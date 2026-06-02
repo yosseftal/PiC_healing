@@ -182,7 +182,8 @@ sms_sent = 30
 anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150
-# Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
+# Number of sign up and sign-in requests that can be made in a 5 minute interval
+# per IP address (excludes anonymous users).
 sign_in_sign_ups = 30
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
 token_verifications = 30
@@ -254,12 +255,14 @@ max_frequency = "5s"
 # Force log out if the user has been inactive longer than the specified duration.
 # inactivity_timeout = "8h"
 
-# This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
+# This hook runs before a new user is created and allows developers to reject the request
+# based on the incoming user object.
 # [auth.hook.before_user_created]
 # enabled = true
 # uri = "pg-functions://postgres/auth/before-user-created-hook"
 
-# This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
+# This hook runs before a token is issued and allows you to add additional claims
+# based on the authentication method used.
 # [auth.hook.custom_access_token]
 # enabled = true
 # uri = "pg-functions://<database>/<schema>/<hook_name>"

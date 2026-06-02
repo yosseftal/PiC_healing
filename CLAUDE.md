@@ -1,34 +1,63 @@
-# PiC Healing - Project Manifesto & Guidelines
+# PiC Healing - Project Manifesto & Guidelines V2
+
+This document operationalizes the manifesto for product, UX, and implementation decisions.
 
 ## 1. Project Vision
-PiC Healing is a knowledge-management platform for therapeutic wisdom, designed to empower users through adaptive inquiry and community growth.
+PiC (Personal Information Center) is a knowledge-management platform for self-healing.
+It empowers users to access their body's "internal database" through a structured methodology,
+turning subjective experiences into actionable wisdom.
 
-## 2. Core Principles (The Manifesto)
+## 2. Core Pillars (Implementation Logic)
 
-### A. Growth & Mutuality (צמיחה והדדיות)
-The system is an active partner in the user's evolution. 
-- **The "No-Dead-End" Rule:** If a specific treatment or term is not found in the database, the system **never** returns a simple "Not Found" error. Instead, it must offer three specific pathways:
-    1. **Inward Connection:** Guidance to connect internally and document a new personal insight.
-    2. **Professional Support:** Referral to verified therapeutic resources.
-    3. **Project Contribution:** Encouraging the user to become an active partner by contributing their finding to the community.
+### A. The "Empty Vessel" & Absolute Ownership
+- Start every session with a Brain Dump ("Empty Vessel") to clear cognitive load and allow new insights.
+- The user is the architect: they manually split raw input into Symptom Fragments and assign them to groups.
+- Require a Joint Treatment Test (muscle test) to decide whether symptoms stay together or split
+  into separate Symptom Buckets for Atomic Focus.
 
-### B. Knowledge Expansion (התרחבות הידע)
-We don't just display data; we organize and create it.
-- Encourage users to document their private information center, turning subjective experiences into structured, accessible knowledge.
+### B. The Gateway & Methodology Access
+- Core method education (self-muscle-testing videos/text) must remain freely accessible.
+- Freemium rule: diagnostic tables and logic are open; persistent memory, tracking,
+  and Reflective Journal require subscription.
 
-### C. Adaptive Inquiry (ניווט מבוסס עומק)
-The user experience is dynamic and non-overwhelming.
-- The diagnostic flow and information display must match the user's current skill level and immediate needs. 
-- Hide advanced complexity from beginners; reveal nuanced therapeutic steps only as the user progresses.
+### C. Systematic Inquiry Flow (NEMAR)
+- Begin with a Safety Check for Self-Sabotage blockers.
+- Left Path (Root Cause): ask whether it is NEMAR (Right/Accurate/Desirable) to diagnose
+  a cause; if yes, classify Physical/Emotional/Energetic/Conscious and map in Causes Table.
+- Right Path (Treatment): identify the most precise intervention from Treatments Table.
+- Define execution instructions: technique, provider, duration, frequency, and recurrence.
 
-## 3. Technical Standards & Patterns
-- **Database:** Supabase (PostgreSQL) with Row Level Security (RLS).
-- **Frontend:** React with TypeScript.
-- **Tone & Language:** Use positive, constructive, and empowering language in all UI strings and system messages. (Avoid "Cannot", "Failed", "Illegal").
-- **Code Style:** Clean, modular, and self-documenting.
-- **Git Commits:** Every commit message must be written in simple English, readable for non-programmers.
+### D. Dynamic Assessment & Blind Ratings
+- Allow symptom refinement at the start of any session.
+- Require blind re-rating (1-10) at each new session.
+- Hide previous rating during input to reduce bias, unless the user explicitly requests override.
 
-## 4. OpenSpec Integration
-- Follow the Spec-Driven Development (SDD) flow.
-- All new features must start with a `proposal.md` in the `/openspec` folder.
-- Ensure every technical spec aligns with the "Growth & Mutuality" principle.
+### E. Post-Treatment: Integration & Growth
+- End each session with Reflective Journaling prompts for insights and personal tasks.
+- Do not use failure framing when treatment is incomplete; use Integrating/In Progress states.
+- Integration reasons may include repetition, pending user commitments, or natural body permeation time.
+
+## 3. Technical Standards
+- Stack: React, Supabase, TypeScript.
+- UI/UX: "One screen, one action" (Atomic Focus).
+- Tone: strictly positive and empowering language in UI/system copy.
+- Git: human-readable English commit messages.
+
+## 4. OpenSpec Alignment
+- Use Spec-Driven Development workflow for new features.
+- Ensure proposals, specs, and tasks reflect the five pillars above.
+- Preserve positive, non-blocking language and avoid dead-end UX flows.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `yosseftal/PiC_healing` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage roles use default label names (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

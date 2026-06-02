@@ -1,96 +1,80 @@
-PiC: Personal Information Center - Project Manifesto
+# PiC Healing - Project Manifesto & Logic V2
+# PiC Healing - מניפסט הפרויקט ועקרונות הלוגיקה
 
-🎯 Vision
+## 1. Project Vision | חזון הפרויקט
+PiC (Personal Information Center) is a knowledge-management platform for self-healing.
+It empowers users to access their body's "internal database" through a structured methodology,
+turning subjective experiences into actionable wisdom.
 
-PiC teaches users how to connect to their Personal Information Center for self-healing. The body is the ultimate database, containing all the answers regarding any illness, condition, or symptom. All the answers already exist within you; the PiC app provides the tools and methodology to connect to this information and use it to lead your own healing process.
+אפליקציית PiC (מרכז מידע אישי) היא פלטפורמה לניהול ידע עבור ריפוי עצמי.
+היא מעניקה למשתמשים כלים לגשת ל"מאגר המידע הפנימי" של הגוף באמצעות מתודולוגיה מובנית,
+והופכת חוויות סובייקטיביות לידע נגיש ומעשי.
 
-🛠️ Core Principles
+## 2. Core Pillars | עקרונות הליבה
 
-Ownership & Responsibility: The system is a hub for learning and action that empowers users to take full responsibility for their health. The user manages their healing process based on a deep understanding of their needs and the precise treatment required at any given moment.
+### A. The "Empty Vessel" & Absolute Ownership | "הכלי הריק" ובעלות מלאה
+- The Brain Dump: Every session begins with a mental decluttering (The Empty Vessel) to clear space for new insights.
+- User as the Architect: The user manually fragments their raw input into "Symptom Fragments"
+  and assigns them to groups.
+- The Joint Treatment Test: Users perform a Muscle Test to determine if all symptoms can be
+  treated together. If not, they manually split them into separate "Symptom Buckets" to
+  maintain Atomic Focus.
 
-The Body as the Database: The system serves as an intelligent interface that enables the user to access the answers within them and tap into their inherent internal knowledge.
+- ריקון (הכלי הריק): כל סשן טיפולי מתחיל בפינוי מקום מחשבתי (הכלי הריק) כדי לאפשר לתובנות חדשות לצוף.
+- המשתמש כאדריכל: המשתמש מפרק באופן ידני את טקסט ה"ריקון" הגולמי ל"סימפטומים בודדים" ומשייך אותם לקבוצות.
+- מבחן טיפול משותף: המשתמש מבצע מבחן שריר כדי לקבוע אם ניתן לטפל בכל הסימפטומים יחד.
+  אם התשובה שלילית, עליו לחלק אותם ידנית ל"מכלי סימפטומים" נפרדים כדי לשמור על מיקוד אטומי.
 
-Collaborating with the Center: The user works alongside their Personal Information Center. The app organizes the insights gained and facilitates the user's communication with their internal knowledge base, allowing for effective management of their self-healing process.
+### B. The Gateway & Methodology Access | "השער" ונגישות לשיטה
+- Free Education: Learning the core method (videos/text on self-muscle testing) is always free and accessible.
+- Freemium Model: The diagnostic tables and logic are open to all; however, persistent memory,
+  tracking, and the "Reflective Journal" require a paid subscription.
 
-Multi-Context Management: Users can manage multiple symptom groups simultaneously. Each group maintains its own dedicated treatment logs, ensuring clarity across various healing processes and active courses.
+- למידה חופשית: הגישה ללימוד עקרונות השיטה (סרטונים וטקסט על מבחן שריר עצמי) תמיד תהיה חינמית ונגישה לכולם.
+- מודל שירות: טבלאות האבחון והלוגיקה פתוחות לכולם; עם זאת, היכולת לשמור נתונים,
+  לתעד ולנהל את "יומן המסע" לאורך זמן דורשת מנוי בתשלום.
 
-Treatment Flexibility: The system enables direct access to treatments even without a predefined symptom, allowing for natural flow and intuitive connection to the information center.
+### C. The Systematic Inquiry Flow | סדר השאילתות המובנה
+- Safety Check: Before starting, verify there is no "Self-Sabotage" pattern blocking the process.
+- The Left Path (Root Cause): Ask: "Is it NEMAR (Right/Accurate/Desirable) to diagnose a Root
+  Cause?". If yes, identify the type (Physical/Emotional/Energetic/Conscious) and locate it
+  in the Causes Table.
+- The Right Path (Treatment): Identify the precise intervention from the Treatments Table.
+- Instructions: Determine the specific technique, provider, duration, and frequency.
 
-Intent & Symptom Bucket: The system maintains symptom groups as persistent visual anchors. Users can always return to and view the specific intentions they are currently addressing.
+- בדיקת חסמים: לפני תחילת התהליך, יש לוודא שאין דפוס של "חבלה עצמית" שחוסם את הריפוי.
+- הנתיב השמאלי (אבחון גורם): השאלה הראשונה היא:
+  "האם נמ"ר (נכון, מדויק, רצוי) לאבחן גורם?".
+  אם כן, מאבחנים את סוג הגורם (פיזי/רגשי/אנרגטי/תודעתי) ומאתרים אותו בטבלת הגורמים.
+- הנתיב הימני (אבחון טיפול): זיהוי הטיפול המדויק ביותר מתוך טבלת הטיפולים.
+- הנחיות ביצוע: הגדרת הטכניקה, הגורם המטפל, המשך, התדירות והחזרתיות הנדרשים.
 
-The Empty Vessel (Brain Dump): The healing process begins with clearing mental space. Decluttering is a therapeutic step that allows for new content and learning to enter.
+### D. Dynamic Assessment & "Blind" Ratings | הערכה דינמית ודירוג "עיוור"
+- Symptom Refinement: Users can rephrase or refine their symptoms at the start of any session
+  to ensure current accuracy.
+- Blind Refresh: At the start of every session, users re-rate symptom intensity (1-10).
+- Bias Prevention: To ensure an objective muscle test, the system hides the previous rating
+  during input, unless a manual override is requested.
 
-Atomic Focus: Information is presented step-by-step (one screen, one action) to prevent cognitive overload, specifically optimized for ADHD.
+- דיוק סימפטומים: למשתמש יש אפשרות לדייק או לשנות את ניסוח הסימפטום בתחילת כל סשן כדי להבטיח התאמה למצב הנוכחי.
+- רענון דירוג: בתחילת כל סשן, המשתמש מדרג מחדש את עוצמת הסימפטום (1-10).
+- מניעת הטיות: כדי להבטיח מבחן שריר אובייקטיבי,
+  המערכת מסתירה את הדירוג הקודם בזמן ההזנה, אלא אם המשתמש מבקש במפורש לראות אותו.
 
-💎 Features & Ecosystem
+### E. Post-Treatment: Integration & Growth | סיום טיפול: הטמעה וצמיחה
+- Reflective Journaling: Every session concludes with an invitation to document insights or personal tasks.
+- The Integration State: If a treatment is not "fully successful" yet, it is marked as
+  "Integrating" or "In Progress" (avoiding negative terms like "Failed").
+- Reasons for Integration: Includes the need for repetition, pending user tasks/commitments,
+  or the need for the process to "permeate" the body.
 
-The Gateway (Academy): An introductory course teaching the method's principles, muscle testing, and the art of inquiry.
+- תיעוד ותובנות: כל סשן מסתיים בהצעה להוסיף תיעוד ל"יומן המסע" לגבי תובנות או משימות שעלו.
+- מצב הטמעה: במידה והטיפול לא הסתיים ב"הצלחה מלאה",
+  הוא יוגדר כטיפול בשלבי הטמעה או בתהליך (תוך הימנעות ממונחים שליליים).
+- סיבות להטמעה: הצורך בחזרתיות, משימות פתוחות שהמשתמש לקח על עצמו, או צורך של הגוף בזמן כדי שהטיפול "יחלחל" וישקע.
 
-The Inquiry Engine: A diagnostic interface linking user intent with the body's information, with automatic mapping to symptom groups.
-
-Courses & Journeys: Modular developmental sequences combining guidance, treatments, inspirations, and reflection tasks.
-
-The Reflective Journal (Contextual Archive): A chronological journal where every entry is automatically linked to its context (treatment, insight, or symptom).
-
-Referral System: Integration for cases where the inquiry indicates a need for certified PiC practitioners or medical professionals.
-
-🏗️ Technical Architecture
-
-Stack: Flutter (Frontend) & Supabase (Backend).
-
-Data Privacy: Users have the absolute right to permanently delete all personal data from the app's databases at any time.
-
-AI Ready: Structured infrastructure for future AI integration to analyze personal trends within the journal.
-
-
-
-
-
-
-PiC: Personal Information Center - מניפסט הפרויקט
-
-
-🎯 חזון
-
-אפליקציית PiC מלמדת את המשתמש כיצד להתחבר למאגר המידע האישי שלו ולהשתמש בו לריפוי עצמי. הגוף הוא מאגר המידע המקיף ביותר, המכיל את כל התשובות לגבי כל מחלה, מצב או תסמין. כל התשובות כבר קיימות אצלך; PiC מספקת את הכלים והשיטה כדי להתחבר למידע הזה ולהשתמש בו כדי להוביל את תהליך הריפוי.
-
-
-🛠️ עקרונות הליבה
-
-אחריות ובעלות: המערכת היא מרכז למידה ופעולה המעניק למשתמש את הכלים להוביל את בריאותו באופן עצמאי. המשתמש מנהל את תהליך הריפוי מתוך הבנה עמוקה של צרכיו ושל סוג הטיפול המדויק עבורו בכל רגע.
-
-הגוף כמאגר המידע: המערכת משמשת כממשק חכם המאפשר למשתמש לגשת לתשובות הקיימות בתוכו ולמצות את הידע הפנימי הטמון בו.
-
-עבודה לצד המידע: המשתמש פועל לצד מאגר המידע האישי שלו. האפליקציה מארגנת את הנתונים שהושגו ומסייעת למשתמש בתקשורת עם מאגר המידע, כך שיוכל להיעזר בו לניהול מיטבי של תהליך הריפוי.
-
-ניהול רב-תהליכי: המשתמש יכול לנהל מספר קבוצות תסמינים במקביל. לכל קבוצה נשמר תיעוד טיפולים נפרד, המאפשר סדר ובהירות גם כשישנם מספר תהליכי ריפוי וקורסים פעילים.
-
-גמישות טיפולית: המערכת מאפשרת גישה ישירה לטיפולים גם ללא הגדרת תסמין ספציפי, כדי לאפשר זרימה טבעית וחיבור אינטואיטיבי למאגר המידע.
-
-כוונות ומכל תסמינים: המערכת מחזיקה את קבוצות התסמינים כעוגן חזותי קבוע. המשתמש יכול תמיד לחזור ולראות את הכוונות הספציפיות שבהן הוא מטפל ברגע זה.
-
-הכלי הריק (פינוי מנטלי): תהליך הטיפול מתחיל בפינוי מקום מחשבתי. ניקוי העומס הוא צעד תרפויטי המאפשר כניסה לתוכן חדש ולמידה.
-
-מיקוד מפורט (צעד אחר צעד): הצגת מידע באופן מדורג (מסך אחד, פעולה אחת) כדי למנוע הצפה של הקשב ולשמור על בהירות, מותאם במיוחד לאנשים עם הפרעות קשב וריכוז.
-
-
-💎 רכיבי המערכת
-
-השער (האקדמיה): קורס מבוא המלמד את עקרונות השיטה, ביצוע מבחן שרירים וטכניקת שאילת שאלות.
-
-מנוע השאילתות: ממשק אבחון המקשר בין כוונת המשתמש למידע הקיים בגוף, תוך שיוך אוטומטי לקבוצות תסמינים.
-
-קורסים ומסעות: רצפי התפתחות המשלבים הדרכה, טיפולים, תובנות מעוררות השראה ומשימות תיעוד.
-
-יומן המסע (ארכיון הקשרי): יומן כרונולוגי המאגד מחשבות ותובנות, כאשר כל רישום משויך אוטומטית להקשר שבו נכתב (טיפול מסוים, תובנה או תסמין).
-
-מערכת הפניות: אפשרות להפניה למטפלי PiC מוסמכים או לאנשי מקצוע במקרים בהם עולה צורך בליווי חיצוני.
-
-
-🏗️ תשתית טכנית
-
-טכנולוגיה: פיתוח חוצה-פלטפורמות (Flutter) וניהול נתונים בענן (Supabase).
-
-פרטיות נתונים: זכות מוחלטת למשתמש למחוק באופן קבוע ומלא את כל המידע האישי שלו מהמאגרים בכל עת.
-
-מוכנות לבינה מלאכותית: תשתית נתונים מאורגנת המאפשרת שילוב עתידי של כלי ניתוח חכמים לזיהוי מגמות אישיות ביומן.
+## 3. Technical Standards | סטנדרטים טכניים
+- Stack: React, Supabase, TypeScript.
+- UI/UX: "One screen, one action" (Atomic Focus).
+- Tone: Strictly positive and empowering language.
+- Git: Human-readable English commit messages.
