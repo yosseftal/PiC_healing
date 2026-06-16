@@ -17,9 +17,9 @@ Captured before feature specs or schema design.
 1. **Inquiry / decision-making** — one muscle-test question at a time (NEMAR flow).
 2. **Treatment execution** — the Player breaks protocols into small sequential steps.
 3. **Choosing what to work on** — during a given **Inquiry Session**, work stays on **one focus target** at a time: usually **one**
-   Symptom Group / הקשר, **or** one **course-as-treatment** workflow (**DEC-003**), so inquiry and muscle tests stay clear.
-   The Event Manager may **switch target** and **start a new Inquiry Session whenever they want**. “Active” means *this visit*, not a
-   lock on the account.
+   Symptom Group / הקשר, **or** one **course-as-treatment** workflow (**DEC-003**), **or** a **timeline-first** technique/treatment visit
+   (**DEC-004**), so inquiry and muscle tests stay clear. The Event Manager may **switch target** and **start a new Inquiry Session whenever
+   they want**. “Active” means *this visit*, not a lock on the account.
 
 It is **not** a separate database entity or synonym for מכלי סימפטומים.
 
@@ -104,11 +104,11 @@ documentation, freemium boundaries, and how an Inquiry Session is “anchored.�
    course’s **continuous Work Session** (סשן עבודה) in the **course** sense: completion and history **substitute** for “no separate paper
    trail” — they **are** the durable work record for that course.
 3. **Event Manager choice of shape:** A course may **stand alone**; may be chosen as work **inside** a Symptom Group’s broader Work
-   Session; or the EM may take **one technique** learned from a course and run an **Inquiry Session** with that technique **whenever and
-   wherever** they choose (including on another Symptom Group). No forced auto-link unless the EM opts in.
-4. **Course as treatment:** When the EM chooses **a course as treatment**, an **Inquiry Session** for that visit **follows that
+   Session; or the Event Manager may take **one technique** learned from a course and run an **Inquiry Session** with that technique **whenever and
+   wherever** they choose (including on another Symptom Group). No forced auto-link unless the Event Manager opts in.
+4. **Course as treatment:** When the Event Manager chooses **a course as treatment**, an **Inquiry Session** for that visit **follows that
    course’s workflow** (course-led Atomic Focus for that sitting).
-5. **Commerce:** Courses may be **free or paid**. Paid access is by **per-course grant**; the EM may **re-run** a granted course.
+5. **Commerce:** Courses may be **free or paid**. Paid access is by **per-course grant**; the Event Manager may **re-run** a granted course.
    **Course progress is included** in what the grant (or free offer) covers — not an extra “healing persistence” upsell on top of the
    course price.
 6. **Freemium bucket (Q3 — teaching vs saved work):** **Core Gateway teaching** and **open diagnostic material** stay **freely accessible**
@@ -117,48 +117,95 @@ documentation, freemium boundaries, and how an Inquiry Session is “anchored.�
    data as **persistent healing**: same **subscription-gated persistence** and **data-sovereignty** expectations as Symptom Group history
    (do not park real course saves in a cheap “learning-only” bucket that would dodge export/delete rules).
 
-**Refines DEC-001 §3 (Atomic Focus):** During one **Inquiry Session**, **one Atomic Focus target** per visit: either **one Symptom Group**
-(symptom-led) **or** **one course-as-treatment workflow** (course-led). Switching targets means **ending / starting** a session, same as
-switching Symptom Groups today.
+**Refines DEC-001 §3 (Atomic Focus):** During one **Inquiry Session**, **one Atomic Focus target** per visit: **one Symptom Group**
+(symptom-led), **one course-as-treatment workflow** (course-led), or **timeline-first** technique/treatment work (**DEC-004**). Switching
+targets means **ending / starting** a session, same as switching Symptom Groups today.
 
 **Refines DEC-002 consequences:** Persistence is **not only** `symptom_groups`: add a **first-class course enrollment / progress** root
-(name TBD in schema) alongside symptom groups. Cross-links when the EM attaches a course to a group remain **explicit**, not implied.
+(name TBD in schema) alongside symptom groups. Cross-links when the Event Manager attaches a course to a group remain **explicit**, not implied.
 
-**Rationale:** Matches parallel Hebrew framing (קבוצות + קורסים), keeps EM sovereignty over stand-alone vs linked work, and aligns paid
+**Rationale:** Matches parallel Hebrew framing (קבוצות + קורסים), keeps Event Manager sovereignty over stand-alone vs linked work, and aligns paid
 grants with “you own your course run history.”
 
 **Consequences:**
 
 - OpenSpec / schema: model **course enrollment**, replay, grants, and Integrating state without folding courses into
   `symptom_groups`.
-- UX copy: distinguish **Symptom Group Work Session** vs **course Work Session** where ambiguity would confuse the EM.
+- UX copy: distinguish **Symptom Group Work Session** vs **course Work Session** where ambiguity would confuse the Event Manager.
 - ~~README / manifesto~~: follow-up optional pass to spell out “course-led Inquiry Session” and freemium bucket (persistent healing) in
-  plain language.
+  plain language. ~~English `README.md` + `CLAUDE.md` pillars~~ Updated for **DEC-004** (2026-06-08).
+
+---
+
+## DEC-004 — Timeline-first persistence, Personal Treatment Library, intentional Smart-Linking
+
+**Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-001**
+
+**Context:** **GQ-001** asked where technique-only or ad-hoc treatment work **must** attach. The manifesto centres the **Reflective
+Journal** as a chronological archive; **DEC-003** allows techniques without a full course-as-treatment flow. The team rejected **implicit
+defaults** that would force a Symptom Group or course row before saving.
+
+**Decision:**
+
+1. **Baseline (prior grill option D):** There is **no mandatory** Symptom Group or course row as a **precondition** for logging a
+   technique or treatment execution. The product must **not** silently default a visit onto a group or course to satisfy persistence.
+2. **Mandatory anchor = Chronological Timeline:** The **only required** persistence anchor is the Event Manager’s **chronological
+   timeline** — the same spine as the **Reflective Journal** principle (the journey told in time). Each technique or treatment **execution**
+   is recorded as its **own** timeline event **unless** the Event Manager opts into further attachment (below).
+3. **Intentional association (prior grill option C when used):** The Event Manager **chooses** whether a session or execution also belongs
+   with a **Symptom Group**, a **Course** / run, both, or neither beyond the timeline. **Dual or multiple Smart-Links** are **available
+   actions**, never automatic defaults. There is no prescribed “correct” topology — only the path chosen by the user, who owns linking
+   choices.
+4. **Personal Treatment Library (Personal Treatment Table):** Every account keeps a **personal toolbox** of techniques and treatments the
+   Event Manager has **actually executed**. The **first execution** of any technique or treatment — from a **course**, the shared
+   **Treatments Table**, a **library** copy, self-invented material, or elsewhere — **updates** this repository. It is **separate** from any
+   one Symptom Group’s continuous log; Smart-Linking connects into group or course stories when the Event Manager decides it matters.
+5. **Smart-Linking:** If the Event Manager decides an execution or visit is **relevant** to a Symptom Group (or analogously to a course),
+   they may **Smart-Link during the session or retroactively**. The timeline stays the spine; links are overlays the Event Manager controls.
+
+**Refines:**
+
+- **DEC-001 / DEC-003:** **Atomic Focus** still governs *attention* during a visit (one muscle-test question and one Player step at a time).
+  **Persistence** for ad-hoc or technique-first work **starts on the timeline** without forcing `symptom_groups` or course foreign keys.
+- **DEC-002:** The Symptom Group remains the rich **Work Session** for group-bound healing; timeline + library add **non-group-first** rails.
+
+**Consequences:**
+
+- Schema must support a **timeline / journal spine**, **execution events**, **Personal Treatment Library**, and **Smart-Link** edges without
+  required default foreign keys to `symptom_groups` or courses.
+- UX must make **“timeline only”** obvious and trustworthy, and make **linking** an explicit, positive action — not recovery from mistaken
+  auto-defaults.
+- **Blind (re-)rating** applies **only to symptoms** (symptom intensity), as part of **symptom–group healing paths** the app offers — not
+  by default for course-only, library-only, or timeline-only work unless a **symptom** is intentionally in scope. Group-scoped analytics that
+  depend on symptom ratings follow the same scope.
+- The Event Manager may **start ad-hoc re-rating** whenever they choose, not only at a fixed session entry (OpenSpec).
+
+**Rationale:** Aligns chronology with the Reflective Journal, maximises Event Manager autonomy, and keeps Symptom Groups and Courses as
+powerful **optional** contexts rather than silent gatekeepers.
 
 ---
 
 ## Grill — open questions (living)
 
-### GQ-001 — Technique-only Inquiry Session: what is the persistence anchor?
+### GQ-002 — Personal Treatment Library: one card or many for the “same” technique?
 
 **Status:** Open (posed 2026-06-08)
 
-**Context:** **DEC-003** allows the Event Manager to take **one technique** learned from a course and run an **Inquiry Session** whenever
-and wherever — including on another Symptom Group. We have not yet pinned **where** logs, blind ratings, Player / Integrating state, and
-journal Smart-Links **must** attach when the visit is **not** the full **course-as-treatment** workflow.
+**Context:** **DEC-004** defines the **Personal Treatment Library** as the Event Manager’s toolbox, updated on **first execution** of a
+technique or treatment from **multiple possible origins** (shared **Treatments Table**, **course**, **library** copy, **self-invented**,
+etc.). The UI and schema still need a rule for **identity**: what counts as “the same technique” for deduplication, provenance, and
+search.
 
-**Question:** For a **technique-only** visit (one technique from a course, not the whole course run), what is the **required persistence
-anchor**?
+**Question:** When the **same** underlying protocol is run from **different sources** (e.g. once from the global table, later from a
+course lesson, later with a personal tweak), should the library show **one** toolbox entry (merged identity + history of sources), **separate**
+entries per lineage, or **one** entry with **explicit sub-variants** the Event Manager names?
 
-- **A.** Always **one Symptom Group** — pick or create a group so ratings and the group logbook stay coherent with **Atomic Focus** and
-  blind refresh rules for that group.
-- **B.** Anchor on **course enrollment / grant** only — technique practice lives under the **course Work Session**, even when the concern
-  “feels” like a body symptom tied elsewhere.
-- **C.** **Dual link** — one **primary** anchor (A or B) plus **optional** Smart-Link to the other.
-- **D.** **No mandatory anchor** — minimal “scratch” save until the EM links; accept weaker queries / policy edge cases until then.
-
-**Co-architect recommendation (non-binding):** **A** as default, **C** optional: default to a **chosen Symptom Group** so blind re-rating and
-the group log stay one story; **explicit** Smart-Link to the originating **course** / lesson for Academy continuity. Use **D** only as a
-narrow, loudly labeled scratch mode if you insist on it.
+**Co-architect recommendation (non-binding):** Prefer **one logical technique** with a **provenance / source history** stack and a **single**
+primary card in the toolbox; timeline executions carry **source tags**. Allow **user-named variants** when the Event Manager insists the
+felt practice is materially different—opt-in split, not silent duplicates.
 
 **Awaiting:** Yossef-Tal & Sigal
+
+---
+
+*Previously resolved:* **GQ-001** → **DEC-004** (2026-06-08).
