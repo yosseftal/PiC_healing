@@ -65,12 +65,17 @@ do not mix.
 One muscle-test question and one Player
 step at a time (one screen, one action)
 to reduce cognitive overload. During an
-**Inquiry Session**, work on **one**
-Symptom Group at a time; users may
-**switch groups** and **start a new
-Inquiry Session** whenever they choose.
-ADHD-friendly pacing—not a separate
-container type (see `CONTEXT.md`).
+**Inquiry Session**, keep **one focus** at
+a time: **symptom-led** work on one
+Symptom Group, **course-led** work when a
+**course as treatment** is chosen, or a
+**timeline-first** visit (e.g. a technique
+or treatment run without a required group
+row)—see `decisions.md` **DEC-003** and
+**DEC-004**. Users may **switch** by
+**starting a new Inquiry Session** whenever
+they choose. ADHD-friendly pacing—not a
+separate container type (see `CONTEXT.md`).
 
 ### 6. Offline Resilience
 The app is designed to support
@@ -119,34 +124,45 @@ logic, based on the NEMAR principles
        provider, duration, frequency,
        and repetition.
 
-* **Inquiry Session (סשן):** One sitting
-  on a chosen Symptom Group. Steps—Empty
+* **Inquiry Session (סשן):** One sitting with
+  **one chosen focus**—symptom-led on a
+  Symptom Group, course-led when a **course
+  as treatment** is chosen, or **timeline-first**
+  technique/treatment work. Steps—Empty
   Vessel, safety check, NEMAR inquiry,
   treatment player, journal—may be
-  **entered and run in any order**.
-  **Recommended** order: Empty Vessel →
-  safety → NEMAR → player → journal.
-  New sessions may start whenever the
-  user chooses (any group, any entry point).
+  **entered and run in any order** where the
+  path applies. **Recommended** order: Empty
+  Vessel → safety → NEMAR → player → journal.
+  New sessions may start whenever the user
+  chooses (any focus, any entry point).
 
 ### 3. Dynamic Assessment & "Blind" Ratings
-* **Symptom Refinement:** Users can rephrase
-  or refine their symptoms at the start
-  of any Inquiry Session to ensure current accuracy.
-* **Blind Refresh:** At the start of every
-  Inquiry Session, users re-rate symptom intensity (1-10).
-* **Bias Prevention:** To ensure an objective
-  muscle test, the system **hides** the previous
-  rating during input, unless a manual
-  override is requested.
+* **Symptom Refinement:** On **symptom–group
+  inquiry paths**, users can rephrase or
+  refine symptoms when that focus is active,
+  to keep language aligned with the body.
+* **Blind (re-)rating (symptoms only):** On
+  those paths, blind intensity refresh (1–10)
+  may be offered with the **previous score
+  hidden**; the Event Manager may also start
+  **ad-hoc** re-rating anytime. Not implied for
+  pure course, library, or timeline-only work
+  unless a symptom is intentionally in scope.
+* **Bias Prevention:** During blind symptom
+  input, the system **hides** the prior rating
+  unless the Event Manager requests override.
 
 ### 4. The Networked Reflective Journal
 A chronological archive for thoughts and
-insights. Entries can be retroactively
-"Smart-Linked" to multiple symptoms,
-treatments, or courses simultaneously,
-or exist independently, breaking
-traditional rigid hierarchies.
+insights—aligned with the **chronological
+timeline** that anchors sessions and
+executions unless the Event Manager links
+them elsewhere (`decisions.md` **DEC-004**).
+Entries can be retroactively "Smart-Linked"
+to multiple symptoms, treatments, or courses
+simultaneously, or exist independently,
+breaking traditional rigid hierarchies.
 Every Inquiry Session may conclude with an
 invitation to document insights or
 personal tasks in the Reflective Journal.
@@ -220,10 +236,20 @@ them with generic tech jargon:
   repetition, or pending tasks, it is
   simply *Integrating*.
 * **Smart-Linking:** The non-linear relationship
-  between elements in the Reflective Journal.
-  A note, treatment, or insight is not
-  strictly hierarchical; it can be multi-contextual
-  and linked to several symptoms simultaneously.
+  between journal entries, timeline events,
+  and treatment or technique executions. The
+  Event Manager links during a session or
+  retroactively; the app does not silently
+  default a parent (`decisions.md` **DEC-004**).
+* **Chronological timeline:** The ordered spine
+  of healing activity; executions may stand
+  alone until Smart-Linked (`decisions.md`
+  **DEC-004**).
+* **Personal Treatment Library:** The Event
+  Manager’s toolbox of techniques they have
+  run at least once—fed from courses, the
+  Treatments Table, or self-invented work
+  (`CONTEXT.md`).
 * **Symptom Group (הקשר):** Symptoms treated
   together per a joint muscle test; equals
   מכלי הסימפטומים and one Work Session.
@@ -231,8 +257,11 @@ them with generic tech jargon:
 * **Work Session (סשן עבודה):** The continuous
   saved thread for one Symptom Group—not
   a parent of multiple groups.
-* **Inquiry Session (סשן):** One visit on one
-  group; flexible step order (see Principle 3–5).
+* **Inquiry Session (סשן):** One visit with one
+  chosen **focus**—symptom-led on a group,
+  course-led for a **course as treatment**, or
+  timeline-first technique/treatment work;
+  flexible step order (see Principles 3–5).
 * **Empty Vessel (הכלי הריק):** Optional free
   writing gate; not only a symptom list.
 
