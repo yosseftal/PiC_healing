@@ -1,7 +1,7 @@
 # PiC Healing - Project Manifesto & Guidelines V2
 
 This document operationalizes the manifesto for product, UX, and implementation decisions.
-Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001, DEC-002).
+Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-004).
 
 ## 1. Project Vision
 PiC (Personal Information Center) is a knowledge-management platform for self-healing.
@@ -21,6 +21,9 @@ turning subjective experiences into actionable wisdom.
   groups *or* spontaneous session notes (mood today, insights about the group).
   Recommended, not mandatory every visit.
 - The Event Manager assigns and refines symptoms; the app organizes and retrieves.
+- **Timeline & toolbox (DEC-004):** The **chronological timeline** is the mandatory persistence spine for executions and insights;
+  the **Personal Treatment Library** records techniques/treatments the Event Manager has **run** at least once. **Smart-Linking** to Symptom
+  Groups or courses is **intentional**, never a silent default.
 
 ### B. The Gateway & Methodology Access
 - Core method education (self-muscle-testing videos/text) must remain freely accessible.
@@ -28,19 +31,26 @@ turning subjective experiences into actionable wisdom.
   and Reflective Journal require subscription.
 
 ### C. Inquiry Sessions & NEMAR Flow
-- **Inquiry Session** (סשן): one sitting on **one chosen Symptom Group**. User may
-  **switch groups** and **start a new session anytime**.
+- **Inquiry Session** (סשן): one sitting with **one chosen focus**—**symptom-led** on a
+  Symptom Group, **course-led** when a **course as treatment** is chosen, or **timeline-first**
+  technique/treatment work (`decisions.md` **DEC-003**, **DEC-004**). User may **switch focus**
+  by **starting a new session anytime** (including switching Symptom Groups on symptom-led paths).
 - **Steps** (flexible order; user may **start at any step**): Empty Vessel → Safety
   Check (Self-Sabotage) → NEMAR inquiry → treatment player → Reflective Journal.
 - **Recommended order:** same as above. NEMAR path: Left (root cause in Causes Table)
   / Right (treatment in Treatments Table) → execution instructions.
-- **Atomic Focus during a session:** one group, one muscle-test question at a time,
-  small Player steps—not locked across visits.
+- **Atomic Focus during a session:** one muscle-test question and one Player step at a time,
+  one **focus target** per visit (symptom group, course-as-treatment, or timeline-first)—not
+  locked across visits.
 
 ### D. Dynamic Assessment & Blind Ratings
-- Allow symptom refinement at the start of any Inquiry Session.
-- Require blind re-rating (1-10) at each new Inquiry Session on that group.
-- Hide previous rating during input to reduce bias, unless the user explicitly requests override.
+- Allow **symptom refinement** on **symptom–group inquiry paths** when that focus is active.
+- **Blind (re-)rating** applies **only to symptoms** (intensity 1–10) on those paths; the Event
+  Manager may also start **ad-hoc** re-rating when they choose—not implied for pure course,
+  library, or timeline-only work unless a symptom is intentionally in scope (`decisions.md`
+  **DEC-004**).
+- **Bias prevention:** hide the previous symptom rating during blind input unless the Event
+  Manager explicitly requests override.
 
 ### E. Post-Treatment: Integration & Growth
 - Offer Reflective Journaling after a session (any step order); not only at end of linear wizard.
@@ -52,11 +62,12 @@ turning subjective experiences into actionable wisdom.
   `scripts/check-max-line-length.py`; enable with
   `git config core.hooksPath .githooks`).
 - Stack: React, Supabase, TypeScript.
-- UI/UX: Atomic Focus—one screen, one action; one Symptom Group per Inquiry Session visit.
+- UI/UX: Atomic Focus—one screen, one action; symptom-led visits stay on one Symptom Group; course-led and timeline-first technique visits
+  follow `decisions.md` (**DEC-003**, **DEC-004**).
 - Tone: strictly positive and empowering language in UI/system copy.
 - Git: human-readable English commit messages.
-- Persistence root for healing work: `symptom_groups` (or equivalent)—not separate
-  “context” / “bucket” tables unless aliased to Symptom Group.
+- Persistence for healing work: `symptom_groups`, course enrollments, **chronological timeline / journal spine**, and **Personal
+  Treatment Library** per `decisions.md` (**DEC-002**—**DEC-004**); avoid separate “context” buckets unless aliased to those concepts.
 
 ## 4. OpenSpec Alignment
 - Use Spec-Driven Development workflow for new features.
