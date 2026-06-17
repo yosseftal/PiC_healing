@@ -1,99 +1,244 @@
-# PiC (Personal Information Center)
+# PiC Architectural Decisions
 
-A self-healing knowledge platform: the user connects to their inner information Center via muscle testing, diagnoses, and applies
-treatments. The app organizes and retrieves — it does not predict clinical outcomes.
+Living record of agreements reached during co-architecture sessions (Grill-with-Docs).
+Captured before feature specs or schema design.
 
-## Language
+---
 
-**The Center**:
-The user's Personal Information Center — the body as the source of answers accessed through muscle testing.
-_Avoid_: Database (as if external), AI prediction, calculating outcomes
+## DEC-001 — Atomic Focus is a UX principle, not a separate container type
 
-**Event Manager**:
-The user's role: active director of their own healing, not a passive patient or generic end-user.
-_Avoid_: Patient, user (when meaning the healing role), client
+**Status:** Agreed (2026-06-02, updated per Yossef-Tal)
 
-**Atomic Focus**:
-One muscle-test question at a time; small sequential steps in the Player.
-During one **Inquiry Session**, **one focus target** at a time for *inquiry flow*: **one Symptom Group** (symptom-led), **one
-course-as-treatment workflow** (course-led), or a **timeline-first** technique/treatment visit (**DEC-004**).
-The Event Manager may switch targets by opening a new Inquiry Session when they choose.
-_Avoid_: Symptom Bucket as a separate entity; lock on one group across the whole app; two focus targets in one sitting
+**Context:** Early drafts tied “Atomic Focus” only to one-question screens and the Player. Co-architect review also challenged
+“Symptom Buckets” as a separate persistence unit.
 
-**Integrating**:
-A treatment or session is still in progress — repetition, pending commitments, or permeation time needed.
-_Avoid_: Failed, error, incomplete, stuck
+**Decision:** **Atomic Focus** applies to:
 
-**Smart-Linking**:
-Journal entries, timeline events, and treatment or technique **executions** can relate to multiple symptoms, treatments, or courses
-without a rigid parent-child tree. The Event Manager may link **during a session or retroactively**; the system does not impose a default
-parent.
-_Avoid_: Folder hierarchy, single-parent tagging only, silent auto-attachment to a Symptom Group or course
+1. **Inquiry / decision-making** — one muscle-test question at a time (NEMAR flow).
+2. **Treatment execution** — the Player breaks protocols into small sequential steps.
+3. **Choosing what to work on** — during a given **Inquiry Session**, work stays on **one focus target** at a time: usually **one**
+   Symptom Group / הקשר, **or** one **course-as-treatment** workflow (**DEC-003**), **or** a **timeline-first** technique/treatment visit
+   (**DEC-004**), so inquiry and muscle tests stay clear. The Event Manager may **switch target** and **start a new Inquiry Session whenever
+   they want**. “Active” means *this visit*, not a lock on the account.
 
-**Reflective Journal**:
-Networked chronological archive of thoughts and insights; may Smart-Link to symptoms, treatments, courses, timeline events, and
-executions. The ordered journey matches the **Chronological Timeline** spine (**DEC-004**).
-_Avoid_: Rigid single-parent filing for every entry
+It is **not** a separate database entity or synonym for מכלי סימפטומים.
 
-**Chronological Timeline**:
-The **required** persistence spine for healing actions and insights: a **time-ordered** record aligned with the **Reflective Journal**.
-Technique and treatment **executions** may exist as **standalone** timeline events until the Event Manager chooses further links.
-_Avoid_: Pretending every save must belong to a Symptom Group or course row first
+**Rationale:** Matches public teaching (simple steps) and clarified domain model (DEC-002).
 
-**Personal Treatment Library** (Personal Treatment Table):
-The Event Manager’s **toolbox** — techniques and treatments they have **actually run** at least once. **First execution** from any source
-(course, shared Treatments Table, library copy, self-invented entry, etc.) **creates or extends** the matching **logical** row, with
-**provenance** of sources and a **monotonic use counter** that increments on each **recorded execution** mapped to that row (**DEC-005**).
-It is **separate** from any single Symptom Group’s Work Session; **Smart-Linking** connects into a group or course when the Event Manager
-decides.
-_Avoid_: Collapsing the library into one Symptom Group, or treating it as the same thing as the global Treatments Table; duration or
-stopwatch-style totals **on the library row** (v1 is **use count only**)
+**Consequences:**
 
-**NEMAR** (נמ"ר):
-Right, Accurate, Desirable — the muscle-test framing for whether to proceed with a line of inquiry or choice.
-_Avoid_: NAMER (typo), yes/no without the three-part meaning where the method requires it
+- ~~Update manifesto Principle 5 in `README.md`~~ Done (2026-06-02).
+- ~~Align `CLAUDE.md`~~ Done (2026-06-02).
 
-**Empty Vessel** (הכלי הריק / פינוי מנטלי):
-Free, unstructured writing to clear mental space before or during work — not only a symptom list.
-May include listing symptoms you care about (often when forming or updating groups), but also spontaneous session notes (e.g.
-how you feel today, a new insight about this Symptom Group). Optional; recommended as a gate, not mandatory every visit.
-_Avoid_: Treating it only as “symptom inventory”, required form fields, clinical intake questionnaire
+---
 
-**Symptom Group** (קבוצת סימפטומים / מכלי הסימפטומים / הקשר):
-Symptoms that belong together for treatment — decided by listing all symptoms, then a joint treatment muscle test;
-split into multiple groups only when the test says they cannot be treated together.
-Carries the full persistent log (סשן עבודה): history, documentation on any object in the group, ratings, Integrating treatments.
-_Avoid_: Symptom Vessel, Symptom Bucket (as a different type), Context (tech sense), separate “track” above the group
+## DEC-002 — Symptom Group, הקשר, מכלי סימפטומים, and Work Session are one unit
 
-**Work Session** (סשן עבודה):
-The continuous saved thread for one Symptom Group — same unit as הקשר, not a parent container.
-_Avoid_: Inquiry Session, confusing with a single evening’s visit
+**Status:** Agreed (2026-06-02, Yossef-Tal & Sigal)
 
-**Inquiry Session** (סשן):
-One sitting of work with **one chosen focus**: **symptom-led** work on a **Symptom Group**, or **course-led** work when
-the Event Manager chose **a course as treatment** (that visit follows the course workflow).
-**Timeline-first** visits are also allowed: e.g. executing a technique or treatment with **no** required Symptom Group or course row —
-persistence starts on the **Chronological Timeline**; the Event Manager may **Smart-Link** later (**DEC-004**).
-The user may **enter at any step** and **run steps in any order** where the method applies
-(Empty Vessel, safety check, NEMAR inquiry, treatment player, journal).
-**Recommended** order: Empty Vessel → safety → NEMAR → treatment player → journal.
-A new session can start whenever the user chooses (any entry point).
-_Avoid_: Work Session, appointment, mandatory linear wizard with no skip or reorder
+**Context:** English *context*, *symptom group*, and *work session* sounded like nested layers. Hebrew in `README.md` §4 lists parallel
+**קבוצות תסמינים** and **קורסים**, with **לכל הקשר** a continuous **סשן עבודה**.
 
-**Course (Academy)**:
-Structured **parallel lane** to Symptom Groups: its own progress, replays, and **continuous course Work Session** (NEMAR, Player,
-Integrating, documentation for that course).
-May run **standalone**, attach to a **Symptom Group**’s Work Session, or supply
-**single techniques** the Event Manager applies in an Inquiry Session **whenever** they choose.
-Access may be **free or paid** (**per-course grant**); progress is part of what that grant (or free offer) includes.
-_Avoid_: Treating a course as the same entity as a Symptom Group; no auto-binding of a course to a group without EM choice
+**Decision:**
 
-**Symptom** (סימפטום):
-One named concern inside a Symptom Group (e.g. lower back and neck as two symptoms in one group).
-_Avoid_: Treating “symptom” as synonymous with the group itself
+| Concept | Hebrew terms (same unit) | English canonical term |
+|--------|---------------------------|-------------------------|
+| Persistent healing thread | **קבוצה** = **מכלי** = **הקשר** = **סשן עבודה** (full Hebrew in README §4) | **Symptom Group** (primary); **Work Session** when stressing continuity |
+| One visit on that group | **סשן** (inquiry / rating / journal flow) | **Inquiry Session** |
+| Items inside the group | **סימפטומים** (e.g. lower back + neck together) | **Symptom** |
 
-**Blind (re-)rating**:
-Applies **only to a symptom** (e.g. intensity 1–10): part of **symptom–group healing paths** the product offers, with the prior score
-hidden unless the Event Manager overrides. The Event Manager may also start **ad-hoc** re-rating when they choose — not only at a fixed
-session gate.
-_Avoid_: Blind rating on visits with no symptom in scope; implying every healing path requires a blind rating
+**Course-side (parallel; see DEC-003):** The table above is only the **symptom-group** equivalence (קבוצה / מכלי / הקשר / סשן עבודה).
+**קורסים** are **not** extra columns in that row — they are a **separate lane** with their own saved thread (**course Work Session**).
+Each **distinct course run / enrollment** (including a **second time** through the same granted course, if the product opens a new run)
+keeps its **own** continuity record; two runs ⇒ **two** **course Work Session** histories unless we later agree on a “single merged replay”
+mode.
+
+**Formation workflow:**
+
+1. The Event Manager **lists all symptoms** they want to address.
+2. **Joint treatment muscle test:** can these symptoms be treated together?
+   - Often **yes** → one Symptom Group.
+   - If **no** → split into **separate Symptom Groups** (each becomes its own הקשר / סשן עבודה).
+3. For a chosen group: full **log and documentation** over time; documentation may attach to **any object** in that Work Session
+   (symptoms, treatments, inquiries, etc.) — the group’s logbook.
+4. **Inquiry Sessions** can be started **whenever** on that group (Atomic Focus: one group per visit, not locked across visits).
+
+**Inquiry Session flow (agreed nuance):** Steps (Empty Vessel, safety, NEMAR, treatment player, journal) are **available in any order**;
+the user may **start at any step**. **Recommended** order: Empty Vessel → safety → NEMAR → treatment player → journal. Matches flexible
+journey gate in README §3 (skip brain dump when not needed).
+
+**Empty Vessel (agreed nuance):** Free writing (הכלי הריק / פינוי מנטלי) — **not only** listing all symptoms. It **can** be used to
+surface symptoms when building or updating groups, but also as **spontaneous** pre-session text (e.g. “how am I feeling today?”,
+something you now understand about this Symptom Group). Distinct from the Reflective Journal at the end, though content may later be
+linked or copied there if the user chooses.
+
+**Example (Maya):** “Lower back” and “neck” are two **symptoms** in **one** Symptom Group / הקשר / Work Session (treated together).
+“Allergies” would be a **second** Symptom Group if the muscle test says they cannot be treated with the back/neck set.
+
+**Rationale:** One persistent boundary per group; no extra “Healing Track” layer. מכלי and קבוצה are naming variants, not parent/child
+types.
+
+**Consequences:**
+
+- Schema/UI: `symptom_groups` (or equivalent) is the persistence root for logs, ratings, and Integrating state — not a separate
+  `contexts` table unless we alias it.
+- Glossary: drop **Symptom Vessel** and **Healing Track** as separate terms.
+- ~~README §4 / glossary aligned to Symptom Group (הקשר)~~ Done (2026-06-02).
+- ~~**Open (next grill):** How **active courses** relate to a Symptom Group~~ Resolved in **DEC-003** (2026-06-08).
+
+---
+
+## DEC-003 — Academy courses: parallel lane, own Work continuity, optional Symptom Group attachment
+
+**Status:** Agreed (2026-06-08, Yossef-Tal & Sigal)
+
+**Context:** README lists Symptom Groups and **courses** in parallel. We needed one model for NEMAR / Player / Integrating /
+documentation, freemium boundaries, and how an Inquiry Session is “anchored.”
+
+**Decision:**
+
+1. **Parallel on-ramp:** **Courses (Academy)** are a **separate lane** with their **own progress model** — not a Symptom Group, not renamed
+   into one.
+2. **Same therapeutic machinery per course:** For a given **course run / enrollment**, the product supports the same **NEMAR** inquiry
+   pattern (נמ"ר — not “NAMER”), **Player**, **Integrating**, and **scoped documentation** as for symptom-led work. That thread is the
+   course’s **continuous Work Session** (סשן עבודה) in the **course** sense: completion and history **substitute** for “no separate paper
+   trail” — they **are** the durable work record for that course.
+3. **Event Manager choice of shape:** A course may **stand alone**; may be chosen as work **inside** a Symptom Group’s broader Work
+   Session; or the Event Manager may take **one technique** learned from a course and run an **Inquiry Session** with that technique **whenever and
+   wherever** they choose (including on another Symptom Group). No forced auto-link unless the Event Manager opts in.
+4. **Course as treatment:** When the Event Manager chooses **a course as treatment**, an **Inquiry Session** for that visit **follows that
+   course’s workflow** (course-led Atomic Focus for that sitting).
+5. **Commerce:** Courses may be **free or paid**. Paid access is by **per-course grant**; the Event Manager may **re-run** a granted course.
+   **Course progress is included** in what the grant (or free offer) covers — not an extra “healing persistence” upsell on top of the
+   course price.
+6. **Freemium bucket (Q3 — teaching vs saved work):** **Core Gateway teaching** and **open diagnostic material** stay **freely accessible**
+   per manifesto. **Course progress, completion, and run state** (where you are in the course, Integrating, course-scoped notes) are **the
+   Event Manager’s personal healing record** for that **course Work Session** — not a throwaway “anonymous learner” silo. Classify that
+   data as **persistent healing**: same **subscription-gated persistence** and **data-sovereignty** expectations as Symptom Group history
+   (do not park real course saves in a cheap “learning-only” bucket that would dodge export/delete rules).
+
+**Refines DEC-001 §3 (Atomic Focus):** During one **Inquiry Session**, **one Atomic Focus target** per visit: **one Symptom Group**
+(symptom-led), **one course-as-treatment workflow** (course-led), or **timeline-first** technique/treatment work (**DEC-004**). Switching
+targets means **ending / starting** a session, same as switching Symptom Groups today.
+
+**Refines DEC-002 consequences:** Persistence is **not only** `symptom_groups`: add a **first-class course enrollment / progress** root
+(name TBD in schema) alongside symptom groups. Cross-links when the Event Manager attaches a course to a group remain **explicit**, not implied.
+
+**Rationale:** Matches parallel Hebrew framing (קבוצות + קורסים), keeps Event Manager sovereignty over stand-alone vs linked work, and aligns paid
+grants with “you own your course run history.”
+
+**Consequences:**
+
+- OpenSpec / schema: model **course enrollment**, replay, grants, and Integrating state without folding courses into
+  `symptom_groups`.
+- UX copy: distinguish **Symptom Group Work Session** vs **course Work Session** where ambiguity would confuse the Event Manager.
+- ~~README / manifesto~~: follow-up optional pass to spell out “course-led Inquiry Session” and freemium bucket (persistent healing) in
+  plain language. ~~English `README.md` + `CLAUDE.md` pillars~~ Updated for **DEC-004** (2026-06-08).
+
+---
+
+## DEC-004 — Timeline-first persistence, Personal Treatment Library, intentional Smart-Linking
+
+**Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-001**
+
+**Context:** **GQ-001** asked where technique-only or ad-hoc treatment work **must** attach. The manifesto centres the **Reflective
+Journal** as a chronological archive; **DEC-003** allows techniques without a full course-as-treatment flow. The team rejected **implicit
+defaults** that would force a Symptom Group or course row before saving.
+
+**Decision:**
+
+1. **Baseline (prior grill option D):** There is **no mandatory** Symptom Group or course row as a **precondition** for logging a
+   technique or treatment execution. The product must **not** silently default a visit onto a group or course to satisfy persistence.
+2. **Mandatory anchor = Chronological Timeline:** The **only required** persistence anchor is the Event Manager’s **chronological
+   timeline** — the same spine as the **Reflective Journal** principle (the journey told in time). Each technique or treatment **execution**
+   is recorded as its **own** timeline event **unless** the Event Manager opts into further attachment (below).
+3. **Intentional association (prior grill option C when used):** The Event Manager **chooses** whether a session or execution also belongs
+   with a **Symptom Group**, a **Course** / run, both, or neither beyond the timeline. **Dual or multiple Smart-Links** are **available
+   actions**, never automatic defaults. There is no prescribed “correct” topology — only the path chosen by the user, who owns linking
+   choices.
+4. **Personal Treatment Library (Personal Treatment Table):** Every account keeps a **personal toolbox** of techniques and treatments the
+   Event Manager has **actually executed**. The **first execution** of any technique or treatment — from a **course**, the shared
+   **Treatments Table**, a **library** copy, self-invented material, or elsewhere — **updates** this repository. It is **separate** from any
+   one Symptom Group’s continuous log; Smart-Linking connects into group or course stories when the Event Manager decides it matters.
+5. **Smart-Linking:** If the Event Manager decides an execution or visit is **relevant** to a Symptom Group (or analogously to a course),
+   they may **Smart-Link during the session or retroactively**. The timeline stays the spine; links are overlays the Event Manager controls.
+
+**Refines:**
+
+- **DEC-001 / DEC-003:** **Atomic Focus** still governs *attention* during a visit (one muscle-test question and one Player step at a time).
+  **Persistence** for ad-hoc or technique-first work **starts on the timeline** without forcing `symptom_groups` or course foreign keys.
+- **DEC-002:** The Symptom Group remains the rich **Work Session** for group-bound healing; timeline + library add **non-group-first** rails.
+
+**Consequences:**
+
+- Schema must support a **timeline / journal spine**, **execution events**, **Personal Treatment Library**, and **Smart-Link** edges without
+  required default foreign keys to `symptom_groups` or courses.
+- UX must make **“timeline only”** obvious and trustworthy, and make **linking** an explicit, positive action — not recovery from mistaken
+  auto-defaults.
+- **Blind (re-)rating** applies **only to symptoms** (symptom intensity), as part of **symptom–group healing paths** the app offers — not
+  by default for course-only, library-only, or timeline-only work unless a **symptom** is intentionally in scope. Group-scoped analytics that
+  depend on symptom ratings follow the same scope.
+- The Event Manager may **start ad-hoc re-rating** whenever they choose, not only at a fixed session entry (OpenSpec).
+- **Personal Treatment Library** row identity, provenance, and **usage counter:** **DEC-005**.
+
+**Rationale:** Aligns chronology with the Reflective Journal, maximises Event Manager autonomy, and keeps Symptom Groups and Courses as
+powerful **optional** contexts rather than silent gatekeepers.
+
+---
+
+## DEC-005 — Personal Treatment Library identity, provenance, and usage count
+
+**Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-002**
+
+**Context:** **GQ-002** asked how to represent the “same” technique from **different origins** (Treatments Table, course, self-tweak, etc.)
+without cluttering the toolbox.
+
+**Decision:**
+
+1. **One logical toolbox row:** Prefer **one** **Personal Treatment Library** entry per **logical** technique or treatment the Event Manager
+   uses, with a **provenance / source history** (where they first met it and subsequent sources). **Timeline executions** carry **source
+   tags** pointing into that history.
+2. **Opt-in variants only:** If the Event Manager considers a practice **materially different**, they may **split** an **explicitly named
+   variant**—never silent duplicate cards for the same felt protocol.
+3. **Usage counter (use count only):** Each library row stores **only** a **monotonic use count** — the number of times the Event Manager
+   **recorded an execution** mapped to that row. **Do not** add duration-on-task, stopwatch totals, or time-summed minutes **on the library
+   row** for v1 (other surfaces may evolve separately). **When** each increment fires is **GQ-003** until closed (then folded into OpenSpec
+   + a future **DEC** if needed).
+
+**Rationale:** Keeps the toolbox readable, preserves learning lineage, and gives the Event Manager a simple **count of uses** without scope
+creep into time accounting.
+
+**Consequences:**
+
+- Schema / UI: library entity + provenance list + **`use_count` only** on the row (no duration field on that row for v1); increments from
+  execution events per **GQ-003** outcome.
+- UX: surface **use count** on the toolbox card; avoid implying “minutes practiced” from the library card in v1.
+
+---
+
+## Grill — open questions (living)
+
+### GQ-003 — When does Personal Treatment Library `use_count` increment?
+
+**Status:** Open (posed 2026-06-08)
+
+**Context:** **DEC-005** fixes **use count only** (no duration on the library row) but the **+1 trigger** must be consistent across Player
+runs, timeline-first executions, and Smart-Linked retries so we avoid double-counting or “silent zero uses.”
+
+**Question:** What **default** advances **use_count**?
+
+- **A.** Each **completed Player run** mapped to that library row (protocol reaches an agreed “done / exited” state in OpenSpec).
+- **B.** Each **timeline execution event** the Event Manager records for that technique/treatment, even with no Player.
+- **C.** **Manual confirmation** only (“count this use”); Player optional and does not auto-increment alone.
+- **D.** **Hybrid:** **A** when the session used the Player for that row; otherwise **B** or a **single explicit “log this use”** control for
+  timeline-first / ad-hoc runs.
+
+**Co-architect recommendation (non-binding):** **D** — Player completion when applicable; one obvious **log use** action when there is no
+Player path. Same calendar session should not increment twice unless the Event Manager **explicitly** records two distinct uses (OpenSpec:
+abandoned mid-protocol → no increment unless they confirm a partial as a use).
+
+**Awaiting:** Yossef-Tal & Sigal
+
+---
+
+**Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005** (2026-06-08).
