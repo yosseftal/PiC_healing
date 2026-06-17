@@ -42,9 +42,12 @@ _Avoid_: Pretending every save must belong to a Symptom Group or course row firs
 
 **Personal Treatment Library** (Personal Treatment Table):
 The Event Manager’s **toolbox** — techniques and treatments they have **actually run** at least once. **First execution** from any source
-(course, shared Treatments Table, library copy, self-invented entry, etc.) **updates** this personal repository. It is **separate** from any
-single Symptom Group’s Work Session; **Smart-Linking** connects into a group or course when the Event Manager decides.
-_Avoid_: Collapsing the library into one Symptom Group, or treating it as the same thing as the global Treatments Table
+(course, shared Treatments Table, library copy, self-invented entry, etc.) **creates or extends** the matching **logical** row, with
+**provenance** of sources and a **monotonic use counter** that increments on each **recorded execution** mapped to that row (**DEC-005**).
+It is **separate** from any single Symptom Group’s Work Session; **Smart-Linking** connects into a group or course when the Event Manager
+decides.
+_Avoid_: Collapsing the library into one Symptom Group, or treating it as the same thing as the global Treatments Table; duration or
+stopwatch-style totals **on the library row** (v1 is **use count only**)
 
 **NEMAR** (נמ"ר):
 Right, Accurate, Desirable — the muscle-test framing for whether to proceed with a line of inquiry or choice.
