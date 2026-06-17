@@ -179,33 +179,66 @@ defaults** that would force a Symptom Group or course row before saving.
   by default for course-only, library-only, or timeline-only work unless a **symptom** is intentionally in scope. Group-scoped analytics that
   depend on symptom ratings follow the same scope.
 - The Event Manager may **start ad-hoc re-rating** whenever they choose, not only at a fixed session entry (OpenSpec).
+- **Personal Treatment Library** row identity, provenance, and **usage counter:** **DEC-005**.
 
 **Rationale:** Aligns chronology with the Reflective Journal, maximises Event Manager autonomy, and keeps Symptom Groups and Courses as
 powerful **optional** contexts rather than silent gatekeepers.
 
 ---
 
+## DEC-005 — Personal Treatment Library identity, provenance, and usage count
+
+**Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-002**
+
+**Context:** **GQ-002** asked how to represent the “same” technique from **different origins** (Treatments Table, course, self-tweak, etc.)
+without cluttering the toolbox.
+
+**Decision:**
+
+1. **One logical toolbox row:** Prefer **one** **Personal Treatment Library** entry per **logical** technique or treatment the Event Manager
+   uses, with a **provenance / source history** (where they first met it and subsequent sources). **Timeline executions** carry **source
+   tags** pointing into that history.
+2. **Opt-in variants only:** If the Event Manager considers a practice **materially different**, they may **split** an **explicitly named
+   variant**—never silent duplicate cards for the same felt protocol.
+3. **Usage counter (use count only):** Each library row stores **only** a **monotonic use count** — the number of times the Event Manager
+   **recorded an execution** mapped to that row. **Do not** add duration-on-task, stopwatch totals, or time-summed minutes **on the library
+   row** for v1 (other surfaces may evolve separately). **When** each increment fires is **GQ-003** until closed (then folded into OpenSpec
+   + a future **DEC** if needed).
+
+**Rationale:** Keeps the toolbox readable, preserves learning lineage, and gives the Event Manager a simple **count of uses** without scope
+creep into time accounting.
+
+**Consequences:**
+
+- Schema / UI: library entity + provenance list + **`use_count` only** on the row (no duration field on that row for v1); increments from
+  execution events per **GQ-003** outcome.
+- UX: surface **use count** on the toolbox card; avoid implying “minutes practiced” from the library card in v1.
+
+---
+
 ## Grill — open questions (living)
 
-### GQ-002 — Personal Treatment Library: one card or many for the “same” technique?
+### GQ-003 — When does Personal Treatment Library `use_count` increment?
 
 **Status:** Open (posed 2026-06-08)
 
-**Context:** **DEC-004** defines the **Personal Treatment Library** as the Event Manager’s toolbox, updated on **first execution** of a
-technique or treatment from **multiple possible origins** (shared **Treatments Table**, **course**, **library** copy, **self-invented**,
-etc.). The UI and schema still need a rule for **identity**: what counts as “the same technique” for deduplication, provenance, and
-search.
+**Context:** **DEC-005** fixes **use count only** (no duration on the library row) but the **+1 trigger** must be consistent across Player
+runs, timeline-first executions, and Smart-Linked retries so we avoid double-counting or “silent zero uses.”
 
-**Question:** When the **same** underlying protocol is run from **different sources** (e.g. once from the global table, later from a
-course lesson, later with a personal tweak), should the library show **one** toolbox entry (merged identity + history of sources), **separate**
-entries per lineage, or **one** entry with **explicit sub-variants** the Event Manager names?
+**Question:** What **default** advances **use_count**?
 
-**Co-architect recommendation (non-binding):** Prefer **one logical technique** with a **provenance / source history** stack and a **single**
-primary card in the toolbox; timeline executions carry **source tags**. Allow **user-named variants** when the Event Manager insists the
-felt practice is materially different—opt-in split, not silent duplicates.
+- **A.** Each **completed Player run** mapped to that library row (protocol reaches an agreed “done / exited” state in OpenSpec).
+- **B.** Each **timeline execution event** the Event Manager records for that technique/treatment, even with no Player.
+- **C.** **Manual confirmation** only (“count this use”); Player optional and does not auto-increment alone.
+- **D.** **Hybrid:** **A** when the session used the Player for that row; otherwise **B** or a **single explicit “log this use”** control for
+  timeline-first / ad-hoc runs.
+
+**Co-architect recommendation (non-binding):** **D** — Player completion when applicable; one obvious **log use** action when there is no
+Player path. Same calendar session should not increment twice unless the Event Manager **explicitly** records two distinct uses (OpenSpec:
+abandoned mid-protocol → no increment unless they confirm a partial as a use).
 
 **Awaiting:** Yossef-Tal & Sigal
 
 ---
 
-*Previously resolved:* **GQ-001** → **DEC-004** (2026-06-08).
+**Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005** (2026-06-08).
