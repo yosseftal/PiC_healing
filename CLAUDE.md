@@ -1,7 +1,7 @@
 # PiC Healing - Project Manifesto & Guidelines V2
 
 This document operationalizes the manifesto for product, UX, and implementation decisions.
-Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-004).
+Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-005).
 
 ## 1. Project Vision
 PiC (Personal Information Center) is a knowledge-management platform for self-healing.
@@ -22,8 +22,10 @@ turning subjective experiences into actionable wisdom.
   Recommended, not mandatory every visit.
 - The Event Manager assigns and refines symptoms; the app organizes and retrieves.
 - **Timeline & toolbox (DEC-004):** The **chronological timeline** is the mandatory persistence spine for executions and insights;
-  the **Personal Treatment Library** records techniques/treatments the Event Manager has **run** at least once. **Smart-Linking** to Symptom
-  Groups or courses is **intentional**, never a silent default.
+  the **Personal Treatment Library** records techniques/treatments the Event Manager has **run** at least once—**one logical row** per
+  protocol with **provenance**, a **use count only** on the row (**DEC-005**; increment rules **GQ-003**), and **opt-in named variants** when
+  materially different.
+  **Smart-Linking** to Symptom Groups or courses is **intentional**, never a silent default.
 
 ### B. The Gateway & Methodology Access
 - Core method education (self-muscle-testing videos/text) must remain freely accessible.
