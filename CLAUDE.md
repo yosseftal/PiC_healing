@@ -1,7 +1,7 @@
 # PiC Healing - Project Manifesto & Guidelines V2
 
 This document operationalizes the manifesto for product, UX, and implementation decisions.
-Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-005).
+Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-006).
 
 ## 1. Project Vision
 PiC (Personal Information Center) is a knowledge-management platform for self-healing.
@@ -23,7 +23,7 @@ turning subjective experiences into actionable wisdom.
 - The Event Manager assigns and refines symptoms; the app organizes and retrieves.
 - **Timeline & toolbox (DEC-004):** The **chronological timeline** is the mandatory persistence spine for executions and insights;
   the **Personal Treatment Library** records techniques/treatments the Event Manager has **run** at least once—**one logical row** per
-  protocol with **provenance**, a **use count only** on the row (**DEC-005**; increment rules **GQ-003**), and **opt-in named variants** when
+  protocol with **provenance**, a **use count only** on the row (**DEC-005**; increment rules **DEC-006**), and **opt-in named variants** when
   materially different.
   **Smart-Linking** to Symptom Groups or courses is **intentional**, never a silent default.
 
@@ -58,6 +58,9 @@ turning subjective experiences into actionable wisdom.
 - Offer Reflective Journaling after a session (any step order); not only at end of linear wizard.
 - Do not use failure framing when treatment is incomplete; use Integrating/In Progress states.
 - Integration reasons may include repetition, pending user commitments, or natural body permeation time.
+- **Personal Treatment Library `use_count`:** auto-increment **only** on Player **Finish** (סיום) after **required** steps; **optional**
+  closing **yes/no** muscle-test (*did it end successfully?*) per protocol; **Integrating** mid-exits do **not** auto-increment; **manual +1**
+  anytime (**DEC-006**). Keep the metric **secondary** and non-pressuring.
 
 ## 3. Technical Standards
 - **Line length:** no line may exceed 130 characters (enforced on staged files via
