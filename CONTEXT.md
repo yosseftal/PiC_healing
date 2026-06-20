@@ -43,15 +43,27 @@ _Avoid_: Pretending every save must belong to a Symptom Group or course row firs
 **Personal Treatment Library** (Personal Treatment Table):
 The Event Manager’s **toolbox** — techniques and treatments they have **actually run** at least once. **First execution** from any source
 (course, shared Treatments Table, library copy, self-invented entry, etc.) **creates or extends** the matching **logical** row, with
-**provenance** of sources and a **monotonic use counter** that increments on each **recorded execution** mapped to that row (**DEC-005**).
-It is **separate** from any single Symptom Group’s Work Session; **Smart-Linking** connects into a group or course when the Event Manager
-decides.
+**provenance** of sources and a **monotonic use count only** (**DEC-005**). 
+**Auto +1** when a **Player** run reaches **Finish** (סיום) after **all required** steps. 
+Protocols may offer an **optional** closing **muscle-test** 
+(**yes/no**: *Did this treatment or technique end successfully?*) — same **NEMAR** family; 
+**not** required for **Finish** or +1 unless the protocol says so (**DEC-006**). 
+**Manual +1** anytime from the library for off-app or intentional logs; 
+the counter stays **secondary** and low-pressure (**DEC-006**). 
+It is **separate** from any single Symptom Group’s Work Session; **Smart-Linking**
+connects into a group or course when the Event Manager decides.
 _Avoid_: Collapsing the library into one Symptom Group, or treating it as the same thing as the global Treatments Table; duration or
-stopwatch-style totals **on the library row** (v1 is **use count only**)
+stopwatch-style totals **on the library row** (v1 is **use count only**); scoreboard pressure or clutter around the counter (**DEC-006**).
 
 **NEMAR** (נמ"ר):
 Right, Accurate, Desirable — the muscle-test framing for whether to proceed with a line of inquiry or choice.
 _Avoid_: NAMER (typo), yes/no without the three-part meaning where the method requires it
+
+**Post-treatment success muscle-test** (optional):
+An **optional** binary muscle-test (**yes/no**) at the end of a **treatment** or **technique** — *Did this end successfully?* Same family as
+other **NEMAR** inquiries; **not** required unless the protocol explicitly mandates it. It does **not** replace **Finish** (סיום) as the commit
+that closes the **Player** for **use_count** rules (**DEC-006**).
+_Avoid_: Treating it as a different product “mode” from other muscle-test questions; forcing it when the protocol marks it optional
 
 **Empty Vessel** (הכלי הריק / פינוי מנטלי):
 Free, unstructured writing to clear mental space before or during work — not only a symptom list.
