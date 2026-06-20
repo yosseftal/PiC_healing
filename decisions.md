@@ -179,7 +179,7 @@ defaults** that would force a Symptom Group or course row before saving.
   by default for course-only, library-only, or timeline-only work unless a **symptom** is intentionally in scope. Group-scoped analytics that
   depend on symptom ratings follow the same scope.
 - The Event Manager may **start ad-hoc re-rating** whenever they choose, not only at a fixed session entry (OpenSpec).
-- **Personal Treatment Library** row identity, provenance, and **usage counter:** **DEC-005**.
+- **Personal Treatment Library** row identity, provenance, and **usage counter:** **DEC-005**; **increment behaviour:** **DEC-006**.
 
 **Rationale:** Aligns chronology with the Reflective Journal, maximises Event Manager autonomy, and keeps Symptom Groups and Courses as
 powerful **optional** contexts rather than silent gatekeepers.
@@ -202,43 +202,94 @@ without cluttering the toolbox.
    variant**—never silent duplicate cards for the same felt protocol.
 3. **Usage counter (use count only):** Each library row stores **only** a **monotonic use count** — the number of times the Event Manager
    **recorded an execution** mapped to that row. **Do not** add duration-on-task, stopwatch totals, or time-summed minutes **on the library
-   row** for v1 (other surfaces may evolve separately). **When** each increment fires is **GQ-003** until closed (then folded into OpenSpec
-   + a future **DEC** if needed).
+   row** for v1 (other surfaces may evolve separately). **Increment rules:** **DEC-006** (resolves **GQ-003**).
 
 **Rationale:** Keeps the toolbox readable, preserves learning lineage, and gives the Event Manager a simple **count of uses** without scope
 creep into time accounting.
 
 **Consequences:**
 
-- Schema / UI: library entity + provenance list + **`use_count` only** on the row (no duration field on that row for v1); increments from
-  execution events per **GQ-003** outcome.
-- UX: surface **use count** on the toolbox card; avoid implying “minutes practiced” from the library card in v1.
+- Schema / UI: library entity + provenance list + **`use_count` only** on the row (no duration field on that row for v1); increment rules
+  **DEC-006**.
+- UX: surface **use count** quietly on the toolbox card (**DEC-006**: secondary, non-pressuring); avoid implying “minutes practiced” from the
+  library card in v1.
+
+---
+
+## DEC-006 — Personal Treatment Library `use_count`: hybrid Player Finish + manual (GQ-003)
+
+**Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-003**; **amended** same day (optional success muscle-test wording).
+
+**Context:** **GQ-003** chose **option D (hybrid)** with **Ownership**, **NEMAR** alignment, **Integrating** language, and a **low-pressure**
+toolbox metaphor.
+
+**Decision:**
+
+1. **Player path — automatic +1 on Finish (סיום):** When the Event Manager runs the **Player** for a technique/treatment mapped to a
+   **Personal Treatment Library** row, **`use_count` increments once** when they complete **all required** Player steps and press
+   **Finish** (סיום). Protocols may offer an **optional** closing **muscle-test** — **yes/no**: *Did this treatment or technique end
+   successfully?* — in the same **NEMAR** inquiry family as other binary questions; it is **not** mandatory for **Finish** or for **+1**
+   unless a specific protocol marks it required. **Finish** is the explicit **commit** that triggers auto +1 after required steps, not merely
+   opening the Player or partial progress.
+2. **Integrating / mid-exit — no silent auto +1:** If the Event Manager **leaves** the Player while the work is still **Integrating** (not
+   framed as failure), **do not** auto-increment. They may later **manually** add a use when they honestly consider the practice “done
+   enough” to count, or return and **Finish** when the flow allows—**never** double-count the same finished run (see §5).
+3. **Manual increment — Ownership:** At **any time**, from the **Personal Treatment Library**, the Event Manager may **manually increase**
+   **`use_count`** for any row—e.g. work **outside** the app, off-Player practice, or an intentional “log this session” choice. Manual
+   entry honours **self-reported** experience without forcing Player completion.
+4. **Low friction — analysis only:** The counter is a **secondary**, **non-intrusive** aid for light personal reflection; copy and UI
+   must **not** create scoreboard pressure, clutter primary flows, or imply clinical benchmarking.
+5. **No double-counting:** A **single** timeline session / Player run should produce **at most one automatic +1** from **Finish**; a second
+   bump in the same sitting requires an **explicit extra manual** increment (two genuinely distinct uses the Event Manager chooses to
+   record). OpenSpec lists edge cases (replay same recording, undo, etc.).
+
+**Bilingual nuance (agreed, Hebrew team notes):**
+
+- **Finish (סיום) & optional success muscle-test:** **`use_count`** auto +1 follows **Finish** after **required** Player steps. An **optional**
+  closing **muscle-test** (**yes/no**: *Did this treatment or technique end successfully?*) may appear—in the **NEMAR** inquiry family; **not**
+  required for **Finish** or +1 unless a protocol explicitly requires it.
+- **סיום (עברית):** העלאת המונה קשורה ל-**סיום** אחרי כל שלבי הנגן הנדרשים. בסוף הפרוטוקול אפשר **מבחן שרירים כן/לא אופציונלי**: *האם הטיפול /
+  הטכניקה הסתיימו בהצלחה?* — לא חובה אלא אם הפרוטוקול מחייב במפורש.
+- **בהטמעה (Integrating):** Because unfinished treatment stays **Integrating**, the counter **must not** auto-rise on mid-exit; only
+  **Finish** or a **conscious manual** choice advances it—preserving **non-failure** framing.
+- **פשטות:** One clear action (**Finish** or manual +1) → one clear outcome—keeps the app feeling like a **simple program**.
+- **ארגז כלים:** The library stays a **toolbox** of accumulated experience, not a stressful measuring instrument.
+
+**Rationale:** Hybrid **D** with explicit **Finish** gate respects methodology rigour while **manual** use upholds autonomy and real-world
+practice off-device.
+
+**Consequences:**
+
+- Player UX: prominent **Finish** (סיום); optional closing **yes/no success** muscle-test per protocol; wire auto +1 on **Finish** once
+  **required** Player steps are complete (OpenSpec: ordering when both exist).
+- Library UX: always-offered **manual +1** (wording TBD) with guardrails against accidental spam taps (OpenSpec: confirm or long-press if
+  needed).
+- Analytics copy: “for your reflection only”—never primary gamification.
 
 ---
 
 ## Grill — open questions (living)
 
-### GQ-003 — When does Personal Treatment Library `use_count` increment?
+### GQ-004 — Correcting a mistaken `use_count` increment?
 
 **Status:** Open (posed 2026-06-08)
 
-**Context:** **DEC-005** fixes **use count only** (no duration on the library row) but the **+1 trigger** must be consistent across Player
-runs, timeline-first executions, and Smart-Linked retries so we avoid double-counting or “silent zero uses.”
+**Context:** **DEC-006** makes **Finish** and **manual +1** deliberate. Mis-taps, wrong row, or changed mind still occur.
 
-**Question:** What **default** advances **use_count**?
+**Question:** If the Event Manager **regrets** an increment, what is the default product behaviour?
 
-- **A.** Each **completed Player run** mapped to that library row (protocol reaches an agreed “done / exited” state in OpenSpec).
-- **B.** Each **timeline execution event** the Event Manager records for that technique/treatment, even with no Player.
-- **C.** **Manual confirmation** only (“count this use”); Player optional and does not auto-increment alone.
-- **D.** **Hybrid:** **A** when the session used the Player for that row; otherwise **B** or a **single explicit “log this use”** control for
-  timeline-first / ad-hoc runs.
+- **A.** **No decrement** — append-only count; narrative correction only in journal/timeline.
+- **B.** **Undo snackbar** — revert the last +1 within a short window (same session or minutes).
+- **C.** **Explicit “−1”** — guarded (confirm, rate limit) on the library row.
+- **D.** **Audit correction** — count unchanged; a logged **adjustment event** preserves analytics honesty.
 
-**Co-architect recommendation (non-binding):** **D** — Player completion when applicable; one obvious **log use** action when there is no
-Player path. Same calendar session should not increment twice unless the Event Manager **explicitly** records two distinct uses (OpenSpec:
-abandoned mid-protocol → no increment unless they confirm a partial as a use).
+**Co-architect recommendation (non-binding):** **B** for accidental **Finish** +1; **C**-style confirm for **manual +1** mistakes; consider
+**D** if immutable audit is ever required.
 
 **Awaiting:** Yossef-Tal & Sigal
 
 ---
 
-**Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005** (2026-06-08).
+*Add **GQ-00n** below when the next question is posed.*
+
+**Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006** (2026-06-08).
