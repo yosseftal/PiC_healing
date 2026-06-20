@@ -186,6 +186,17 @@ or "Error". Instead, it is marked as
        time to "sink in" or "permeate"
        into the physical or energetic body.
 
+* **Personal Treatment Library use_count:**
+  Rises **automatically** only when the Event
+  Manager completes the Player through
+  **Finish** (סיום) after **required** steps; an
+  **optional** closing **yes/no** muscle-test
+  (*did it end successfully?*) may appear per
+  protocol. **Integrating** mid-exits do **not**
+  auto-increment. **Manual +1** is always
+  available for honest off-Player logging
+  (`decisions.md` **DEC-006**).
+
 ---
 
 ## 🏗️ Technical Architecture
@@ -248,12 +259,16 @@ them with generic tech jargon:
 * **Personal Treatment Library:** The Event
   Manager’s toolbox: **one logical card** per
   technique/treatment with **provenance**,
-  a **use counter** (times recorded), and
+  **use count only** on the card (v1), and
   **opt-in named variants** (`decisions.md`
-  **DEC-005**); fed from courses, the
-  Treatments Table, or self-invented work
-  (`CONTEXT.md`). **Use count only** on the
-  card for v1—no duration field there.
+  **DEC-005**). **Auto +1** on Player **Finish**
+  (סיום) after **required** steps; **optional**
+  closing **yes/no** muscle-test (*ended
+  successfully?*) per protocol; **manual +1** anytime
+  (`decisions.md` **DEC-006**); keep the count
+  **quiet**—reflection, not pressure. Fed from
+  courses, the Treatments Table, or self-invented
+  work (`CONTEXT.md`).
 * **Symptom Group (הקשר):** Symptoms treated
   together per a joint muscle test; equals
   מכלי הסימפטומים and one Work Session.
@@ -511,6 +526,14 @@ PiC מספקת את הכלים והמתודולוגיה
     3. צורך של הגוף בזמן נוסף
        כדי שהטיפול "יחלחל" וישקע.
 
+* **מונה בספרייה האישית:** עלייה **אוטומטית**
+  רק אחרי **סיום** הנגן לאחר כל השלבים
+  **הנדרשים**; אפשר **מבחן שרירים כן/לא
+  אופציונלי** בסוף (*האם הסתיים בהצלחה?*)
+  לפי פרוטוקול. יציאה באמצע במצב **בהטמעה**
+  **לא** מעלה את המונה אוטומטית; **+1 ידני**
+  זמין תמיד (`decisions.md` **DEC-006**).
+
 ---
 
 ## 🏗️ תשתית טכנית
@@ -565,12 +588,16 @@ PiC מספקת את הכלים והמתודולוגיה
   קישור חכם (`decisions.md` **DEC-004**).
 * **ספריית טיפולים אישית:** ארגז הכלים
   של מנהל האירוע: **כרטיס לוגי אחד** לכל
-  טכניקה/טיפול עם **מקורות**, **מונה שימושים**
-  (מספר ביצועים מתועדים), ו**וריאנטים בשם**
-  לבחירה כשהשינוי מהותי (`decisions.md`
-  **DEC-005**); מזינים מקורס, טבלת טיפולים,
-  או עבודה עצמית (`CONTEXT.md`). **מונה שימושים
-  בלבד** על הכרטיס ב-v1—לא שדה משך זמן.
+  טכניקה/טיפול עם **מקורות**, **מונה שימושים
+  בלבד** (ב-v1), ו**וריאנטים בשם** לבחירה
+  כשהשינוי מהותי (`decisions.md` **DEC-005**).
+  **עדכון אוטומטי +1** ב-**סיום** נגן אחרי
+  שלבים נדרשים; **מבחן שרירים אופציונלי**
+  בסוף (*האם הסתיים בהצלחה?*) לפי פרוטוקול;
+  **עדכון ידני +1** בכל עת
+  (`decisions.md` **DEC-006**); המונה **משני**
+  ולא מלחיץ. מזינים מקורס, טבלת טיפולים,
+  או עבודה עצמית (`CONTEXT.md`).
 * **קבוצת סימפטומים (הקשר):** תסמינים
   לטיפול משותף לפי מבחן משותף; שווה
   למכלי הסימפטומים ולסשן עבודה אחד.
