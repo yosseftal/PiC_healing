@@ -290,6 +290,112 @@ practice off-device.
 
 ---
 
-*Add **GQ-00n** below when the next question is posed.*
+## DEC-007 — Personal Treatment Library `use_count`: auto-decrement on Player back-nav, manual edit, multitype timeline
 
-**Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006** (2026-06-08).
+**Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-004**
+
+**Context:** **GQ-004** asked how to handle mistaken increments. Answer combines Player state sync, Event Manager ownership, and transparent logging.
+
+**Decision:**
+
+1. **Auto-decrement on Player back-navigation:** If the Event Manager navigates **back** from a **Finish** state to a prior step 
+(or abandons the Player after **Finish** was pressed), the system **automatically decrements** `use_count` by **1**. 
+This ties the counter to **Player state**, not just the forward path—intuitive and reversible.
+2. **Manual counter edit — Ownership:** The Event Manager retains the right to **manually edit** `use_count` **anytime** to reflect their 
+**physical reality** (off-app practice, re-evaluation, corrections). The counter is their **sovereign data**.
+3. **Multitype Timeline Architecture** (GQ-004 follow-up):
+   - **Event categorization:** Every action (Technique Execution, Manual Correction, Insight, Rating Refresh, Use Count Adjustment, etc.) 
+   is logged with a **specific `log_type`**.
+   - **Smart filtering:** The **Chronological Timeline** displays a **filter UI** allowing users to choose which `log_type` entries to view. 
+   **By default**, technical/system corrections (e.g. "use_count adjusted −1") are **hidden** to maintain a clean, **Atomic Focus** workspace.
+   - **Data integrity without clutter:** All changes are **permanently recorded**; visibility is user-controlled.
+
+**Bilingual nuance:**
+
+- **ריבונות** (Sovereignty): Event Manager's absolute ownership over their healing data; manual edits **always** allowed.
+- **סנכרון** (Sync): Player state ↔ `use_count`; back-nav = auto-decrement.
+- **מרחב עבודה נקי** (Clean workspace): Multitype timeline + filtering keeps **Atomic Focus** alive even with full audit trail.
+
+**Rationale:** Combines **trust in the Event Manager** (ownership), 
+**intuitive reversibility** (Player state sync), and 
+**transparent integrity** (logged but filterable timeline) without creating visual clutter or losing auditability.
+
+**Consequences:**
+
+- Schema: `use_count` field on library row; timeline table includes `log_type` and optional `metadata` 
+(e.g. `{source: 'manual_edit', previous_value: 3, new_value: 5}`).
+- Player UX: Back-navigation automatically adjusts `use_count`; no separate undo affordance needed for Player completions.
+- Library UX: **Manual edit** control (wording TBD: "Adjust count" or "Record use") with simple number input; optionally confirm if already >0.
+- Timeline UX: Filter chip UI (Show: All / Events only / Corrections hidden); default = **Corrections hidden**; persisted user preference.
+- Copy: "Your timeline, your view—you decide what to see."
+
+---
+
+## DEC-008 — Smart-Linking timing, scope, conflict handling, and logging
+
+**Status:** Agreed (2026-06-22, Yossef-Tal & Sigal) — resolves **GQ-005**
+
+**Context:** **DEC-004** establishes Smart-Linking as intentional and user-controlled, never automatic. GQ-005 probed the mechanics:
+timing (when can linking happen?), scope (can one event link to multiple groups?), unlinking (can EMs reverse links?), and
+visibility (what timeline does an EM see when viewing a specific group?).
+
+**Decision:**
+
+1. **Timing of Smart-Linking (fully flexible):** The Event Manager may **link a timeline event** at **any point**:
+   - **During an active Inquiry Session** (e.g., inside the Player or Reflective Journal steps) — immediate insight linking.
+   - **Retroactively from the Chronological Timeline** — later reflection and organization.
+   - No prescribed "correct" order; flexibility supports both spontaneous and deliberate linking.
+
+2. **Scope & Multiple Links (no conflicts):** A **single timeline event may link to multiple entities simultaneously**
+   (e.g., Symptom Group A + Symptom Group B + a specific Course). The system **rejects rigid folder hierarchy**; links are
+   **overlays** on the timeline spine. **No conflict exists** because the Event Manager **defines the relevance** for each link.
+
+3. **Unlinking (full Event Manager authority + light confirmation):** The Event Manager retains **absolute authority** to
+   **unlink** an event from any Symptom Group or Course **at any time**. To prevent accidental data loss while preserving
+   autonomy:
+   - Unlinking is a **simple, accessible action**.
+   - A **light confirmation prompt** accompanies it (e.g., "Remove link to Group A?" with Confirm/Cancel).
+   - The EM may unlink without penalty; no "undo" window needed (can re-link retroactively anytime).
+
+4. **Logging linking & unlinking actions:** Both **linking** and **unlinking** are **logged as timeline events**
+   (log_type: 'link_created' / 'link_removed'). These appear in the Chronological Timeline as transparent, auditable actions
+   and are **hidden by default** in the timeline filter (same as other technical corrections) to maintain **Atomic Focus**.
+
+5. **Timeline visibility across group contexts (ADHD-friendly, with toggle):** To maintain **Atomic Focus** and prevent
+   cognitive overload:
+   - **Default:** When viewing a specific **Symptom Group's Work Session**, the EM sees **only events linked to that
+     group** (clean, focused view).
+   - **Toggle / Filter affordance:** A simple control (e.g., "Show All" or "Show Unlinked") allows the EM to see:
+     - All unlinked events in the timeline (for retroactive linking discovery).
+     - Events linked to other groups (for cross-referencing, if desired).
+   - This supports **ADHD-friendly design** (reduce default cognitive load) without hiding information.
+
+**Refines:**
+
+- **DEC-004 (Smart-Linking):** Adds mechanics (timing, multiple links, unlinking, logging, filtering) that operationalize the
+  "intentional, user-controlled" principle.
+- **DEC-007 (Multitype Timeline Architecture):** Expands `log_type` categories to include 'link_created' and 'link_removed',
+  hidden by default.
+
+**Rationale:** Full flexibility (timing, multiple links, unlinking) respects Event Manager autonomy. Light confirmation and
+logging (hidden by default) guard against accidental loss without creating friction. Group-scoped views + toggle + filtering
+balance Atomic Focus (clean UX) with retroactive discovery (powerful organizing).
+
+**Consequences:**
+
+- Schema: timeline table tracks `log_type` values including 'link_created' (from_event_id, to_entity_type, to_entity_id) and
+  'link_removed' (same fields); Smart-Link edge table (timeline_event_id ← many-to-many → group_id / course_id).
+- UX: When viewing a Symptom Group's Work Session, render **linked events only** by default; add a filter chip UI toggle for
+  "Show All / Show Unlinked."
+- Player / Journal steps: Surfacing Smart-Link affordance (e.g., "Link to another group?" button) with simple modal or
+  side panel.
+- Copy: "Link events to groups and courses as they matter to your healing journey—one event, many threads."
+
+---
+
+## Grill — open questions (living)
+
+*No open items. Add **GQ-00n** below when the next question is posed.*
+
+**Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
+**GQ-005** → **DEC-008** (2026-06-22).
