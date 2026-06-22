@@ -1,0 +1,35 @@
+Persistence Roots (four independent spines):
+  1. symptom_groups
+     ├─ symptom (list of concerns in the group)
+     ├─ work_session_history (inquiries, NEMAR runs, Player executions on this group)
+     ├─ ratings (blind re-rating history for symptoms)
+     ├─ integrating_state (current treatment status)
+     └─ group_documentation (notes attached to any object in the group)
+
+  2. course_enrollments (course runs; same course → multiple runs → multiple rows)
+     ├─ course_id
+     ├─ run_id (distinct run if re-granted)
+     ├─ progress (current step, lesson, completion %)
+     ├─ course_work_session_history (NEMAR, Player, journal for this course run)
+     ├─ integrating_state (current lesson/protocol status)
+     └─ course_documentation (notes for this run)
+
+  3. chronological_timeline (universal spine; all events land here)
+     ├─ timestamp
+     ├─ log_type (Technique Execution, Manual Correction, Insight, Rating Refresh, etc.)
+     ├─ content (what happened)
+     ├─ metadata (source_type, player_id if from Player, etc.)
+     └─ filter_visibility (default hidden for log_type='manual_correction', etc.)
+
+  4. personal_treatment_library (Event Manager's toolbox)
+     ├─ technique_id
+     ├─ logical_name (unified name for "same" technique from multiple sources)
+     ├─ provenance (list of sources: {course_id, lesson, or "self", or "treatments_table_id", ...})
+     ├─ use_count (frequency; monotonic, only this field for v1)
+     ├─ opt_in_variant (e.g., "with prop adjustment" vs. "basic")
+     └─ last_updated
+
+Smart-Linking edges (optional, EM-initiated):
+  timeline_event ← many-to-many → symptom_groups
+  timeline_event ← many-to-many → course_enrollments
+  personal_treatment_library row ← many → timeline executions (source tracking)
