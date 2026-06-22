@@ -1,7 +1,7 @@
 # PiC Healing - Project Manifesto & Guidelines V2
 
 This document operationalizes the manifesto for product, UX, and implementation decisions.
-Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-009).
+Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-013).
 
 ## 1. Project Vision
 PiC (Personal Information Center) is a knowledge-management platform for self-healing.
@@ -13,11 +13,14 @@ turning subjective experiences into actionable wisdom.
 ### A. Symptom Groups, Empty Vessel & Ownership
 - **Symptom Group** (קבוצת סימפטומים / מכלי הסימפטומים / הקשר) = **Work Session**
   (סשן עבודה): persistent log per group—history, documentation on any object in the
-  group, ratings (with polarity), Integrating treatments.
+  group, ratings (with polarity), Integrating treatments. Groups remain
+  **perpetually available**; the Event Manager may **archive/unarchive** anytime (**DEC-013**).
 - **Formation:** List symptoms → **joint treatment muscle test** → one group if
   treated together; separate groups only when the test says split.
 - **Symptoms** live inside a group (e.g. lower back + neck in one group); each symptom has
   a **polarity** (Positive or Negative) and the Event Manager may flip it during updates.
+  **Renaming** (**DEC-012**) is independent; when the EM changes name or polarity, the system offers **soft suggestions**
+  (not requirements) to review the other dimension. Renaming can happen anytime via group settings.
 - **Empty Vessel** (הכלי הריק): optional free writing—symptom surfacing when building
   groups *or* spontaneous session notes (mood today, insights about the group).
   Recommended, not mandatory every visit.
@@ -48,11 +51,13 @@ turning subjective experiences into actionable wisdom.
 
 ### D. Dynamic Assessment, Polarity Ratings & Smart-Linking
 - Allow **symptom refinement** on **symptom–group inquiry paths** when that focus is active.
-- **Blind (re-)rating** applies **only to symptoms** on those paths with **polarity** (Positive or Negative) and **directional
-  flexibility** — the Event Manager may flip polarity during updates (e.g., "Back Pain" [Negative] → "Back Strength" [Positive])
-  (**DEC-009**). The Event Manager may also start **ad-hoc** re-rating when they choose—not implied for pure course, library,
-  or timeline-only work unless a symptom is intentionally in scope (**DEC-004**).
-- **Bias prevention:** hide the previous symptom rating during blind input unless the Event Manager explicitly requests override.
+- **Rating dimensions:** Each symptom has **independent Polarity** (Positive/Negative valence) and **Intensity** (0–10 magnitude)
+  (**DEC-010**). The EM may flip Polarity while Intensity persists (e.g., "Back Pain" 8/10 Negative → "Back Strength" 2/10 Positive),
+  supporting long-term analytics regardless of how the symptom is framed.
+- **Blind (re-)rating** applies **only to symptoms** on symptom-group paths with Polarity and Intensity (**DEC-010**). Blind rating
+  UX hides both prior dimensions by default (**DEC-011**); the EM may easily request to reveal one or both via simple toggle
+  affordances (**DEC-011**). The Event Manager may also start **ad-hoc** re-rating when they choose (**DEC-004**).
+- **Bias prevention:** hide the previous rating dimensions during blind input unless the Event Manager explicitly requests override.
 - **Smart-Link suggestion:** When a timeline execution is linked to a Symptom Group or symptom, the system proactively suggests
   rating associated symptoms, closing the feedback loop with "The Center" (**DEC-008**, **DEC-009**).
 - **Atomic Focus in rating:** only one symptom rated at a time; a symptom belongs to only one Symptom Group at a time (**DEC-009**).
