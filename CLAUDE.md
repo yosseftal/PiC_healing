@@ -1,7 +1,7 @@
 # PiC Healing - Project Manifesto & Guidelines V2
 
 This document operationalizes the manifesto for product, UX, and implementation decisions.
-Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-006).
+Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-009).
 
 ## 1. Project Vision
 PiC (Personal Information Center) is a knowledge-management platform for self-healing.
@@ -13,19 +13,20 @@ turning subjective experiences into actionable wisdom.
 ### A. Symptom Groups, Empty Vessel & Ownership
 - **Symptom Group** (קבוצת סימפטומים / מכלי הסימפטומים / הקשר) = **Work Session**
   (סשן עבודה): persistent log per group—history, documentation on any object in the
-  group, ratings, Integrating treatments.
+  group, ratings (with polarity), Integrating treatments.
 - **Formation:** List symptoms → **joint treatment muscle test** → one group if
   treated together; separate groups only when the test says split.
-- **Symptoms** live inside a group (e.g. lower back + neck in one group).
+- **Symptoms** live inside a group (e.g. lower back + neck in one group); each symptom has
+  a **polarity** (Positive or Negative) and the Event Manager may flip it during updates.
 - **Empty Vessel** (הכלי הריק): optional free writing—symptom surfacing when building
   groups *or* spontaneous session notes (mood today, insights about the group).
   Recommended, not mandatory every visit.
 - The Event Manager assigns and refines symptoms; the app organizes and retrieves.
-- **Timeline & toolbox (DEC-004):** The **chronological timeline** is the mandatory persistence spine for executions and insights;
-  the **Personal Treatment Library** records techniques/treatments the Event Manager has **run** at least once—**one logical row** per
-  protocol with **provenance**, a **use count only** on the row (**DEC-005**; increment rules **DEC-006**), and **opt-in named variants** when
-  materially different.
-  **Smart-Linking** to Symptom Groups or courses is **intentional**, never a silent default.
+- **Smart-Linking & Timeline (DEC-004, DEC-008):** The **chronological timeline** is the mandatory persistence spine for
+  executions and insights. **Smart-Linking** is **intentional** (timing-flexible, multi-link, full unlinking authority) and
+  logged as timeline events (**DEC-008**). The **Personal Treatment Library** records techniques/treatments the Event Manager
+  has **run** at least once—**one logical row** per protocol with **provenance**, a **use count only** on the row (**DEC-005**;
+  increment rules **DEC-006**, **DEC-007**), and **opt-in named variants** when materially different.
 
 ### B. The Gateway & Methodology Access
 - Core method education (self-muscle-testing videos/text) must remain freely accessible.
@@ -45,22 +46,26 @@ turning subjective experiences into actionable wisdom.
   one **focus target** per visit (symptom group, course-as-treatment, or timeline-first)—not
   locked across visits.
 
-### D. Dynamic Assessment & Blind Ratings
+### D. Dynamic Assessment, Polarity Ratings & Smart-Linking
 - Allow **symptom refinement** on **symptom–group inquiry paths** when that focus is active.
-- **Blind (re-)rating** applies **only to symptoms** (intensity 1–10) on those paths; the Event
-  Manager may also start **ad-hoc** re-rating when they choose—not implied for pure course,
-  library, or timeline-only work unless a symptom is intentionally in scope (`decisions.md`
-  **DEC-004**).
-- **Bias prevention:** hide the previous symptom rating during blind input unless the Event
-  Manager explicitly requests override.
+- **Blind (re-)rating** applies **only to symptoms** on those paths with **polarity** (Positive or Negative) and **directional
+  flexibility** — the Event Manager may flip polarity during updates (e.g., "Back Pain" [Negative] → "Back Strength" [Positive])
+  (**DEC-009**). The Event Manager may also start **ad-hoc** re-rating when they choose—not implied for pure course, library,
+  or timeline-only work unless a symptom is intentionally in scope (**DEC-004**).
+- **Bias prevention:** hide the previous symptom rating during blind input unless the Event Manager explicitly requests override.
+- **Smart-Link suggestion:** When a timeline execution is linked to a Symptom Group or symptom, the system proactively suggests
+  rating associated symptoms, closing the feedback loop with "The Center" (**DEC-008**, **DEC-009**).
+- **Atomic Focus in rating:** only one symptom rated at a time; a symptom belongs to only one Symptom Group at a time (**DEC-009**).
 
 ### E. Post-Treatment: Integration & Growth
 - Offer Reflective Journaling after a session (any step order); not only at end of linear wizard.
 - Do not use failure framing when treatment is incomplete; use Integrating/In Progress states.
 - Integration reasons may include repetition, pending user commitments, or natural body permeation time.
 - **Personal Treatment Library `use_count`:** auto-increment **only** on Player **Finish** (סיום) after **required** steps; **optional**
-  closing **yes/no** muscle-test (*did it end successfully?*) per protocol; **Integrating** mid-exits do **not** auto-increment; **manual +1**
-  anytime (**DEC-006**). Keep the metric **secondary** and non-pressuring.
+  closing **yes/no** muscle-test (*did it end successfully?*) per protocol; **Integrating** mid-exits do **not** auto-increment; **auto-decrement**
+  if user navigates **back** from **Finish**; **manual edit anytime** for Event Manager sovereignty (**DEC-007**); **Multitype Timeline** with
+  **`log_type`** categorization + **smart filtering** (corrections hidden by default) for clean workspace (**DEC-007**). Keep the metric
+  **secondary** and non-pressuring.
 
 ## 3. Technical Standards
 - **Line length:** no line may exceed 130 characters (enforced on staged files via
