@@ -457,26 +457,188 @@ because each Symptom Group's symptoms are distinct Work Session concerns.
 
 ---
 
-## Grill — open questions (living)
+---
 
-### GQ-007 — Intensity dimension: how does it relate to Polarity?
+## DEC-010 — Polarity and Intensity as independent dimensions
 
-**Status:** Open (posed 2026-06-22)
+**Status:** Agreed (2026-06-22, Yossef-Tal & Sigal) — resolves **GQ-007**
 
-**Context:** **DEC-009** introduces **Polarity** (Positive or Negative). Earlier docs mention **"intensity 1–10"** in blind rating.
+**Context:** **DEC-009** introduces **Polarity** (Positive or Negative valence). **GQ-007** asked whether Polarity and **Intensity**
+(magnitude: 0–10) are separate data dimensions or linked/merged. Answer is **Option A: Separate**.
 
-**Question:** Are **Polarity** and **Intensity** separate dimensions, or the same?
+**Decision:**
 
-**Options:**
-- **A.** **Separate:** Polarity (direction: ±) + Intensity (magnitude: 1–10 or 0–10), independent.
-- **B.** **Linked:** Intensity is always on a Polarity scale (1–10 where 1–5 = Negative, 6–10 = Positive; or vice versa).
-- **C.** **Polarity only (v1):** Drop intensity for now; rate only as Positive or Negative, defer magnitude tracking.
-- **D.** **Other:** Please clarify.
+1. **Independent Data Dimensions:** **Polarity** (direction: Positive or Negative) and **Intensity** (magnitude: typically 0–10)
+   are **stored and tracked as separate fields** in the symptom rating record. This enables:
+   - A symptom to **change polarity while maintaining magnitude continuity** (e.g., "Back Pain" 8/10 Negative → "Back Strength"
+     2/10 Positive; the 2/10 reflects residual sensation, tracked consistently across the transformation).
+   - Long-term analytics to **decouple valence from magnitude**, revealing pure growth trajectories regardless of how the EM
+     currently frames the symptom.
 
-**Co-architect recommendation:** Lean toward **A** (Polarity + Intensity independent) to keep the model composable and flexible.
-But awaiting your intent.
+2. **Unified UI Interaction (Atomic Focus):** Despite being separate in the data model, the UI presents Polarity + Intensity as a
+   **single cohesive action** (e.g., polarity selection button, then intensity slider or step input). This maintains **Atomic
+   Focus** and avoids cognitive overload—the EM experiences one rating action, not two.
+
+3. **Future Analytics & AI:** Separating magnitude from valence is a standard practice in data science and supports future **AI
+   agents** in identifying **patterns of growth** (declining intensity / increasing ease) across symptom reframings, without
+   relying on label consistency.
+
+4. **Intensity Scale (deferred to OpenSpec):** The specific range (0–10), directionality (does higher = better
+   or worse?), and semantics (e.g., "intensity of pain" vs. "strength of ease") are TBD in OpenSpec. The architectural decision
+   here is that the fields are **independent**, not the specific scale.
+
+**Rationale:** Decoupling polarity and magnitude preserves data integrity, supports long-term insight, and future-proofs analytics
+without complicating the present-moment UX.
+
+**Consequences:**
+
+- Schema: symptom rating record includes separate **`polarity`** (enum: Positive / Negative) and **`intensity`** (integer: 0–10)
+  fields, plus `timestamp`, `history` (for tracking changes).
+- Blind (re-)rating UX: when the EM rates, the system can hide/show prior polarity and intensity independently (e.g., hide both,
+  or show only polarity to hint at direction but hide magnitude). Details in **GQ-008** (next).
+- Analytics: query patterns like "all symptoms trending toward lower intensity" or "polarity-flipped symptoms that maintained
+  low magnitude" become straightforward.
+- Copy: "Rate the strength and direction—they tell your story separately."
 
 ---
 
+---
+
+## DEC-011 — Blind rating UX: both dimensions hidden by default, with easy override controls
+
+**Status:** Agreed (2026-06-22, Yossef-Tal & Sigal) — resolves **GQ-008**
+
+**Context:** **DEC-010** establishes Polarity and Intensity as independent fields. **GQ-008** asked: during blind re-rating, which
+prior rating dimensions should the system show or hide? Answer is **Option A with an override affordance**.
+
+**Decision:**
+
+1. **Default: Both hidden (strongest bias prevention):** When offering a **blind re-rating** session, the system **hides both prior
+   Polarity and prior Intensity** by default. The Event Manager rates fresh, with zero anchoring to the old state. This maximizes
+   the integrity of the blind rating and prevents magnitude/polarity anchoring bias.
+
+2. **Easy override controls (user autonomy):** The Event Manager can **easily request** to reveal one or both prior dimensions
+   during the rating session via a simple affordance:
+   - "Show prior polarity?" [toggle/button]
+   - "Show prior intensity?" [toggle/button]
+   - Or a combined "Show prior rating?" [toggle] if the EM wants both at once.
+   - These controls are **always accessible**, not buried or punitive (e.g., no "click here to reduce bias protection").
+
+3. **Rationale for override:** Respects **Event Manager ownership** — the EM may have legitimate reasons to see prior state
+   (e.g., to remind themselves of context, to double-check consistency, or to intentionally track continuity). The system
+   defaults to blind integrity but trusts the EM to choose otherwise when they need it.
+
+**Refines:**
+
+- **DEC-009 & DEC-010 (Blind rating):** Adds concrete UX rules: default both hidden, easy toggle to reveal.
+
+**Rationale:** Blind rating integrity by default + EM sovereignty via easy override = best of both worlds.
+
+**Consequences:**
+
+- UX: When entering a blind re-rating flow, display a simple prompt or modal:
+  ```
+  "Rate this symptom (prior rating hidden to reduce bias)"
+  
+  ☐ Show prior polarity?
+  ☐ Show prior intensity?
+  
+  [Polarity selection] [Intensity slider/input: 0–10]
+  ```
+  Checkboxes update the UI in real-time if tapped.
+  
+- Copy: "We hide your prior rating by default to keep your answer fresh. Check below if you'd like a reminder."
+- Accessibility: Ensure toggle affordances are keyboard-navigable and screen-reader friendly.
+
+---
+
+---
+
+## DEC-012 — Symptom name evolution: decoupled from polarity flip, optional anytime
+
+**Status:** Agreed (2026-06-22, Yossef-Tal & Sigal) — resolves **GQ-009**
+
+**Context:** **DEC-009** says the EM may flip Polarity and "may rename or reframe the symptom name when changing polarity if they
+choose." **GQ-009** asked how to handle symptom renaming when Polarity flips. Answer is **Option A: Always optional, decoupled**.
+
+**Decision:**
+
+1. **Decoupled but Suggestive:** Symptom **name/label** and **Polarity** are **independent** concerns, but the system offers
+   **light, optional suggestions** (not mandatory):
+   - When **Polarity changes:** System suggests "You might want to review the symptom name" (soft nudge, no specific new name proposed).
+   - When **symptom name changes:** System suggests "You might want to review the symptom polarity" (soft nudge).
+   - Suggestions are **always skippable** and **never block** the action.
+   - The EM may flip Polarity without renaming (e.g., keep "Back Pain" as Negative, then later flip to Positive).
+
+2. **Renaming as Independent Action (MVP):** For the **MVP**, the Event Manager can **rename a symptom anytime** via a simple
+   "Edit symptom name" action in the Symptom Group's settings or symptom card. Renaming is **always optional**, and suggestions
+   (not requirements) are offered when the EM makes related changes.
+
+3. **Post-MVP Enhancement:** Richer suggestion logic (e.g., AI-suggested names based on symptom history or polarity shift context)
+   can be added post-MVP as a convenience feature.
+
+4. **Semantics & UX:** The system **does not** warn or prevent confusing name-polarity pairs like "Back Pain" [Positive]. The EM
+   owns their symptom language; if they choose to keep the name, it's valid. Suggestions are just nudges, not gates.
+
+**Rationale:** Soft suggestions (nudges, not gates) + Event Manager autonomy. Respects the EM's choice to keep names even after
+polarity changes, while offering helpful prompts for semantic clarity when they choose to make changes.
+
+**Consequences:**
+
+- Schema: symptom row includes **`name`** (string) and **`polarity`** (enum) as independent fields; no cascade or trigger between them.
+- UX (MVP): Symptom card / Symptom Group settings → "Edit symptom name" button → simple text input → save. No auto-suggestion
+  logic.
+- Copy: "Name your symptom however makes sense to you. You can change it anytime in the group settings."
+- Post-MVP roadmap: consider **Option B** (suggest rename on polarity flip) as a convenience enhancement.
+
+---
+
+---
+
+## DEC-013 — Symptom Group lifecycle: perpetual with optional user-initiated archival
+
+**Status:** Agreed (2026-06-22, Yossef-Tal & Sigal) — resolves **GQ-010**
+
+**Context:** **DEC-002** establishes Symptom Groups as persistent **Work Sessions** (healing threads). **GQ-010** asked whether a
+Symptom Group ever reaches a "done" or "archived" state. Answer is **Option A with user control**.
+
+**Decision:**
+
+1. **Perpetual by Default (No Forced Closure):** Symptom Groups are **never automatically marked as "done"** or hidden. They remain
+   **perpetually available** in the EM's Symptom Group list and can be re-opened anytime. This honors the **self-healing as an
+   ongoing journey** principle and avoids creating a sense of finality or forced closure.
+
+2. **User-Initiated Archival (Optional):** The Event Manager may **manually archive** a Symptom Group at any time via a simple action
+   (e.g., "Archive this group" button in group settings). Archived groups:
+   - Move to an **"Archived"** or **"Inactive"** tab / view.
+   - Remain fully **searchable, accessible, and restorable**.
+   - Can be **un-archived anytime** if symptoms resurface or the EM wants to revisit them (e.g., full undo).
+
+3. **No Forced Dormancy:** The system does **not** automatically transition a group to dormant or archived states based on inactivity
+   timers or other heuristics. **Only the Event Manager decides** when a group feels "complete enough" to archive.
+
+4. **Perpetual Timeline:** All documentation, ratings, and Integrating treatments remain **permanently** in the Work Session history,
+   whether the group is active or archived.
+
+**Rationale:** Perpetuity + user control honors the **Ownership** pillar (EM decides when/if to archive) and the self-healing continuum
+(no false endpoints). Archival is a convenience feature for decluttering active views, not a lifecycle gate.
+
+**Consequences:**
+
+- Schema: Symptom Group row includes optional **`archived_at`** timestamp (null = active; set = archived). No cascade effects.
+- UX:
+  - Symptom Group list shows **Active** tab by default.
+  - **Archived** tab / filter for archived groups.
+  - "Archive" / "Unarchive" buttons in group settings (always available).
+  - Archived groups remain visible in search results and Smart-Linking flows.
+- Copy: "Archive a group when you want to focus on others. You can restore it anytime if symptoms return."
+
+---
+
+## Grill — open questions (living)
+
+*No open items. Add **GQ-00n** below when the next question is posed.*
+
 **Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
-**GQ-005** → **DEC-008**; **GQ-006** → **DEC-009** (2026-06-22).
+**GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**; **GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**;
+**GQ-010** → **DEC-013** (2026-06-22).
