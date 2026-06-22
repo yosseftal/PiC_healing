@@ -137,20 +137,34 @@ logic, based on the NEMAR principles
   New sessions may start whenever the user
   chooses (any focus, any entry point).
 
-### 3. Dynamic Assessment & "Blind" Ratings
+### 3. Dynamic Assessment, Polarity Ratings & Smart-Linking
 * **Symptom Refinement:** On **symptom–group
   inquiry paths**, users can rephrase or
   refine symptoms when that focus is active,
   to keep language aligned with the body.
+* **Polarity & Directional Flexibility:** Each symptom has a **polarity** (Positive or Negative) reflecting its current
+  state's valence (e.g., "Back Pain" [Negative] → "Back Strength" [Positive]). The Event Manager may **flip polarity** during
+  any rating update, supporting the healing narrative where symptoms evolve (**DEC-009**).
 * **Blind (re-)rating (symptoms only):** On
-  those paths, blind intensity refresh (1–10)
-  may be offered with the **previous score
-  hidden**; the Event Manager may also start
-  **ad-hoc** re-rating anytime. Not implied for
-  pure course, library, or timeline-only work
-  unless a symptom is intentionally in scope.
+  those paths, blind rating refresh may be
+  offered with the **previous score hidden** 
+  unless the Event Manager requests override; t
+  he Event Manager may
+  also start **ad-hoc** re-rating anytime. Not
+  implied for pure course, library, or
+  timeline-only work unless a symptom is
+  intentionally in scope.
+* **Atomic Focus in Rating:** Only one symptom
+  rated at a time; a symptom belongs to only
+  one Symptom Group, ensuring focused Work
+  Sessions (**DEC-009**).
+* **Smart-Link Suggestion (Feedback Loop):**
+  When a timeline execution is linked to a
+  Symptom Group or symptom, the system proactively suggests rating those associated
+  symptoms, closing the feedback loop between
+  technique and "The Center" (**DEC-008**, **DEC-009**).
 * **Bias Prevention:** During blind symptom
-  input, the system **hides** the prior rating
+  input, the system **hides** the prior rating 
   unless the Event Manager requests override.
 
 ### 4. The Networked Reflective Journal
@@ -249,9 +263,13 @@ them with generic tech jargon:
 * **Smart-Linking:** The non-linear relationship
   between journal entries, timeline events,
   and treatment or technique executions. The
-  Event Manager links during a session or
-  retroactively; the app does not silently
-  default a parent (`decisions.md` **DEC-004**).
+  Event Manager links **at any time** (during
+  or after a session), can link one event to
+  **multiple groups/courses** simultaneously,
+  and can **unlink anytime** with light
+  confirmation. Linking and unlinking are
+  logged as timeline events (**DEC-008**);
+  the app does not silently default a parent.
 * **Chronological timeline:** The ordered spine
   of healing activity; executions may stand
   alone until Smart-Linked (`decisions.md`
@@ -483,20 +501,31 @@ PiC מספקת את הכלים והמתודולוגיה
   **מומלץ:** הכלי הריק → חסמים → נמ"ר →
   נגן → יומן. ניתן לפתוח סשן חדש בכל עת (כל מוקד, כל נקודת כניסה).
 
-### 3. הערכה דינמית ודירוג "עיוור"
+### 3. הערכה דינמית, דירוג קוטביות וקישור חכם
 * **דיוק סימפטומים:** ב**נתיבי שאילתה מובילי-קבוצה**,
   ניתן לדייק או לשנות ניסוח תסמין כשהמוקד
   הפעיל רלוונטי.
+* **קוטביות ו"גמישות כיוון":** לכל סימפטום יש **קוטביות** (חיובית או שלילית)
+  המשקפת את ערך המצב הנוכחי (למשל, "כאב גב" [שלילי] → "חוסן גב" [חיובי]).
+  מנהל האירוע יכול **לשנות קוטביות** בכל עדכון דירוג, ואף לשנות שם התסמין
+  לשיקוף הנוסחה החדשה (**DEC-009**).
 * **דירוג עיוור (לתסמין בלבד):** בנתיבים
-  אלה ניתן להציע רענון עיוור לעוצמה (1–10)
-  עם **הסתרת דירוג קודם**; מנהל האירוע יכול
-  גם **אד-הוק** לדרג מחדש מתי שירצה. לא
-  מנוהל אוטומטית במסלול קורס-בלבד, ציר-זמן
-  בלבד או ספרייה בלבד אלא אם תסמין במפורש
-  בתוך ההיקף.
+  אלה ניתן להציע רענון עיוור עם **הסתרת הדירוג
+  הקודם** אלא אם מנהל האירוע
+  מבקש במפורש; מנהל האירוע יכול גם **אד-הוק** לדרג
+  מחדש מתי שירצה. לא מנוהל אוטומטית במסלול
+  קורס-בלבד, ציר-זמן בלבד או ספרייה בלבד אלא אם
+  תסמין במפורש בתוך ההיקף.
+* **מיקוד אטומי בדירוג:** המערכת מדרגת תסמין אחד
+  בכל פעם; תסמין שייך לקבוצה אחת בלבד כל רגע,
+  מה שמבטיח סשן עבודה ממוקד (**DEC-009**).
+* **הצעת קישור לסגירת מעגל משוב:** כאשר ביצוע
+  טכניקה מקושר לקבוצת סימפטומים או תסמין ספציפי,
+  המערכת מציעה לדרג את הסימפטומים המשויכים,
+  וסוגרת את מעגל המשוב בין הביצוע ל"המרכז" (**DEC-008**, **DEC-009**).
 * **מניעת הטיות:** בזמן הזנת דירוג עיוור לתסמין,
-  המערכת **מסתירה** את הדירוג הקודם אלא
-  אם מנהל האירוע מבקש במפורש לראותו.
+  המערכת **מסתירה** את הדירוג הקודם 
+  אלא אם מנהל האירוע מבקש במפורש לראותם.
 
 ### 4. יומן המסע הרשתי
 ארכיון כרונולוגי חכם לתיעוד
@@ -579,10 +608,12 @@ PiC מספקת את הכלים והמתודולוגיה
   משימות פתוחות, הוא פשוט *בהטמעה*.
 * **קישור רשתי (Smart-Linking):**
   קשר לא-ליניארי בין רשומות יומן, אירועי
-  ציר זמן, וביצועי טיפול או טכניקה;
-  מנהל האירוע מקשר במהלך הסשן או
-  רטרואקטיבית—ללא ברירת מחדל שקטה
-  (`decisions.md` **DEC-004**).
+  ציר זמן, וביצועי טיפול או טכניקה.
+  מנהל האירוע מקשר **בכל עת** (במהלך או
+  אחרי סשן), יכול **לקשר אירוע אחד למספר
+  קבוצות/קורסים** במקביל, ויכול **לנתק בכל עת**
+  עם אישור קל. קישור וניתוק מתועדים כאירועי
+  ציר זמן (**DEC-008**), ללא ברירת מחדל שקטה.
 * **ציר זמן כרונולוגי:** עמוד השדרה המסודר
   לפעילות ריפוי; ביצועים עומדים לבד עד
   קישור חכם (`decisions.md` **DEC-004**).
