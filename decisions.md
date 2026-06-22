@@ -637,7 +637,46 @@ Symptom Group ever reaches a "done" or "archived" state. Answer is **Option A wi
 
 ## Grill — open questions (living)
 
-*No open items. Add **GQ-00n** below when the next question is posed.*
+### GQ-011 — NEMAR inquiry flow: Left (root cause) vs. Right (treatment) path mechanics and atomicity
+
+**Status:** Open (posed 2026-06-22)
+
+**Context:** README and CLAUDE.md mention "NEMAR path: Left (root cause in Causes Table) / Right (treatment in Treatments Table)
+→ execution instructions" (**DEC-003**). But the mechanics are fuzzy: how does the EM choose Left vs. Right? Can one Inquiry Session
+contain both, or is each path **atomic** (one per session, honoring **Atomic Focus**)?
+
+**Questions:**
+
+1. **Path selection timing:** When an Event Manager starts an Inquiry Session on a Symptom Group, how do they **choose** Left vs. Right?
+   - **A.** At session entry: "Are you diagnosing root cause or selecting treatment?" [Left/Right picker].
+   - **B.** System-guided: based on symptom history or EM profile, suggest one path.
+   - **C.** Organic: EM naturally flows to Left or Right based on intent during Empty Vessel or initial NEMAR question.
+   - **D.** Other?
+
+2. **Left path (root cause diagnosis) workflow:**
+   - The EM asks NEMAR questions from a **Causes Table** (EM defined? system-provided?).
+   - They work through potential root causes until they isolate one or more.
+   - Then what?
+     - End session (diagnosis only)?
+     - Offer "Switch to Right path to treat?" (new session or same session)?
+     - Auto-suggest treatment based on diagnosed cause?
+
+3. **Right path (treatment selection) workflow:**
+   - The EM asks NEMAR questions from a **Treatments Table** (EM defined? system-provided?).
+   - They select a treatment protocol.
+   - Launch the Player to execute.
+   - After Player Finish, can they ask more treatment questions, or is the Inquiry Session done?
+
+4. **Path atomicity & Atomic Focus:**
+   - **Option A (Atomic per path):** One Inquiry Session = one path only (Left-only or Right-only). Switching paths = new session.
+   - **Option B (Sequential within session):** One Inquiry Session can flow Left → Right → Player (one continuous thread).
+   - **Option C (Flexible):** EM chooses anytime—can do Left-only, Right-only, or Left → Right in one session.
+
+**Co-architect recommendation:** Lean toward **Option A (atomic per path)** to honor **Atomic Focus** rigorously. But awaiting your design intent.
+
+---
+
+*No other open items. Next: GQ-012 (Player mechanics), GQ-013 (Courses & Academy), etc. See `docs/grill-backlog.md` for full subsystem list.*
 
 **Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
 **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**; **GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**;
