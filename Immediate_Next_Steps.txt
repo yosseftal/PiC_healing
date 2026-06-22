@@ -1,0 +1,21 @@
+Immediate Next Steps:
+Schema Design — Model the persistence layer:
+symptom_groups table (with Work Session history, ratings, Integrating state)
+course_enrollments table (with course run, progress, Work Session state)
+timeline / journal table (with log_type categorization for filtering)
+personal_treatment_library table (use_count only, provenance list, opt-in variants)
+Smart-Link edges (joining timeline events / executions to multiple symptom groups / courses)
+OpenSpec / Feature Specs — Write detailed specs for:
+Inquiry Session UX (entry points, step order flexibility, focus target switching)
+Player + Finish flow with auto +1 on use_count
+Timeline filtering UI (showing / hiding log_type corrections by default)
+Personal Treatment Library card (manual edit, display use_count quietly)
+Smart-Linking controls (retroactive linking from timeline to groups/courses)
+Freemium Bucket Clarification — Q3 agenda per DEC-003:
+Core teaching (diagnostic tables, self-muscle-testing method) stays free.
+Persistent healing data (Symptom Group logs, course progress, timeline, library) requires subscription.
+Classify course progress as "persistent healing," not a throwaway learning silo.
+Code Implementation — Begin tracer-bullet vertical slices:
+Backend: persistence layer (Supabase schema + migrations)
+Frontend: Inquiry Session entry point + timeline view + library card
+Test coverage: unit (domain logic), integration (Player → library increment), end-to-end (linking flows)
