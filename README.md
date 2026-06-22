@@ -101,7 +101,7 @@ a paid subscription.
 ### 2. The Inquiry Engine & Logic (NEMAR)
 A dynamic interactive interface linking
 user intent with the body's information
-using binary (Yes/No) and scale (1-10)
+using binary (Yes/No) and scale (0-10)
 logic, based on the NEMAR principles
 (Right, Accurate, Desirable).
 
@@ -147,9 +147,12 @@ logic, based on the NEMAR principles
   any rating update, supporting the healing narrative where symptoms evolve (**DEC-009**).
 * **Blind (re-)rating (symptoms only):** On
   those paths, blind rating refresh may be
-  offered with the **previous score hidden** 
-  unless the Event Manager requests override; t
-  he Event Manager may
+  offered with the **previous polarity and/or
+  intensity hidden by default** (**DEC-011**);
+  the EM can easily request to see one or both
+  prior dimensions via simple toggle controls
+  (**DEC-011**).
+  The Event Manager may
   also start **ad-hoc** re-rating anytime. Not
   implied for pure course, library, or
   timeline-only work unless a symptom is
@@ -164,8 +167,11 @@ logic, based on the NEMAR principles
   symptoms, closing the feedback loop between
   technique and "The Center" (**DEC-008**, **DEC-009**).
 * **Bias Prevention:** During blind symptom
-  input, the system **hides** the prior rating 
-  unless the Event Manager requests override.
+  input, the system **hides** the prior polarity
+  and/or intensity unless the Event Manager requests override.
+* **Independent Intensity:** Each symptom tracks **Intensity** (0–10 magnitude) **independently** of Polarity (**DEC-010**).
+  This enables pure growth measurement: a symptom can shift from "Back Pain" 8/10 Negative to "Back Strength" 2/10 Positive—the
+  magnitude story persists and reveals healing regardless of how the EM reframes the symptom.
 
 ### 4. The Networked Reflective Journal
 A chronological archive for thoughts and
@@ -510,9 +516,10 @@ PiC מספקת את הכלים והמתודולוגיה
   מנהל האירוע יכול **לשנות קוטביות** בכל עדכון דירוג, ואף לשנות שם התסמין
   לשיקוף הנוסחה החדשה (**DEC-009**).
 * **דירוג עיוור (לתסמין בלבד):** בנתיבים
-  אלה ניתן להציע רענון עיוור עם **הסתרת הדירוג
-  הקודם** אלא אם מנהל האירוע
-  מבקש במפורש; מנהל האירוע יכול גם **אד-הוק** לדרג
+  אלה ניתן להציע רענון עיוור עם **הסתרת הקוטביות
+  ו/או העוצמה הקודמות כברירת מחדל** (**DEC-011**); מנהל האירוע יכול בקלות
+  לבקש לראות אחד או שניים מהממדים הקודמים דרך כפתור toggle פשוט
+  (**DEC-011**); מנהל האירוע יכול גם **אד-הוק** לדרג
   מחדש מתי שירצה. לא מנוהל אוטומטית במסלול
   קורס-בלבד, ציר-זמן בלבד או ספרייה בלבד אלא אם
   תסמין במפורש בתוך ההיקף.
@@ -523,8 +530,11 @@ PiC מספקת את הכלים והמתודולוגיה
   טכניקה מקושר לקבוצת סימפטומים או תסמין ספציפי,
   המערכת מציעה לדרג את הסימפטומים המשויכים,
   וסוגרת את מעגל המשוב בין הביצוע ל"המרכז" (**DEC-008**, **DEC-009**).
+* **מאפיין דירוג:** כל סימפטום עוקב אחר מאפיין אחר - **עוצמה** (0–10) או **קוטביות** (**DEC-010**).
+  זה מאפשר מדידת צמיחה טהורה: תסמין יכול להעבור מ"כאב גב" 8/10 שלילי ל"חוסן גב" 2/10 חיובי—
+  מעקב אחר מאפיינים אלו משקף (בצורה מסויימת) את השינוי המתרחש לאורך תהליך הריפוי, בנוסף על הרצף הטיפולי המתועד
 * **מניעת הטיות:** בזמן הזנת דירוג עיוור לתסמין,
-  המערכת **מסתירה** את הדירוג הקודם 
+  המערכת **מסתירה** את הקוטביות ו/או העוצמה הקודמות
   אלא אם מנהל האירוע מבקש במפורש לראותם.
 
 ### 4. יומן המסע הרשתי
