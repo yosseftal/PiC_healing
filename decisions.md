@@ -393,9 +393,90 @@ balance Atomic Focus (clean UX) with retroactive discovery (powerful organizing)
 
 ---
 
+---
+
+## DEC-009 — Symptom rating polarity, directional flexibility, and Smart-Link integration
+
+**Status:** Agreed (2026-06-22, Yossef-Tal & Sigal) — resolves **GQ-006**
+
+**Context:** **DEC-004** introduces blind re-rating of symptoms. **DEC-008** allows one timeline event (execution) to link to
+multiple Symptom Groups. **GQ-006** asked: if a technique links to multiple groups with overlapping symptoms, how should ratings
+work? Answer refines the rating model with **polarity** (directional, not intensity-only).
+
+**Decision:**
+
+1. **Exclusive Polarity (one rating per symptom at a time):** Each symptom carries **exactly one rating** at any given time.
+   That rating has a **polarity** — either **Positive** or **Negative** — never both simultaneously. Polarity represents the
+   **direction** or **valence** of the symptom's current state (e.g., "Back Pain" as Negative; "Back Strength" as Positive).
+
+2. **Directional Flexibility (EM can flip polarity):** The Event Manager has **absolute authority** to **change the direction**
+   of a rating (Negative ↔ Positive) during any rating update or refresh. This reflects real healing journeys where a
+   **pain-oriented symptom** evolves into a **strength-oriented state** (e.g., from "Back Pain" [Negative] to "Back Strength"
+   [Positive]). The EM may also rename or reframe the symptom name when changing polarity if they choose.
+
+3. **Atomic Focus in Rating:** **Only one symptom** is rated at a time (maintaining Atomic Focus). A symptom **belongs to only
+   one Symptom Group** at a time, ensuring the Work Session stays focused. (A symptom cannot be "shared" across groups.)
+
+4. **Rating Opportunity Triggers (three modes):**
+   - **Session-scoped suggestion:** During an Inquiry Session on a **specific Symptom Group**, the app **optionally suggests**
+     refreshing ratings for **all symptoms in that group** — still one symptom at a time, in sequence if the EM chooses.
+   - **Smart-Link suggestion (close the feedback loop):** When a timeline event (technique execution) is **linked** to a
+     Symptom Group or a **specific symptom**, the system **proactively suggests** rating those associated symptoms. This
+     closes the feedback loop between the execution and "The Center" (the body's information).
+   - **Ad-hoc / anytime:** The Event Manager may **independently rate any symptom at any time**, outside of structured
+     sessions or linking actions.
+
+5. **No multi-group rating collapse:** When an execution **links to multiple Symptom Groups**, the rating(s) apply to
+   **symptom(s) in the linked groups independently**. The EM does not rate "Group A's pain intensity" vs. "Group B's pain
+   intensity" in a single action. Instead, if both groups contain relevant symptoms, the EM rates each group's symptoms
+   **separately** (or not at all, if they choose). This preserves **Atomic Focus** and prevents confusion about symptom
+   ownership.
+
+**Refines:**
+
+- **DEC-004 (Blind rating):** Adds **polarity** dimension and **directional flexibility** (EM can flip); rating applies per
+  symptom, one at a time.
+- **DEC-008 (Smart-Linking):** Introduces **Smart-Link suggestion** to proactively prompt rating when a technique is linked,
+  closing the feedback loop with "The Center."
+
+**Rationale:** Polarity and directional flexibility honour the **healing journey narrative** (pain → strength; fear → confidence).
+Exclusive polarity + Atomic Focus keep the UX simple and non-overwhelming. Multi-link scenarios don't collapse into one rating
+because each Symptom Group's symptoms are distinct Work Session concerns.
+
+**Consequences:**
+
+- Schema: symptom row includes **`polarity`** field (Positive / Negative) + optional **`intensity`** or **`strength`** field (magnitude, TBD in
+  OpenSpec). Rating history tracks polarity changes and timestamps.
+- UX / Inquiry Session:
+  - When suggesting a rating, display **current polarity** (but allow EM to flip it).
+  - During **Smart-Link→suggest-rating**, surface a modal or side panel: "This technique is now linked to [Group Name]. Would you like to
+    rate symptoms in that group?" with an affordance to rate or skip.
+  - Always rate **one symptom** per action; optionally chain to the next symptom if the EM wants (sequence mode for convenience).
+- Copy: "Rate symptoms one at a time — each reflects how you're experiencing this part of your healing journey."
+- Glossary: clarify **Polarity** (direction) vs. intensity / strength (magnitude, TBD).
+
+---
+
 ## Grill — open questions (living)
 
-*No open items. Add **GQ-00n** below when the next question is posed.*
+### GQ-007 — Intensity dimension: how does it relate to Polarity?
+
+**Status:** Open (posed 2026-06-22)
+
+**Context:** **DEC-009** introduces **Polarity** (Positive or Negative). Earlier docs mention **"intensity 1–10"** in blind rating.
+
+**Question:** Are **Polarity** and **Intensity** separate dimensions, or the same?
+
+**Options:**
+- **A.** **Separate:** Polarity (direction: ±) + Intensity (magnitude: 1–10 or 0–10), independent.
+- **B.** **Linked:** Intensity is always on a Polarity scale (1–10 where 1–5 = Negative, 6–10 = Positive; or vice versa).
+- **C.** **Polarity only (v1):** Drop intensity for now; rate only as Positive or Negative, defer magnitude tracking.
+- **D.** **Other:** Please clarify.
+
+**Co-architect recommendation:** Lean toward **A** (Polarity + Intensity independent) to keep the model composable and flexible.
+But awaiting your intent.
+
+---
 
 **Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
-**GQ-005** → **DEC-008** (2026-06-22).
+**GQ-005** → **DEC-008**; **GQ-006** → **DEC-009** (2026-06-22).
