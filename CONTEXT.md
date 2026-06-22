@@ -111,6 +111,15 @@ _Avoid_: Treating “symptom” as synonymous with the group itself
 
 **Blind (re-)rating**:
 Applies **only to a symptom** (e.g. intensity 1–10): part of **symptom–group healing paths** the product offers, with the prior score
-hidden unless the Event Manager overrides. The Event Manager may also start **ad-hoc** re-rating when they choose — not only at a fixed
-session gate.
-_Avoid_: Blind rating on visits with no symptom in scope; implying every healing path requires a blind rating
+hidden unless the Event Manager overrides. Each symptom has a **polarity** (Positive or Negative, reflecting the valence of the current
+state), and the Event Manager may **flip polarity** during updates (e.g., "Back Pain" [Negative] → "Back Strength" [Positive]).
+The Event Manager may also start **ad-hoc** re-rating when they choose — not only at a fixed session gate. **Smart-Link suggestion**
+proactively invites rating when a technique is linked to a group or symptom, closing the feedback loop (**DEC-009**).
+_Avoid_: Blind rating on visits with no symptom in scope; implying every healing path requires a blind rating; forcing the EM to rate
+the same symptom with conflicting polarities simultaneously
+
+**Polarity** (rating direction):
+The **valence** or **direction** of a symptom's current rating: either **Positive** (strength, ease, improvement) or **Negative** (pain,
+difficulty, challenge). The Event Manager may change polarity during any rating update, reflecting the healing journey where a state
+evolves from negative to positive.
+_Avoid_: Treating polarity as immutable; assuming a symptom name must match its polarity (EM can reframe)
