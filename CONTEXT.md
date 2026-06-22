@@ -25,10 +25,12 @@ A treatment or session is still in progress — repetition, pending commitments,
 _Avoid_: Failed, error, incomplete, stuck
 
 **Smart-Linking**:
-Journal entries, timeline events, and treatment or technique **executions** can relate to multiple symptoms, treatments, or courses
-without a rigid parent-child tree. The Event Manager may link **during a session or retroactively**; the system does not impose a default
-parent.
-_Avoid_: Folder hierarchy, single-parent tagging only, silent auto-attachment to a Symptom Group or course
+Journal entries, timeline events, and treatment or technique **executions** can relate to **multiple Symptom Groups, courses, or
+other entities simultaneously** without a rigid parent-child tree. **Timing** (during session or retroactively), **scope** (one
+event → many links), and **unlinking** (full EM authority) are all user-controlled (**DEC-008**). Linking and unlinking actions
+are **logged as timeline events** (hidden by default) to maintain **Atomic Focus** without losing audit trails.
+_Avoid_: Folder hierarchy, single-parent tagging only, silent auto-attachment to a Symptom Group or course, treating multiple
+links as conflicts
 
 **Reflective Journal**:
 Networked chronological archive of thoughts and insights; may Smart-Link to symptoms, treatments, courses, timeline events, and
@@ -37,8 +39,11 @@ _Avoid_: Rigid single-parent filing for every entry
 
 **Chronological Timeline**:
 The **required** persistence spine for healing actions and insights: a **time-ordered** record aligned with the **Reflective Journal**.
-Technique and treatment **executions** may exist as **standalone** timeline events until the Event Manager chooses further links.
-_Avoid_: Pretending every save must belong to a Symptom Group or course row first
+Technique and treatment **executions** may exist as **standalone** timeline events until the Event Manager chooses further links. Every action is
+logged with a **`log_type`** (Technique Execution, Manual Correction, Rating Refresh, Link Created, Link Removed, etc.);
+**smart filtering** lets users hide technical corrections (including linking/unlinking actions) by default to maintain **Atomic Focus** (**DEC-007**, **DEC-008**).
+_Avoid_: Pretending every save must belong to a Symptom Group or course row first; visual clutter from system corrections; forcing
+transparency without user control
 
 **Personal Treatment Library** (Personal Treatment Table):
 The Event Manager’s **toolbox** — techniques and treatments they have **actually run** at least once. **First execution** from any source
