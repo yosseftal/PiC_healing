@@ -118,6 +118,20 @@ When global NEMAR to a category/table returns clear Yes or No (not specific to o
 ("all could help" or "none fit").
 _Avoid_: Forcing NEMAR after global answer; hiding table when body says yes to category
 
+**Player** (הנגן):
+The treatment execution engine. Presents a protocol's atomic steps one at a time (one screen per step). 
+The EM advances by clicking **"Next"** based on internal readiness—there are **no technical validation gates**. 
+The EM decides when each step is complete (executed, understood, or intuitively skipped). Clicking **"Finish"** (סיום) 
+at any point auto-increments `use_count` (**DEC-006**, **DEC-015**). Exiting before the protocol's end preserves 
+the session as **Integrating** (not failed). EM can resume later (**DEC-015**).
+_Avoid_: Forcing step completion checks; blocking progression with validation; framing incomplete sessions as failures
+
+**Structured Markdown** (DEC-015):
+The canonical format for authoring all treatment protocols, techniques, and courses. Every **H3 header (###)** in the document
+automatically defines one atomic **Player step**. A Content Parser converts existing HTML docs and future Markdown 
+into JSON entries in the database, enabling fast retrieval and consistent step sequencing (**DEC-015**).
+_Avoid_: Ad-hoc step definitions; mixing formats; dense paragraph-based protocols without clear step boundaries
+
 **Symptom** (סימפטום):
 One named concern inside a Symptom Group (e.g. lower back and neck as two symptoms in one group).
 _Avoid_: Treating “symptom” as synonymous with the group itself
