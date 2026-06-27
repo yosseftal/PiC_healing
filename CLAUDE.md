@@ -42,7 +42,16 @@ turning subjective experiences into actionable wisdom.
   technique/treatment work. User may **switch focus** by **starting a new session anytime**.
 - **NEMAR flow (Organic, multi-path):** Within a Symptom Group Inquiry Session, the EM flows organically between diagnosing
   root causes (Left path, using **Causes Table**) and selecting treatments (Right path, using **Treatments Table**), guided by
-  real-time muscle testing (**NEMAR**) (**DEC-014**). No prescribed order; multiple causes/treatments per session supported.
+  real-time muscle testing (**NEMAR**). Categories are: Physical, Emotional, Energetic, Conscious (**DEC-014**).
+- **Atomic Discovery (hierarchical NEMAR):** Category-level question first ("Is it **Physical**?"), then item-by-item 
+  ("Is **this item** most NEMAR?"). Maintains **Atomic Focus** without overwhelming questions (**DEC-014**).
+- **Intuitive Choice Rule:** If global NEMAR to category = Yes or No, system displays **entire table** for intuitive EM selection 
+  instead of atomic discovery (**DEC-014**).
+- **User preferences for discovery mode:**
+  - **"Always show entire table"** (skip Atomic Discovery, show full table immediately).
+  - **"Always show entire category"** (after category selection, show full category instead of item-by-item).
+- **Pairwise category testing (optional):** EM can set mode to **"Show categories two by two"**: system groups 4 categories into pairs,
+  asks NEMAR on pair ("Is it **Physical OR Emotional**?"), then splits into separate questions if Yes (**DEC-014**).
 - **Steps** (flexible order; user may **start at any step**): Empty Vessel → Self-Sabotage rating (if added to group) → 
   NEMAR inquiry (Left/Right flow) → treatment player → Reflective Journal.
 - **Recommended order:** same as above, but EM may reorder or skip where the method allows.
@@ -99,12 +108,3 @@ turning subjective experiences into actionable wisdom.
 ### Issue tracker
 
 GitHub Issues on `yosseftal/PiC_healing` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Canonical triage roles use default label names (`needs-triage`, `needs-info`,
-`ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: `CONTEXT.md`, `decisions.md`, and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
