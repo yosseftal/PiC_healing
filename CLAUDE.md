@@ -76,6 +76,15 @@ turning subjective experiences into actionable wisdom.
   rating associated symptoms, closing the feedback loop with "The Center" (**DEC-008**, **DEC-009**).
 - **Atomic Focus in rating:** only one symptom rated at a time; a symptom belongs to only one Symptom Group at a time (**DEC-009**).
 
+### E. Player & Structured Markdown
+- **Player** (הנגן): Treatment execution engine displaying atomic steps **one per screen** (**DEC-015**).
+- **Subjective Completion (EM Sovereignty):** **No validation gates**. The EM decides when a step is complete based on 
+**internal readiness** (executed, understood, or intuitively skipped). Click **"Next"** when ready—no pressure (**DEC-015**).
+- **Structured Markdown Standard:** All treatments authored in **Structured Markdown** (H3 headers = steps). Content Parser converts
+  existing HTML + future Markdown into atomic JSON steps (**DEC-015**).
+- **Finish & Integrating:** Clicking **"Finish"** (סיום) auto-increments `use_count` (**DEC-006**). 
+Exiting before end preserves session as **Integrating** (not failed, EM can resume) (**DEC-015**).
+
 ### E. Post-Treatment: Integration & Growth
 - Offer Reflective Journaling after a session (any step order); not only at end of linear wizard.
 - Do not use failure framing when treatment is incomplete; use Integrating/In Progress states.
@@ -108,3 +117,12 @@ turning subjective experiences into actionable wisdom.
 ### Issue tracker
 
 GitHub Issues on `yosseftal/PiC_healing` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage roles use default label names (`needs-triage`, `needs-info`,
+`ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md`, `decisions.md`, and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
