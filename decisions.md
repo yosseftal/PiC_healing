@@ -865,10 +865,111 @@ or flow between them—whatever feels right. We log every discovery."
 
 ---
 
+## DEC-015 — Player mechanics: subjective completion, atomic steps, content pipeline
+
+**Status:** Agreed (2026-06-27, Yossef-Tal & Sigal) — resolves **GQ-012**
+
+**Context:** **DEC-006** defines Player **Finish** (סיום) as the trigger for auto +1 use_count. 
+**DEC-014** establishes Atomic Discovery for treatment/cause selection. **GQ-012** refined Player architecture around 
+**Event Manager Sovereignty** and **Atomic Focus**, introducing a **Structured Markdown content pipeline**.
+
+**Decision:**
+
+1. **Subjective Completion (EM Sovereignty, not Technical Gates):**
+   - **No validation gates:** There are **no system-enforced "required steps"** or technical checks that block progression.
+   - **EM is sole authority:** The Event Manager decides when a step is "complete" based on **internal readiness** 
+   (whether they fully executed the action, understood it, or intuitively chose to skip it).
+   - **Intuitive progression:** A step is marked complete when the EM **feels ready to move forward**, 
+   not when the system judges completion. This honors **Ownership** and the healing principle that the body knows.
+   - **Atomic navigation:** Each **screen = one action/instruction**. EM advances by clicking **"Next"** based on felt readiness.
+
+2. **Structured Markdown as Content Standard:**
+   - **Markdown template standard:** All treatments, protocols, and techniques are authored or converted to 
+   **Structured Markdown** format to enable atomic step parsing.
+   - **Atomic rule:** Every **H3 header (###)** in the document **automatically defines one Player step**.
+     - Example:
+       ```markdown
+       ### Step 1: Relax Your Shoulders
+       Take a deep breath and let your shoulders drop naturally.
+
+       ### Step 2: Feel the Release
+       Notice where you feel the release happening in your body.
+
+       ### Step 3: Hold the Awareness
+       Maintain this feeling for 30 seconds without forcing.
+       ```
+   - **Benefits:** Clear, simple parsing logic; easy for EM and course creators to add steps; consistent structure across all protocols.
+
+3. **Content Transformation Pipeline:**
+   - **Content Parser (Python/AI-based):** A dedicated module scrapes existing HTML content from the website and identifies:
+     - Paragraph breaks or bullet points as potential atomic steps
+     - Logical action boundaries (instructions that fit one "Next" click)
+   - **Conversion to JSON:** Parser transforms identified steps into **JSON database entries** with:
+     - `step_number`, `step_title` (from header or first line), `step_content`, `step_order`
+     - Optional: `is_optional` (true/false), `alternative_steps` (list of conditional paths)
+   - **Storage:** Steps stored in database, indexed by protocol/treatment ID, enabling fast retrieval and sequencing in Player.
+   - **Future intake:** New treatments authored in Structured Markdown directly, no manual conversion needed.
+
+4. **Session Persistence & Integrating State:**
+   - **Finish flow (סיום):** Clicking **"Finish"** at any point (after required or optional steps) **increments use_count by 1**.
+     The system **trusts the EM's declaration** of completion.
+   - **Optional closing muscle-test:** After or before clicking Finish, the EM may optionally run a 
+   **NEMAR inquiry: "Is it NEMAR that this treatment ended successfully?"** (yes/no binary test). 
+   This is **optional** — not required for Finish or use_count increment (DEC-006). 
+   If run, the result is logged as metadata on the timeline entry.
+   - **Integrating exit:** If EM exits **before reaching the protocol's final step**, the session is preserved in 
+   **Integrating state** (not failed, not incomplete — in progress). No penalty, no pressure.
+   - **Resume capability:** EM can later resume the same Inquiry Session, returning to the last step or starting fresh (their choice).
+
+5. **Step Optionality & Conditional Branching (Future-Ready):**
+   - **MVP:** All steps treated equally; EM can skip any step (no enforcement).
+   - **Post-MVP:** Support optional flags (`is_optional: true`) and branching (`alternative_steps`) 
+   for protocols that offer choices.
+   - **Architecture remains simple:** Parser handles conditional logic; Player displays one step at a time regardless of 
+   complexity.
+
+**Refines:**
+
+- **DEC-001 (Atomic Focus):** Atomic Focus applies to Player navigation: one screen, one action, one "Next" click at a time.
+- **DEC-006 (use_count increment):** **Finish** (סיום) is the explicit trigger for auto +1, triggered by EM declaration, 
+not system validation.
+- **DEC-014 (Content discovery):** Treatments/courses sourced via Atomic Discovery now have atomic-step internals 
+via Structured Markdown.
+
+**Rationale:** **Event Manager Sovereignty** means no hidden gates or technical validation. **Intuitive progression** 
+aligns with the healing principle (the body knows when it's ready). 
+**Structured Markdown** provides a universal, simple, parser-friendly format for all content, eliminating ad-hoc step definitions. 
+**Integrating state** preserves non-failure framing and supports real-world healing (which is often messy and non-linear).
+
+**Consequences:**
+
+- **Schema:**
+  - `protocols` table gains `content_format` field (enum: 'structured_markdown', 'other')
+  - `player_steps` table: `protocol_id`, `step_number`, `step_title`, `step_content`, `is_optional`, `alternatives` (JSONB)
+  - `inquiry_session` gains `current_step_index`, `integrating_state` (bool), `can_resume` (bool)
+
+- **Content Pipeline:**
+  - **Intake:** HTML scraper (Content Parser) processes existing treatment docs → identifies steps → stores as JSON
+  - **Authoring:** New treatments authored in Structured Markdown (H3 = step) → Parser auto-converts to DB entries
+  - **Fallback:** If structured markdown parsing fails, treat entire protocol as single step (graceful degradation)
+
+- **Player UX:**
+  - Display current step (title + content) → "Next" button (always available, no validation) → navigate to next step
+  - No "Skip" button needed; "Next" is skip-capable when EM is ready
+  - **Finish button** (visible at any point): clicking it increments use_count, marks session complete or Integrating
+  - Session state persisted: EM can close app, return later, resume where they left off (or restart)
+
+- **Copy:**
+  - "Follow the steps at your own pace. Click 'Next' when you're ready—no pressure to rush. You can stop anytime; 
+  your progress is saved."
+  - "Finish when you've had enough. The work will keep integrating, whether you completed all steps or not."
+
+---
+
 *Next: I'll update CLAUDE.md, CONTEXT.md, and README.md to reflect DEC-014.*
 
 **Resolved:** GQ-011 → **DEC-014** (2026-06-22).
 
 **Resolved (total):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
 **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**; **GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**;
-**GQ-010** → **DEC-013**; **GQ-011** → **DEC-014** (2026-06-22).
+**GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**; **GQ-012** → **DEC-015** (2026-06-27).
