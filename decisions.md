@@ -683,6 +683,42 @@ redesigned as a dynamic symptom, and session documentation split into unit-level
      EM-customized). EM muscle-tests Right-path NEMAR questions to select what to execute.
    - Both tables are **Smart-Linkable** to Symptom Groups; the EM may attach causes/treatments to group documentation.
 
+5. **Atomic Discovery Mechanics (Category → Item Progression):**
+   - **Category-level NEMAR inquiry (first):** Before drilling down into items, the EM muscle-tests a category question:
+     - "Is the most **NEMAR** cause **Physical**?" / "Is the most **NEMAR** treatment **Energetic**?" etc.
+     - Four categories: Physical, Emotional, Energetic, Conscious (system-defined, extensible).
+   - **Item-by-item discovery (after category selected):** Once a category is chosen, the system presents items **one-by-one**:
+     - "Is **'Being Worthy'** the most **NEMAR** cause for me right now?"
+     - "Is **'Ocean of Thoughts'** the most **NEMAR** treatment for me right now?"
+     - Maintains **Atomic Focus**: one question at a time, one item tested per step.
+   - **Result:** EM narrows down from category → specific item without cognitive overload.
+
+6. **Intuitive Choice Rule (Global Logic Exception):**
+   - **Global NEMAR answer:** If the EM muscle-tests a **category-level or whole-table NEMAR question** 
+   (e.g., "Is there a **NEMAR** treatment for me in this category?") and the body responds with a 
+   **clear global 'Yes' or global 'No'** (not a specific item), the system **bypasses atomic item-by-item discovery** 
+   and displays the **entire table** to the EM for **intuitive selection**.
+   - **Intuitive choice UX:** EM scans the full table and selects what *feels* right, without being forced through 
+   10+ NEMAR questions.
+   - **User preference overrides:** The EM can set system-wide defaults to:
+     - **"Always show entire table"** (skip Atomic Discovery entirely, show full table by default).
+     - **"Always show entire category"** (skip item-by-item after category selection, show full category by default).
+   - **Pairwise Category Testing (optional):** When viewing multiple categories 
+   (e.g., Physical, Emotional, Energetic, Conscious), the EM can request **"Show categories two by two"**: 
+   system asks NEMAR about pairs ("Is it **Physical OR Emotional**?"). Only if the answer is **Yes**, 
+   the system splits into **two separate NEMAR questions** ("Is it **Physical**?" and "Is it **Emotional**?").
+     This keeps category discovery efficient while respecting the body's binary choices.
+   - **Rationale:** Honors the body's intelligence — sometimes the body says "all of these could help" (global Yes) or "none of the standard
+     causes fit" (global No), and the EM needs visual context to make the final choice.
+
+7. **Scope Definition & Completion Verification (Additional NEMAR Questions):**
+   - **Scope question (before starting work):** "Is it **NEMAR** to treat the **entire symptom list** together 
+   [in this session]?" If No, EM may narrow scope to specific symptoms.
+   - **Completion question (after Player Finish or treatment execution):** 
+   "Is it **NEMAR** that this treatment has finished successfully?" 
+     Optional binary muscle-test to affirm completion (used alongside Integrating state, DEC-006).
+   - Both are **voluntary NEMAR inquiries** the EM can trigger, not mandatory gates.
+
 **Refines:**
 
 - **DEC-001 (Atomic Focus):** Atomic Focus applies per **focus target** (Symptom Group), not per **path unit**. One group = one session;
@@ -693,26 +729,49 @@ redesigned as a dynamic symptom, and session documentation split into unit-level
 
 **Rationale:** Organic flow honors the body's real-time guidance (NEMAR as a dynamic navigator, not a rigid gate). 
 Self-Sabotage as a symptom simplifies UX (no special flow), increases relevance (group-specific), 
-and aligns with the rating system. Multi-layered docs preserve both precision (unit work) and narrative (session context).
+and aligns with the rating system. 
+**Atomic Discovery** (category → item progression) maintains **Atomic Focus** while navigating complex tables—
+no cognitive overload from asking 10+ individual questions. **Intuitive Choice Rule** honors moments 
+when the body provides a global answer (Yes or No to whole category), allowing the EM to use intuition 
+for final selection. Multi-layered docs preserve both precision (unit work) and narrative (session context).
 
 **Consequences:**
 
 - Schema:
   - Symptom Group row includes optional **`self_sabotage_rating`** (Polarity, Intensity, history). 
   Can be null if not added to group.
+  - **Causes Table & Treatments Table** rows include **`category`** field (enum: Physical, Emotional, Energetic, Conscious).
   - Session/Inquiry record includes **`session_audit`** (JSONB or text) capturing all unit types and flow sequence.
   - Timeline events gain expanded **`log_type`** values: 
-  'cause_identified', 'treatment_executed', 'session_opened', 'session_closed', etc.
+  'cause_identified', 'treatment_selected', 'treatment_executed', 'session_opened', 'session_closed', etc.
 
 - UX (Inquiry Session on Symptom Group):
   - **No mandatory "Safety Check" step.** If Self-Sabotage symptom exists in group, EM rates it as part of group rating workflow.
   - **No "Choose Left or Right" picker.** EM flows organically: starts with Empty Vessel, then navigates to Causes Table or
     Treatments Table based on intent or body guidance.
+  - **Atomic Discovery UI for Tables (configurable defaults):**
+    - **User preferences:** EM can set system-wide defaults to:
+      - "Always show entire table" (skip Atomic Discovery, show full table immediately).
+      - "Always show entire category" (after category selection, show full category rather than item-by-item).
+    - **Scope question (optional):** "Is it NEMAR to treat the entire symptom list together?" [Yes/No muscle test].
+    - **Category selection (with pairwise option):**
+      - **Standard:** "Is the most NEMAR [Cause/Treatment] **Physical** / **Emotional** / **Energetic** / **Conscious**?" 
+        [One-at-a-time or direct picker].
+      - **Pairwise mode (if EM prefers):** System groups categories two-by-two. NEMAR question: "Is it **Physical OR Emotional**?" 
+        If Yes, system then asks: "Is it **Physical**?" and "Is it **Emotional**?" separately to narrow further. If No, 
+        system moves to next pair (e.g., "Is it **Energetic OR Conscious**?").
+    - **Item-by-item after category (if not overridden by user preference):** 
+    "Is **[Item Name]** the most NEMAR [Cause/Treatment] for me right now?" 
+      [Presented sequentially, one item per screen—Atomic Focus].
+    - **Intuitive Choice override:** If global NEMAR to category/table = Yes or No, display full table for intuitive scan + selection.
   - **Unit affordances:** "What did you discover?" (cause), "What did you execute?" (treatment) capture unit-level docs.
+  - **Completion verification (optional):** "Is it NEMAR that this treatment has finished successfully?" 
+    [Optional yes/no muscle test after Player Finish].
   - **Session audit:** At session close (or anytime), display/download comprehensive session log: "Today in this group: [causes
     diagnosed], [treatments run], [insights captured]."
 
-- Copy: "Your body guides you. Diagnose causes, select treatments, 
+- Copy: "Your body guides you. Diagnose causes, select treatments, or flow between them—whatever feels right. 
+We ask one question at a time. When your body says 'yes or no to all,' we show you the full menu to choose from." 
 or flow between them—whatever feels right. We log every discovery."
 
 ---
