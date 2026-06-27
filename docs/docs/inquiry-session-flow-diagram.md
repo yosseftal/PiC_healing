@@ -250,3 +250,120 @@ Once past Empty Vessel + Group Ratings, the EM navigates freely between Left and
 - **Autonomy:** Self-Sabotage is optional and group-specific, not a mandatory gate.
 - **Continuity:** Multiple causes/treatments in one session without breaking Atomic Focus (which applies to the group, not the path).
 
+---
+
+## User Preference Logic for Atomic Discovery (DEC-014)
+
+```
+┌─────────────────────────────────────┐
+│   EM Selects Discovery Mode         │
+│  (or uses system default)            │
+└──────────────┬──────────────────────┘
+               │
+    ┌──────────┼──────────┐
+    │          │          │
+┌───▼────┐ ┌──▼────┐ ┌──▼────────┐
+│Atomic  │ │Always │ │Pairwise   │
+│(default)│ │Show   │ │Categories │
+│        │ │Table  │ │           │
+└───┬────┘ └──┬────┘ └──┬────────┘
+    │         │         │
+    ▼         ▼         ▼
+┌─────────────────┐    ┌──────────────┐
+│Category-Level   │    │Show Full     │
+│NEMAR: "Is it    │    │Table/Category│
+│Physical/        │    │for Intuitive │
+│Emotional?"      │    │Selection     │
+└────┬────────────┘    └──────────────┘
+     │
+     ├─ Yes
+     │   │
+     │   ▼
+     │ ┌───────────────────────────┐
+     │ │Item-by-Item NEMAR:        │
+     │ │"Is [Item] most NEMAR?"    │
+     │ │(one item per screen)      │
+     │ └─────────┬─────────────────┘
+     │           │
+     │ ┌─────────┴─────────┐
+     │ │ Yes / Found       │ (next item
+     │ │                   │  or exit)
+     │ │
+     │ └─► Continue or Exit
+     │
+     └─ No
+         │
+         ▼
+     ┌──────────────────────┐
+     │ Global "No"          │
+     │ Display Full Table   │
+     │ for Intuitive        │
+     │ Selection            │
+     └──────────────────────┘
+
+PAIRWISE FLOW (if EM selects "Pairwise Categories"):
+┌────────────────────────────────────┐
+│NEMAR Pair 1:                        │
+│"Is it Physical OR Emotional?"       │
+└────────┬───────────────────────────┘
+         │
+    ┌────┴────┐
+    │          │
+  Yes         No
+    │          │
+    ▼          ▼
+┌─────────┐  ┌────────────────────────┐
+│Split    │  │NEMAR Pair 2:           │
+│into:    │  │"Is it Energetic OR     │
+│"Physical│  │Conscious?"             │
+│?"       │  └────────┬───────────────┘
+│"Emotional│          │
+│?"       │   ┌──────┴──────┐
+│         │   │              │
+└────┬────┘ Yes            No
+     │   │    │              │
+     │   │    ▼              ▼
+     │   │  ┌──────────┐  ┌────────┐
+     │   │  │Split &   │  │None    │
+     │   │  │Ask       │  │Found   │
+     │   │  │(similar) │  │(Manual │
+     │   │  └──────────┘  │input)  │
+     │   │                └────────┘
+     │   │
+     └───┴─► Narrow Down to Category or Item
+
+KEY DECISION POINTS:
+• EM chooses discovery mode upfront (or uses default)
+• At each NEMAR question, global Yes/No → show full table (intuitive choice)
+• Pairwise mode efficiently handles 4 categories in 2-3 questions
+• Always show mode skips discovery, displays table immediately
+```
+
+---
+
+## User Preference Settings (DEC-014)
+
+**Discovery Mode Options:**
+
+1. **Atomic Discovery (Default)**
+   - Category-level NEMAR first: "Is it **Physical**?"
+   - Then item-by-item within category
+   - Best for: methodical, step-by-step decision-making
+
+2. **Always Show Entire Table**
+   - Skip all NEMAR questions, display full table immediately
+   - Best for: EM who knows what they want or prefers visual scanning
+
+3. **Always Show Entire Category**
+   - Category-level NEMAR, then show full category (skip item-by-item)
+   - Best for: faster discovery while maintaining some structure
+
+4. **Pairwise Category Testing**
+   - NEMAR groups categories two-by-two
+   - More efficient than individual category questions
+   - Best for: EM with binary muscle-test preference
+
+**How to Switch Modes:**
+- Settings → Discovery Preferences → [Select Mode]
+- Can change anytime during session (affects next table interaction)
+
