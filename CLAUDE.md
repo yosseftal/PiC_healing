@@ -39,15 +39,20 @@ turning subjective experiences into actionable wisdom.
 ### C. Inquiry Sessions & NEMAR Flow
 - **Inquiry Session** (סשן): one sitting with **one chosen focus**—**symptom-led** on a
   Symptom Group, **course-led** when a **course as treatment** is chosen, or **timeline-first**
-  technique/treatment work (`decisions.md` **DEC-003**, **DEC-004**). User may **switch focus**
-  by **starting a new session anytime** (including switching Symptom Groups on symptom-led paths).
-- **Steps** (flexible order; user may **start at any step**): Empty Vessel → Safety
-  Check (Self-Sabotage) → NEMAR inquiry → treatment player → Reflective Journal.
-- **Recommended order:** same as above. NEMAR path: Left (root cause in Causes Table)
-  / Right (treatment in Treatments Table) → execution instructions.
+  technique/treatment work. User may **switch focus** by **starting a new session anytime**.
+- **NEMAR flow (Organic, multi-path):** Within a Symptom Group Inquiry Session, the EM flows organically between diagnosing
+  root causes (Left path, using **Causes Table**) and selecting treatments (Right path, using **Treatments Table**), guided by
+  real-time muscle testing (**NEMAR**) (**DEC-014**). No prescribed order; multiple causes/treatments per session supported.
+- **Steps** (flexible order; user may **start at any step**): Empty Vessel → Self-Sabotage rating (if added to group) → 
+  NEMAR inquiry (Left/Right flow) → treatment player → Reflective Journal.
+- **Recommended order:** same as above, but EM may reorder or skip where the method allows.
+- **Self-Sabotage as group-specific symptom:** Not a mandatory gate; instead, a dynamic symptom the EM can add/remove from any
+  group. When present, rated like any other symptom (blind re-rating supported). Satisfies "safety check" through standard rating
+  workflow (**DEC-014**).
+- **Multi-layered documentation:** Unit-level logs (each cause identified, each treatment executed) + session-level audit (comprehensive
+  session narrative) (**DEC-014**).
 - **Atomic Focus during a session:** one muscle-test question and one Player step at a time,
-  one **focus target** per visit (symptom group, course-as-treatment, or timeline-first)—not
-  locked across visits.
+  one **focus target** per visit (symptom group or course-as-treatment)—not locked across visits.
 
 ### D. Dynamic Assessment, Polarity Ratings & Smart-Linking
 - Allow **symptom refinement** on **symptom–group inquiry paths** when that focus is active.
