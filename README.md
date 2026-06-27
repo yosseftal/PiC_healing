@@ -129,13 +129,19 @@ logic, based on the NEMAR principles
   Symptom Group, course-led when a **course
   as treatment** is chosen, or **timeline-first**
   technique/treatment work. Steps—Empty
-  Vessel, safety check, NEMAR inquiry,
+  Vessel, self-sabotage rating (if relevant), NEMAR inquiry,
   treatment player, journal—may be
   **entered and run in any order** where the
   path applies. **Recommended** order: Empty
-  Vessel → safety → NEMAR → player → journal.
+  Vessel → self-sabotage rating → NEMAR → player → journal.
   New sessions may start whenever the user
   chooses (any focus, any entry point).
+* **NEMAR Inquiry Flow (Organic):** Within a session, EM flows organically between diagnosing
+  root causes (Left) and selecting treatments (Right), guided by real-time muscle testing. 
+  **Atomic Discovery** keeps questions focused: category-level first ("Is it **Physical**?"), 
+  then item-by-item. EM can set preferences (**"Always show full table"** or **"Pairwise categories"**) 
+  for faster discovery. **Intuitive Choice Rule:** if body says yes to entire category, system 
+  displays full table for intuitive selection instead of continuing one-by-one questions (**DEC-014**).
 
 ### 3. Dynamic Assessment, Polarity Ratings & Smart-Linking
 * **Symptom Refinement:** On **symptom–group
