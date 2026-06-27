@@ -105,6 +105,19 @@ May run **standalone**, attach to a **Symptom Group**’s Work Session, or suppl
 Access may be **free or paid** (**per-course grant**); progress is part of what that grant (or free offer) includes.
 _Avoid_: Treating a course as the same entity as a Symptom Group; no auto-binding of a course to a group without EM choice
 
+**Atomic Discovery** (DEC-014):
+The system asks NEMAR questions hierarchically to help the EM narrow from categories (Physical, Emotional, Energetic, Conscious) to 
+specific items. First: **category NEMAR** ("Is it **Physical**?"). Then: **item-by-item** within category. 
+EM can override with preferences (**"Always show full table"**) or use **pairwise testing** 
+(system groups categories two-by-two: "Is it **Physical OR Emotional**?" then splits if Yes).
+_Avoid_: Forcing item-by-item through all items when global Yes or No; ignoring EM preferences
+
+**Intuitive Choice Rule** (DEC-014):
+When global NEMAR to a category/table returns clear Yes or No (not specific to one item), system displays 
+**entire table** for **intuitive EM selection** instead of continuing atomic discovery. Honors body's wisdom 
+("all could help" or "none fit").
+_Avoid_: Forcing NEMAR after global answer; hiding table when body says yes to category
+
 **Symptom** (סימפטום):
 One named concern inside a Symptom Group (e.g. lower back and neck as two symptoms in one group).
 _Avoid_: Treating “symptom” as synonymous with the group itself
