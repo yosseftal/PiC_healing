@@ -635,49 +635,181 @@ Symptom Group ever reaches a "done" or "archived" state. Answer is **Option A wi
 
 ---
 
-## Grill — open questions (living)
+---
 
-### GQ-011 — NEMAR inquiry flow: Left (root cause) vs. Right (treatment) path mechanics and atomicity
+## DEC-014 — NEMAR inquiry flow: organic sequencing, self-sabotage as symptom, multi-layered logging
 
-**Status:** Open (posed 2026-06-22)
+**Status:** Agreed (2026-06-22, Yossef-Tal & Sigal) — resolves **GQ-011**
 
-**Context:** README and CLAUDE.md mention "NEMAR path: Left (root cause in Causes Table) / Right (treatment in Treatments Table)
-→ execution instructions" (**DEC-003**). But the mechanics are fuzzy: how does the EM choose Left vs. Right? Can one Inquiry Session
-contain both, or is each path **atomic** (one per session, honoring **Atomic Focus**)?
+**Context:** **DEC-001** defines Atomic Focus per Inquiry Session (one focus target). **GQ-011** clarified the mechanics of the two
+NEMAR paths (Left: root cause diagnosis; Right: treatment selection). Answer is **Option C (Organic Flow)** with Self-Sabotage
+redesigned as a dynamic symptom, and session documentation split into unit-level + session-level records.
 
-**Questions:**
+**Decision:**
 
-1. **Path selection timing:** When an Event Manager starts an Inquiry Session on a Symptom Group, how do they **choose** Left vs. Right?
-   - **A.** At session entry: "Are you diagnosing root cause or selecting treatment?" [Left/Right picker].
-   - **B.** System-guided: based on symptom history or EM profile, suggest one path.
-   - **C.** Organic: EM naturally flows to Left or Right based on intent during Empty Vessel or initial NEMAR question.
-   - **D.** Other?
+1. **Self-Sabotage as a Dynamic, Group-Specific Symptom (not a separate gate):**
+   - **"Self-Sabotage"** (הכשלה עצמית) is **not** a mandatory pre-session check. Instead, it is a **symptom that can be added to any
+     Symptom Group** at any time.
+   - Each Symptom Group has its **own independent instance** of the Self-Sabotage symptom (if included), with independent
+     **Polarity** and **Intensity** ratings (0–10).
+   - Once a Self-Sabotage symptom is present in a group, the "safety check" is **satisfied by the standard symptom rating
+     workflow** (blind re-rating, polarity flip, intensity update) — **no separate "Safety Check" UI flow** needed.
+   - The EM may add or remove the Self-Sabotage symptom from a group based on current relevance.
 
-2. **Left path (root cause diagnosis) workflow:**
-   - The EM asks NEMAR questions from a **Causes Table** (EM defined? system-provided?).
-   - They work through potential root causes until they isolate one or more.
-   - Then what?
-     - End session (diagnosis only)?
-     - Offer "Switch to Right path to treat?" (new session or same session)?
-     - Auto-suggest treatment based on diagnosed cause?
+2. **Organic Path Selection & Continuity (Option C):**
+   - An Inquiry Session on a Symptom Group supports **organic flow** between Left (diagnose root causes) and Right (select treatments).
+   - The session remains **anchored to one focus target** (one Symptom Group), honoring **Atomic Focus** on the group itself.
+   - Within that group, the EM may:
+     - Ask Left-path NEMAR questions (using a **Causes Table**) to diagnose causes.
+     - Ask Right-path NEMAR questions (using a **Treatments Table**) to select treatments.
+     - Execute treatments in the Player.
+     - Return to Left or Right paths at any time during the same session.
+   - **No prescribed order.** The body's NEMAR guidance (real-time muscle testing) directs the flow.
 
-3. **Right path (treatment selection) workflow:**
-   - The EM asks NEMAR questions from a **Treatments Table** (EM defined? system-provided?).
-   - They select a treatment protocol.
-   - Launch the Player to execute.
-   - After Player Finish, can they ask more treatment questions, or is the Inquiry Session done?
+3. **Multi-Layered Documentation (Unit + Session audit):**
+   - **Unit-level documentation:** Every individual unit of work (each cause diagnosed, each treatment executed) receives:
+     - Its own **timeline entry** (log_type: 'cause_identified', 'treatment_executed', etc.).
+     - Its own **documentation/note** (captured in Reflective Journal or inline during session).
+   - **Session-level documentation:** In addition, the system maintains a **comprehensive session audit** that:
+     - Records all units executed within that specific Inquiry Session.
+     - Preserves the **chronological flow** of the session (EM navigated Left → Right → Left → Player, etc.).
+     - Captures **session-level context** (mood, insights, blockers encountered during the session).
+   - Both levels coexist: granular unit logs + holistic session story.
 
-4. **Path atomicity & Atomic Focus:**
-   - **Option A (Atomic per path):** One Inquiry Session = one path only (Left-only or Right-only). Switching paths = new session.
-   - **Option B (Sequential within session):** One Inquiry Session can flow Left → Right → Player (one continuous thread).
-   - **Option C (Flexible):** EM chooses anytime—can do Left-only, Right-only, or Left → Right in one session.
+4. **Causes Table & Treatments Table:**
+   - **Causes Table:** A structured reference of potential root causes (system-provided, group-specific, or EM-customized).
+     EM muscle-tests Left-path NEMAR questions to narrow down actual causes for the group.
+   - **Treatments Table:** A structured reference of available treatments/techniques (system-provided, course-derived, or
+     EM-customized). EM muscle-tests Right-path NEMAR questions to select what to execute.
+   - Both tables are **Smart-Linkable** to Symptom Groups; the EM may attach causes/treatments to group documentation.
 
-**Co-architect recommendation:** Lean toward **Option A (atomic per path)** to honor **Atomic Focus** rigorously. But awaiting your design intent.
+**Refines:**
+
+- **DEC-001 (Atomic Focus):** Atomic Focus applies per **focus target** (Symptom Group), not per **path unit**. One group = one session;
+  multiple causes/treatments within that session are supported.
+- **DEC-002 (Work Session continuity):** Multi-layered docs enrich the group's persistent Work Session log with both granular and
+  holistic narratives.
+- **DEC-004 (Timeline):** Unit-level logs create additional timeline events; session audit provides cross-referencing.
+
+**Rationale:** Organic flow honors the body's real-time guidance (NEMAR as a dynamic navigator, not a rigid gate). 
+Self-Sabotage as a symptom simplifies UX (no special flow), increases relevance (group-specific), 
+and aligns with the rating system. Multi-layered docs preserve both precision (unit work) and narrative (session context).
+
+**Consequences:**
+
+- Schema:
+  - Symptom Group row includes optional **`self_sabotage_rating`** (Polarity, Intensity, history). 
+  Can be null if not added to group.
+  - Session/Inquiry record includes **`session_audit`** (JSONB or text) capturing all unit types and flow sequence.
+  - Timeline events gain expanded **`log_type`** values: 
+  'cause_identified', 'treatment_executed', 'session_opened', 'session_closed', etc.
+
+- UX (Inquiry Session on Symptom Group):
+  - **No mandatory "Safety Check" step.** If Self-Sabotage symptom exists in group, EM rates it as part of group rating workflow.
+  - **No "Choose Left or Right" picker.** EM flows organically: starts with Empty Vessel, then navigates to Causes Table or
+    Treatments Table based on intent or body guidance.
+  - **Unit affordances:** "What did you discover?" (cause), "What did you execute?" (treatment) capture unit-level docs.
+  - **Session audit:** At session close (or anytime), display/download comprehensive session log: "Today in this group: [causes
+    diagnosed], [treatments run], [insights captured]."
+
+- Copy: "Your body guides you. Diagnose causes, select treatments, 
+or flow between them—whatever feels right. We log every discovery."
 
 ---
 
-*No other open items. Next: GQ-012 (Player mechanics), GQ-013 (Courses & Academy), etc. See `docs/grill-backlog.md` for full subsystem list.*
+## Diagram: Inquiry Session Flow (Organic Multi-Path Model)
 
-**Resolved:** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    INQUIRY SESSION ENTRY                         │
+│                  (Anchored to one Symptom Group)                 │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    ▼                     ▼
+           ┌─────────────────┐  ┌─────────────────┐
+           │  EMPTY VESSEL   │  │  GROUP RATINGS  │
+           │ (Free writing)  │  │ (+ Self-Sabotage│
+           │   OPTIONAL      │  │  if added)      │
+           └────────┬────────┘  └────────┬────────┘
+                    │                    │
+                    └────────┬───────────┘
+                             ▼
+                   ┌─────────────────────┐
+                   │  ORGANIC FLOW GATE  │
+                   │  (Body guides EM)   │
+                   └────┬────────────┬───┘
+                        │            │
+         ┌──────────────┘            └──────────────┐
+         ▼                                          ▼
+    ┌─────────────┐                        ┌─────────────────┐
+    │  LEFT PATH  │                        │   RIGHT PATH    │
+    │ (NEMAR on   │                        │  (NEMAR on      │
+    │  Causes)    │                        │  Treatments)    │
+    └────┬────────┘                        └────┬────────────┘
+         │                                      │
+         ├─ Cause identified                    ├─ Treatment selected
+         │  [Timeline: cause_identified]        │  [Timeline: treatment_selected]
+         │  [Unit doc captured]                 │  [Unit doc captured]
+         │                                      │
+         └──────────┬───────────────────────────┘
+                    │
+        ┌───────────▼───────────┐
+        │  CONTINUE IN SESSION? │
+        └───────┬───────────────┘
+                │
+     ┌──────────┴──────────┐
+     │                     │
+   YES                    NO
+     │                     │
+     ▼                     ▼
+┌──────────┐        ┌────────────────┐
+│ Back to  │        │ SESSION AUDIT  │
+│ Organic  │        │ (Comprehensive │
+│  Flow    │        │  session log)  │
+│ (Left or │        │ [Session Finish│
+│  Right)  │        │  Timeline]     │
+└────┬─────┘        └────────┬───────┘
+     │                       │
+     └───────────────────────┼───────────────────────┐
+                             │                       │
+                      ┌──────▼──────┐     ┌──────────▼──────┐
+                      │   PLAYER    │     │ REFLECTIVE      │
+                      │ (Execute    │     │ JOURNAL         │
+                      │ treatment)  │     │ (Optional)      │
+                      └──────┬──────┘     └─────────────────┘
+                             │
+                      ┌──────▼──────────┐
+                      │ Player Finish   │
+                      │ (use_count +1)  │
+                      │ [Timeline: tech │
+                      │  _executed]     │
+                      └────────┬────────┘
+                               │
+                      ┌────────▼────────┐
+                      │ Integrating or  │
+                      │ Continue in     │
+                      │ Organic Flow?   │
+                      └─────────────────┘
+```
+
+---
+
+**Key Features of the Diagram:**
+
+1. **Organic Flow Hub:** Once past Empty Vessel + Ratings, the EM flows freely between Left (Causes) and Right (Treatments).
+2. **No Prescribed Order:** Multiple causes can be diagnosed before any treatment. Multiple treatments can be selected/executed.
+3. **Unit-Level Logging:** Each cause identified and each treatment executed generates its own timeline entry.
+4. **Session Audit:** At session close, a comprehensive record captures the entire session narrative.
+5. **Player Integration:** Treatment execution (via Player) is one possible unit within the session, not the only path.
+6. **Post-Player:** After Finish, EM can continue in the organic flow (more causes, more treatments) or close the session.
+
+---
+
+*Next: I'll update CLAUDE.md, CONTEXT.md, and README.md to reflect DEC-014.*
+
+**Resolved:** GQ-011 → **DEC-014** (2026-06-22).
+
+**Resolved (total):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
 **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**; **GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**;
-**GQ-010** → **DEC-013** (2026-06-22).
+**GQ-010** → **DEC-013**; **GQ-011** → **DEC-014** (2026-06-22).
