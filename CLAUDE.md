@@ -87,15 +87,21 @@ Exiting before end preserves session as **Integrating** (not failed, EM can resu
 - **Optional closing NEMAR:** After or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this treatment ended successfully?"**
   (yes/no). Result logged as metadata (**DEC-015**).
 
-### F. Courses: Polymorphic Lessons & Library Sync
-- **Course Work Session:** Courses are parallel lanes with dedicated Work Sessions (distinct from Symptom Groups), each with full chronological
-  integrity (**DEC-016**).
-- **Polymorphic Lesson Blocks:** Lessons use **Structured Markdown (H3 = step)** and can contain **four block types**:
-  Original Content, Treatment Reference (dynamic link to shared protocols), Insight/(הגיג) (read-only inspiration), Reflection Prompt (**DEC-016**).
-- **Subjective Navigation:** **No mandatory NEMAR** before treatments in courses (EM decides readiness). EM can **skip and return** later.
-  Three buttons per lesson: **"Next"** (mark viewed), **"Skip"** (mark skipped), **"Done"** (finish early) (**DEC-016**).
-- **Course Completion:** Course marked "Successfully Completed" when **all required blocks explicitly done** (optional blocks can be skipped).
+### F. Courses: Polymorphic Lessons, Contextual Binding & Content Versioning
+- **Course Work Session & Polymorphic Context:** Courses are parallel lanes with dedicated Work Sessions. A Course Work Session can be
+  **independent** (linked only to timeline, no parent Symptom Group) or **nested** (tagged as treatment for a Symptom Group). All course
+  activities are **retroactively linkable** to any logical unit (groups, journal, other courses) for full data reciprocity (**DEC-016**).
+- **Polymorphic Lesson Blocks:** Lessons use **Structured Markdown (H3 = step)** and can contain **four block types**: Original Content,
+  Treatment Reference (dynamic link to shared protocols), Insight/הגיג (read-only inspiration), Reflection Prompt (**DEC-016**).
+- **Subjective Navigation & "Soft Completion":** **No mandatory NEMAR** before treatments; EM decides readiness. **No technical gates**.
+  Three actions per block: **"Done" (בוצע)** — EM declares complete based on internal readiness (not physical execution);
+  **"Skip" (דלג)** — defers block, marked Incomplete, remains available later; **"Back" (חזור)** — navigate backward (**DEC-016**).
+  **Sovereignty:** EM can mark any block/lesson "Done" anytime, regardless of execution.
+- **Course Completion:** Course marked "Successfully Completed" when **all required blocks marked as done**. Optional blocks can be skipped.
   **Optional closing NEMAR** at course end (**DEC-016**).
+- **Content Versioning (Diary vs. Toolbox):** Timeline stores **static snapshot** of protocol as performed (historical integrity).
+  **Personal Treatment Library** always points to **latest live version** from master Treatments Table (no version alerts, always current).
+  **Manual variants** preserve EM ownership (custom adaptations, `variant_type: 'personal'`) (**DEC-016**).
 - **Library Sync:** Completing a treatment in a course **auto-adds it** to Personal Treatment Library (first-time execution).
   **Use count reciprocity:** Course execution increments universal `use_count` in library. Toolbox grows organically (**DEC-016**).
 
