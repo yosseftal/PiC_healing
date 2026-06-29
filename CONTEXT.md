@@ -166,7 +166,29 @@ All are navigable with **"Next"**, **"Skip"**, **"Done"** buttons; **no mandator
 _Avoid_: Fixed lesson templates; forced linear progression; treating lesson blocks as different from treatment protocols in structure
 
 **Course Work Session** (DEC-016):
-A dedicated, persistent Work Session for a course enrollment — separate from any Symptom Group Work Session. 
-Carries full chronological integrity, NEMAR machinery, Player execution, and Integrating states specific to that course.
-Each course run gets its own **timeline** and **progress** (**DEC-016**).
-_Avoid_: Merging course progress into a Symptom Group's Work Session without EM intention; forcing courses into static completion gates
+A dedicated, persistent Work Session for a course enrollment. Can exist **independently** on the Chronological Timeline (no parent Symptom Group)
+or be **nested** within a Symptom Group's Work Session (when EM tags course-as-treatment for a group).
+Carries full chronological integrity, NEMAR machinery, Player execution, Integrating states, and retroactive linking to any logical unit
+(other groups, courses, journal entries) for full data reciprocity (**DEC-016**).
+_Avoid_: Forcing courses into a rigid hierarchical parent-child relationship with Symptom Groups; preventing independent course Work Sessions
+
+**"Done" (בוצע) Action** (DEC-016):
+EM's **declaration** that a block or lesson is complete, based on **internal readiness alone**—not technical execution. Clicking "Done" marks
+the unit as "Completed" in the session record and advances to the next unit. EM can mark blocks "Done" at any time, even without physical
+step-by-step execution (e.g., reading and saying "I know this—done") (**DEC-016**).
+_Avoid_: Treating "Done" as requiring physical completion; blocking "Done" with validation gates; conflating "Done" with "Skip"
+
+**"Skip" (דלג) Action** (DEC-016):
+EM's **acknowledgment** of a block while **deferring it** for later. Clicking "Skip" marks the block as "Incomplete" and moves to the next unit.
+Skipped blocks remain available for future sessions and are tracked in course progress UI (**DEC-016**).
+_Avoid_: Treating "Skip" as "Done"; not tracking skipped blocks; preventing return to skipped blocks
+
+**Diary vs. Toolbox Model** (DEC-016):
+**Dual versioning approach** for treating content stability and updates:
+- **Timeline as a "Diary" (Static Record):** When EM clicks **Finish** in Player, system saves a **textual snapshot** of the protocol as performed
+  at that moment (stored as timeline event metadata). Ensures historical integrity: EM can review exactly what they did months or years ago.
+- **Library as a "Live Toolbox" (Dynamic Reference):** Personal Treatment Library card **always points** to the **latest live version** of protocol
+  from master Treatments Table (maintained by Sigal). No version alerts; EM always accesses current guidance.
+- **Manual Variants (Ownership):** If EM wishes to deviate from live version, they manually create a **"Personal Variant"** (`variant_type: 'personal'`).
+  Preserves Ownership principle; system stays simple (**DEC-016**).
+_Avoid_: Version histories cluttering the library; forcing EM to decide which version to use; silent auto-updates confusing historical records
