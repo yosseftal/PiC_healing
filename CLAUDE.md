@@ -1,7 +1,7 @@
 # PiC Healing - Project Manifesto & Guidelines V2
 
 This document operationalizes the manifesto for product, UX, and implementation decisions.
-Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-013).
+Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-016).
 
 ## 1. Project Vision
 PiC (Personal Information Center) is a knowledge-management platform for self-healing.
@@ -84,8 +84,22 @@ turning subjective experiences into actionable wisdom.
   existing HTML + future Markdown into atomic JSON steps (**DEC-015**).
 - **Finish & Integrating:** Clicking **"Finish"** (סיום) auto-increments `use_count` (**DEC-006**). 
 Exiting before end preserves session as **Integrating** (not failed, EM can resume) (**DEC-015**).
+- **Optional closing NEMAR:** After or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this treatment ended successfully?"**
+  (yes/no). Result logged as metadata (**DEC-015**).
 
-### E. Post-Treatment: Integration & Growth
+### F. Courses: Polymorphic Lessons & Library Sync
+- **Course Work Session:** Courses are parallel lanes with dedicated Work Sessions (distinct from Symptom Groups), each with full chronological
+  integrity (**DEC-016**).
+- **Polymorphic Lesson Blocks:** Lessons use **Structured Markdown (H3 = step)** and can contain **four block types**:
+  Original Content, Treatment Reference (dynamic link to shared protocols), Insight/(הגיג) (read-only inspiration), Reflection Prompt (**DEC-016**).
+- **Subjective Navigation:** **No mandatory NEMAR** before treatments in courses (EM decides readiness). EM can **skip and return** later.
+  Three buttons per lesson: **"Next"** (mark viewed), **"Skip"** (mark skipped), **"Done"** (finish early) (**DEC-016**).
+- **Course Completion:** Course marked "Successfully Completed" when **all required blocks explicitly done** (optional blocks can be skipped).
+  **Optional closing NEMAR** at course end (**DEC-016**).
+- **Library Sync:** Completing a treatment in a course **auto-adds it** to Personal Treatment Library (first-time execution).
+  **Use count reciprocity:** Course execution increments universal `use_count` in library. Toolbox grows organically (**DEC-016**).
+
+### G. Post-Treatment: Integration & Growth
 - Offer Reflective Journaling after a session (any step order); not only at end of linear wizard.
 - Do not use failure framing when treatment is incomplete; use Integrating/In Progress states.
 - Integration reasons may include repetition, pending user commitments, or natural body permeation time.
