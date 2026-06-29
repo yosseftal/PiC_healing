@@ -966,10 +966,78 @@ aligns with the healing principle (the body knows when it's ready).
 
 ---
 
+## DEC-016 — Course architecture: polymorphic lesson blocks, subjective navigation, library sync
+
+**Status:** Agreed (2026-06-29, Yossef-Tal & Sigal) — resolves **GQ-013**
+
+**Context:** **DEC-003** defines courses as a parallel lane with NEMAR, Player, Integrating. **DEC-015** establishes Structured Markdown
+(H3 = step) as the content standard for all protocols. **GQ-013** clarified how course lessons integrate with the Player, Personal Treatment
+Library, and EM autonomy.
+
+**Decision:**
+
+1. **Course as a dedicated Work Session (DEC-003 alignment):**
+   - Each course **enrollment** creates a dedicated **Course Work Session** — distinct from Symptom Group Work Sessions.
+   - Follows the same **chronological integrity** as Symptom Groups: every lesson execution is logged as a **timeline event**.
+   - All lesson interactions (read, skipped, completed, finished) become persistent records in the course's Work Session.
+
+2. **Polymorphic Lesson Blocks (Content Standard):**
+   - **Lessons use Structured Markdown (H3 = step)** per **DEC-015**, enabling consistent parsing.
+   - Each **lesson is a container** that can hold **one or more block types**:
+     - **Original Content:** Unique text, videos, audio, or instructions authored for the course.
+     - **Treatment Reference:** A dynamic **link to an existing protocol** from the **Treatments Table** (or Personal Treatment Library).
+       When rendered, displays the protocol's steps using the same Player as standalone treatments.
+     - **Insight/Inspiration (הגיג):** A standalone **"Hagig"** from the shared collection — displayed as read-only inspiration, not executable.
+     - **Reflection Prompt:** A **specific prompt** for the Event Manager to add to their **Reflective Journal** during or after the lesson.
+
+3. **Execution Logic & Event Manager Sovereignty:**
+   - **No pre-treatment NEMAR inside course:** When a **treatment is presented within a course**, there is **no mandatory NEMAR inquiry**.
+     The system **trusts the EM's readiness**.
+   - **Non-linear navigation:** The EM may **skip steps and return later**.
+   - **Skipped ≠ done:** A skipped step remains in its **current state** (not marked "Complete") unless the EM explicitly triggers completion.
+   - **Atomic progress UI:** One screen per step. **"Next"** (move forward), **"Skip"** (mark skipped), or **"Done"** (finish block).
+
+4. **Course Completion & Success:**
+   - **Completion trigger:** Course marked **"Successfully Completed"** when **all required blocks** are **explicitly performed or done**.
+   - **Optional success NEMAR:** Upon course completion, optional **NEMAR inquiry: "Is it NEMAR that this course ended successfully?"**
+     Result stored as metadata on session closure log.
+
+5. **Technique Extraction & Personal Treatment Library Sync:**
+   - **First-time execution trigger:** If EM **never executed** a course treatment, clicking **Finish** **automatically adds it** to 
+   Personal Treatment Library.
+   - **Provenance tracking:** Library entry includes **source metadata** (e.g., "Source: Course X, Lesson Y").
+   - **Use count reciprocity:** Completing a treatment **within a course** **increments `use_count`** in the Personal Treatment Library.
+     One unified counter, all sources contribute.
+
+**Refines:**
+
+- **DEC-003 (Courses):** Adds mechanics for lesson structure and Player integration.
+- **DEC-015 (Structured Markdown):** Confirms H3 parsing applies to course lessons; treatment references enable content reuse.
+- **DEC-005 & DEC-006 (Personal Treatment Library):** First-time course execution auto-populates library with provenance.
+
+**Rationale:** **Polymorphic blocks** enable course creators to mix original content with dynamic links to shared protocols, rapid assembly
+without duplication. **No pre-treatment NEMAR** respects EM's body wisdom. **Subjective completion** honors autonomy. **Automatic library sync**
+makes toolbox a natural outcome of learning.
+
+**Consequences:**
+
+- **Schema:**
+  - `course_lessons` table: `course_id`, `lesson_number`, `lesson_blocks` (JSONB: polymorphic array)
+  - `course_session` gains: `completed_blocks`, `skipped_blocks`, `completion_status` (enum), `completion_nemar_result`
+  - `course_timeline` events: `log_type` includes 'lesson_viewed', 'lesson_skipped', 'lesson_completed', 'course_completed'
+
+- **Player UX (course):** Three buttons: "Next" (mark viewed), "Skip", "Done" (finish early). Treatment references run via Player.
+
+- **Library sync:** On treatment Finish within course → check library → create new entry or append source, increment `use_count`.
+
+- **Copy:** "Take lessons at your own pace. Every technique you complete builds your personal toolbox."
+
+---
+
 *Next: I'll update CLAUDE.md, CONTEXT.md, and README.md to reflect DEC-014.*
 
 **Resolved:** GQ-011 → **DEC-014** (2026-06-22).
 
 **Resolved (total):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**; **GQ-004** → **DEC-007**;
 **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**; **GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**;
-**GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**; **GQ-012** → **DEC-015** (2026-06-27).
+**GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**; **GQ-012** → **DEC-015**; **GQ-013** → **DEC-016** (2026-06-29).
