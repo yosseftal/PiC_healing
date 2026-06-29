@@ -966,22 +966,28 @@ aligns with the healing principle (the body knows when it's ready).
 
 ---
 
-## DEC-016 — Course architecture: polymorphic lesson blocks, subjective navigation, library sync
+## DEC-016 — Course architecture: polymorphic lesson blocks, subjective navigation, content versioning
 
-**Status:** Agreed (2026-06-29, Yossef-Tal & Sigal) — resolves **GQ-013**
+**Status:** Refined (2026-06-29, Yossef-Tal & Sigal) — resolves **GQ-013** with critical refinements
 
 **Context:** **DEC-003** defines courses as a parallel lane with NEMAR, Player, Integrating. **DEC-015** establishes Structured Markdown
-(H3 = step) as the content standard for all protocols. **GQ-013** clarified how course lessons integrate with the Player, Personal Treatment
-Library, and EM autonomy.
+(H3 = step) as the content standard for all protocols. **GQ-013** clarified how course lessons integrate with the Player, Personal Treatment Library, 
+and EM autonomy. 
+**Refinement (2026-06-29):** Adds clarity on "Done" semantics, contextual reciprocity (nested vs. independent), and
+content versioning model (Diary vs. Toolbox).
 
 **Decision:**
 
-1. **Course as a dedicated Work Session (DEC-003 alignment):**
+1. **Course Work Session: Polymorphic Context**
    - Each course **enrollment** creates a dedicated **Course Work Session** — distinct from Symptom Group Work Sessions.
+   - **Context polymorphism:** A Course Work Session can exist:
+     - **Independently** on the Chronological Timeline (linked only to timeline events, no parent Symptom Group).
+     - **Nested** within a Symptom Group's Work Session (when EM tags course-as-treatment for a group).
+   - **Retroactive Integrity:** All course activities (lessons, treatments, reflections) are **retroactively linkable** to any logical unit
+     on the timeline (Symptom Groups, other courses, journal insights) — ensuring full **data reciprocity** without rigid hierarchies.
    - Follows the same **chronological integrity** as Symptom Groups: every lesson execution is logged as a **timeline event**.
-   - All lesson interactions (read, skipped, completed, finished) become persistent records in the course's Work Session.
 
-2. **Polymorphic Lesson Blocks (Content Standard):**
+2. **Polymorphic Lesson Blocks (Content Standard)**
    - **Lessons use Structured Markdown (H3 = step)** per **DEC-015**, enabling consistent parsing.
    - Each **lesson is a container** that can hold **one or more block types**:
      - **Original Content:** Unique text, videos, audio, or instructions authored for the course.
@@ -990,47 +996,88 @@ Library, and EM autonomy.
      - **Insight/Inspiration (הגיג):** A standalone **"Hagig"** from the shared collection — displayed as read-only inspiration, not executable.
      - **Reflection Prompt:** A **specific prompt** for the Event Manager to add to their **Reflective Journal** during or after the lesson.
 
-3. **Execution Logic & Event Manager Sovereignty:**
+3. **Subjective Navigation & "Soft Completion"**
    - **No pre-treatment NEMAR inside course:** When a **treatment is presented within a course**, there is **no mandatory NEMAR inquiry**.
      The system **trusts the EM's readiness**.
-   - **Non-linear navigation:** The EM may **skip steps and return later**.
-   - **Skipped ≠ done:** A skipped step remains in its **current state** (not marked "Complete") unless the EM explicitly triggers completion.
-   - **Atomic progress UI:** One screen per step. **"Next"** (move forward), **"Skip"** (mark skipped), or **"Done"** (finish block).
+   - **No technical validation gates:** The system **never enforces** required blocks. The EM is sole authority over completion.
+   - **Three atomic actions per step/block:**
+     - **"Done" (בוצע):** EM **declares** the step/block complete and moves forward. **EM's internal readiness is the only criterion** — not technical execution.
+       Clicking "Done" marks the block as "Completed" in the session record.
+     - **"Skip" (דלג):** EM **acknowledges** the block but chooses to defer it. Block marked as "Incomplete" and remains available for future sessions.
+       Skipped blocks are trackable on the course progress UI.
+     - **"Back" (חזור):** Navigate one unit backward in the sequence (optional, for EM to reread or reconsider).
+   - **Sovereignty Rule:** The EM can mark a block or a whole lesson as "Done" at any time, based on internal readiness,
+     **regardless of physical execution**. (E.g., EM reads a treatment and says "I know this—done" without stepping through every instruction.)
 
-4. **Course Completion & Success:**
-   - **Completion trigger:** Course marked **"Successfully Completed"** when **all required blocks** are **explicitly performed or done**.
+4. **Course Completion & Success**
+   - **Completion trigger:** Course marked **"Successfully Completed"** when **all required blocks** are **explicitly marked as done or completed**.
    - **Optional success NEMAR:** Upon course completion, optional **NEMAR inquiry: "Is it NEMAR that this course ended successfully?"**
      Result stored as metadata on session closure log.
 
-5. **Technique Extraction & Personal Treatment Library Sync:**
-   - **First-time execution trigger:** If EM **never executed** a course treatment, clicking **Finish** **automatically adds it** to 
-   Personal Treatment Library.
-   - **Provenance tracking:** Library entry includes **source metadata** (e.g., "Source: Course X, Lesson Y").
+
+5. **Content Versioning: Diary vs. Toolbox (Simple Model)**
+   - **Problem solved:** Prevent versioning clutter while ensuring both historical integrity and current guidance.
+   - **Timeline as a "Diary" (Static Record):**
+     - When EM clicks **Finish** in the Player, the system **saves a textual snapshot** of the protocol **as it was performed** at that moment.
+       This snapshot is stored as **timeline event metadata**.
+     - **Historical integrity:** If EM looks back a year later, they see **exactly what they did then** — textual record of the steps they followed.
+     - Supports both course lessons and ad-hoc treatments (same logic).
+   - **Library as a "Live Toolbox" (Dynamic Reference):**
+     - The **Personal Treatment Library card always points** to the **latest live version** of the protocol
+       from the **master Treatments Table** (maintained by Sigal).
+     - **No version alerts:** EM always accesses the most **updated guidance**. Updates are transparent and always-current.
+     - **No version history clutter:** Library remains clean and lightweight.
+   - **Manual Variants (for customization):**
+     - If EM wishes to **deviate** from the live version, they manually create a **"Personal Variant"** (tagged as `variant_type: 'personal'`) in the library.
+     - This **preserves Ownership:** EM can customize without system interference. Variants are **linked to provenance** (e.g., "Variant of Protocol X").
+     - System remains simple; EM remains architect.
+
+6. **Technique Extraction & Personal Treatment Library Sync**
+   - **First-time execution trigger:** If EM **never executed** a course treatment, clicking **Finish** **automatically adds it** to
+     Personal Treatment Library.
+   - **Provenance tracking:** Library entry includes **source metadata** (e.g., "Source: Course X, Lesson Y") and creation timestamp.
    - **Use count reciprocity:** Completing a treatment **within a course** **increments `use_count`** in the Personal Treatment Library.
-     One unified counter, all sources contribute.
+     One unified counter, all sources contribute (courses, ad-hoc sessions, Treatments Table).
+   - **Content link vs. snapshot:**
+     - Library card points to **live version** (allows EM to see updated guidance).
+     - Timeline event embeds **static snapshot** (what was actually performed).
 
 **Refines:**
 
-- **DEC-003 (Courses):** Adds mechanics for lesson structure and Player integration.
+- **DEC-003 (Courses):** Adds mechanics for lesson structure, polymorphic context, and Player integration.
 - **DEC-015 (Structured Markdown):** Confirms H3 parsing applies to course lessons; treatment references enable content reuse.
-- **DEC-005 & DEC-006 (Personal Treatment Library):** First-time course execution auto-populates library with provenance.
+- **DEC-005 & DEC-006 (Personal Treatment Library):** First-time course execution auto-populates library with provenance; use_count reciprocity.
+- **DEC-004 (Chronological Timeline):** Snapshot storage on timeline ensures diary integrity; library points to live version.
 
-**Rationale:** **Polymorphic blocks** enable course creators to mix original content with dynamic links to shared protocols, rapid assembly
-without duplication. **No pre-treatment NEMAR** respects EM's body wisdom. **Subjective completion** honors autonomy. **Automatic library sync**
-makes toolbox a natural outcome of learning.
+**Rationale:**
+- **Polymorphic lesson blocks** enable course creators to mix original content with dynamic links to shared protocols, rapid assembly without duplication.
+- **No pre-treatment NEMAR** respects EM's body wisdom and autonomy.
+- **"Done" semantics clarify EM sovereignty:** Declaration based on readiness, not execution. Removes friction between system and EM intent.
+- **Diary vs. Toolbox model is elegant:** Preserves history, enables updates, avoids clutter. Ownership remains with EM (manual variants).
+- **Retroactive linking** ensures full data reciprocity: courses can connect to any logical unit, any time.
 
 **Consequences:**
 
 - **Schema:**
-  - `course_lessons` table: `course_id`, `lesson_number`, `lesson_blocks` (JSONB: polymorphic array)
-  - `course_session` gains: `completed_blocks`, `skipped_blocks`, `completion_status` (enum), `completion_nemar_result`
-  - `course_timeline` events: `log_type` includes 'lesson_viewed', 'lesson_skipped', 'lesson_completed', 'course_completed'
+  - `course_sessions` table: `course_id`, `course_status` (enum: 'in_progress', 'completed', 'integrating'), 
+  `contextual_binding` (nullable `symptom_group_id` or null for standalone), `retroactive_links` (JSONB: array of linked entities).
+  - `course_lessons` table: `course_id`, `lesson_number`, `lesson_blocks` (JSONB: polymorphic array with `block_type`, `content`, `is_required`).
+  - `lesson_progress`: `course_session_id`, `lesson_id`, `block_id`, `action` (enum: 'viewed', 'skipped', 'completed'), `timestamp`.
+  - `personal_library_entries`: add `variant_type` (enum: 'original', 'personal', 'course_extracted'), `source_metadata` (JSONB).
+  - `timeline_events`: add `snapshot` (JSONB, only for Player Finish events: stores static copy of protocol steps as performed).
 
-- **Player UX (course):** Three buttons: "Next" (mark viewed), "Skip", "Done" (finish early). Treatment references run via Player.
+- **Player UX (course):** Three buttons: **"Done"** (mark complete, move forward), **"Skip"** (mark incomplete, move to next), **"Back"** (navigate backward).
+  Treatment references run via standard Player with same buttons.
 
-- **Library sync:** On treatment Finish within course → check library → create new entry or append source, increment `use_count`.
+- **Library sync:** On treatment Finish within course → check library → create new entry with `variant_type: 'course_extracted'` or append source, 
+increment `use_count`.
 
-- **Copy:** "Take lessons at your own pace. Every technique you complete builds your personal toolbox."
+- **Timeline storage:** On Finish, embed snapshot of protocol steps (textual array) as `timeline_event.metadata.protocol_snapshot`.
+
+- **Copy:**
+  - "Take lessons at your own pace. Mark 'Done' when you're ready—this step, or the whole lesson. No pressure to do every step step-by-step."
+  - "Every technique you complete builds your personal toolbox. Revisit it anytime—always up-to-date with Sigal's latest guidance."
+  - "You're the architect of your healing. Skip lessons now, return later. Nothing is forced."
 
 ---
 
