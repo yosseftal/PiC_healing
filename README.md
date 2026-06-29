@@ -223,6 +223,47 @@ or "Error". Instead, it is marked as
   available for honest off-Player logging
   (`decisions.md` **DEC-006**).
 
+### 6. Academy Courses: Polymorphic Lessons & Organic Navigation
+A parallel lane of structured courses offering
+education, techniques, insights, and reflection
+prompts all authored in **Structured Markdown**
+(H3 headers = steps) (**DEC-016**).
+
+* **Polymorphic Lesson Blocks:** Four types
+  of content:
+  - **Original Content:** Foundational teaching
+    (videos, text, theory).
+  - **Treatment Reference:** Dynamic links to
+    shared protocols in the Treatments Table
+    (not a copy, but live).
+  - **Insight/הגיג:** Read-only reflection or
+    revelation (curated wisdom or breakthrough
+    thoughts).
+  - **Reflection Prompt:** Open-ended question
+    for the Event Manager to journal and
+    integrate (**DEC-016**).
+
+* **Subjective Navigation:** **No mandatory
+  NEMAR** before course treatments; the EM
+  decides readiness. EM may **skip and return**
+  later, creating a non-linear progression
+  (**DEC-016**).
+
+* **Course Completion:** Marked "Successfully
+  Completed" when **all required blocks
+  explicitly done** (optional blocks can be
+  skipped). **Optional closing NEMAR** at
+  course end (**DEC-016**).
+
+* **Personal Toolbox Integration:** When a
+  treatment is executed in a course for the
+  **first time**, it is **auto-added** to the
+  Personal Treatment Library. Subsequent uses
+  increment a **universal `use_count`** across
+  courses and ad-hoc sessions—the toolbox
+  grows organically with every healing
+  intervention (**DEC-016**).
+
 ---
 
 ## 🏗️ Technical Architecture
@@ -578,6 +619,41 @@ PiC מספקת את הכלים והמתודולוגיה
   לפי פרוטוקול. יציאה באמצע במצב **בהטמעה**
   **לא** מעלה את המונה אוטומטית; **+1 ידני**
   זמין תמיד (`decisions.md` **DEC-006**).
+
+### 6. קורסי האקדמיה: בלוקים פולימורפיים וניווט אורגני
+מסלול מקביל של קורסים מובנים המציע
+למידה, טכניקות, תובנות ודיווחים
+הכל בכתיבה **Structured Markdown**
+(כותרות H3 = צעדים) (**DEC-016**).
+
+* **בלוקים של שיעורים פולימורפיים:** ארבעה סוגי
+  תוכן:
+  - **תוכן מקורי:** הוראה יסודית
+    (סרטונים, טקסט, תיאוריה).
+  - **הפניית טיפול:** קישור דינמי לפרוטוקולים
+    משותפים בטבלת הטיפולים (לא עותק,
+    אלא חי).
+  - **תובנה/הגיג:** תוכן מעורר השראה מתוך ההגיגים של סיגל
+  - **הנושא להרהור:** הזמנה לתעד או לכתוב ביחס לנושא מסויים הקשור לקורס(**DEC-016**).
+
+* **ניווט סובייקטיבי:** **אין נמ"ר חובה**
+  לפני טיפולי קורס; מנהל האירוע מחליט
+  על הכנות. מנהל ואירוע יכול **לדלג וחזור**
+  מאוחר יותר, יוצר התקדמות לא-ליניארית
+  (**DEC-016**).
+
+* **השלמת קורס:** מסומנת כ"הושלמה בהצלחה"
+  כאשר **כל הבלוקים הנדרשים בוצעו במפורש**
+  (בלוקים אופציונליים יכולים להיות דלולים).
+  **נמ"ר סגירה אופציונלי** בסוף קורס
+  (**DEC-016**).
+
+* **שילוב אורגני כלים אישי:** כאשר טיפול
+  בוצע בקורס ב**פעם הראשונה**, הוא **מתווסף
+  באוטומט** לספרייה האישית. שימושים
+  בהמשך מעלים **מונה ישיר** בקורסים
+  וסשנים אד-הוק—ארגז הכלים גדל
+  אורגנית בכל התערבות ריפוי (**DEC-016**).
 
 ---
 
