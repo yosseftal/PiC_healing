@@ -155,3 +155,18 @@ The **quantitative magnitude** of a symptom's current state (e.g., 0–10 scale,
 A symptom might transition from "Back Pain" 8/10 Negative to "Back Strength" 2/10 Positive; the magnitude tracks consistently, enabling
 analytics to measure pure change regardless of how the EM frames the symptom. Intensity is **independent** of **Polarity** (**DEC-010**).
 _Avoid_: Assuming intensity must increase or decrease with polarity flip; treating intensity as directional (up = good, down = bad)
+
+**Polymorphic Lesson Block** (DEC-016):
+One atomic unit within a course lesson, authored in **Structured Markdown** (H3 header = block). Four block types:
+1. **Original Content:** Foundational teaching (video, text, theory).
+2. **Treatment Reference:** Dynamic link to a shared protocol in the global Treatments Table (not a copy).
+3. **Insight/הגיג:** Read-only reflection or breakthrough (curated wisdom).
+4. **Reflection Prompt:** Open-ended question for EM journaling and integration.
+All are navigable with **"Next"**, **"Skip"**, **"Done"** buttons; **no mandatory pre-treatment NEMAR** (**DEC-016**).
+_Avoid_: Fixed lesson templates; forced linear progression; treating lesson blocks as different from treatment protocols in structure
+
+**Course Work Session** (DEC-016):
+A dedicated, persistent Work Session for a course enrollment — separate from any Symptom Group Work Session. 
+Carries full chronological integrity, NEMAR machinery, Player execution, and Integrating states specific to that course.
+Each course run gets its own **timeline** and **progress** (**DEC-016**).
+_Avoid_: Merging course progress into a Symptom Group's Work Session without EM intention; forcing courses into static completion gates
