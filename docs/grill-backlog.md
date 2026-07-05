@@ -138,39 +138,17 @@ Recommended Approach: User-Driven with Optional Guidance
 **Rationale:** Preserves EM sovereignty while offering structure for those who want guidance. Avoids pressure
 (reminders optional). Honors the therapeutic reality that integration time is body-dependent.
 
-### Audit Insight (Architecture Stress-Test, 2026-06-30)
+### Audit Insight (Architecture Stress-Test, 2026-06-30) — ✅ Resolved via GQ-018 (2026-07-02)
 
-**Audit finding — Contradiction 1.3 (HIGH):** Auto-decrement on back-navigation (DEC-007) is the only place
-in the entire architecture where the system overrides an EM declaration without the EM's consent. An EM who
-navigates "Back" to re-read a treatment step did not intend to revoke their completion. This conflicts with
-EM Sovereignty as the governing principle of DEC-015.
+**Audit finding — Contradiction 1.3 (HIGH):** Auto-decrement on back-navigation (DEC-007) was the only place
+in the entire architecture where the system overrode an EM declaration without the EM's consent.
 
-**Proposed Solution Paths:**
-
-**Path 1 — Remove Auto-Decrement; Replace with an Explicit Undo Window (Recommended):**
-Clicking "Finish" triggers use_count +1 immediately. A brief "Undo" affordance appears (dismisses on session
-close or when EM taps it). If EM taps Undo, the +1 is reversed and the session reverts to Integrating. After
-the window closes, only manual edit (per DEC-007 §2) can adjust the count. Back-navigation has zero use_count
-effect — it is a reading action, not a revocation.
-- *Manifesto alignment:* Strongest sovereignty expression. Explicit Undo = explicit EM intent. No system-side
-  inference about what navigation means.
-- *Risk:* Undo window timing must feel unhurried in a therapeutic context; consider tying it to session close
-  rather than a countdown.
-
-**Path 2 — Soft Prompt on Back-Navigation from Finish:**
-Back-navigation from the Finish state triggers a soft question: "Are you revisiting, or would you like more
-time with this? [Keep as done] [Return to Integrating]." EM makes an explicit choice. No silent auto-action.
-- *Manifesto alignment:* Explicit choice preserves sovereignty. Adds one interaction but removes ambiguity.
-- *Risk:* Could feel like an interruption during the organic post-treatment flow (NEMAR → Player → Journal).
-
-**Path 3 — Scope-Limited Auto-Decrement (Refine DEC-007, not replace it):**
-Auto-decrement only applies while the Player session is still actively open (app in foreground, Player mounted).
-Once EM closes the Player or backgrounds the app, the Finish declaration stands — only manual edit applies.
-- *Manifesto alignment:* Partial sovereignty. Navigation within a live, uncommitted session can be treated as
-  still mid-action; once the EM has left the Player, the declaration is final.
-- *Risk:* "Session still active" is ambiguous on mobile; app-backgrounding is not the same as explicit close.
-
-**Audit priority:** Fold Path resolution into GQ-018 (Completion Semantics) before any Player code is written.
+**Resolution:** Neither of the three paths originally proposed here was adopted in isolation. **GQ-018** resolved
+this more simply than Path 1's "Undo window" or Path 2's "soft prompt": **auto-decrement is removed entirely,
+with no replacement mechanism at all.** Back-navigation is redefined as **"Revisiting"** — it never touches
+`use_count` or completion state, full stop. The **only** correction path is the manual edit already defined in
+DEC-007 §2 (unchanged). No Undo window, no soft prompt, no scope-limiting logic — because none of those are needed
+once back-navigation carries no side effects to begin with. Full logic in the amended **DEC-007** and **DEC-015**.
 
 ---
 
@@ -347,10 +325,11 @@ group-scoped timeline views across the product.
 
 ---
 
-### 6. **Completion Semantics Canonicalization** (⚠️ IMMEDIATE PRIORITY — BLOCKS ALL PLAYER IMPLEMENTATION)
-**Status:** Open (GQ-018, identified 2026-06-30 Architecture Stress-Test)
+### 6. **Completion Semantics Canonicalization** (✅ RESOLVED)
+**Status:** Resolved (GQ-018, 2026-07-02, Yossef-Tal & Sigal) — amends **DEC-006**, **DEC-007**, **DEC-015**, **DEC-016**
 
-**Context:** Three separate decisions use overlapping completion vocabulary with different meanings:
+**Context (as identified 2026-06-30):** Three separate decisions used overlapping completion vocabulary with different
+meanings:
 - DEC-006: use_count +1 when EM completes **"all required Player steps"** and presses Finish.
 - DEC-015: **"No system-enforced required steps."** Finish is available at any point → use_count +1.
 - DEC-016: Course blocks use **"Done (בוצע)"** for completion. Standalone Player uses **"Finish (סיום)"**.
@@ -359,51 +338,41 @@ group-scoped timeline views across the product.
 **Contradictions addressed:** 1.1 (Required Steps Paradox), 1.2 (Two Player Button Sets), 1.3
 (Sovereignty vs. Auto-Decrement), 1.4 (Required Blocks in Courses).
 
-**Gaps requiring resolution:**
-- Is "Finish" and "Done" the same semantic action in different surface contexts, or genuinely different concepts?
-- Which button set is canonical for the Player when embedded inside a course Treatment Reference block?
-- Does "required steps" have any enforced meaning, or is it a display label only?
-- Does clicking "Done" on a Treatment Reference block trigger use_count +1?
-- Is `is_optional` on `player_steps` a gate, a hint, or deprecated?
+**Resolution — the "Scroll-Player" state machine (full logic in the amended DEC-015):**
 
-**Proposed Solution Paths:**
+Neither Path A ("Finish" and "Done" as one merged action), Path B (two verbs, hard sequential gate between them), nor
+Path C (single neutral verb) as originally proposed. The resolved model is a **fourth path**, sharper than all three:
+**"Finish" and "Done" stay two genuinely distinct actions, but at two different scopes — never in conflict.**
 
-**Path A — One Declaration, Two Labels (Unify Semantics, Keep Both Words):**
-Both "Finish (סיום)" and "Done (בוצע)" map to a single semantic: **EM Declaration of Completion.**
-Both trigger identical logic — (1) mark the unit complete, (2) if the unit is a treatment execution,
-increment use_count. The button label differs per surface (Finish in standalone Player; Done in course blocks)
-but the underlying action is identical. `is_optional` becomes a UI display hint only (suggested emphasis,
-never a gate). "Required steps" is retired as a technical concept — all steps are equal; EM decides readiness.
-- *Manifesto alignment:* Strongest EM Sovereignty. One clear action, one clear outcome. Eliminates the
-  contradiction at its root. Simplest implementation path.
-- *Risk:* Must update all copy referencing "required steps" in DEC-006, DEC-015, DEC-016, CLAUDE.md.
+- **Unit-level actions — "Done" / "Skip" / "Back":** apply to every Atomic Unit (the merged term for "step" and
+  "block"), in every Player instance, standalone or course-nested. Reversible, low-stakes, never trigger success
+  metadata on their own.
+- **Container-level action — "Finish":** available only at the final Atomic Unit of a given Player instance. The
+  **sole** trigger for `use_count` +1 or `"Successfully Completed"`. A course's Treatment Reference block opens a
+  **nested** Player instance with its own internal Finish — no invisible gate, no forced sequencing between "Done"
+  and "Finish" (Path B's flaw is avoided: there is no rule that Finish must precede Done, because they operate at
+  different scopes entirely).
+- **"Required steps" abolished as a technical gate** — `is_optional` becomes a non-enforced editorial display hint only.
+- **The Nudge:** a single, dismissible, never-blocking suggestion ("Review skipped items?") may appear at Finish time.
+  "Finish anyway" always succeeds.
+- **Auto-decrement removed entirely** (resolves the GQ-015 audit insight in the same motion): back-navigation is
+  "Revisiting," never "Revoking." The sole correction path is the manual edit already defined in DEC-007 §2.
+- **Unit state (`completed` / `skipped` / `unseen`) persists after Finish**, so the EM can "deepen" into skipped
+  units later without re-triggering success metadata.
 
-**Path B — Two Verbs, Two Distinct Semantics (Keep Mechanical Difference):**
-"Finish (סיום)" means: "I completed this treatment execution — trigger use_count +1."
-"Done (בוצע)" means: "I acknowledge this course block as complete for course progress tracking."
-A Treatment Reference block in a course requires the inner Player to reach "Finish" before "Done"
-is valid. Two separate completion events, two separate state updates.
-- *Manifesto alignment:* Creates an invisible inner gate (must press Finish before Done can fire).
-  Conflicts with "no validation gates" (DEC-015). The EM experiences two sequential confirmations
-  for the same therapeutic act — not atomic.
-- *Risk:* High implementation complexity. Two Player component modes with different interaction models.
+**Why this beats all three originally proposed paths:** Path A's "one action, two labels" would have made "Done" on
+every course block quietly capable of incrementing `use_count`, which is wrong for content that isn't a treatment
+execution (Original Content, Insight blocks). Path B's forced Finish-before-Done gate reintroduced a validation gate
+by the back door. Path C's neutral-verb rename didn't resolve the actual semantic problem (whether unit-level and
+container-level completion are the same event) and cost the most in copy rewrites for no logical gain. The resolved
+model keeps both words, keeps their emotional resonance (סיום for endings, בוצע for accomplishment), and gives each
+a scope where it cannot contradict the other.
 
-**Path C — Single Neutral Verb, Context-Free (Maximum Sovereignty):**
-Replace both "Finish" and "Done" with a single context-neutral phrase: **"I'm ready" / "סיימתי"**.
-The system records this as a completion event. Whether use_count increments depends only on whether the
-unit was a treatment execution (any type, any context). `is_optional` and "required" are removed from
-the data model entirely — they are content-author editorial opinions, not system logic.
-- *Manifesto alignment:* Purest expression of "Body as Database" (the EM's internal state is the only
-  authority). Removes all mechanical tension from the vocabulary.
-- *Risk:* Requires rewriting all existing button copy in DEC-015 and DEC-016. Highest doc-update cost.
+**Amended decisions:** DEC-006 §1, DEC-007 §1, DEC-015 (rewritten as the canonical state machine), DEC-016 §3–4.
+Full text: `decisions.md` — new **GQ-018** entry, and inline amendments to DEC-006/007/015/016.
 
-**Recommendation:** Path A is most PiC-native. It preserves the emotional resonance of both Hebrew words
-(סיום for endings, בוצע for accomplishment) while unifying their underlying logic. The decisive move is
-to retire "required steps" as a gating concept and redeclare `is_optional` as a display-only attribute.
-
-**Must also resolve in this grill:**
-- The back-navigation decrement (see GQ-015 Audit Insight, Path 1 recommended).
-- The blind rating entry path scope (see GQ-021, Part B).
+**Deferred to OpenSpec (explicitly out of scope for this decision):** Button placement, Nudge modal visuals,
+"deepen later" re-entry UI. This decision defines the state machine, not the screen.
 
 ---
 
@@ -654,66 +623,72 @@ Sigal publishes protocol versions (v1, v2). Active sessions stay on their enroll
 
 ## Next Steps
 
-**Priority order revised after Architecture Stress-Test (2026-06-30):**
+**Priority order revised after GQ-018 resolution (2026-07-02):**
 
 | Priority | GQ | Topic | Reason |
 |---|---|---|---|
-| 🔴 IMMEDIATE | GQ-018 | Completion Semantics | Blocks all Player implementation |
 | 🔴 BLOCKER | GQ-019 | Auth & User Identity | Blocks all schema design (no RLS without user model) |
 | 🔴 BLOCKER | GQ-020 | Causes/Treatments Schema | Blocks all NEMAR flow implementation |
 | 🟠 HIGH | GQ-014 | Freemium Model | Blocks all access control (elevated from MEDIUM) |
 | 🟠 HIGH | GQ-021 | Intensity Scale & Rating Paths | Blocks all rating screen design |
 | 🟠 HIGH | GQ-022 | Library Sync Protocol | Blocks course → library integration |
 | 🟡 MEDIUM | GQ-023 | Content Authoring/Governance | Blocks content operations pipeline |
-| 🟡 MEDIUM | GQ-015 | Integrating Lifecycle | Refine after GQ-018 resolves auto-decrement |
-| 🟡 MEDIUM | GQ-016 | Offline-First Sync | Session state model feeds from GQ-018 |
+| 🟡 MEDIUM | GQ-016 | Offline-First Sync | Session state model now unblocked by GQ-018's Finish-only sync unit |
+| 🟢 LOW | GQ-015 | Integrating Lifecycle (remaining scope) | Auto-decrement sub-question resolved via GQ-018; visibility/reminders remain |
 | 🟢 LOW | GQ-017 | Journal & Smart-Linking | Foundation in place; refine when ready |
 
 **Resolved:**
-1. ✅ GQ-013 → DEC-016 (Courses & Academy)
+1. ✅ GQ-013 → **DEC-016** (Courses & Academy, 2026-06-27)
+2. ✅ **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (Completion Semantics, 2026-07-02)
 
 ---
 
 ## Grill Session Summary
 
-- **Grilled subsystems:** 13 questions → 16 decisions (DEC-001 through DEC-016)
+- **Grilled subsystems:** 14 questions → 16 decisions, 4 of them since amended (DEC-001 through DEC-016)
 
-- **Architecture Status (revised 2026-06-30): Foundation Conceptually Sound — Critical Gaps Identified**
+- **Architecture Status (revised 2026-07-02): Foundation Aligned on Completion Logic — Remaining Gaps Unchanged**
 
-  *What IS implementation-ready (tracer-bullet spike only):*
+  The 2026-06-30 stress-test found the Player/completion subsystem internally contradictory across four decisions
+  (Audit 1.1–1.4). **GQ-018 (2026-07-02) resolved all four** by establishing one unified Scroll-Player state machine
+  (see the amended **DEC-015**, and the consequent amendments to **DEC-006**, **DEC-007**, **DEC-016**). The
+  foundation is no longer merely "conceptually sound" on completion logic — it is now **internally consistent**:
+  one Player model, one set of unit-level actions (Done/Skip/Back), one container-level success trigger (Finish),
+  no technical gates, no silent auto-corrections.
+
+  *What IS implementation-ready (tracer-bullet spike, now including Player logic):*
   - Symptom Group entity and archival lifecycle (DEC-002, DEC-013)
   - Polarity + Intensity as independent schema fields (DEC-010)
   - Timeline `log_type` categorization and filter architecture (DEC-007, DEC-008)
+  - **Unified Scroll-Player state machine** — Atomic Units, Done/Skip/Back, Finish, no gates, no auto-decrement
+    (DEC-015, amended 2026-07-02)
   - Structured Markdown → JSON content pipeline (DEC-015)
   - Smart-Link edge table concept (DEC-008)
 
-  *What is NOT ready for general OpenSpec — critical gaps requiring resolution first:*
+  *What is STILL NOT ready for general OpenSpec — gaps unaffected by GQ-018:*
   - ⚠️ Auth/User model absent → no RLS policy can be written → nothing is deployable (GQ-019)
   - ⚠️ Freemium enforcement undefined → no access control on any feature (GQ-014)
   - ⚠️ Causes/Treatments Table schema undefined → NEMAR flow cannot be built (GQ-020)
-  - ⚠️ "Required steps" contradiction → Player Finish logic is ambiguous (GQ-018)
-  - ⚠️ Two Player button sets → two incompatible UIs for the same component (GQ-018)
   - ⚠️ Intensity scale direction deferred → rating UX and analytics are blocked (GQ-021)
   - ⚠️ First-time library detection undefined → course → library sync is not implementable (GQ-022)
 
-- **Prior status "Foundation COMPLETE" is revised.** The 16 decisions cover the philosophical and UX
-  surface with genuine depth. The failure mode is precision: terms like "required," "Finish," and "Done"
-  accumulated multiple meanings across decisions without being canonicalized. The architecture is not yet
-  closed for OpenSpec. It requires GQ-018 through GQ-022 (estimated 3–4 resolution sessions) before
-  the first full sprint can proceed safely.
+- **Prior status ("Foundation Conceptually Sound — Critical Gaps Identified," 2026-06-30) is now partially resolved.**
+  The Player/completion contradiction — the deepest and most structurally entangled of the audit findings, spanning
+  four decisions — is closed. The remaining gaps (GQ-019 through GQ-023, minus GQ-018) are independent of each
+  other and do not share the same kind of cross-decision contradiction; they are missing subsystems, not
+  internal conflicts. Estimated 3 more resolution sessions before the first full sprint can proceed safely.
 
-- **What CAN begin now:** A tracer-bullet spike limited to the simplest happy path — create a Symptom
-  Group, add a symptom, rate it, view the timeline event — is feasible with current decisions.
+- **What CAN begin now:** A tracer-bullet spike covering the simplest happy path — create a Symptom Group, add a
+  symptom, rate it, run a standalone treatment through the full Scroll-Player (Done/Skip/Back/Finish), view the
+  timeline event — is feasible with current decisions, including the Player logic for the first time.
 
 ---
 
 ## Grill Session Cadence
 
-- **Target:** 1–2 grill questions per session (batch closely related Qs; e.g., GQ-018 + GQ-015 §1.3).
-- **Documentation:** Each GQ gets its own DEC-xxx after resolution.
-- **Critical path:** GQ-018 → GQ-019 → GQ-020 → GQ-014 → GQ-021 → GQ-022 → OpenSpec.
-- **Dependency note:** GQ-015 (Integrating Lifecycle) and GQ-016 (Offline Sync) should follow GQ-018,
-  because the Integrating state transition logic and session sync model both depend on the Finish/Done
-  semantics being canonicalized first.
-- **Status:** Architecture stress-tested (2026-06-30). 6 new GQs added (GQ-018–GQ-023). Ready to grill
-  GQ-018 immediately.
+- **Target:** 1–2 grill questions per session (batch closely related Qs).
+- **Documentation:** Each GQ gets its own DEC-xxx after resolution, or amends existing ones when it resolves a
+  cross-decision contradiction (as GQ-018 did).
+- **Critical path (updated 2026-07-02):** ~~GQ-018~~ → GQ-019 → GQ-020 → GQ-014 → GQ-021 → GQ-022 → OpenSpec.
+- **Status:** GQ-018 resolved (2026-07-02). 9 GQs remain open (GQ-014, GQ-015 remaining scope, GQ-016, GQ-017,
+  GQ-019, GQ-020, GQ-021, GQ-022, GQ-023). Ready to grill GQ-019 (Auth & User Identity) next.
