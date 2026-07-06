@@ -967,12 +967,17 @@ techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content
    - This models the therapeutic reality that healing content can be revisited and re-absorbed without ever having to
      "undo" a prior success to keep learning.
 
-7. **Reflection Prompt Units (Course-Specific Content Type, DEC-016):**
-   - A **Reflection Prompt** Atomic Unit automatically surfaces its journal-input affordance when the EM reaches it in
-     sequence — this is simply what that unit *is* (per **DEC-016** polymorphic content types), not a forced interruption
-     of the Scroll-Player model.
-   - **"Done"** on a Reflection Prompt commits any entered text as a linked Reflective Journal entry. **"Skip"** defers it,
-     exactly like any other unit.
+7. **Reflection Prompt Units (Standard Polymorphic Atomic Unit Type):**
+   - A **Reflection Prompt** is a standard **Atomic Unit type** available in **any Scroll-Player instance** — treatments,
+     techniques, courses, or any other content sequence. It is **not** course-specific.
+   - When the EM reaches a Reflection Prompt unit in sequence, the system **automatically surfaces a journal-input
+     affordance** — this is simply what that unit *is*, not a forced interruption of the Scroll-Player model. The EM may
+     enter reflective text inline.
+   - **"Done"** on a Reflection Prompt commits any entered text as a linked entry to the **Reflective Journal** (with
+     automatic Smart-Link to the current context: the Symptom Group, course enrollment, or timeline event scope). **"Skip"**
+     defers the reflection, exactly like any other unit, and the affordance remains available if the EM returns to it.
+   - **Content authors (Sigal, EM-custom)** may place Reflection Prompt units at any point in a sequence — beginning,
+     middle, or end — depending on the pedagogical or therapeutic intent.
 
 8. **Structured Markdown as Content Standard (unchanged from original DEC-015):**
    - All treatments, protocols, techniques, and course lessons are authored or converted to **Structured Markdown**.
@@ -1068,12 +1073,15 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 
 2. **Polymorphic Lesson Blocks (Content Standard)**
    - **Lessons use Structured Markdown (H3 = step)** per **DEC-015**, enabling consistent parsing.
-   - Each **lesson is a container** that can hold **one or more block types**:
+   - Each **lesson is a container** that can hold **one or more block types** (the same polymorphic block types are also
+     available as Atomic Units in any Scroll-Player sequence per **DEC-015** §7):
      - **Original Content:** Unique text, videos, audio, or instructions authored for the course.
      - **Treatment Reference:** A dynamic **link to an existing protocol** from the **Treatments Table** (or Personal Treatment Library).
        When rendered, displays the protocol's steps using the same Player as standalone treatments.
      - **Insight/Inspiration (הגיג):** A standalone **"Hagig"** from the shared collection — displayed as read-only inspiration, not executable.
-     - **Reflection Prompt:** A **specific prompt** for the Event Manager to add to their **Reflective Journal** during or after the lesson.
+     - **Reflection Prompt:** A standard **Atomic Unit type** (per **DEC-015** §7) — a journal-input surface. Reaching it
+       automatically offers the EM an affordance to reflect and commit text as a linked Reflective Journal entry. Not
+       course-specific; available in any Scroll-Player sequence.
 
 3. **Subjective Navigation & "Soft Completion" (rewritten 2026-07-02 — see DEC-015)**
    - **No pre-treatment NEMAR inside course:** When a **treatment is presented within a course**, there is **no mandatory NEMAR inquiry**.
