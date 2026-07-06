@@ -937,12 +937,19 @@ techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content
    - **Intuitive progression, unchanged from the original decision:** the EM decides when a unit is complete based on
      internal readiness (whether they fully executed the action, understood it, or intuitively chose to skip it).
 
-4. **The Nudge — Informational, Never a Gate:**
-   - When the EM triggers "Finish" while one or more units remain `skipped` or `unseen`, the system **may** surface a single,
-     dismissible **Nudge** (e.g., "Review skipped items?" `[Review] [Finish anyway]`).
-   - The Nudge is informational only. Choosing "Finish anyway" **always** succeeds — the content is marked
-     `"Successfully Completed"` (or triggers `use_count` +1) regardless of how many units were skipped or left unseen.
-   - The Nudge is **never** a validation gate, confirmation requirement, or blocker of any kind.
+4. **Terminal Button Logic — Two-Option Switch (Not a Gate):**
+   - At the final Atomic Unit of a Scroll-Player instance, the terminal button behavior **depends on unit states**:
+     - **If all units are `completed`:** Display a standard **[Finish]** button. Pressing it triggers success
+       declaration immediately.
+     - **If any unit is `skipped` or `unseen`:** Display **two explicit options** instead of a single Finish:
+       - **[Review Skipped]:** Navigates backward to the first `skipped` or `unseen` unit in the sequence. The
+         EM may read it, mark it `completed`, continue forward, and return to the final unit. This is a
+         **revisiting affordance**, not a gate — choosing Review does not delay or prevent ultimate Finish.
+       - **[Finish Anyway]:** Triggers success declaration immediately — the content is marked `"Successfully
+         Completed"` (or `use_count` increments by 1) **regardless of how many units remain `skipped` or
+         `unseen`**. This path is **always sovereign and always available**.
+   - **Non-blocking sovereignty:** Both branches (Review or Finish Anyway) are equally valid. The EM's choice
+     between them is never judged or gated by the system. This is a UX branching, not a validation gate.
 
 5. **No Auto-Decrement — "Revisiting" Is Not "Revoking":**
    - Navigating "Back" — at any point, including after Finish — is **"Revisiting."** It **never** decrements `use_count`,
@@ -981,6 +988,7 @@ techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content
        ### Step 3: Hold the Awareness
        Maintain this feeling for 30 seconds without forcing.
        ```
+   - **Benefits:** Clear, simple parsing logic; easy for EM and course creators to add steps; consistent structure across all protocols.
 
 9. **Content Transformation Pipeline (unchanged from original DEC-015):**
    - A **Content Parser** converts existing HTML content and future Structured Markdown into JSON Atomic Unit entries
@@ -1080,11 +1088,12 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 
 4. **Course Completion & Success (rewritten 2026-07-02 — see DEC-015)**
    - **Completion trigger:** A course is a Scroll-Player instance like any other. It is marked **"Successfully Completed"** when the EM
-     triggers **"Finish" (סיום) at the final Atomic Unit** of the course (**DEC-015** §2) — **not** when "all required blocks" are done.
-     "Required" is now a purely editorial hint (**DEC-015** §3); it can never block or gate Finish.
-   - **The Nudge, not a gate:** If units remain `skipped` or `unseen` when the EM triggers Finish, the system may offer the single
-     **Nudge** defined in **DEC-015** §4 ("Review skipped items? [Review] [Finish anyway]"). Choosing "Finish anyway" **always**
-     succeeds — course completion never depends on how many units were skipped.
+     triggers the terminal button action at the final Atomic Unit (**DEC-015** §2) — either pressing **[Finish]** (if all units
+     completed) or choosing **[Finish Anyway]** (if units remain skipped/unseen), per the **Two-Option Switch** logic in **DEC-015** §4.
+     "Required" is now a purely editorial hint (**DEC-015** §3); it can never block or gate course completion.
+   - **Terminal button logic:** Per **DEC-015** §4, when skipped/unseen units remain, the EM sees **[Review Skipped]** and
+     **[Finish Anyway]** instead of a single Finish — allowing an optional pass through deferred content without ever forcing it.
+     **[Finish Anyway]** always succeeds — course completion never depends on how many units were skipped.
    - **Optional success NEMAR:** Upon Finish, optional **NEMAR inquiry: "Is it NEMAR that this course ended successfully?"**
      Result stored as metadata on session closure log. (Unchanged.)
    - **Deepening after completion:** Per **DEC-015** §6, the EM may return to a "Successfully Completed" course and mark previously
@@ -1188,11 +1197,14 @@ claiming no technical gates exist.
 **Resolution:** A single unified **Scroll-Player** state machine, fully specified in the amended **DEC-015**:
 
 - **One Player, one model** for treatments, techniques, and course lessons — "Atomic Unit" replaces "step" and "block."
-- **Unit-level actions** (Done / Skip / Back) are reversible, low-stakes, and identical everywhere. **Container-level Finish**
-  is the sole, unconditional trigger for success metadata (`use_count` +1, "Successfully Completed"), available only at the
-  final unit.
+- **Unit-level actions** (Done / Skip / Back) are reversible, low-stakes, and identical everywhere. **Container-level terminal button
+  logic** (refined 2026-07-06) branches conditionally at the final unit:
+  - **If all units `completed`:** standard **[Finish]** → success declaration.
+  - **If any unit `skipped` or `unseen`:** two explicit options — **[Review Skipped]** (navigate to first deferred unit, optional
+    affordance) and **[Finish Anyway]** (success regardless) — both equally sovereign, neither gated or judged.
 - **"Required" is abolished as a technical gate** — retained only as a non-enforced editorial display hint.
-- **The Nudge** offers a non-blocking suggestion to review skipped units at Finish time; it can never block Finish.
+- **Terminal-button branching:** The EM sees mutually-exclusive active choices that reflect their unit states without judgment. 
+  Both paths are sovereign.
 - **Auto-decrement is removed entirely.** Back-navigation is "Revisiting," never "Revoking." The sole correction path for
   `use_count` is the sovereign manual edit already defined in DEC-007 §2.
 - **Unit state persists after Finish**, allowing the EM to "deepen" into skipped units later without re-triggering success
@@ -1202,8 +1214,9 @@ claiming no technical gates exist.
 "Revisiting is not revoking"); **DEC-015** (substantially rewritten — now the canonical Scroll-Player state machine);
 **DEC-016** §3–4 (rewritten to defer to DEC-015 instead of describing a separate course Player model).
 
-**Deferred to OpenSpec:** Button placement, Nudge modal visuals, and "deepen later" re-entry UI — this decision defines the
-state machine, not the screen, per the grill's structural directive to separate logic from UI/UX.
+**Deferred to OpenSpec:** Specific label copy, button styling, and the "deepen later" re-entry UI. This decision defines the
+Responsibility Switch logic (the branching between a single [Finish] and the dual [Review Skipped] + [Finish Anyway] choices), 
+while the final interaction choreography and layout remain UI/UX concerns per the grill's structural directive.
 
 **Resolved (total, updated):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**;
 **GQ-004** → **DEC-007**; **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**;
