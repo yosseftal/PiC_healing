@@ -224,18 +224,18 @@ creep into time accounting.
 **Context:** **GQ-003** chose **option D (hybrid)** with **Ownership**, **NEMAR** alignment, **Integrating** language, and a **low-pressure**
 toolbox metaphor.
 
-**Amendment (2026-07-02):** The unified **Scroll-Player** state machine (**DEC-015**) retires "required" vs. "optional" Player steps as a
+**Amendment (2026-07-02):** The unified **Unified Player** state machine (**DEC-015**) retires "required" vs. "optional" Player steps as a
 technical gate (this was Audit Contradiction 1.1 — DEC-006 said "required," DEC-015 said "no gates," and they could not both be true).
 **Finish is now available at the final Atomic Unit unconditionally.** §1 below is rewritten accordingly; §2–§5 are unchanged.
 
 **Decision:**
 
-1. **Player path — automatic +1 on Finish (סיום):** When the Event Manager runs the **Scroll-Player** for a technique/treatment mapped to
+1. **Player path — automatic +1 on Finish (סיום):** When the Event Manager runs the **Unified Player** for a technique/treatment mapped to
    a **Personal Treatment Library** row and triggers **Finish** (סיום) at the **final Atomic Unit** of that instance (**DEC-015** §2),
    **`use_count` increments once**. There is **no "required steps" precondition** — Finish is reachable regardless of how many prior units
    were marked `completed` vs. `skipped` (**DEC-015** §3–4). Protocols may still offer an **optional** closing **muscle-test** — **yes/no**:
    *Did this treatment or technique end successfully?* — in the same **NEMAR** inquiry family; it remains **not mandatory** for Finish or +1.
-2. **Integrating / mid-exit — no silent auto +1:** If the Event Manager **leaves** the Scroll-Player before reaching Finish, the work stays
+2. **Integrating / mid-exit — no silent auto +1:** If the Event Manager **leaves** the Unified Player before reaching Finish, the work stays
    **Integrating** (not framed as failure); **do not** auto-increment. They may later **manually** add a use, or return and **Finish**
    when the flow allows—**never** double-count the same finished run (see §5).
 3. **Manual increment — Ownership:** At **any time**, from the **Personal Treatment Library**, the Event Manager may **manually increase**
@@ -305,13 +305,13 @@ ownership, and transparent logging.
 
 **Amendment (2026-07-02):** The original §1 (auto-decrement on back-navigation) directly contradicted **EM Sovereignty**
 (Audit Contradiction 1.3): it let a **navigation gesture** silently override an **explicit prior declaration** ("Finish") without the
-Event Manager's consent. The unified **Scroll-Player** model (**DEC-015** §5) reframes back-navigation as **"Revisiting"** — reading
+Event Manager's consent. The unified **Unified Player** model (**DEC-015** §5) reframes back-navigation as **"Revisiting"** — reading
 or reconsidering — never a revocation. §1 below replaces the removed auto-decrement clause; §2 (manual edit) and §3 (multitype
 timeline) are unchanged in substance.
 
 **Decision:**
 
-1. **Revisiting is not revoking — no auto-decrement:** Navigating **back** from a **Finish** state (or at any point in the Scroll-Player)
+1. **Revisiting is not revoking — no auto-decrement:** Navigating **back** from a **Finish** state (or at any point in the Unified Player)
    **never** changes `use_count` and **never** un-marks a `"Successfully Completed"` declaration. This is a **read/reconsider** action, not
    an undo action. The **only** way `use_count` moves after Finish is the sovereign **manual edit** in §2.
 2. **Manual counter edit — Ownership:** The Event Manager retains the right to **manually edit** `use_count` **anytime** to reflect their
@@ -329,7 +329,7 @@ timeline) are unchanged in substance.
 
 - **ריבונות** (Sovereignty): Event Manager's absolute ownership over their healing data; manual edits **always** allowed; no automatic
   system-side correction ever competes with that ownership.
-- **חזרה אינה ביטול** (Revisiting is not revoking): Back-navigation in the Scroll-Player never touches `use_count` or completion state.
+- **חזרה אינה ביטול** (Revisiting is not revoking): Back-navigation in the Unified Player never touches `use_count` or completion state.
 - **מרחב עבודה נקי** (Clean workspace): Multitype timeline + filtering keeps **Atomic Focus** alive even with full audit trail.
 
 **Rationale:** Auto-decrement tied a data-integrity concern (mistaken Finish) to a UX gesture (back-navigation) that also has an entirely
@@ -882,7 +882,7 @@ or flow between them—whatever feels right. We log every discovery."
 
 ---
 
-## DEC-015 — Unified Scroll-Player: atomic units, sovereign completion, and the Finish/Done state machine
+## DEC-015 — Unified Player: atomic units, visibility-based state machine, and sovereign completion
 
 **Status:** Agreed (2026-06-27, Yossef-Tal & Sigal) — resolves **GQ-012**; **substantially amended (2026-07-02)** — resolves
 **GQ-018** (Completion Semantics), fixing Audit Contradictions **1.1, 1.2, 1.3, 1.4**.
@@ -894,42 +894,49 @@ and **Atomic Focus**, introducing a **Structured Markdown content pipeline**.
 **Amendment (2026-07-02, GQ-018):** The Architecture Stress-Test found that DEC-006's "required steps" language, this decision's
 "no validation gates" principle, and **DEC-016**'s separate Done/Skip/Back button set for courses described **three incompatible
 completion models** for what should be one Player. This amendment replaces §1 and §4 below in full, and establishes **one**
-state machine — the **Scroll-Player** — that governs **every** sequence of atomic content in PiC: standalone treatments,
+state machine — the **Unified Player** — that governs **every** sequence of atomic content in PiC: standalone treatments,
 techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content pipeline) are retained essentially unchanged.
+
+**Amendment (2026-07-13, Visibility-Based Completion):** Further refined the Unit-Level Actions model (§2) to replace manual
+"Done"/"Skip"/"Back" buttons with an automatic visibility-based state machine. **Movement through content** (navigation or
+rendering) now serves as the technical trigger for unit-state transitions, eliminating manual confirmation gates while preserving
+the EM's agency via the container-level **Finish** action.
 
 **Decision:**
 
-1. **One Player, One Model — the "Scroll-Player":**
+1. **One Player, One Model — the "Unified Player":**
    - There is **no functional distinction** between a "Treatment Player" and a "Course Player." Both are the same
-     **Scroll-Player** engine: a sequence of **Atomic Units** — the umbrella term replacing the separate vocabularies of
+     **Unified Player** engine: a sequence of **Atomic Units** — the umbrella term replacing the separate vocabularies of
      "Player step" (treatments) and "lesson block" (courses, **DEC-016**). Every Atomic Unit is authored in **Structured
      Markdown** (H3 = one unit, per §2 below).
    - A course's Atomic Units may include a **Treatment Reference** (**DEC-016** block type): entering it opens a **nested
-     Scroll-Player instance** scoped to that protocol's own Atomic Units, governed by the identical state machine below.
+     Unified Player instance** scoped to that protocol's own Atomic Units, governed by the identical state machine below.
      Nesting is expected and supported, not an edge case.
 
-2. **Unit-Level Actions vs. the Container-Level Finish (Semantic Separation):**
-   - **Unit-level actions — "Done" (בוצע) / "Skip" (דלג) / "Back" (חזור):** apply to **every** Atomic Unit, in **every**
-     Scroll-Player instance (standalone or nested). These are **navigation and state-marking actions**, never success
-     declarations:
-     - **"Done":** EM declares this specific unit complete, based on internal readiness alone — not technical execution.
-       Marks the unit's stored state as `completed`.
-     - **"Skip":** EM defers this unit. Marks it `skipped`. Remains available to revisit at any time.
-     - **"Back":** EM moves to the previous unit to reread or reconsider. This is **"Revisiting"** — it never alters any
-       unit's stored state and never touches success metadata (see §5).
-   - **Container-level action — "Finish" (סיום):** available **only** at the **final Atomic Unit** of a given Scroll-Player
-     instance (a standalone treatment's last step, a nested Treatment Reference's last step, or a course's last lesson
-     unit). Finish is the **sole trigger** for **success metadata** on that instance:
-     - If the instance maps to a Personal Treatment Library row: `use_count` +1 (**DEC-006**).
-     - If the instance is a course: course status → `"Successfully Completed"` (**DEC-016** §4).
-     - A Diary-model timeline snapshot is recorded (**DEC-016** §5), unchanged.
-   - **"Done" never substitutes for "Finish."** Marking every unit "Done" does not itself trigger success metadata — only
-     the explicit **"Finish"** action at the final unit does. This is the line between **Step Completion** (moving through
-     content) and **Overall Success Declaration** (declaring the whole thing done).
+2. **Unit-Level State Transitions — Visibility-Based Automatic Completion (No Manual Gates):**
+   - **Atomic Unit states:** Each Atomic Unit has a stored state: `unseen` (not yet rendered), `in_view` (currently visible to
+     EM), or `completed` (EM has progressed past it).
+   - **Automatic state transition — visibility trigger:** When an Atomic Unit is **rendered in the viewport**, its state
+     automatically transitions from `unseen` to `in_view`. When the EM **navigates to the next unit** (forward or backward), the
+     prior unit's state transitions from `in_view` to `completed`. **No manual "Done" or "Confirm" buttons are required** to
+     advance between units.
+   - **EM agency preserved — backward navigation:** The EM may navigate **backward** at any time to revisit prior units. Moving
+     backward **does not** revert a unit's `completed` state to `in_view` — it remains `completed`. This preserves the
+     non-linear therapeutic reality: revisiting content is "deepening," not "undoing."
+   - **Skipped units:** If the EM navigates forward without engaging a unit (e.g., scrolls past it or uses a "Next" affordance
+     without pausing), the skipped unit's state transitions directly from `unseen` to `completed` without ever entering `in_view`.
+     Skipped units are tracked distinctly for analytics and deepening later, but they do not block forward progress or the
+     eventual **Finish** action.
+   - **Step Completion (unit-state transition) vs. Overall Success Declaration (Finish):** Unit-state transitions happen
+     automatically and silently as the EM moves through content. They are **local**, **ephemeral**, and **reversible via
+     revisiting**. They are **not** success metadata. Overall success is declared only via the explicit **Finish** action at the
+     container level (§4 below).
+   - **No validation gates in unit-level logic:** The system never blocks the EM from progressing to the next unit, skipping
+     forward, or navigating backward. Movement is the EM's declaration of progress; the system honors it.
 
 3. **Abolishing "Required" as a Technical Gate:**
    - **No unit — standalone step or course block — can block the EM from reaching "Finish."** There is no system-enforced
-     "required steps" check anywhere in the Scroll-Player.
+     "required steps" check anywhere in the Unified Player.
    - `is_optional` (and any course-side `is_required` flag) becomes a **purely editorial signal** from the content author
      (e.g. Sigal): a **display hint** only (such as subtle emphasis in the UI), **never** a technical condition the system
      evaluates before allowing Finish. This retires the "required steps" clause of **DEC-006** §1 and the "required blocks"
@@ -937,19 +944,28 @@ techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content
    - **Intuitive progression, unchanged from the original decision:** the EM decides when a unit is complete based on
      internal readiness (whether they fully executed the action, understood it, or intuitively chose to skip it).
 
-4. **Terminal Button Logic — Two-Option Switch (Not a Gate):**
-   - At the final Atomic Unit of a Scroll-Player instance, the terminal button behavior **depends on unit states**:
-     - **If all units are `completed`:** Display a standard **[Finish]** button. Pressing it triggers success
-       declaration immediately.
-     - **If any unit is `skipped` or `unseen`:** Display **two explicit options** instead of a single Finish:
-       - **[Review Skipped]:** Navigates backward to the first `skipped` or `unseen` unit in the sequence. The
-         EM may read it, mark it `completed`, continue forward, and return to the final unit. This is a
-         **revisiting affordance**, not a gate — choosing Review does not delay or prevent ultimate Finish.
-       - **[Finish Anyway]:** Triggers success declaration immediately — the content is marked `"Successfully
-         Completed"` (or `use_count` increments by 1) **regardless of how many units remain `skipped` or
-         `unseen`**. This path is **always sovereign and always available**.
-   - **Non-blocking sovereignty:** Both branches (Review or Finish Anyway) are equally valid. The EM's choice
-     between them is never judged or gated by the system. This is a UX branching, not a validation gate.
+4. **Container-Level Finish Action and Terminal Button Logic (Two-Option Switch):**
+   - **Finish is the sole success trigger:** Available **only** at the **final Atomic Unit** of a given Unified Player
+     instance (a standalone treatment's last step, a nested Treatment Reference's last step, or a course's last lesson unit).
+     Pressing **[Finish]** (סיום) triggers **success metadata**:
+     - If the instance maps to a Personal Treatment Library row: `use_count` +1 (**DEC-006**).
+     - If the instance is a course: course status → `"Successfully Completed"` (**DEC-016** §4).
+     - A Diary-model timeline snapshot is recorded (**DEC-016** §5), unchanged.
+   - **Terminal button behavior — conditional branching based on unit states:** The terminal button display at the final Atomic
+     Unit depends on the **computed state** of all prior units (automatically derived from the visibility-based state machine
+     in §2):
+     - **If all units are in `completed` state:** Display a standard **[Finish]** button. Pressing it triggers success
+       declaration immediately, no further options offered.
+     - **If any unit remains in `unseen` or was skipped (not explicitly engaged):** Display **two explicit options** instead of
+       a single Finish:
+       - **[Review Skipped]:** Navigates backward to the first `unseen` or skipped unit in the sequence. The EM may engage it,
+         revisit content, continue forward, and return to the final unit. This is a **revisiting affordance**, not a gate —
+         choosing Review does not delay or prevent eventual Finish.
+       - **[Finish Anyway]:** Triggers success declaration immediately — the content is marked `"Successfully Completed"` (or
+         `use_count` increments by 1) **regardless of how many units remain `unseen` or skipped**. This path is **always
+         sovereign and always available**.
+   - **Non-blocking sovereignty:** Both branches (Review or Finish Anyway) are equally valid. The EM's choice between them is
+     never judged or gated by the system. This is a UX branching, not a validation gate.
 
 5. **No Auto-Decrement — "Revisiting" Is Not "Revoking":**
    - Navigating "Back" — at any point, including after Finish — is **"Revisiting."** It **never** decrements `use_count`,
@@ -959,25 +975,31 @@ techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content
      Library (**DEC-007** §2, unchanged) — an explicit EM reassessment, never inferred from navigation behavior.
 
 6. **Persistence of Unit State Beyond Finish ("Deepening"):**
-   - Every Atomic Unit's state — `completed` / `skipped` / `unseen` — is **permanently recorded** and remains visible and
-     editable **after** a "Successfully Completed" or Finish declaration.
+   - Every Atomic Unit's **automatically-computed state** — `completed` / `unseen` / skipped (subset of unseen) — is
+     **permanently recorded** and remains available **after** a "Successfully Completed" or Finish declaration.
    - The EM may return to a "Successfully Completed" instance at any time and **"deepen"** into previously skipped or unseen
-     units, marking them `completed` retroactively. This does **not** trigger a second Finish or a second `use_count` +1
-     (**DEC-006** §5) unless the EM explicitly starts a new session/run.
-   - This models the therapeutic reality that healing content can be revisited and re-absorbed without ever having to
-     "undo" a prior success to keep learning.
+     units by navigating backward. Revisiting units causes their states to remain `completed` (revisiting does not revert state,
+     per §2). The EM may engage the content more deeply, spend longer on reflection, or simply re-read for reinforcement.
+   - **Deepening does not trigger a second Finish or a second `use_count` +1** (**DEC-006** §5) unless the EM explicitly starts a
+     new session/run. The first Finish declaration is final for success metadata purposes; revisiting is pure learning, not a
+     new attempt.
+   - This models the therapeutic reality that healing content can be revisited and re-absorbed without ever having to "undo" a
+     prior success to keep learning.
 
 7. **Reflection Prompt Units (Standard Polymorphic Atomic Unit Type):**
-   - A **Reflection Prompt** is a standard **Atomic Unit type** available in **any Scroll-Player instance** — treatments,
+   - A **Reflection Prompt** is a standard **Atomic Unit type** available in **any Unified Player instance** — treatments,
      techniques, courses, or any other content sequence. It is **not** course-specific.
-   - When the EM reaches a Reflection Prompt unit in sequence, the system **automatically surfaces a journal-input
-     affordance** — this is simply what that unit *is*, not a forced interruption of the Scroll-Player model. The EM may
-     enter reflective text inline.
-   - **"Done"** on a Reflection Prompt commits any entered text as a linked entry to the **Reflective Journal** (with
-     automatic Smart-Link to the current context: the Symptom Group, course enrollment, or timeline event scope). **"Skip"**
-     defers the reflection, exactly like any other unit, and the affordance remains available if the EM returns to it.
-   - **Content authors (Sigal, EM-custom)** may place Reflection Prompt units at any point in a sequence — beginning,
-     middle, or end — depending on the pedagogical or therapeutic intent.
+   - When the EM reaches a Reflection Prompt unit in sequence (rendered in viewport via the visibility-based state machine in
+     §2), the system **automatically surfaces a journal-input affordance** — this is simply what that unit *is*, not a forced
+     interruption of the Unified Player model. The EM may enter reflective text inline.
+   - The unit's state transitions automatically as the EM moves through content (per §2); entering text does **not** require
+     explicit confirmation. **Progressing to the next unit** commits any entered text as a linked entry to the **Reflective
+     Journal** (with automatic Smart-Link to the current context: the Symptom Group, course enrollment, or timeline event
+     scope). If the EM navigates **backward** to revisit the Reflection Prompt unit, the journal entry is **preserved and
+     editable**, supporting non-linear reflection.
+   - **No manual "Done" button required** — the automatic state transition (movement/visibility) serves as the submission
+     trigger. The EM's agency is preserved entirely: they may spend as long as they like on a Reflection Prompt before moving
+     forward, or skip it entirely by navigating forward without engaging.
 
 8. **Structured Markdown as Content Standard (unchanged from original DEC-015):**
    - All treatments, protocols, techniques, and course lessons are authored or converted to **Structured Markdown**.
@@ -998,7 +1020,7 @@ techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content
 9. **Content Transformation Pipeline (unchanged from original DEC-015):**
    - A **Content Parser** converts existing HTML content and future Structured Markdown into JSON Atomic Unit entries
      (`unit_number`, `unit_title`, `unit_content`, `unit_order`, optional `is_optional` display hint), stored and indexed
-     by protocol/course ID for fast retrieval and sequencing in the Scroll-Player.
+     by protocol/course ID for fast retrieval and sequencing in the Unified Player.
 
 **Refines / Supersedes:**
 
@@ -1006,15 +1028,15 @@ techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content
   final Atomic Unit of a library-mapped instance" (amended DEC-006, 2026-07-02).
 - **Supersedes DEC-007 §1:** removes auto-decrement on back-navigation entirely (amended DEC-007, 2026-07-02).
 - **Supersedes DEC-016 §3–4:** removes the "required blocks" gate; unifies course Player mechanics with this decision's
-  Done/Skip/Back/Finish model instead of describing a separate button set (amended DEC-016, 2026-07-02).
-- **DEC-001 (Atomic Focus):** Atomic Focus now applies uniformly to **one Atomic Unit at a time**, in **any** Scroll-Player
+  visibility-based state machine instead of describing a separate button set (amended DEC-016, 2026-07-02).
+- **DEC-001 (Atomic Focus):** Atomic Focus now applies uniformly to **one Atomic Unit at a time**, in **any** Unified Player
   instance — treatment, technique, or course lesson — collapsing what were previously two described navigation models into
   one.
 
 **Rationale:** A single, content-type-agnostic Player removes the two-button-set contradiction (Audit 1.2) at its root: there
-is only one Player component, one state machine, used everywhere. Separating "Done" (unit-level, reversible, low-stakes)
-from "Finish" (container-level, deliberate, success-triggering) removes both the "required steps" paradox (Audit 1.1) and
-the required-blocks contradiction (Audit 1.4) — success becomes purely an act of EM declaration, never a computed gate.
+is only one Player component, one state machine, used everywhere. The **visibility-based state machine** (movement/rendering as
+the trigger for unit-state transitions, per §2) removes the need for manual "Done"/"Skip"/"Back" buttons while preserving EM
+agency through the container-level **Finish** action. Success becomes purely an act of EM declaration, never a computed gate.
 Removing auto-decrement (Audit 1.3) closes the one place where the system silently overrode an EM's declared completion:
 "Revisiting" is now always safe, never punitive. Persistence of unit state after Finish honors the non-linear, permeative
 nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo" success in order to keep learning.
@@ -1023,13 +1045,27 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
 
 - **Schema:**
   - `player_steps` / `lesson_blocks` unify under a single **Atomic Unit** concept with a `unit_state` field
-    (enum: `unseen` / `completed` / `skipped`); the former `is_optional` boolean is retained **only** as a non-enforced
-    editorial display hint (consider renaming to `is_recommended` in OpenSpec to avoid implying enforcement).
+    (enum: `unseen` / `in_view` / `completed`). The `in_view` state is **ephemeral** — computed in real-time based on
+    viewport/render state, not persisted to disk. **Persisted states** are `unseen` (not yet engaged) and `completed` (EM
+    has progressed past). Skipped units are tracked as a subset of `completed` for analytics.
+  - The former `is_optional` boolean is retained **only** as a non-enforced editorial display hint (consider renaming to
+    `is_recommended` in OpenSpec to avoid implying enforcement).
   - `inquiry_session` / `course_sessions` gain a `finished_at` timestamp (set only by the explicit Finish action) distinct
     from unit-level `unit_state` completion, and a `success_declared` boolean set **only** by Finish — never inferred.
   - `protocols` / course tables retain `content_format` (enum: `structured_markdown`, `other`).
-- **Player UX (deferred to OpenSpec):** Button placement, Nudge modal design, and "deepen later" re-entry UI are explicitly
-  **out of scope** for this decision and belong to OpenSpec. This decision defines the state machine, not the screen.
+  - A viewport/render event triggers the `unseen` → `in_view` transition; a navigation-forward event triggers the
+    `in_view` → `completed` transition (no manual buttons required).
+- **Player state machine (not UI/UX):** This decision specifies the **state-transition logic**:
+  - Unit rendering → `unseen` to `in_view` (automatic).
+  - Navigation forward / progression → `in_view` to `completed` (automatic).
+  - Navigation backward / revisiting → remains `completed`, can re-engage for deepening.
+  - Terminal button display logic (§4) is computed from persisted `unit_state` values, not from UI interaction.
+  - **No manual "Done," "Skip," or "Back" buttons are required** — movement and visibility are the triggers.
+  - Button placement, visual styling, and interaction affordances are deferred to OpenSpec.
+- **Player UX (deferred to OpenSpec):** This decision defines the state machine, not the screen. Button placement,
+  visual styling, modal design, scroll mechanics, and viewport-detection methods all belong to OpenSpec. The state
+  machine here is content-agnostic: HTML render, canvas, audio timeline, PDF viewport, etc., all trigger state
+  transitions via the same visibility-based logic.
 - **Content Pipeline (unchanged):** HTML scraper intake → JSON Atomic Units; new content authored directly in Structured
   Markdown; graceful degradation to a single unit if parsing fails.
 - **Analytics:** `use_count` and course-completion metrics are now computed from one unambiguous trigger (Finish at the
@@ -1044,7 +1080,7 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
 ## DEC-016 — Course architecture: polymorphic lesson blocks, subjective navigation, content versioning
 
 **Status:** Refined (2026-06-29, Yossef-Tal & Sigal) — resolves **GQ-013** with critical refinements; **amended (2026-07-02)** —
-§3–4 rewritten to adopt the unified Scroll-Player model per **DEC-015** (resolves **GQ-018**).
+§3–4 rewritten to adopt the unified Unified Player model per **DEC-015** (resolves **GQ-018**).
 
 **Context:** **DEC-003** defines courses as a parallel lane with NEMAR, Player, Integrating. **DEC-015** establishes Structured Markdown
 (H3 = step) as the content standard for all protocols. **GQ-013** clarified how course lessons integrate with the Player, Personal Treatment Library, 
@@ -1056,8 +1092,8 @@ content versioning model (Diary vs. Toolbox).
 the standalone treatment Player's Next/Finish — this was Audit Contradiction 1.2 (two incompatible Player button sets). §4 originally
 gated course completion on "all required blocks explicitly done," which both contradicted §3's "no technical gates" and could never
 be reconciled with **DEC-006**'s equally contradictory "required steps" language — this was Audit Contradiction 1.4. **DEC-015**'s
-unified Scroll-Player now resolves both: course lesson units and treatment steps are the same **Atomic Unit** concept, and course
-completion follows the identical **Finish**-based state machine as any other Scroll-Player instance. §3 and §4 below are rewritten
+unified Unified Player now resolves both: course lesson units and treatment steps are the same **Atomic Unit** concept, and course
+completion follows the identical **Finish**-based state machine as any other Unified Player instance. §3 and §4 below are rewritten
 accordingly; §1, §2, §5, and §6 are unchanged in substance.
 
 **Decision:**
@@ -1074,28 +1110,28 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 2. **Polymorphic Lesson Blocks (Content Standard)**
    - **Lessons use Structured Markdown (H3 = step)** per **DEC-015**, enabling consistent parsing.
    - Each **lesson is a container** that can hold **one or more block types** (the same polymorphic block types are also
-     available as Atomic Units in any Scroll-Player sequence per **DEC-015** §7):
+     available as Atomic Units in any Unified Player sequence per **DEC-015** §7):
      - **Original Content:** Unique text, videos, audio, or instructions authored for the course.
      - **Treatment Reference:** A dynamic **link to an existing protocol** from the **Treatments Table** (or Personal Treatment Library).
        When rendered, displays the protocol's steps using the same Player as standalone treatments.
      - **Insight/Inspiration (הגיג):** A standalone **"Hagig"** from the shared collection — displayed as read-only inspiration, not executable.
      - **Reflection Prompt:** A standard **Atomic Unit type** (per **DEC-015** §7) — a journal-input surface. Reaching it
        automatically offers the EM an affordance to reflect and commit text as a linked Reflective Journal entry. Not
-       course-specific; available in any Scroll-Player sequence.
+       course-specific; available in any Unified Player sequence.
 
 3. **Subjective Navigation & "Soft Completion" (rewritten 2026-07-02 — see DEC-015)**
    - **No pre-treatment NEMAR inside course:** When a **treatment is presented within a course**, there is **no mandatory NEMAR inquiry**.
      The system **trusts the EM's readiness**. (Unchanged.)
    - **No technical validation gates:** The system **never enforces** "required" blocks — this is now a hard architectural rule, not a
      course-specific one; see **DEC-015** §3.
-   - **Course lesson blocks use the exact same unit-level actions as every other Scroll-Player instance** — **"Done" (בוצע)**,
+   - **Course lesson blocks use the exact same unit-level actions as every other Unified Player instance** — **"Done" (בוצע)**,
      **"Skip" (דלג)**, **"Back" (חזור)** — defined once in **DEC-015** §2, not redefined here. There is **no separate course button set**;
-     a Treatment Reference block opens a **nested Scroll-Player** governed by the identical model (**DEC-015** §1).
+     a Treatment Reference block opens a **nested Unified Player** governed by the identical model (**DEC-015** §1).
    - **Sovereignty Rule (unchanged):** The EM can mark a block or a whole lesson unit as "Done" at any time, based on internal readiness,
      **regardless of physical execution**. (E.g., EM reads a treatment and says "I know this—done" without stepping through every instruction.)
 
 4. **Course Completion & Success (rewritten 2026-07-02 — see DEC-015)**
-   - **Completion trigger:** A course is a Scroll-Player instance like any other. It is marked **"Successfully Completed"** when the EM
+   - **Completion trigger:** A course is a Unified Player instance like any other. It is marked **"Successfully Completed"** when the EM
      triggers the terminal button action at the final Atomic Unit (**DEC-015** §2) — either pressing **[Finish]** (if all units
      completed) or choosing **[Finish Anyway]** (if units remain skipped/unseen), per the **Two-Option Switch** logic in **DEC-015** §4.
      "Required" is now a purely editorial hint (**DEC-015** §3); it can never block or gate course completion.
@@ -1138,7 +1174,7 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 **Refines:**
 
 - **DEC-003 (Courses):** Adds mechanics for lesson structure, polymorphic context, and Player integration.
-- **DEC-015 (Unified Scroll-Player, amended 2026-07-02):** Course lesson units **are** Atomic Units — no separate Player model,
+- **DEC-015 (Unified Unified Player, amended 2026-07-02):** Course lesson units **are** Atomic Units — no separate Player model,
   no separate button set, no required-blocks gate. §3–4 above now defer entirely to **DEC-015**'s state machine.
 - **DEC-005 & DEC-006 (Personal Treatment Library):** First-time course execution auto-populates library with provenance; use_count reciprocity.
 - **DEC-004 (Chronological Timeline):** Snapshot storage on timeline ensures diary integrity; library points to live version.
@@ -1147,7 +1183,7 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 - **Polymorphic lesson blocks** enable course creators to mix original content with dynamic links to shared protocols, rapid assembly without duplication.
 - **No pre-treatment NEMAR** respects EM's body wisdom and autonomy.
 - **"Done" semantics clarify EM sovereignty:** Declaration based on readiness, not execution. Removes friction between system and EM intent.
-- **Unifying with the standalone Scroll-Player (2026-07-02):** Removes the two-button-set contradiction and the required-blocks
+- **Unifying with the standalone Unified Player (2026-07-02):** Removes the two-button-set contradiction and the required-blocks
   gate at their root — a course is not a special case, it is the same Player used everywhere.
 - **Diary vs. Toolbox model is elegant:** Preserves history, enables updates, avoids clutter. Ownership remains with EM (manual variants).
 - **Retroactive linking** ensures full data reciprocity: courses can connect to any logical unit, any time.
@@ -1164,9 +1200,9 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
   - `personal_library_entries`: add `variant_type` (enum: 'original', 'personal', 'course_extracted'), `source_metadata` (JSONB).
   - `timeline_events`: add `snapshot` (JSONB, only for Finish events: stores static copy of protocol/course steps as performed).
 
-- **Player UX (course):** No course-specific button set. A course is a Scroll-Player instance; it uses the **same**
+- **Player UX (course):** No course-specific button set. A course is a Unified Player instance; it uses the **same**
   Done/Skip/Back unit-level actions and the **same** Finish container-level action defined once in **DEC-015** §2.
-  Treatment Reference blocks open a **nested** Scroll-Player instance (**DEC-015** §1), not a different component.
+  Treatment Reference blocks open a **nested** Unified Player instance (**DEC-015** §1), not a different component.
 
 - **Library sync:** On treatment Finish within a course → check library → create new entry with `variant_type: 'course_extracted'`
   or append source, increment `use_count` (per the amended, gate-free trigger in **DEC-006** §1).
@@ -1202,7 +1238,7 @@ button sets (standalone Next/Finish vs. course Done/Skip/Back); **1.3** auto-dec
 silently overriding EM declarations; **1.4** "required blocks" gating course completion (DEC-016) while simultaneously
 claiming no technical gates exist.
 
-**Resolution:** A single unified **Scroll-Player** state machine, fully specified in the amended **DEC-015**:
+**Resolution:** A single unified **Unified Player** state machine, fully specified in the amended **DEC-015**:
 
 - **One Player, one model** for treatments, techniques, and course lessons — "Atomic Unit" replaces "step" and "block."
 - **Unit-level actions** (Done / Skip / Back) are reversible, low-stakes, and identical everywhere. **Container-level terminal button
@@ -1219,7 +1255,7 @@ claiming no technical gates exist.
   metadata.
 
 **Amended decisions:** **DEC-006** §1 (removed required-steps precondition); **DEC-007** §1 (auto-decrement replaced with
-"Revisiting is not revoking"); **DEC-015** (substantially rewritten — now the canonical Scroll-Player state machine);
+"Revisiting is not revoking"); **DEC-015** (substantially rewritten — now the canonical Unified Player state machine);
 **DEC-016** §3–4 (rewritten to defer to DEC-015 instead of describing a separate course Player model).
 
 **Deferred to OpenSpec:** Specific label copy, button styling, and the "deepen later" re-entry UI. This decision defines the
