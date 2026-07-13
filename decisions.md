@@ -1001,6 +1001,29 @@ the EM's agency via the container-level **Finish** action.
      trigger. The EM's agency is preserved entirely: they may spend as long as they like on a Reflection Prompt before moving
      forward, or skip it entirely by navigating forward without engaging.
 
+7a. **Navigation Tree — Exclusive Non-Linear Manual Navigation:**
+   - **Exclusivity principle:** The **Navigation Tree** (a hierarchical outline of all Atomic Units in the sequence) is the
+     **only** manual mechanism for non-sequential movement within the Unified Player. There is **no "Skip" button** in the
+     primary Player UI.
+   - **Navigation Tree representation:** The tree displays all H3-defined Atomic Units as selectable nodes, ordered sequentially.
+     The EM's current position is marked. The tree is always accessible during a Player session.
+   - **Forward jump via tree selection (skipping intermediate units):**
+     - When the EM selects a **future Atomic Unit** in the tree (forward of the current unit), the system automatically
+       transitions all **intermediate units** (those between current and selected) to the **`skipped` state**.
+     - Skipped units are a specific subset of `completed` state semantically; they are tracked distinctly to enable future
+       deepening and analytics (e.g., "engaged via skip").
+     - The EM may continue forward from the selected unit or may return to skipped units anytime via tree navigation.
+     - **No blocking gates:** The skipped state does not prevent the EM from reaching the **Finish** action at the final unit.
+   - **Backward navigation via tree selection (revisiting — pure deepening):**
+     - When the EM selects a **previous Atomic Unit** in the tree (backward from the current unit), the system navigates to
+       that unit and renders it for engagement.
+     - **Non-revocation principle (critical):** Navigating backward to a previously `completed` unit **does not revert its
+       state to `in_view`** and **does not undo any success metadata**. The unit remains `completed` — revisiting is pure
+       learning and deepening, not undoing.
+     - Backward navigation never decrements `use_count` or revokes a prior **Finish** declaration.
+   - **Consistency across content types:** Navigation Tree logic applies uniformly to standalone treatments, techniques, and
+     course lessons — all share the Unified Player engine and the same state-machine rules.
+
 8. **Structured Markdown as Content Standard (unchanged from original DEC-015):**
    - All treatments, protocols, techniques, and course lessons are authored or converted to **Structured Markdown**.
    - **Atomic rule:** every **H3 header (###)** in the document automatically defines one Atomic Unit.
@@ -1055,12 +1078,19 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
   - `protocols` / course tables retain `content_format` (enum: `structured_markdown`, `other`).
   - A viewport/render event triggers the `unseen` → `in_view` transition; a navigation-forward event triggers the
     `in_view` → `completed` transition (no manual buttons required).
+  - **Navigation Tree state machine (§7a — exclusive non-linear navigation):**
+    - Forward jump via tree selection: intermediate units `unseen` → `skipped` (subset of `completed`, tracked distinctly).
+    - Backward navigation via tree selection: "Revisiting" — no state reversion, no use_count changes, pure deepening.
+    - Non-revocation principle: backward movement never decrements success metadata or undoes a prior Finish declaration.
+    - Skipped units are labeled "engaged via skip" for analytics and do not block Finish action.
 - **Player state machine (not UI/UX):** This decision specifies the **state-transition logic**:
   - Unit rendering → `unseen` to `in_view` (automatic).
   - Navigation forward / progression → `in_view` to `completed` (automatic).
-  - Navigation backward / revisiting → remains `completed`, can re-engage for deepening.
+  - Navigation backward / revisiting → remains `completed`, can re-engage for deepening (never revokes state or success metadata).
   - Terminal button display logic (§4) is computed from persisted `unit_state` values, not from UI interaction.
-  - **No manual "Done," "Skip," or "Back" buttons are required** — movement and visibility are the triggers.
+  - **Exclusive skipping via Navigation Tree (§7a):** The Navigation Tree is the **only** manual mechanism for bypassing content.
+    There is **no "Skip" button** in the primary Player UI. Forward jumps via tree selection trigger automatic `unseen` →
+    `skipped` transitions for intermediate units.
   - Button placement, visual styling, and interaction affordances are deferred to OpenSpec.
 - **Player UX (deferred to OpenSpec):** This decision defines the state machine, not the screen. Button placement,
   visual styling, modal design, scroll mechanics, and viewport-detection methods all belong to OpenSpec. The state
@@ -1071,9 +1101,10 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
 - **Analytics:** `use_count` and course-completion metrics are now computed from one unambiguous trigger (Finish at the
   final Atomic Unit) — no dual interpretation across treatment vs. course contexts.
 - **Copy:**
-  - "Move through each part at your own pace — mark it Done or Skip, whichever fits."
+  - "Move through each part at your own pace — jump ahead using the outline whenever you're ready."
   - "When you reach the end, Finish is yours to declare, whenever you're ready — skipped units and all."
   - "Going back is just re-reading. Nothing you've already finished changes."
+  - "Navigate your own path: step by step, or jump ahead with the outline."
 
 ---
 
