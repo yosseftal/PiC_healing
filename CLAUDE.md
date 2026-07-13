@@ -76,34 +76,67 @@ turning subjective experiences into actionable wisdom.
   rating associated symptoms, closing the feedback loop with "The Center" (**DEC-008**, **DEC-009**).
 - **Atomic Focus in rating:** only one symptom rated at a time; a symptom belongs to only one Symptom Group at a time (**DEC-009**).
 
-### E. Player & Structured Markdown
-- **Player** (הנגן): Treatment execution engine displaying atomic steps **one per screen** (**DEC-015**).
-- **Subjective Completion (EM Sovereignty):** **No validation gates**. The EM decides when a step is complete based on 
-**internal readiness** (executed, understood, or intuitively skipped). Click **"Next"** when ready—no pressure (**DEC-015**).
-- **Structured Markdown Standard:** All treatments authored in **Structured Markdown** (H3 headers = steps). Content Parser converts
-  existing HTML + future Markdown into atomic JSON steps (**DEC-015**).
-- **Finish & Integrating:** Clicking **"Finish"** (סיום) auto-increments `use_count` (**DEC-006**). 
-Exiting before end preserves session as **Integrating** (not failed, EM can resume) (**DEC-015**).
-- **Optional closing NEMAR:** After or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this treatment ended successfully?"**
-  (yes/no). Result logged as metadata (**DEC-015**).
+### E. Unified Player & Structured Markdown
+
+**The Unified Player** (הנגן) is the treatment execution engine powering standalone treatments, techniques, and course lessons.
+It uses a visibility-based state machine with exclusive Navigation Tree navigation (**DEC-015**, **DEC-015 §7a**).
+
+- **Player** (הנגן): Unified engine displaying Atomic Units (H3-defined steps) one at a time (**DEC-015**).
+  - **Visibility-based state transitions:** Unit states change automatically as the EM moves through content:
+    - `unseen` → `in_view`: triggered by rendering/viewport visibility (automatic, no button required).
+    - `in_view` → `completed`: triggered by navigating to the next unit (automatic, no button required).
+    - `unseen` → `skipped`: triggered by forward jumps via Navigation Tree (intermediate units auto-skipped).
+  - **No manual "Done," "Skip," or "Back" buttons in the primary Player UI.** Movement and visibility are the triggers.
+
+- **Navigation Tree — Exclusive Non-Linear Navigation (DEC-015 §7a):**
+  - The Navigation Tree (hierarchical outline of all Atomic Units) is the **only** manual mechanism for skipping content.
+  - **Forward jumps:** Selecting a future unit via the tree automatically transitions intermediate units to `skipped` state.
+  - **Backward navigation (Revisiting):** Selecting a prior unit navigates back without reverting state or revoking success
+    metadata.
+    Revisiting is pure deepening, never undoing.
+  - Skipped units are tracked distinctly ("engaged via skip") for analytics and future deepening.
+  - Navigation Tree logic applies uniformly across all content types (treatments, techniques, courses).
+
+- **Subjective Completion (EM Sovereignty):** No validation gates. The EM moves through content at their own pace;
+  state transitions follow automatically. **Finish** (סיום) at the final unit is the **only** trigger for success metadata
+  (`use_count` +1, course completion status) (**DEC-006**, **DEC-015**).
+
+- **Structured Markdown Standard:** All treatments authored in **Structured Markdown** (H3 headers = Atomic Units). Content Parser
+  converts existing HTML + future Markdown into atomic JSON units (**DEC-015**).
+
+- **Finish & Integrating:** Clicking **"Finish"** (סיום) at the final unit auto-increments `use_count` (**DEC-006**).
+  Exiting before the final unit preserves session as **Integrating** (not failed, EM can resume) (**DEC-015**).
+
+- **Optional closing NEMAR:** After or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this treatment ended
+  successfully?"** (yes/no). Result logged as metadata (**DEC-015**).
+
+- **Reflection Prompts:** A standard Atomic Unit type available in any Unified Player sequence (treatments, techniques,
+  courses). Journal input affordance surfaces automatically when a Reflection Prompt unit is reached. No manual submission button
+  required; progression to the next unit commits the entry (**DEC-015 §7**).
 
 ### F. Courses: Polymorphic Lessons, Contextual Binding & Content Versioning
-- **Course Work Session & Polymorphic Context:** Courses are parallel lanes with dedicated Work Sessions. A Course Work Session can be
-  **independent** (linked only to timeline, no parent Symptom Group) or **nested** (tagged as treatment for a Symptom Group). All course
-  activities are **retroactively linkable** to any logical unit (groups, journal, other courses) for full data reciprocity (**DEC-016**).
-- **Polymorphic Lesson Blocks:** Lessons use **Structured Markdown (H3 = step)** and can contain **four block types**: Original Content,
-  Treatment Reference (dynamic link to shared protocols), Insight/הגיג (read-only inspiration), Reflection Prompt (**DEC-016**).
-- **Subjective Navigation & "Soft Completion":** **No mandatory NEMAR** before treatments; EM decides readiness. **No technical gates**.
-  Three actions per block: **"Done" (בוצע)** — EM declares complete based on internal readiness (not physical execution);
-  **"Skip" (דלג)** — defers block, marked Incomplete, remains available later; **"Back" (חזור)** — navigate backward (**DEC-016**).
-  **Sovereignty:** EM can mark any block/lesson "Done" anytime, regardless of execution.
-- **Course Completion:** Course marked "Successfully Completed" when **all required blocks marked as done**. Optional blocks can be skipped.
-  **Optional closing NEMAR** at course end (**DEC-016**).
+- **Course Work Session & Polymorphic Context:** Courses are parallel lanes with dedicated Work Sessions. A Course Work
+  Session can be **independent** (linked only to timeline, no parent Symptom Group) or **nested** (tagged as treatment for a
+  Symptom Group). All course activities are **retroactively linkable** to any logical unit (groups, journal, other courses) for
+  full data reciprocity (**DEC-016**).
+- **Polymorphic Lesson Blocks:** Lessons use **Structured Markdown (H3 = Atomic Unit)** and can contain **four block types**:
+  Original Content, Treatment Reference (dynamic link to shared protocols), Insight/הגיג (read-only inspiration), Reflection
+  Prompt (**DEC-016**).
+- **Subjective Navigation:** Courses use the same **Unified Player** engine and **Navigation Tree** mechanism as standalone
+  treatments (**DEC-015**, **DEC-015 §7a**). No mandatory NEMAR before treatments; EM decides readiness. EM navigates via the
+  Navigation Tree, with automatic visibility-based state transitions. No technical gates. **Sovereignty:** EM can mark any block
+  complete anytime, regardless of execution. EM can skip any block via forward Navigation Tree jumps; skipped units remain
+  available for later deepening.
+- **Course Completion:** Course marked "Successfully Completed" when EM clicks **"Finish"** at the final Atomic Unit
+  (**DEC-015 §4**). Skipped units do not block completion.
+- **Optional closing NEMAR:** At or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this course ended successfully?"**
+  (yes/no). Result logged as metadata (**DEC-016**).
 - **Content Versioning (Diary vs. Toolbox):** Timeline stores **static snapshot** of protocol as performed (historical integrity).
-  **Personal Treatment Library** always points to **latest live version** from master Treatments Table (no version alerts, always current).
-  **Manual variants** preserve EM ownership (custom adaptations, `variant_type: 'personal'`) (**DEC-016**).
+  **Personal Treatment Library** always points to **latest live version** from master Treatments Table (no version alerts, always
+  current). **Manual variants** preserve EM ownership (custom adaptations, `variant_type: 'personal'`) (**DEC-016**).
 - **Library Sync:** Completing a treatment in a course **auto-adds it** to Personal Treatment Library (first-time execution).
-  **Use count reciprocity:** Course execution increments universal `use_count` in library. Toolbox grows organically (**DEC-016**).
+  **Use count reciprocity:** Course execution increments universal `use_count` in library. Toolbox grows organically
+  (**DEC-016**).
 
 ### G. Post-Treatment: Integration & Growth
 - Offer Reflective Journaling after a session (any step order); not only at end of linear wizard.
