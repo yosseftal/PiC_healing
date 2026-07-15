@@ -1052,10 +1052,53 @@ the EM's agency via the container-level **Finish** action.
        ```
    - **Benefits:** Clear, simple parsing logic; easy for EM and course creators to add steps; consistent structure across all protocols.
 
-9. **Content Transformation Pipeline (unchanged from original DEC-015):**
-   - A **Content Parser** converts existing HTML content and future Structured Markdown into JSON Atomic Unit entries
-     (`unit_number`, `unit_title`, `unit_content`, `unit_order`, optional `is_optional` display hint), stored and indexed
-     by protocol/course ID for fast retrieval and sequencing in the Unified Player.
+9. **Content Transformation Pipeline — Unit Rationale Extraction:**
+   - A **Content Parser** converts existing HTML content and future Structured Markdown into JSON Atomic Unit entries, with the
+     following schema:
+     - `unit_number`, `unit_title`, `unit_content` (primary therapeutic content)
+     - `unit_order` (sequencing)
+     - `unit_rationale` (optional, extracted via blockquote parsing — see below)
+     - `is_optional` (optional, display hint only, non-enforced)
+   - **Structured Markdown parsing rule for unit_rationale:**
+     - Any **blockquote (>)** appearing immediately after an H3 header is extracted as the `unit_rationale` field.
+     - Example:
+       ```markdown
+       ### Step 1: Feel Your Breath
+       > This step activates parasympathetic nervous system awareness, allowing the body to recognize safety signals naturally.
+       
+       Take three slow breaths and notice where you feel the air moving in your body.
+       ```
+       Parsed as:
+       - `unit_title`: "Step 1: Feel Your Breath"
+       - `unit_rationale`: "This step activates parasympathetic nervous system awareness, allowing the body to
+         recognize safety signals naturally."
+       - `unit_content`: "Take three slow breaths and notice where you feel the air moving in your body."
+   - **Ownership & Authority:** The `unit_rationale` content is 100% authored by the content creator (e.g., Sigal) and reflects
+     their clinical/therapeutic reasoning. This architectural update provides the container only; therapeutic intent remains
+     entirely theirs.
+   - **Separation of concerns:** `unit_rationale` is persisted as distinct metadata in the JSON structure, separate from
+     `unit_content`, enabling deepening without cluttering the primary unit view.
+   - The parser applies uniformly to **all content types** (standalone treatments, techniques, and course lessons) processed by
+     the Unified Player. If no blockquote follows an H3 header, `unit_rationale` is omitted or set to `null`.
+   - Graceful degradation: If parsing fails, the unit falls back to a single `unit_content` container (no rationale layer).
+
+9a. **The "Info" Affordance — Optional, Non-Blocking Deepening UI:**
+   - **Purpose:** Surface the `unit_rationale` metadata without cluttering the primary unit view or interrupting Atomic Focus.
+   - **Mechanism:** An optional, non-blocking UI affordance (e.g., a subtle "info" icon, label, or button) is displayed alongside
+     or near the unit title when `unit_rationale` is present. Interaction is entirely optional.
+   - **Pull-Based Visibility:** The rationale layer is **hidden by default**. It is only revealed when the EM explicitly requests
+     it (e.g., by tapping the "info" icon). This preserves the primary unit's clarity and Atomic Focus (§1, DEC-001).
+   - **Content and Intent:** When revealed, the `unit_rationale` displays the clinical/therapeutic reasoning authored by the
+     content creator (e.g., why this step is included, what mechanism it targets). This context supports **deepening** — allowing
+     the EM to understand the "why" behind the "what" without requiring it.
+   - **Non-Blocking Navigation & Finish:**
+     - Opening, reading, or closing the rationale layer does **not** affect unit state transitions (§2).
+     - Interacting with rationale does **not** block forward navigation, backward navigation, or the **Finish** action.
+     - The rationale layer is a **pure information layer**, never a gate.
+   - **Consistency:** This affordance applies uniformly to all content types in the Unified Player (standalone treatments,
+     techniques, and course lessons) where `unit_rationale` is present.
+   - **Deferred to OpenSpec:** Button styling, icon design, accessibility, animation, and specific placement are deferred to the
+     OpenSpec phase. This decision specifies the logical layer (hidden by default, optional interaction) only.
 
 **Refines / Supersedes:**
 
@@ -1079,10 +1122,13 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
 **Consequences:**
 
 - **Schema:**
-  - `player_steps` / `lesson_blocks` unify under a single **Atomic Unit** concept with a `unit_state` field (enum: `unseen` /
-    `in_view` / `skipped` / `completed`). The `in_view` state is **ephemeral, session-based** — computed in real-time based on
-    viewport/render state, not persisted to disk. **Persisted states** are: `unseen` (not yet reached), `skipped` (bypassed via
-    forward tree jump), and `completed` (engaged and navigated past).
+  - `player_steps` / `lesson_blocks` unify under a single **Atomic Unit** concept with the following fields:
+    - `unit_state` (enum: `unseen` / `in_view` / `skipped` / `completed`). Ephemeral: `in_view` (session-based, computed
+      in real-time); Persisted: `unseen`, `skipped`, `completed`.
+    - `unit_title`, `unit_content` (primary therapeutic content, authored by content creator).
+    - `unit_rationale` (optional, extracted from blockquote after H3 header; contains clinical/therapeutic reasoning).
+    - `unit_order` (sequencing).
+    - `is_optional` (optional, non-enforced editorial display hint; rename to `is_recommended` in OpenSpec).
   - The former `is_optional` boolean is retained **only** as a non-enforced editorial display hint (consider renaming to
     `is_recommended` in OpenSpec to avoid implying enforcement).
   - `inquiry_session` / `course_sessions` gain a `finished_at` timestamp (set only by the explicit Finish action) distinct
@@ -1090,6 +1136,8 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
   - `protocols` / course tables retain `content_format` (enum: `structured_markdown`, `other`).
   - A viewport/render event triggers the `unseen` → `in_view` transition; a navigation-forward event triggers the
     `in_view` → `completed` transition (no manual buttons required).
+  - **Unit Rationale metadata:** Extracted via blockquote parsing (§9), persisted separately from `unit_content`, surfaced via
+    optional "info" affordance (§9a) with pull-based visibility (hidden by default).
   - **Flat 4-state transitions (§2):**
     - `unseen` → `in_view`: Unit rendered in viewport (automatic).
     - `in_view` → `completed`: EM navigates to next unit (automatic).
@@ -1119,8 +1167,10 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
   visual styling, modal design, scroll mechanics, and viewport-detection methods all belong to OpenSpec. The state
   machine here is content-agnostic: HTML render, canvas, audio timeline, PDF viewport, etc., all trigger state
   transitions via the same visibility-based logic.
-- **Content Pipeline (unchanged):** HTML scraper intake → JSON Atomic Units; new content authored directly in Structured
-  Markdown; graceful degradation to a single unit if parsing fails.
+- **Content Pipeline (Unit Rationale Extraction):** HTML scraper intake → JSON Atomic Units with optional `unit_rationale`
+  extraction (§9); new content authored directly in Structured Markdown with blockquote parsing for rationale (§9); graceful
+  degradation to single `unit_content` if parsing fails. Rationale metadata is persisted separately and surfaced via optional
+  "info" affordance with pull-based visibility — hidden by default, never blocking navigation or Finish.
 - **Analytics:** `use_count` and course-completion metrics are now computed from one unambiguous trigger (Finish at the
   final Atomic Unit) — no dual interpretation across treatment vs. course contexts.
 - **Copy:**
@@ -1128,6 +1178,7 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
   - "When you reach the end, Finish is yours to declare, whenever you're ready — skipped units and all."
   - "Going back is just re-reading. Nothing you've already finished changes."
   - "Navigate your own path: step by step, or jump ahead with the outline."
+  - "Each step has an optional 'why' — tap to learn the clinical reasoning behind it, or skip and just do."
 
 ---
 
