@@ -913,26 +913,36 @@ the EM's agency via the container-level **Finish** action.
      Unified Player instance** scoped to that protocol's own Atomic Units, governed by the identical state machine below.
      Nesting is expected and supported, not an edge case.
 
-2. **Unit-Level State Transitions — Visibility-Based Automatic Completion (No Manual Gates):**
-   - **Atomic Unit states:** Each Atomic Unit has a stored state: `unseen` (not yet rendered), `in_view` (currently visible to
-     EM), or `completed` (EM has progressed past it).
-   - **Automatic state transition — visibility trigger:** When an Atomic Unit is **rendered in the viewport**, its state
-     automatically transitions from `unseen` to `in_view`. When the EM **navigates to the next unit** (forward or backward), the
-     prior unit's state transitions from `in_view` to `completed`. **No manual "Done" or "Confirm" buttons are required** to
-     advance between units.
-   - **EM agency preserved — backward navigation:** The EM may navigate **backward** at any time to revisit prior units. Moving
-     backward **does not** revert a unit's `completed` state to `in_view` — it remains `completed`. This preserves the
-     non-linear therapeutic reality: revisiting content is "deepening," not "undoing."
-   - **Skipped units:** If the EM navigates forward without engaging a unit (e.g., scrolls past it or uses a "Next" affordance
-     without pausing), the skipped unit's state transitions directly from `unseen` to `completed` without ever entering `in_view`.
-     Skipped units are tracked distinctly for analytics and deepening later, but they do not block forward progress or the
-     eventual **Finish** action.
+2. **Unit-Level State Transitions — Flat 4-State Model (Visibility-Based, No Manual Gates):**
+   - **Atomic Unit states (flat enum):** Each Atomic Unit has a persisted state:
+     - `unseen` — The unit has not yet been rendered or reached by the EM.
+     - `in_view` — The unit is currently visible in the viewport (**ephemeral, session-based state**, not persisted to disk).
+     - `skipped` — The unit was bypassed via a forward jump in the Navigation Tree (persisted, indicating "once passed over").
+     - `completed` — The unit was engaged with (rendered and navigated past, persisted, indicating "fully engaged").
+   - **State transitions — visibility and navigation triggers:**
+     - `unseen` → `in_view`: Triggered when the unit is **rendered in the viewport** (automatic, no button required).
+     - `in_view` → `completed`: Triggered when the EM **navigates to the next unit** (forward or backward, automatic).
+     - `unseen` → `skipped`: Triggered when the EM **uses the Navigation Tree to forward-jump** past the unit without rendering it
+       (intermediate units between current and selected are auto-marked `skipped`).
+     - **Upgrade transition (re-engagement of skipped units):**
+       - `skipped` → `in_view`: When a `skipped` unit is **revisited and rendered** (e.g., via backward tree navigation), it
+         transitions to `in_view` per the visibility trigger.
+       - `in_view` → `completed`: When the EM **navigates forward** from the re-engaged `skipped` unit, it transitions to
+         `completed` (semantic result: the record "cleans" — what was skipped is now fully engaged).
+   - **Both `skipped` and `completed` are "past" states — non-blocking:** Neither state blocks the EM's ability to progress
+     forward, reach the final unit, or trigger the **Finish** action. The system treats both as "progressed beyond."
+   - **EM agency preserved — backward navigation and revisiting:** The EM may navigate **backward** at any time to revisit prior
+     units. Navigating backward to a `completed` unit **does not revert** it to `unseen`, `in_view`, or `skipped` — it remains
+     `completed`. This preserves the non-linear therapeutic reality: revisiting content is "deepening," not "undoing."
+   - **Exit during in_view:** If the EM exits the session while a unit is in `in_view` (rendered but not yet navigated past), that
+     unit's persisted state remains **unchanged** (`unseen` or `skipped`). The transition to `completed` occurs only upon active
+     navigation to another unit.
    - **Step Completion (unit-state transition) vs. Overall Success Declaration (Finish):** Unit-state transitions happen
-     automatically and silently as the EM moves through content. They are **local**, **ephemeral**, and **reversible via
-     revisiting**. They are **not** success metadata. Overall success is declared only via the explicit **Finish** action at the
-     container level (§4 below).
+     automatically and silently as the EM moves through content. They are **local**, **ephemeral** (in_view), or **persisted**
+     (unseen/skipped/completed), and they are **not** success metadata. Overall success is declared only via the explicit
+     **Finish** action at the container level (§4 below).
    - **No validation gates in unit-level logic:** The system never blocks the EM from progressing to the next unit, skipping
-     forward, or navigating backward. Movement is the EM's declaration of progress; the system honors it.
+     forward via the Navigation Tree, or navigating backward. Movement is the EM's declaration of progress; the system honors it.
 
 3. **Abolishing "Required" as a Technical Gate:**
    - **No unit — standalone step or course block — can block the EM from reaching "Finish."** There is no system-enforced
@@ -1007,19 +1017,21 @@ the EM's agency via the container-level **Finish** action.
      primary Player UI.
    - **Navigation Tree representation:** The tree displays all H3-defined Atomic Units as selectable nodes, ordered sequentially.
      The EM's current position is marked. The tree is always accessible during a Player session.
-   - **Forward jump via tree selection (skipping intermediate units):**
+   - **Forward jump via tree selection (setting the skipped state):**
      - When the EM selects a **future Atomic Unit** in the tree (forward of the current unit), the system automatically
-       transitions all **intermediate units** (those between current and selected) to the **`skipped` state**.
-     - Skipped units are a specific subset of `completed` state semantically; they are tracked distinctly to enable future
-       deepening and analytics (e.g., "engaged via skip").
+       transitions all **intermediate units** (those between current and selected) from `unseen` to the `skipped` state.
+     - The `skipped` state is a persisted "past" state indicating the unit was bypassed via forward jump, not engaged directly.
      - The EM may continue forward from the selected unit or may return to skipped units anytime via tree navigation.
-     - **No blocking gates:** The skipped state does not prevent the EM from reaching the **Finish** action at the final unit.
-   - **Backward navigation via tree selection (revisiting — pure deepening):**
+     - **No blocking gates:** The `skipped` state does not prevent the EM from reaching the **Finish** action at the final unit.
+   - **Backward navigation via tree selection (revisiting & upgrade path):**
      - When the EM selects a **previous Atomic Unit** in the tree (backward from the current unit), the system navigates to
        that unit and renders it for engagement.
-     - **Non-revocation principle (critical):** Navigating backward to a previously `completed` unit **does not revert its
-       state to `in_view`** and **does not undo any success metadata**. The unit remains `completed` — revisiting is pure
-       learning and deepening, not undoing.
+     - If that unit is in `completed` state: Navigating backward **does not revert** it to `unseen`, `in_view`, or `skipped`
+       — it remains `completed`. This preserves the non-linear therapeutic reality: revisiting is "deepening," not "undoing."
+     - **If that unit is in `skipped` state (upgrade path):** Rendering the unit transitions it to `in_view` (per the visibility
+       trigger in §2). When the EM **navigates forward** from this re-engaged unit, it transitions from `in_view` to `completed`
+       (the record "cleans" — what was skipped is now fully engaged). This is a **metadata refinement only**, never blocking
+       progress or triggering duplicate success metadata.
      - Backward navigation never decrements `use_count` or revokes a prior **Finish** declaration.
    - **Consistency across content types:** Navigation Tree logic applies uniformly to standalone treatments, techniques, and
      course lessons — all share the Unified Player engine and the same state-machine rules.
@@ -1067,10 +1079,10 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
 **Consequences:**
 
 - **Schema:**
-  - `player_steps` / `lesson_blocks` unify under a single **Atomic Unit** concept with a `unit_state` field
-    (enum: `unseen` / `in_view` / `completed`). The `in_view` state is **ephemeral** — computed in real-time based on
-    viewport/render state, not persisted to disk. **Persisted states** are `unseen` (not yet engaged) and `completed` (EM
-    has progressed past). Skipped units are tracked as a subset of `completed` for analytics.
+  - `player_steps` / `lesson_blocks` unify under a single **Atomic Unit** concept with a `unit_state` field (enum: `unseen` /
+    `in_view` / `skipped` / `completed`). The `in_view` state is **ephemeral, session-based** — computed in real-time based on
+    viewport/render state, not persisted to disk. **Persisted states** are: `unseen` (not yet reached), `skipped` (bypassed via
+    forward tree jump), and `completed` (engaged and navigated past).
   - The former `is_optional` boolean is retained **only** as a non-enforced editorial display hint (consider renaming to
     `is_recommended` in OpenSpec to avoid implying enforcement).
   - `inquiry_session` / `course_sessions` gain a `finished_at` timestamp (set only by the explicit Finish action) distinct
@@ -1078,19 +1090,30 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
   - `protocols` / course tables retain `content_format` (enum: `structured_markdown`, `other`).
   - A viewport/render event triggers the `unseen` → `in_view` transition; a navigation-forward event triggers the
     `in_view` → `completed` transition (no manual buttons required).
+  - **Flat 4-state transitions (§2):**
+    - `unseen` → `in_view`: Unit rendered in viewport (automatic).
+    - `in_view` → `completed`: EM navigates to next unit (automatic).
+    - `unseen` → `skipped`: EM uses Navigation Tree to forward-jump past the unit (automatic).
+    - `skipped` → `in_view` → `completed`: EM revisits skipped unit, renders it, then navigates forward ("upgrade" path,
+      non-blocking metadata refinement, no duplicate `use_count` trigger).
   - **Navigation Tree state machine (§7a — exclusive non-linear navigation):**
-    - Forward jump via tree selection: intermediate units `unseen` → `skipped` (subset of `completed`, tracked distinctly).
-    - Backward navigation via tree selection: "Revisiting" — no state reversion, no use_count changes, pure deepening.
+    - Forward jump via tree selection: intermediate units `unseen` → `skipped` (persisted, enabling future deepening).
+    - Backward navigation via tree selection: "Revisiting" — `completed` units never revert state, `skipped` units upgrade via
+      the normal visibility-based transitions when re-engaged. No state reversion, no use_count changes, pure deepening.
     - Non-revocation principle: backward movement never decrements success metadata or undoes a prior Finish declaration.
-    - Skipped units are labeled "engaged via skip" for analytics and do not block Finish action.
-- **Player state machine (not UI/UX):** This decision specifies the **state-transition logic**:
+    - Both `skipped` and `completed` are "past" states — neither blocks Finish action.
+- **Player state machine (not UI/UX):** This decision specifies the **flat 4-state transition logic**:
   - Unit rendering → `unseen` to `in_view` (automatic).
   - Navigation forward / progression → `in_view` to `completed` (automatic).
-  - Navigation backward / revisiting → remains `completed`, can re-engage for deepening (never revokes state or success metadata).
+  - Navigation Tree forward jump → `unseen` to `skipped` (automatic, intermediate units).
+  - Navigation Tree backward to skipped unit → `skipped` to `in_view` (automatic render), then `in_view` to `completed` (automatic
+    navigation, "upgrade" path).
+  - Navigation backward / revisiting → remains in prior state (`completed` never reverts, `skipped` can upgrade), can re-engage
+    for deepening (never revokes state or success metadata).
   - Terminal button display logic (§4) is computed from persisted `unit_state` values, not from UI interaction.
-  - **Exclusive skipping via Navigation Tree (§7a):** The Navigation Tree is the **only** manual mechanism for bypassing content.
-    There is **no "Skip" button** in the primary Player UI. Forward jumps via tree selection trigger automatic `unseen` →
-    `skipped` transitions for intermediate units.
+  - **Exclusive skipping via Navigation Tree (§7a):** The Navigation Tree is the **only** manual mechanism for setting the
+    `skipped` state. There is **no "Skip" button** in the primary Player UI. Forward jumps via tree selection trigger automatic
+    `unseen` → `skipped` transitions for intermediate units.
   - Button placement, visual styling, and interaction affordances are deferred to OpenSpec.
 - **Player UX (deferred to OpenSpec):** This decision defines the state machine, not the screen. Button placement,
   visual styling, modal design, scroll mechanics, and viewport-detection methods all belong to OpenSpec. The state
