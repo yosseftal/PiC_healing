@@ -955,27 +955,24 @@ the EM's agency via the container-level **Finish** action.
      internal readiness (whether they fully executed the action, understood it, or intuitively chose to skip it).
 
 4. **Container-Level Finish Action and Terminal Button Logic (Two-Option Switch):**
-   - **Finish is the sole success trigger:** Available **only** at the **final Atomic Unit** of a given Unified Player
-     instance (a standalone treatment's last step, a nested Treatment Reference's last step, or a course's last lesson unit).
-     Pressing **[Finish]** (סיום) triggers **success metadata**:
+   - **Finish is the sole success trigger:** Available **only** after the **Terminal NEMAR** (§7b) has been engaged with a **Yes**
+     response. The Terminal NEMAR is the mandatory final step preceding Finish (סיום) in all Unified Player instances. Pressing
+     **[Finish]** (סיום) triggers **success metadata**:
      - If the instance maps to a Personal Treatment Library row: `use_count` +1 (**DEC-006**).
      - If the instance is a course: course status → `"Successfully Completed"` (**DEC-016** §4).
      - A Diary-model timeline snapshot is recorded (**DEC-016** §5), unchanged.
-   - **Terminal button behavior — conditional branching based on unit states:** The terminal button display at the final Atomic
-     Unit depends on the **computed state** of all prior units (automatically derived from the visibility-based state machine
-     in §2):
-     - **If all units are in `completed` state:** Display a standard **[Finish]** button. Pressing it triggers success
-       declaration immediately, no further options offered.
-     - **If any unit remains in `unseen` or was skipped (not explicitly engaged):** Display **two explicit options** instead of
-       a single Finish:
-       - **[Review Skipped]:** Navigates backward to the first `unseen` or skipped unit in the sequence. The EM may engage it,
-         revisit content, continue forward, and return to the final unit. This is a **revisiting affordance**, not a gate —
-         choosing Review does not delay or prevent eventual Finish.
-       - **[Finish Anyway]:** Triggers success declaration immediately — the content is marked `"Successfully Completed"` (or
-         `use_count` increments by 1) **regardless of how many units remain `unseen` or skipped**. This path is **always
-         sovereign and always available**.
-   - **Non-blocking sovereignty:** Both branches (Review or Finish Anyway) are equally valid. The EM's choice between them is
-     never judged or gated by the system. This is a UX branching, not a validation gate.
+   - **Terminal button behavior — conditional branching based on Terminal NEMAR response:** At the Terminal NEMAR unit:
+     - **If the EM selects "Yes":** The system displays a standard **[Finish]** button. Pressing it triggers success declaration
+       immediately, recording the session as `"Successfully Completed"` and incrementing success metadata.
+     - **If the EM selects "No":** The specific remedial logic is TBD (awaiting therapeutic guidance). The session is marked
+       "In-Process, Not Yet Complete." The EM retains sovereign access to **[Finish Anyway]** (see below).
+   - **Sovereign bypass — [Finish Anyway] remains always available:** Regardless of Terminal NEMAR response or prior unit states,
+     the EM may access **[Finish Anyway]** to force success declaration and close the session. This honors EM sovereignty: they
+     are
+     the director of their own process and may choose to complete even if the Terminal NEMAR indicates "No" or if prior units
+     remain skipped. **[Finish Anyway]** always triggers success metadata (`use_count` +1, course completion) without judgment.
+   - **Non-blocking sovereignty:** The Terminal NEMAR is a mandatory touchpoint but not a technical gate. The EM's choice is
+     always respected and acted upon.
 
 5. **No Auto-Decrement — "Revisiting" Is Not "Revoking":**
    - Navigating "Back" — at any point, including after Finish — is **"Revisiting."** It **never** decrements `use_count`,
@@ -1035,6 +1032,32 @@ the EM's agency via the container-level **Finish** action.
      - Backward navigation never decrements `use_count` or revokes a prior **Finish** declaration.
    - **Consistency across content types:** Navigation Tree logic applies uniformly to standalone treatments, techniques, and
      course lessons — all share the Unified Player engine and the same state-machine rules.
+
+7b. **Terminal NEMAR — Mandatory Final Muscle Test Before Finish:**
+   - **Mandatory sequence:** The Terminal NEMAR is now a **mandatory Atomic Unit** that must appear as the **final step** in every
+     Unified Player sequence (treatments, techniques, courses), immediately preceding the Finish (סיום) action. The EM must pass
+     through this unit to reach the final success trigger.
+   - **Muscle Test Inquiry:** The Terminal NEMAR unit displays a binary inquiry:
+     - **"Is it NEMAR that this [Treatment/Course/Technique] ended successfully?"**
+     - The interface provides **Yes** and **No** buttons based on the EM's body response via muscle testing.
+   - **The "Yes" Path (Success Flow):**
+     - If the EM selects **Yes**, it indicates the therapeutic/learning process is complete and successful (per the body's
+       wisdom).
+     - The system enables the **[Finish]** (סיום) button, allowing the EM to trigger success metadata (`use_count` +1 for
+       treatments, course status `"Successfully Completed"` for courses) and close the session.
+   - **The "No" Path (In-Progress Flow — Therapeutic Guidance TBD):**
+     - If the EM selects **No**, it indicates the process is not yet complete or successful.
+     - **Specific remedial logic is TBD — awaiting therapeutic guidance.** For now, define the state as "In-Process, Not Yet
+       Complete" without specific next steps.
+     - The system does **not** block forward progress; the EM retains sovereign access to the **[Finish Anyway]** branch (§4)
+       regardless of Terminal NEMAR response, honoring their authority over their own process.
+   - **Non-Blocking Sovereignty:** While Terminal NEMAR is mandatory to reach, the EM's sovereign bypass (§4, **[Finish Anyway]**)
+     remains always available. The Terminal NEMAR is a mandatory touchpoint, not a technical gate.
+   - **Consistency:** Applied uniformly to all Unified Player instances (standalone treatments, nested Treatment References in
+     courses, and course lessons themselves).
+   - **Interaction:** Terminal NEMAR is a standard Atomic Unit and follows all visibility-based state transitions (§2) and
+     Navigation Tree rules (§7a). The EM may navigate backward to revisit the Terminal NEMAR anytime without revoking prior
+     success metadata (§5).
 
 8. **Structured Markdown as Content Standard (unchanged from original DEC-015):**
    - All treatments, protocols, techniques, and course lessons are authored or converted to **Structured Markdown**.
@@ -1173,6 +1196,15 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
   "info" affordance with pull-based visibility — hidden by default, never blocking navigation or Finish.
 - **Analytics:** `use_count` and course-completion metrics are now computed from one unambiguous trigger (Finish at the
   final Atomic Unit) — no dual interpretation across treatment vs. course contexts.
+- **Terminal NEMAR — Mandatory Completion Validation (§7b):**
+  - Terminal NEMAR is a mandatory Atomic Unit that appears as the final step before Finish (סיום) in all Unified Player instances.
+  - Binary inquiry: "Is it NEMAR that this [Treatment/Course/Technique] ended successfully?" (Yes/No muscle test).
+  - **Yes path:** Enables standard [Finish] button, triggering success metadata (`use_count` +1, course completion).
+  - **No path:** Marks session as "In-Process, Not Yet Complete." Specific remedial logic TBD (awaiting therapeutic guidance).
+  - **Sovereign bypass remains always available:** [Finish Anyway] button available regardless of Terminal NEMAR response,
+    honoring EM authority to close session on their terms.
+  - Terminal NEMAR follows all visibility-based state transitions (§2) and Navigation Tree rules (§7a). Revisiting Terminal NEMAR
+    never revokes prior success metadata (§5, §7b).
 - **Copy:**
   - "Move through each part at your own pace — jump ahead using the outline whenever you're ready."
   - "When you reach the end, Finish is yours to declare, whenever you're ready — skipped units and all."
