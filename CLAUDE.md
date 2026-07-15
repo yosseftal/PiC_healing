@@ -79,22 +79,31 @@ turning subjective experiences into actionable wisdom.
 ### E. Unified Player & Structured Markdown
 
 **The Unified Player** (הנגן) is the treatment execution engine powering standalone treatments, techniques, and course lessons.
-It uses a visibility-based state machine with exclusive Navigation Tree navigation (**DEC-015**, **DEC-015 §7a**).
+It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-015**, **DEC-015 §7a**).
 
 - **Player** (הנגן): Unified engine displaying Atomic Units (H3-defined steps) one at a time (**DEC-015**).
+  - **Flat 4-state model:** Unit states are `unseen` (not yet reached), `in_view` (currently rendered, ephemeral),
+    `skipped` (bypassed via forward tree jump, persisted), and `completed` (engaged and navigated past, persisted).
   - **Visibility-based state transitions:** Unit states change automatically as the EM moves through content:
     - `unseen` → `in_view`: triggered by rendering/viewport visibility (automatic, no button required).
     - `in_view` → `completed`: triggered by navigating to the next unit (automatic, no button required).
     - `unseen` → `skipped`: triggered by forward jumps via Navigation Tree (intermediate units auto-skipped).
+    - `skipped` → `in_view` → `completed`: triggered when revisiting and re-engaging a skipped unit ("upgrade" path,
+      non-blocking metadata refinement, no duplicate success metadata).
   - **No manual "Done," "Skip," or "Back" buttons in the primary Player UI.** Movement and visibility are the triggers.
+  - **Both `skipped` and `completed` are "past" states:** Neither blocks forward progress or reaching Finish.
+  - **Exit during in_view:** If the EM exits while a unit is `in_view`, it remains persisted as `unseen` or `skipped`
+    (not `completed`). State persistence occurs only upon navigation to the next unit.
 
 - **Navigation Tree — Exclusive Non-Linear Navigation (DEC-015 §7a):**
-  - The Navigation Tree (hierarchical outline of all Atomic Units) is the **only** manual mechanism for skipping content.
-  - **Forward jumps:** Selecting a future unit via the tree automatically transitions intermediate units to `skipped` state.
-  - **Backward navigation (Revisiting):** Selecting a prior unit navigates back without reverting state or revoking success
-    metadata.
-    Revisiting is pure deepening, never undoing.
-  - Skipped units are tracked distinctly ("engaged via skip") for analytics and future deepening.
+  - The Navigation Tree (hierarchical outline of all Atomic Units) is the **only** manual mechanism for non-sequential movement.
+  - **Forward jumps:** Selecting a future unit via the tree automatically transitions intermediate units from `unseen` to
+    `skipped` state (persisted for future deepening).
+  - **Backward navigation (Revisiting):** Selecting a prior unit navigates back without reverting state. `Completed` units
+    remain `completed` (deepening, never undoing). `Skipped` units trigger the normal visibility-based state machine when
+    re-engaged, allowing natural "upgrade" to `completed` via re-engagement and forward navigation.
+  - Revisiting is pure deepening, never undoing, never revoking success metadata.
+  - Skipped units are tracked distinctly for analytics and enabled deepening.
   - Navigation Tree logic applies uniformly across all content types (treatments, techniques, courses).
 
 - **Subjective Completion (EM Sovereignty):** No validation gates. The EM moves through content at their own pace;
@@ -124,11 +133,11 @@ It uses a visibility-based state machine with exclusive Navigation Tree navigati
   Prompt (**DEC-016**).
 - **Subjective Navigation:** Courses use the same **Unified Player** engine and **Navigation Tree** mechanism as standalone
   treatments (**DEC-015**, **DEC-015 §7a**). No mandatory NEMAR before treatments; EM decides readiness. EM navigates via the
-  Navigation Tree, with automatic visibility-based state transitions. No technical gates. **Sovereignty:** EM can mark any block
-  complete anytime, regardless of execution. EM can skip any block via forward Navigation Tree jumps; skipped units remain
-  available for later deepening.
+  Navigation Tree, with automatic flat 4-state transitions (`unseen` / `in_view` / `skipped` / `completed`). No technical gates.
+  **Sovereignty:** EM can skip any block via forward Navigation Tree jumps; skipped units remain available for later deepening or
+  "upgrade" to completed via re-engagement. EM can revisit any block anytime; `completed` blocks never revert state.
 - **Course Completion:** Course marked "Successfully Completed" when EM clicks **"Finish"** at the final Atomic Unit
-  (**DEC-015 §4**). Skipped units do not block completion.
+  (**DEC-015 §4**). Both `skipped` and `completed` units are "past" states and do not block completion.
 - **Optional closing NEMAR:** At or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this course ended successfully?"**
   (yes/no). Result logged as metadata (**DEC-016**).
 - **Content Versioning (Diary vs. Toolbox):** Timeline stores **static snapshot** of protocol as performed (historical integrity).
