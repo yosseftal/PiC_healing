@@ -107,8 +107,21 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
   - Navigation Tree logic applies uniformly across all content types (treatments, techniques, courses).
 
 - **Subjective Completion (EM Sovereignty):** No validation gates. The EM moves through content at their own pace;
-  state transitions follow automatically. **Finish** (סיום) at the final unit is the **only** trigger for success metadata
-  (`use_count` +1, course completion status) (**DEC-006**, **DEC-015**).
+  state transitions follow automatically. **Finish** (סיום) is the **only** trigger for success metadata (`use_count` +1, course
+  completion status) (**DEC-006**, **DEC-015**). The Terminal NEMAR (see below) is a mandatory step preceding Finish, but the EM
+  retains sovereign authority via the **[Finish Anyway]** bypass.
+
+- **Terminal NEMAR — Mandatory Closing Muscle Test (DEC-015 §7b):**
+  - Terminal NEMAR is a **mandatory Atomic Unit** appearing as the final step before Finish (סיום) in all Unified Player
+    instances.
+  - **Muscle test inquiry:** "Is it NEMAR that this [Treatment/Course/Technique] ended successfully?"
+  - **Yes response:** Enables standard [Finish] button, triggering success metadata (`use_count` +1, course completion).
+  - **No response:** Marks session as "In-Process, Not Yet Complete." Remedial flow TBD — awaiting therapeutic guidance from
+    Sigal.
+  - **Sovereign bypass:** [Finish Anyway] remains always available, allowing EM to force completion regardless of Terminal NEMAR
+    response or prior unit states, honoring their authority over their own healing process (**DEC-015 §4**).
+  - **Standard Atomic Unit:** Terminal NEMAR follows all visibility-based state transitions and Navigation Tree rules. Revisiting
+    it never revokes prior success metadata. It is a mandatory touchpoint, not a technical gate.
 
 - **Structured Markdown Standard:** All treatments authored in **Structured Markdown** (H3 headers = Atomic Units). Content Parser
   converts existing HTML + future Markdown into atomic JSON units (**DEC-015**).
