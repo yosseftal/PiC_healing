@@ -113,6 +113,19 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
 - **Structured Markdown Standard:** All treatments authored in **Structured Markdown** (H3 headers = Atomic Units). Content Parser
   converts existing HTML + future Markdown into atomic JSON units (**DEC-015**).
 
+- **Unit Rationale — Optional Deepening Metadata (DEC-015 §9–9a):**
+  - **Markdown parsing:** Any blockquote (>) appearing immediately after an H3 header is extracted as `unit_rationale` metadata,
+    separate from primary `unit_content`.
+  - **Content ownership:** Rationale text is 100% authored by the content creator (e.g., Sigal) and reflects clinical/therapeutic
+    reasoning. This architecture provides only the metadata container.
+  - **"Info" affordance:** An optional, non-blocking UI element (e.g., "info" icon) surfaces the rationale when present.
+    Interaction is entirely optional.
+  - **Pull-based visibility (Atomic Focus preservation):** Rationale is **hidden by default**. It is revealed only upon explicit
+    EM request (e.g., tapping an info icon), preserving primary unit clarity and Atomic Focus.
+  - **Non-blocking deepening:** Opening, reading, or closing the rationale never affects unit state transitions, navigation, or
+    Finish action. Rationale is a pure information layer.
+  - **Consistency:** Applied uniformly across all content types (treatments, techniques, courses) in the Unified Player.
+
 - **Finish & Integrating:** Clicking **"Finish"** (סיום) at the final unit auto-increments `use_count` (**DEC-006**).
   Exiting before the final unit preserves session as **Integrating** (not failed, EM can resume) (**DEC-015**).
 
