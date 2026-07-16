@@ -143,9 +143,6 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
 - **Finish & Integrating:** Clicking **"Finish"** (סיום) at the final unit auto-increments `use_count` (**DEC-006**).
   Exiting before the final unit preserves session as **Integrating** (not failed, EM can resume) (**DEC-015**).
 
-- **Optional closing NEMAR:** After or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this treatment ended
-  successfully?"** (yes/no). Result logged as metadata (**DEC-015**).
-
 - **Reflection Prompts:** A standard Atomic Unit type available in any Unified Player sequence (treatments, techniques,
   courses). Journal input affordance surfaces automatically when a Reflection Prompt unit is reached. No manual submission button
   required; progression to the next unit commits the entry (**DEC-015 §7**).
@@ -163,10 +160,9 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
   Navigation Tree, with automatic flat 4-state transitions (`unseen` / `in_view` / `skipped` / `completed`). No technical gates.
   **Sovereignty:** EM can skip any block via forward Navigation Tree jumps; skipped units remain available for later deepening or
   "upgrade" to completed via re-engagement. EM can revisit any block anytime; `completed` blocks never revert state.
-- **Course Completion:** Course marked "Successfully Completed" when EM clicks **"Finish"** at the final Atomic Unit
-  (**DEC-015 §4**). Both `skipped` and `completed` units are "past" states and do not block completion.
-- **Optional closing NEMAR:** At or before Finish, EM may optionally run **NEMAR: "Is it NEMAR this course ended successfully?"**
-  (yes/no). Result logged as metadata (**DEC-016**).
+- **Course Completion:** Course marked "Successfully Completed" when EM clicks **"Finish"** at the final Atomic Unit, gated by
+  the same mandatory **Terminal NEMAR** as any other Unified Player instance (**DEC-015 §4, §7b**). Both `skipped` and
+  `completed` units are "past" states and do not block completion.
 - **Content Versioning (Diary vs. Toolbox):** Timeline stores **static snapshot** of protocol as performed (historical integrity).
   **Personal Treatment Library** always points to **latest live version** from master Treatments Table (no version alerts, always
   current). **Manual variants** preserve EM ownership (custom adaptations, `variant_type: 'personal'`) (**DEC-016**).
