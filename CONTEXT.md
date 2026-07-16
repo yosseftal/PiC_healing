@@ -21,8 +21,10 @@ The Event Manager may switch targets by opening a new Inquiry Session when they 
 _Avoid_: Symptom Bucket as a separate entity; lock on one group across the whole app; two focus targets in one sitting
 
 **Integrating**:
-A treatment or session is still in progress — repetition, pending commitments, or permeation time needed.
-_Avoid_: Failed, error, incomplete, stuck
+A treatment or session is still in progress — repetition, pending commitments, permeation time needed, or a **Terminal NEMAR**
+"No" response (tagged `terminal_nemar_no`, vs. an ordinary mid-exit tagged `mid_exit`; both surface identically) (**DEC-006**,
+**DEC-015**).
+_Avoid_: Failed, error, incomplete, stuck, "In-Process, Not Yet Complete" as a separate label
 
 **Smart-Linking**:
 Journal entries, timeline events, and treatment or technique **executions** can relate to **multiple Symptom Groups, courses, or
@@ -49,10 +51,9 @@ transparency without user control
 The Event Manager’s **toolbox** — techniques and treatments they have **actually run** at least once. **First execution** from any source
 (course, shared Treatments Table, library copy, self-invented entry, etc.) **creates or extends** the matching **logical** row, with
 **provenance** of sources and a **monotonic use count only** (**DEC-005**). 
-**Auto +1** when a **Player** run reaches **Finish** (סיום) after **all required** steps. 
-Protocols may offer an **optional** closing **muscle-test** 
-(**yes/no**: *Did this treatment or technique end successfully?*) — same **NEMAR** family; 
-**not** required for **Finish** or +1 unless the protocol says so (**DEC-006**). 
+**Auto +1** when a **Unified Player** run reaches **Finish** (סיום) — reachable unconditionally, with **no "required steps"
+gate** — gated only by the mandatory closing **Terminal NEMAR** (**yes/no**: *Is it NEMAR that this ended successfully?*); a
+"No" response stays **Integrating**, never blocking the sovereign **[Finish Anyway]** (**DEC-006**, **DEC-015**). 
 **Manual +1** anytime from the library for off-app or intentional logs; 
 the counter stays **secondary** and low-pressure (**DEC-006**). 
 It is **separate** from any single Symptom Group’s Work Session; **Smart-Linking**
@@ -64,11 +65,13 @@ stopwatch-style totals **on the library row** (v1 is **use count only**); scoreb
 Right, Accurate, Desirable — the muscle-test framing for whether to proceed with a line of inquiry or choice.
 _Avoid_: NAMER (typo), yes/no without the three-part meaning where the method requires it
 
-**Post-treatment success muscle-test** (optional):
-An **optional** binary muscle-test (**yes/no**) at the end of a **treatment** or **technique** — *Did this end successfully?* Same family as
-other **NEMAR** inquiries; **not** required unless the protocol explicitly mandates it. It does **not** replace **Finish** (סיום) as the commit
-that closes the **Player** for **use_count** rules (**DEC-006**).
-_Avoid_: Treating it as a different product “mode” from other muscle-test questions; forcing it when the protocol marks it optional
+**Post-treatment success muscle-test**:
+The binary muscle-test (**yes/no**: *Did this end successfully?*) at the end of a treatment, technique, or course — this **is**
+the **Terminal NEMAR** (see below), not a separate optional inquiry. Superseded from "optional" to **mandatory** on 2026-07-13
+(**DEC-015** §7b, resolves **GQ-024**); it does not replace **Finish** (סיום) as the commit that closes the **Unified Player**
+for `use_count` rules, and a "No" response never blocks it (**DEC-006**).
+_Avoid_: Treating it as a separate, still-optional inquiry distinct from Terminal NEMAR; forcing a specific remedial flow on "No"
+(TBD, awaiting therapeutic guidance)
 
 **Empty Vessel** (הכלי הריק / פינוי מנטלי):
 Free, unstructured writing to clear mental space before or during work — not only a symptom list.
@@ -118,19 +121,25 @@ When global NEMAR to a category/table returns clear Yes or No (not specific to o
 ("all could help" or "none fit").
 _Avoid_: Forcing NEMAR after global answer; hiding table when body says yes to category
 
-**Player** (הנגן):
-The treatment execution engine. Presents a protocol's atomic steps one at a time (one screen per step). 
-The EM advances by clicking **"Next"** based on internal readiness—there are **no technical validation gates**. 
-The EM decides when each step is complete (executed, understood, or intuitively skipped). Clicking **"Finish"** (סיום) 
-at any point auto-increments `use_count` (**DEC-006**, **DEC-015**). Exiting before the protocol's end preserves 
-the session as **Integrating** (not failed). EM can resume later (**DEC-015**).
-_Avoid_: Forcing step completion checks; blocking progression with validation; framing incomplete sessions as failures
+**Unified Player** (הנגן):
+The single execution engine for every content sequence in PiC — standalone treatments, techniques, and course lessons alike.
+There is **no separate** "Treatment Player" or "Course Player"; a course's Treatment Reference block simply opens a **nested**
+Unified Player instance. Presents a sequence of **Atomic Units**, advancing automatically as the EM moves through content — there
+are **no manual "Next"/"Skip"/"Back" buttons** and **no technical validation gates**. The EM decides when a unit is complete by
+moving past it (executed, understood, or intuitively skipped); the system never checks *how*. The sequence ends at a mandatory
+**Terminal NEMAR** unit; a "Yes" response enables **"Finish"** (סיום), which auto-increments `use_count`. Exiting before Finish,
+or a Terminal NEMAR "No" response, preserves the session as **Integrating** (not failed); the EM can always resume, and
+**[Finish Anyway]** remains sovereign regardless of Terminal NEMAR response or unit states (**DEC-006**, **DEC-015**).
+_Avoid_: "Treatment Player" / "Course Player" as separate concepts; manual Done/Skip/Back buttons; blocking progression with
+validation; framing incomplete sessions as failures; a "required steps" gate on Finish
 
 **Structured Markdown** (DEC-015):
 The canonical format for authoring all treatment protocols, techniques, and courses. Every **H3 header (###)** in the document
-automatically defines one atomic **Player step**. A Content Parser converts existing HTML docs and future Markdown 
-into JSON entries in the database, enabling fast retrieval and consistent step sequencing (**DEC-015**).
-_Avoid_: Ad-hoc step definitions; mixing formats; dense paragraph-based protocols without clear step boundaries
+automatically defines one **Atomic Unit**. A blockquote (`>`) immediately following an H3 is extracted as that unit's
+**Unit Rationale**. A Content Parser converts existing HTML docs and future Markdown into JSON entries in the database,
+enabling fast retrieval and consistent unit sequencing (**DEC-015**).
+_Avoid_: Ad-hoc step definitions; mixing formats; dense paragraph-based protocols without clear unit boundaries; "Player step" or
+"lesson block" as separate vocabularies
 
 **Symptom** (סימפטום):
 One named concern inside a Symptom Group (e.g. lower back and neck as two symptoms in one group).
@@ -162,8 +171,10 @@ One atomic unit within a course lesson, authored in **Structured Markdown** (H3 
 2. **Treatment Reference:** Dynamic link to a shared protocol in the global Treatments Table (not a copy).
 3. **Insight/הגיג:** Read-only reflection or breakthrough (curated wisdom).
 4. **Reflection Prompt:** Open-ended question for EM journaling and integration.
-All are navigable with **"Next"**, **"Skip"**, **"Done"** buttons; **no mandatory pre-treatment NEMAR** (**DEC-016**).
-_Avoid_: Fixed lesson templates; forced linear progression; treating lesson blocks as different from treatment protocols in structure
+All are navigated via the same **Unified Player** — automatic visibility-based transitions and the **Navigation Tree**, no
+manual buttons; **no mandatory pre-treatment NEMAR** (**DEC-015**, **DEC-016**).
+_Avoid_: Fixed lesson templates; forced linear progression; treating lesson blocks as different from treatment protocols in
+structure; a separate course-specific button set
 
 **Course Work Session** (DEC-016):
 A dedicated, persistent Work Session for a course enrollment. Can exist **independently** on the Chronological Timeline (no parent Symptom Group)
@@ -172,16 +183,36 @@ Carries full chronological integrity, NEMAR machinery, Player execution, Integra
 (other groups, courses, journal entries) for full data reciprocity (**DEC-016**).
 _Avoid_: Forcing courses into a rigid hierarchical parent-child relationship with Symptom Groups; preventing independent course Work Sessions
 
-**"Done" (בוצע) Action** (DEC-016):
-EM's **declaration** that a block or lesson is complete, based on **internal readiness alone**—not technical execution. Clicking "Done" marks
-the unit as "Completed" in the session record and advances to the next unit. EM can mark blocks "Done" at any time, even without physical
-step-by-step execution (e.g., reading and saying "I know this—done") (**DEC-016**).
-_Avoid_: Treating "Done" as requiring physical completion; blocking "Done" with validation gates; conflating "Done" with "Skip"
+**Atomic Unit** (DEC-015):
+The single content-unit concept in the Unified Player, replacing the separate vocabularies of "Player step" (treatments) and
+"lesson block" (courses). Each Atomic Unit holds one of four states, set automatically — never via a manual button:
+**`unseen`** (not yet reached), **`in_view`** (currently rendered, ephemeral), **`skipped`** (bypassed via a Navigation Tree
+forward jump, persisted), or **`completed`** (rendered and navigated past, persisted). A `skipped` unit can be revisited and
+"upgraded" to `completed` by rendering it and navigating forward again; this never re-triggers success metadata (**DEC-015**).
+_Avoid_: "Player step" / "lesson block" as separate terms; manual "Done"/"Skip" buttons; treating `skipped` or `unseen` as
+blocking Finish
 
-**"Skip" (דלג) Action** (DEC-016):
-EM's **acknowledgment** of a block while **deferring it** for later. Clicking "Skip" marks the block as "Incomplete" and moves to the next unit.
-Skipped blocks remain available for future sessions and are tracked in course progress UI (**DEC-016**).
-_Avoid_: Treating "Skip" as "Done"; not tracking skipped blocks; preventing return to skipped blocks
+**Navigation Tree** (DEC-015):
+The **exclusive** manual mechanism for non-sequential movement within the Unified Player — a hierarchical outline of every
+Atomic Unit in the sequence. Selecting a future unit auto-marks intervening units `skipped`; selecting a prior unit is
+**"Revisiting"** (deepening), never undoing — a `completed` unit stays `completed`, and revisiting never touches `use_count` or
+a prior Finish declaration (**DEC-015**).
+_Avoid_: A separate "Skip" button; treating backward navigation as "Revoking"; any manual mechanism for setting `skipped`
+outside the tree
+
+**Terminal NEMAR**:
+A mandatory **Atomic Unit** appearing as the final step before Finish (סיום) in every Unified Player instance: "Is it NEMAR that
+this [Treatment/Course/Technique] ended successfully?" **Yes** enables the standard **Finish** button; **No** marks the session
+**Integrating** (remedial logic TBD). **[Finish Anyway]** stays sovereign and available regardless of response or prior unit
+states (**DEC-015**).
+_Avoid_: Treating Terminal NEMAR as a technical gate; blocking [Finish Anyway] on a "No" response; a new "incomplete" label for
+the "No" path
+
+**Unit Rationale**:
+Optional clinical/therapeutic reasoning behind an Atomic Unit, authored as a blockquote immediately following its H3 header in
+Structured Markdown. **Hidden by default** (pull-based visibility) and surfaced only via an explicit "info" affordance, so it
+never competes with the primary unit content or interrupts **Atomic Focus** (**DEC-015**).
+_Avoid_: Showing rationale by default; treating it as required reading; letting it affect unit-state transitions or Finish
 
 **Diary vs. Toolbox Model** (DEC-016):
 **Dual versioning approach** for treating content stability and updates:
