@@ -88,13 +88,12 @@
   (diagnose)     (select)     │ (Execute │
                               │treatment)│
                               │          │
-                              │ ✓ All    │
-                              │  required│
-                              │  steps   │
-                              │ ✓ Optional
-                              │  closing │
-                              │  success │
-                              │  test    │
+                              │ No       │
+                              │ required │
+                              │ gate     │
+                              │ ✓ Terminal
+                              │  NEMAR   │
+                              │  (mand.) │
                               │ [Timeline│
                               │  entry:  │
                               │ 'treatment
@@ -166,12 +165,14 @@ Once past Empty Vessel + Group Ratings, the EM navigates freely between Left and
 - Switching to a different Symptom Group = new Inquiry Session.
 
 ### **5. Player Execution**
-- When the EM is ready to execute a treatment, they enter the **Player**.
-- The Player guides the EM through required and optional steps.
+- When the EM is ready to execute a treatment, they enter the **Unified Player**.
+- The Player moves through Atomic Units automatically as the EM navigates — no manual buttons, no "required steps" gate
+  (DEC-015).
+- The final unit is a mandatory **Terminal NEMAR** ("Is it NEMAR this treatment ended successfully?"); a "Yes" enables
+  **Finish**, while **[Finish Anyway]** stays sovereign regardless of response (DEC-015 §7b, GQ-024).
 - On **Finish** (סיום):
   - `use_count` increments by 1 (DEC-006).
   - Timeline entry created (`log_type: 'treatment_executed'`).
-  - EM can optionally run a closing **success muscle-test** (NEMAR question: "Did this end successfully?").
 
 ### **6. Multi-Layered Documentation**
 
@@ -230,10 +231,10 @@ Once past Empty Vessel + Group Ratings, the EM navigates freely between Left and
    - Treatment selected: "Tension Release Protocol."
    - [Timeline: 'treatment_selected' + unit doc]
 7. **PLAYER:**
-   - Executes the protocol step-by-step.
+   - Moves through the protocol's Atomic Units.
+   - Terminal NEMAR: "Is it NEMAR this ended successfully?" → body says yes.
    - Finish (סיום).
    - [Timeline: 'treatment_executed' + use_count +1]
-   - Optional closing test: "Did this end successfully?" → body says yes.
 8. **Integrating?** She feels the work is settling in. Exits.
 9. **Session Audit:**
    - [Timeline: 'session_closed']
