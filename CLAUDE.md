@@ -116,8 +116,9 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
     instances.
   - **Muscle test inquiry:** "Is it NEMAR that this [Treatment/Course/Technique] ended successfully?"
   - **Yes response:** Enables standard [Finish] button, triggering success metadata (`use_count` +1, course completion).
-  - **No response:** Marks session as "In-Process, Not Yet Complete." Remedial flow TBD — awaiting therapeutic guidance from
-    Sigal.
+  - **No response:** Marks session as **Integrating** (בהטמעה) — the same non-failure state used for ordinary mid-exits,
+    internally tagged `reason: 'terminal_nemar_no'` for analytics only (never a new "incomplete" label). Remedial flow (what
+    happens next) TBD — awaiting therapeutic guidance from Sigal.
   - **Sovereign bypass:** [Finish Anyway] remains always available, allowing EM to force completion regardless of Terminal NEMAR
     response or prior unit states, honoring their authority over their own healing process (**DEC-015 §4**).
   - **Standard Atomic Unit:** Terminal NEMAR follows all visibility-based state transitions and Navigation Tree rules. Revisiting
@@ -175,11 +176,14 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
 
 ### G. Post-Treatment: Integration & Growth
 - Offer Reflective Journaling after a session (any step order); not only at end of linear wizard.
-- Do not use failure framing when treatment is incomplete; use Integrating/In Progress states.
+- Do not use failure framing when treatment is incomplete; use the **Integrating** state (never "Failed," "Error," or a new
+  "In-Process, Not Yet Complete" label).
 - Integration reasons may include repetition, pending user commitments, or natural body permeation time.
-- **Personal Treatment Library `use_count`:** auto-increment **only** on Player **Finish** (סיום) after **required** steps; **optional**
-  closing **yes/no** muscle-test (*did it end successfully?*) per protocol; **Integrating** mid-exits do **not** auto-increment; **auto-decrement**
-  if user navigates **back** from **Finish**; **manual edit anytime** for Event Manager sovereignty (**DEC-007**); **Multitype Timeline** with
+- **Personal Treatment Library `use_count`:** auto-increment **only** on Player **Finish** (סיום), reachable unconditionally at
+  the final Atomic Unit — **no "required steps" gate** (**DEC-006**, **DEC-015**); gated by the mandatory **Terminal NEMAR**
+  (**DEC-015 §7b**), with **[Finish Anyway]** always sovereign; **Integrating** mid-exits and Terminal-NEMAR "No" responses do
+  **not** auto-increment; **no auto-decrement** on back-navigation — "Revisiting" never touches `use_count` (**DEC-007**);
+  **manual edit anytime** for Event Manager sovereignty (**DEC-007**); **Multitype Timeline** with
   **`log_type`** categorization + **smart filtering** (corrections hidden by default) for clean workspace (**DEC-007**). Keep the metric
   **secondary** and non-pressuring.
 
