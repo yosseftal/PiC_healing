@@ -18,13 +18,15 @@ Content Pipeline, optional closing success NEMAR inquiry, and Integrating state.
 ## Open Subsystems Requiring Grill Questions
 
 ### 1. **Courses & Academy — Lessons, Progress, Library Integration** (HIGH PRIORITY - COMPLETED)
-**Status:** ✅ Resolved (GQ-013 → DEC-016, 2026-06-27)
+**Status:** ✅ Resolved (GQ-013 → DEC-016, 2026-06-27; completion mechanics updated via GQ-018/GQ-024)
 
 **Resolution:** DEC-016 establishes courses as parallel Work Sessions with **polymorphic lesson blocks** 
 (Original Content, Treatment Reference, Insight/הגיג, Reflection Prompt) all authored in **Structured Markdown** 
-(H3 headers = steps, same as treatments). Subjective navigation (skip, return, done). 
-**Course completion** when all required blocks marked done. **Auto library sync:** first-time course treatment auto-adds
-to Personal Treatment Library with use count reciprocity. ✅
+(H3 headers = steps, same as treatments). Subjective navigation via the Unified Player's automatic visibility-based
+transitions and Navigation Tree (no manual buttons, no "required blocks" gate — **DEC-015**, resolved by **GQ-018**/
+**GQ-024**). **Course completion** when the EM presses Finish at the final unit, gated only by the mandatory Terminal
+NEMAR. **Auto library sync:** first-time course treatment auto-adds to Personal Treatment Library with use count
+reciprocity. ✅
 
 ---
 
@@ -137,6 +139,12 @@ Recommended Approach: User-Driven with Optional Guidance
 
 **Rationale:** Preserves EM sovereignty while offering structure for those who want guidance. Avoids pressure
 (reminders optional). Honors the therapeutic reality that integration time is body-dependent.
+
+**Update (GQ-024, 2026-07-13):** A second entry path into Integrating is now canonical: a Terminal NEMAR "No" response
+(**DEC-015** §7b) marks the session Integrating with `integrating_reason: 'terminal_nemar_no'`, distinct internally from
+an ordinary `'mid_exit'`. The label and reason-tagging are resolved; **what to show the EM after a Terminal-NEMAR-triggered
+Integrating state** (e.g., should the "This treatment has been integrating for 5 days" reminder above differ in tone for a
+body-signaled "No" vs. a simple early exit?) remains open scope for this grill (GQ-015), awaiting therapeutic guidance.
 
 ### Audit Insight (Architecture Stress-Test, 2026-06-30) — ✅ Resolved via GQ-018 (2026-07-02)
 
@@ -325,8 +333,9 @@ group-scoped timeline views across the product.
 
 ---
 
-### 6. **Completion Semantics Canonicalization** (✅ RESOLVED)
-**Status:** Resolved (GQ-018, 2026-07-02, Yossef-Tal & Sigal) — amends **DEC-006**, **DEC-007**, **DEC-015**, **DEC-016**
+### 6. **Completion Semantics Canonicalization** (✅ RESOLVED, GQ-018 + GQ-024)
+**Status:** Resolved (GQ-018, 2026-07-02; further resolved GQ-024, 2026-07-13, Yossef-Tal & Sigal) — amends **DEC-006**,
+**DEC-007**, **DEC-015**, **DEC-016**
 
 **Context (as identified 2026-06-30):** Three separate decisions used overlapping completion vocabulary with different
 meanings:
@@ -338,10 +347,10 @@ meanings:
 **Contradictions addressed:** 1.1 (Required Steps Paradox), 1.2 (Two Player Button Sets), 1.3
 (Sovereignty vs. Auto-Decrement), 1.4 (Required Blocks in Courses).
 
-**Resolution — the "Scroll-Player" state machine (full logic in the amended DEC-015):**
+**Resolution, first pass (GQ-018, 2026-07-02) — the "Scroll-Player" state machine:**
 
 Neither Path A ("Finish" and "Done" as one merged action), Path B (two verbs, hard sequential gate between them), nor
-Path C (single neutral verb) as originally proposed. The resolved model is a **fourth path**, sharper than all three:
+Path C (single neutral verb) as originally proposed. The resolved model was a **fourth path**, sharper than all three:
 **"Finish" and "Done" stay two genuinely distinct actions, but at two different scopes — never in conflict.**
 
 - **Unit-level actions — "Done" / "Skip" / "Back":** apply to every Atomic Unit (the merged term for "step" and
@@ -360,19 +369,40 @@ Path C (single neutral verb) as originally proposed. The resolved model is a **f
 - **Unit state (`completed` / `skipped` / `unseen`) persists after Finish**, so the EM can "deepen" into skipped
   units later without re-triggering success metadata.
 
-**Why this beats all three originally proposed paths:** Path A's "one action, two labels" would have made "Done" on
+**Why GQ-018 beat all three originally proposed paths:** Path A's "one action, two labels" would have made "Done" on
 every course block quietly capable of incrementing `use_count`, which is wrong for content that isn't a treatment
 execution (Original Content, Insight blocks). Path B's forced Finish-before-Done gate reintroduced a validation gate
 by the back door. Path C's neutral-verb rename didn't resolve the actual semantic problem (whether unit-level and
 container-level completion are the same event) and cost the most in copy rewrites for no logical gain. The resolved
-model keeps both words, keeps their emotional resonance (סיום for endings, בוצע for accomplishment), and gives each
-a scope where it cannot contradict the other.
+model kept both words, kept their emotional resonance (סיום for endings, בוצע for accomplishment), and gave each
+a scope where it could not contradict the other.
 
-**Amended decisions:** DEC-006 §1, DEC-007 §1, DEC-015 (rewritten as the canonical state machine), DEC-016 §3–4.
-Full text: `decisions.md` — new **GQ-018** entry, and inline amendments to DEC-006/007/015/016.
+**Resolution, second pass (GQ-024, 2026-07-13) — visibility-based automation + Terminal NEMAR:**
 
-**Deferred to OpenSpec (explicitly out of scope for this decision):** Button placement, Nudge modal visuals,
-"deepen later" re-entry UI. This decision defines the state machine, not the screen.
+GQ-018's manual "Done"/"Skip"/"Back" buttons and its "[Review Skipped]" / "[Finish Anyway]" terminal switch were
+subsequently superseded — a change written directly into DEC-015's body but never given its own tracked resolution
+until now:
+
+- **Unit-level actions become fully automatic.** No manual buttons anywhere in the primary Player UI. Rendering and
+  navigation are the sole triggers for the flat 4-state model (`unseen` / `in_view` / `skipped` / `completed`). The
+  **Navigation Tree** is the exclusive manual mechanism for forward jumps and revisiting.
+- **The terminal switch is replaced by a mandatory Terminal NEMAR unit.** Instead of branching on unit-skip counts
+  ("[Review Skipped]" vs. "[Finish Anyway]"), the final Atomic Unit in every Player instance is a Terminal NEMAR:
+  "Is it NEMAR that this ended successfully?" A "Yes" enables **[Finish]**; **[Finish Anyway]** remains sovereign and
+  always available regardless of response.
+- **The Terminal NEMAR "No" path is canonically "Integrating."** No new "In-Process, Not Yet Complete" label — the
+  session reuses the existing **Integrating** (בהטמעה) vocabulary (DEC-006 §2), tagged internally
+  `integrating_reason: 'terminal_nemar_no'` for analytics only. Remedial logic (what happens next) stays TBD, carried
+  forward as remaining scope under **GQ-015** (Integrating Lifecycle).
+- **No new decrement path** — GQ-018's auto-decrement removal (DEC-007 §1) is unaffected.
+
+**Amended decisions:** DEC-006 §1–2, DEC-007 §1 (reaffirmed), DEC-015 (rewritten as the canonical state machine, twice —
+2026-07-02 and 2026-07-13), DEC-016 §3–4. Full text: `decisions.md` — the **GQ-018** and **GQ-024** entries, and inline
+amendments to DEC-006/007/015/016.
+
+**Deferred to OpenSpec (explicitly out of scope for this decision):** Button placement (moot now that unit-level buttons
+are removed), Terminal NEMAR modal visuals, "deepen later" re-entry UI. This decision defines the state machine, not the
+screen. **Deferred to a future grill:** Terminal NEMAR "No" remedial flow (GQ-015 remaining scope).
 
 ---
 
@@ -623,7 +653,7 @@ Sigal publishes protocol versions (v1, v2). Active sessions stay on their enroll
 
 ## Next Steps
 
-**Priority order revised after GQ-018 resolution (2026-07-02):**
+**Priority order revised after GQ-024 resolution (2026-07-13), next: GQ-019:**
 
 | Priority | GQ | Topic | Reason |
 |---|---|---|---|
@@ -633,39 +663,51 @@ Sigal publishes protocol versions (v1, v2). Active sessions stay on their enroll
 | 🟠 HIGH | GQ-021 | Intensity Scale & Rating Paths | Blocks all rating screen design |
 | 🟠 HIGH | GQ-022 | Library Sync Protocol | Blocks course → library integration |
 | 🟡 MEDIUM | GQ-023 | Content Authoring/Governance | Blocks content operations pipeline |
-| 🟡 MEDIUM | GQ-016 | Offline-First Sync | Session state model now unblocked by GQ-018's Finish-only sync unit |
-| 🟢 LOW | GQ-015 | Integrating Lifecycle (remaining scope) | Auto-decrement sub-question resolved via GQ-018; visibility/reminders remain |
+| 🟡 MEDIUM | GQ-016 | Offline-First Sync | Session state model now unblocked by GQ-018/GQ-024's Finish-only sync unit |
+| 🟢 LOW | GQ-015 | Integrating Lifecycle (remaining scope) | Auto-decrement resolved via GQ-018; Terminal NEMAR "No" remedial flow (GQ-024) also carried here; visibility/reminders remain |
 | 🟢 LOW | GQ-017 | Journal & Smart-Linking | Foundation in place; refine when ready |
 
 **Resolved:**
 1. ✅ GQ-013 → **DEC-016** (Courses & Academy, 2026-06-27)
 2. ✅ **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (Completion Semantics, 2026-07-02)
+3. ✅ **GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (Visibility-Based Completion & Terminal NEMAR, 2026-07-13)
+
+**Next-step readiness:** GQ-018 and GQ-024 together fully resolve the Player/completion subsystem across
+`decisions.md`, `docs/grill-backlog.md`, `CLAUDE.md`, `CONTEXT.md`, and `README.md` — no lingering references to
+course-specific buttons, manual Done/Skip/Back actions, "required steps" validation gates, or the superseded
+"[Review Skipped]" terminal switch remain in any of these files. **The documentation is ready to begin the GQ-019
+(Auth & User Identity) grill session.**
 
 ---
 
 ## Grill Session Summary
 
-- **Grilled subsystems:** 14 questions → 16 decisions, 4 of them since amended (DEC-001 through DEC-016)
+- **Grilled subsystems:** 14 questions → 16 decisions, 4 of them since amended twice (DEC-001 through DEC-016)
 
-- **Architecture Status (revised 2026-07-02): Foundation Aligned on Completion Logic — Remaining Gaps Unchanged**
+- **Architecture Status (revised 2026-07-13): Foundation Aligned on Completion Logic — Remaining Gaps Unchanged**
 
   The 2026-06-30 stress-test found the Player/completion subsystem internally contradictory across four decisions
-  (Audit 1.1–1.4). **GQ-018 (2026-07-02) resolved all four** by establishing one unified Scroll-Player state machine
-  (see the amended **DEC-015**, and the consequent amendments to **DEC-006**, **DEC-007**, **DEC-016**). The
-  foundation is no longer merely "conceptually sound" on completion logic — it is now **internally consistent**:
-  one Player model, one set of unit-level actions (Done/Skip/Back), one container-level success trigger (Finish),
-  no technical gates, no silent auto-corrections.
+  (Audit 1.1–1.4). **GQ-018 (2026-07-02) resolved all four** by establishing one unified Unified Player state machine
+  (see the amended **DEC-015**, and the consequent amendments to **DEC-006**, **DEC-007**, **DEC-016**). **GQ-024
+  (2026-07-13) then closed a second, silent drift layer**: GQ-018's manual Done/Skip/Back buttons and
+  "[Review Skipped]"/"[Finish Anyway]" terminal switch were replaced by fully automatic visibility-based unit
+  transitions and a mandatory Terminal NEMAR unit, and the Terminal NEMAR "No" path was canonicalized as
+  **Integrating** rather than a new "In-Process, Not Yet Complete" label. The foundation is no longer merely
+  "conceptually sound" on completion logic — it is now **internally consistent end-to-end**: one Player model, fully
+  automatic unit-level transitions, one container-level success trigger (Finish, gated by Terminal NEMAR), no
+  technical gates, no silent auto-corrections, no orphaned button vocabulary.
 
   *What IS implementation-ready (tracer-bullet spike, now including Player logic):*
   - Symptom Group entity and archival lifecycle (DEC-002, DEC-013)
   - Polarity + Intensity as independent schema fields (DEC-010)
   - Timeline `log_type` categorization and filter architecture (DEC-007, DEC-008)
-  - **Unified Scroll-Player state machine** — Atomic Units, Done/Skip/Back, Finish, no gates, no auto-decrement
-    (DEC-015, amended 2026-07-02)
+  - **Unified Player state machine** — Atomic Units, automatic visibility-based transitions (`unseen` / `in_view` /
+    `skipped` / `completed`), Navigation Tree, Terminal NEMAR, Finish, no gates, no auto-decrement
+    (DEC-015, amended 2026-07-02 and 2026-07-13)
   - Structured Markdown → JSON content pipeline (DEC-015)
   - Smart-Link edge table concept (DEC-008)
 
-  *What is STILL NOT ready for general OpenSpec — gaps unaffected by GQ-018:*
+  *What is STILL NOT ready for general OpenSpec — gaps unaffected by GQ-018/GQ-024:*
   - ⚠️ Auth/User model absent → no RLS policy can be written → nothing is deployable (GQ-019)
   - ⚠️ Freemium enforcement undefined → no access control on any feature (GQ-014)
   - ⚠️ Causes/Treatments Table schema undefined → NEMAR flow cannot be built (GQ-020)
@@ -679,8 +721,9 @@ Sigal publishes protocol versions (v1, v2). Active sessions stay on their enroll
   internal conflicts. Estimated 3 more resolution sessions before the first full sprint can proceed safely.
 
 - **What CAN begin now:** A tracer-bullet spike covering the simplest happy path — create a Symptom Group, add a
-  symptom, rate it, run a standalone treatment through the full Scroll-Player (Done/Skip/Back/Finish), view the
-  timeline event — is feasible with current decisions, including the Player logic for the first time.
+  symptom, rate it, run a standalone treatment through the full Unified Player (automatic transitions, Navigation
+  Tree, Terminal NEMAR, Finish), view the timeline event — is feasible with current decisions, including the Player
+  logic for the first time.
 
 ---
 
@@ -688,7 +731,7 @@ Sigal publishes protocol versions (v1, v2). Active sessions stay on their enroll
 
 - **Target:** 1–2 grill questions per session (batch closely related Qs).
 - **Documentation:** Each GQ gets its own DEC-xxx after resolution, or amends existing ones when it resolves a
-  cross-decision contradiction (as GQ-018 did).
-- **Critical path (updated 2026-07-02):** ~~GQ-018~~ → GQ-019 → GQ-020 → GQ-014 → GQ-021 → GQ-022 → OpenSpec.
-- **Status:** GQ-018 resolved (2026-07-02). 9 GQs remain open (GQ-014, GQ-015 remaining scope, GQ-016, GQ-017,
-  GQ-019, GQ-020, GQ-021, GQ-022, GQ-023). Ready to grill GQ-019 (Auth & User Identity) next.
+  cross-decision contradiction (as GQ-018 and GQ-024 did).
+- **Critical path (updated 2026-07-13):** ~~GQ-018~~ → ~~GQ-024~~ → GQ-019 → GQ-020 → GQ-014 → GQ-021 → GQ-022 → OpenSpec.
+- **Status:** GQ-018 resolved (2026-07-02); GQ-024 resolved (2026-07-13). 9 GQs remain open (GQ-014, GQ-015 remaining
+  scope, GQ-016, GQ-017, GQ-019, GQ-020, GQ-021, GQ-022, GQ-023). Ready to grill GQ-019 (Auth & User Identity) next.
