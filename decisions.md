@@ -234,8 +234,11 @@ technical gate (this was Audit Contradiction 1.1 — DEC-006 said "required," DE
 1. **Player path — automatic +1 on Finish (סיום):** When the Event Manager runs the **Unified Player** for a technique/treatment mapped to
    a **Personal Treatment Library** row and triggers **Finish** (סיום) at the **final Atomic Unit** of that instance (**DEC-015** §2),
    **`use_count` increments once**. There is **no "required steps" precondition** — Finish is reachable regardless of how many prior units
-   were marked `completed` vs. `skipped` (**DEC-015** §3–4). Protocols may still offer an **optional** closing **muscle-test** — **yes/no**:
-   *Did this treatment or technique end successfully?* — in the same **NEMAR** inquiry family; it remains **not mandatory** for Finish or +1.
+   were marked `completed` vs. `skipped` (**DEC-015** §3–4). **Superseded (2026-07-13, GQ-024):** the "optional" closing muscle-test
+   originally described here (*Did this treatment or technique end successfully?*) is the same inquiry as **DEC-015**'s **Terminal
+   NEMAR** (§7b), which has since been promoted from optional to a **mandatory** Atomic Unit preceding Finish. There is no longer a
+   separate optional/mandatory pair asking the same question — see **DEC-015** §7b for the current, single source of truth; a "No"
+   response never blocks Finish (**[Finish Anyway]** remains sovereign) and never gates `use_count` beyond what §2 below already says.
 2. **Integrating / mid-exit — no silent auto +1:** If the Event Manager **leaves** the Unified Player before reaching Finish, the work stays
    **Integrating** (not framed as failure); **do not** auto-increment. They may later **manually** add a use, or return and **Finish**
    when the flow allows—**never** double-count the same finished run (see §5). The same non-increment rule applies when the EM
@@ -253,11 +256,12 @@ technical gate (this was Audit Contradiction 1.1 — DEC-006 said "required," DE
 
 **Bilingual nuance (agreed, Hebrew team notes):**
 
-- **Finish (סיום) & optional success muscle-test:** **`use_count`** auto +1 follows **Finish** at the **final Atomic Unit**, unconditionally
-  (no required-steps gate — **DEC-015**). An **optional** closing **muscle-test** (**yes/no**: *Did this treatment or technique end
-  successfully?*) may appear—in the **NEMAR** inquiry family; **not** required for **Finish** or +1.
-- **סיום (עברית):** העלאת המונה קשורה ל-**סיום** ביחידה האטומית האחרונה, ללא תנאי של "שלבים נדרשים". בסוף הפרוטוקול אפשר **מבחן שרירים
-  כן/לא אופציונלי**: *האם הטיפול / הטכניקה הסתיימו בהצלחה?* — לא חובה.
+- **Finish (סיום) & Terminal NEMAR:** **`use_count`** auto +1 follows **Finish** at the **final Atomic Unit**, unconditionally
+  (no required-steps gate — **DEC-015**). The closing **muscle-test** (**yes/no**: *Did this treatment or technique end
+  successfully?*) is now the **mandatory Terminal NEMAR** (**DEC-015** §7b, resolves **GQ-024**) — no longer a separate optional
+  inquiry; a "No" response stays **Integrating**, never blocking Finish Anyway.
+- **סיום (עברית):** העלאת המונה קשורה ל-**סיום** ביחידה האטומית האחרונה, ללא תנאי של "שלבים נדרשים". בסוף הפרוטוקול קיים **מבחן שרירים
+  חובה** — ה**נמ"ר הסוגר**: *האם זה נמ"ר שהטיפול / הטכניקה הסתיימו בהצלחה?* — תשובת "לא" נשארת **בהטמעה**, ואינה חוסמת "סיום בכל זאת".
 - **בהטמעה (Integrating):** Because unfinished treatment stays **Integrating**, the counter **must not** auto-rise on mid-exit; only
   **Finish** or a **conscious manual** choice advances it—preserving **non-failure** framing.
 - **פשטות:** One clear action (**Finish** or manual +1) → one clear outcome—keeps the app feeling like a **simple program**.
@@ -269,8 +273,9 @@ meaning never depends on a technical judgment about which steps "counted."
 
 **Consequences:**
 
-- Player UX: prominent **Finish** (סיום), reachable unconditionally at the final Atomic Unit; optional closing **yes/no success**
-  muscle-test per protocol; auto +1 wired to Finish alone — no required-step precondition to check (OpenSpec: UI detail only).
+- Player UX: prominent **Finish** (סיום), reachable unconditionally at the final Atomic Unit, gated only by the mandatory
+  **Terminal NEMAR** (**DEC-015** §7b); auto +1 wired to Finish alone — no required-step precondition to check (OpenSpec: UI
+  detail only).
 - Library UX: always-offered **manual +1** (wording TBD) with guardrails against accidental spam taps (OpenSpec: confirm or long-press if
   needed).
 - Analytics copy: “for your reflection only”—never primary gamification.
@@ -737,10 +742,11 @@ redesigned as a dynamic symptom, and session documentation split into unit-level
 7. **Scope Definition & Completion Verification (Additional NEMAR Questions):**
    - **Scope question (before starting work):** "Is it **NEMAR** to treat the **entire symptom list** together 
    [in this session]?" If No, EM may narrow scope to specific symptoms.
-   - **Completion question (after Player Finish or treatment execution):** 
-   "Is it **NEMAR** that this treatment has finished successfully?" 
-     Optional binary muscle-test to affirm completion (used alongside Integrating state, DEC-006).
-   - Both are **voluntary NEMAR inquiries** the EM can trigger, not mandatory gates.
+   - **Completion question:** "Is it **NEMAR** that this treatment has finished successfully?" — **superseded (2026-07-13,
+     GQ-024)** by the mandatory **Terminal NEMAR** Atomic Unit (**DEC-015** §7b), which precedes Finish rather than following
+     it; a "No" response stays **Integrating** (DEC-006), never blocking the sovereign **[Finish Anyway]**.
+   - The **scope question** above remains a **voluntary NEMAR inquiry** the EM can trigger, not a mandatory gate; the
+     **completion question** is no longer voluntary — see Terminal NEMAR.
 
 **Refines:**
 
@@ -788,8 +794,9 @@ for final selection. Multi-layered docs preserve both precision (unit work) and 
       [Presented sequentially, one item per screen—Atomic Focus].
     - **Intuitive Choice override:** If global NEMAR to category/table = Yes or No, display full table for intuitive scan + selection.
   - **Unit affordances:** "What did you discover?" (cause), "What did you execute?" (treatment) capture unit-level docs.
-  - **Completion verification (optional):** "Is it NEMAR that this treatment has finished successfully?" 
-    [Optional yes/no muscle test after Player Finish].
+  - **Completion verification:** "Is it NEMAR that this treatment has finished successfully?" — this is the mandatory
+    **Terminal NEMAR** (**DEC-015** §7b), presented **before** Finish, not an optional check afterward (superseded
+    2026-07-13, **GQ-024**).
   - **Session audit:** At session close (or anytime), display/download comprehensive session log: "Today in this group: [causes
     diagnosed], [treatments run], [insights captured]."
 
