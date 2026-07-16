@@ -215,13 +215,18 @@ or "Error". Instead, it is marked as
 * **Personal Treatment Library use_count:**
   Rises **automatically** only when the Event
   Manager completes the Player through
-  **Finish** (סיום) after **required** steps; an
-  **optional** closing **yes/no** muscle-test
-  (*did it end successfully?*) may appear per
-  protocol. **Integrating** mid-exits do **not**
-  auto-increment. **Manual +1** is always
-  available for honest off-Player logging
-  (`decisions.md` **DEC-006**).
+  **Finish** (סיום) — reachable unconditionally,
+  with **no "required steps" gate**. A mandatory
+  closing muscle-test, the **Terminal NEMAR**
+  (*is it NEMAR that this ended successfully?*),
+  precedes Finish; a "Yes" enables it, while a
+  sovereign **[Finish Anyway]** stays available
+  either way. **Integrating** mid-exits — and a
+  Terminal NEMAR "No" response, which also stays
+  Integrating — do **not** auto-increment.
+  **Manual +1** is always available for honest
+  off-Player logging (`decisions.md` **DEC-006**,
+  **DEC-015**).
 
 ### 6. Academy Courses: Polymorphic Lessons & Organic Navigation
 A parallel lane of structured courses offering
@@ -245,15 +250,21 @@ prompts all authored in **Structured Markdown**
 
 * **Subjective Navigation:** **No mandatory
   NEMAR** before course treatments; the EM
-  decides readiness. EM may **skip and return**
-  later, creating a non-linear progression
-  (**DEC-016**).
+  decides readiness. EM moves through lesson
+  blocks at their own pace — there are **no
+  manual buttons and no "required blocks" gate**;
+  a **Navigation Tree** lets the EM jump ahead
+  or revisit anytime, creating a non-linear
+  progression (**DEC-015**, **DEC-016**).
 
 * **Course Completion:** Marked "Successfully
-  Completed" when **all required blocks
-  explicitly done** (optional blocks can be
-  skipped). **Optional closing NEMAR** at
-  course end (**DEC-016**).
+  Completed" when the EM presses **Finish** at
+  the final lesson block, gated only by the
+  mandatory closing **Terminal NEMAR** muscle-test
+  (*is it NEMAR that this course ended
+  successfully?*) — a sovereign **[Finish Anyway]**
+  is always available regardless of response
+  (**DEC-015**, **DEC-016**).
 
 * **Personal Toolbox Integration:** When a
   treatment is executed in a course for the
@@ -333,10 +344,13 @@ them with generic tech jargon:
   **use count only** on the card (v1), and
   **opt-in named variants** (`decisions.md`
   **DEC-005**). **Auto +1** on Player **Finish**
-  (סיום) after **required** steps; **optional**
-  closing **yes/no** muscle-test (*ended
-  successfully?*) per protocol; **manual +1** anytime
-  (`decisions.md` **DEC-006**); keep the count
+  (סיום), reachable unconditionally with no
+  "required steps" gate, and gated only by the
+  mandatory closing **Terminal NEMAR** muscle-test
+  (*ended successfully?*) — a "No" stays
+  **Integrating**, never blocking a sovereign
+  **[Finish Anyway]**; **manual +1** anytime
+  (`decisions.md` **DEC-006**, **DEC-015**); keep the count
   **quiet**—reflection, not pressure. Fed from
   courses, the Treatments Table, or self-invented
   work (`CONTEXT.md`).
@@ -613,12 +627,16 @@ PiC מספקת את הכלים והמתודולוגיה
        כדי שהטיפול "יחלחל" וישקע.
 
 * **מונה בספרייה האישית:** עלייה **אוטומטית**
-  רק אחרי **סיום** הנגן לאחר כל השלבים
-  **הנדרשים**; אפשר **מבחן שרירים כן/לא
-  אופציונלי** בסוף (*האם הסתיים בהצלחה?*)
-  לפי פרוטוקול. יציאה באמצע במצב **בהטמעה**
-  **לא** מעלה את המונה אוטומטית; **+1 ידני**
-  זמין תמיד (`decisions.md` **DEC-006**).
+  רק אחרי **סיום** הנגן — ניתן להגיע אליו
+  ללא שום תנאי של "שלבים נדרשים". מבחן שרירים
+  סוגר **חובה**, ה**נמ"ר הסוגר**
+  (*האם זה נמ"ר שהטיפול הסתיים בהצלחה?*),
+  קודם לסיום; תשובה "כן" מאפשרת אותו, ותמיד
+  קיימת האפשרות הריבונית **[סיום בכל זאת]**.
+  יציאה באמצע, וכן תשובת "לא" בנמ"ר הסוגר —
+  שגם היא נשארת **בהטמעה** — **לא** מעלות את
+  המונה אוטומטית; **+1 ידני** זמין תמיד
+  (`decisions.md` **DEC-006**, **DEC-015**).
 
 ### 6. קורסי האקדמיה: בלוקים פולימורפיים וניווט אורגני
 מסלול מקביל של קורסים מובנים המציע
@@ -638,15 +656,19 @@ PiC מספקת את הכלים והמתודולוגיה
 
 * **ניווט סובייקטיבי:** **אין נמ"ר חובה**
   לפני טיפולי קורס; מנהל האירוע מחליט
-  על הכנות. מנהל ואירוע יכול **לדלג וחזור**
-  מאוחר יותר, יוצר התקדמות לא-ליניארית
-  (**DEC-016**).
+  על הכנות. מנהל האירוע מתקדם בקצב שלו —
+  **אין כפתורים ידניים ואין תנאי של "בלוקים
+  נדרשים"**; **עץ ניווט** מאפשר לדלג קדימה
+  או לחזור אחורה בכל עת, יוצר התקדמות
+  לא-ליניארית (**DEC-015**, **DEC-016**).
 
 * **השלמת קורס:** מסומנת כ"הושלמה בהצלחה"
-  כאשר **כל הבלוקים הנדרשים בוצעו במפורש**
-  (בלוקים אופציונליים יכולים להיות דלולים).
-  **נמ"ר סגירה אופציונלי** בסוף קורס
-  (**DEC-016**).
+  כאשר מנהל האירוע לוחץ **סיום** בבלוק
+  האחרון, בכפוף רק למבחן השרירים הסוגר
+  והחובה — ה**נמ"ר הסוגר** (*האם זה נמ"ר
+  שהקורס הסתיים בהצלחה?*) — עם אפשרות
+  ריבונית תמידית ל**[סיום בכל זאת]** ללא
+  תלות בתשובה (**DEC-015**, **DEC-016**).
 
 * **שילוב אורגני כלים אישי:** כאשר טיפול
   בוצע בקורס ב**פעם הראשונה**, הוא **מתווסף
@@ -714,11 +736,14 @@ PiC מספקת את הכלים והמתודולוגיה
   טכניקה/טיפול עם **מקורות**, **מונה שימושים
   בלבד** (ב-v1), ו**וריאנטים בשם** לבחירה
   כשהשינוי מהותי (`decisions.md` **DEC-005**).
-  **עדכון אוטומטי +1** ב-**סיום** נגן אחרי
-  שלבים נדרשים; **מבחן שרירים אופציונלי**
-  בסוף (*האם הסתיים בהצלחה?*) לפי פרוטוקול;
+  **עדכון אוטומטי +1** ב-**סיום** נגן, ניתן
+  להגיע אליו ללא שום תנאי של "שלבים נדרשים",
+  ובכפוף רק למבחן השרירים הסוגר והחובה —
+  ה**נמ"ר הסוגר** (*האם הסתיים בהצלחה?*) —
+  תשובת "לא" נשארת **בהטמעה**, ואינה חוסמת
+  את האפשרות הריבונית **[סיום בכל זאת]**;
   **עדכון ידני +1** בכל עת
-  (`decisions.md` **DEC-006**); המונה **משני**
+  (`decisions.md` **DEC-006**, **DEC-015**); המונה **משני**
   ולא מלחיץ. מזינים מקורס, טבלת טיפולים,
   או עבודה עצמית (`CONTEXT.md`).
 * **קבוצת סימפטומים (הקשר):** תסמינים
