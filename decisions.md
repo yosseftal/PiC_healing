@@ -219,7 +219,8 @@ creep into time accounting.
 ## DEC-006 — Personal Treatment Library `use_count`: hybrid Player Finish + manual (GQ-003)
 
 **Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-003**; **amended** same day (optional success muscle-test wording);
-**amended again (2026-07-02)** — removes the "required steps" gate per **DEC-015** (resolves **GQ-018**).
+**amended again (2026-07-02)** — removes the "required steps" gate per **DEC-015** (resolves **GQ-018**); **further amended
+(2026-07-13)** — confirms Terminal NEMAR "No" responses also stay **Integrating** and never auto-increment (resolves **GQ-024**).
 
 **Context:** **GQ-003** chose **option D (hybrid)** with **Ownership**, **NEMAR** alignment, **Integrating** language, and a **low-pressure**
 toolbox metaphor.
@@ -237,7 +238,10 @@ technical gate (this was Audit Contradiction 1.1 — DEC-006 said "required," DE
    *Did this treatment or technique end successfully?* — in the same **NEMAR** inquiry family; it remains **not mandatory** for Finish or +1.
 2. **Integrating / mid-exit — no silent auto +1:** If the Event Manager **leaves** the Unified Player before reaching Finish, the work stays
    **Integrating** (not framed as failure); **do not** auto-increment. They may later **manually** add a use, or return and **Finish**
-   when the flow allows—**never** double-count the same finished run (see §5).
+   when the flow allows—**never** double-count the same finished run (see §5). The same non-increment rule applies when the EM
+   completes the **Terminal NEMAR** (**DEC-015** §7b) with a **"No"** response: the instance stays **Integrating** rather than
+   incrementing `use_count`, internally tagged `reason: 'terminal_nemar_no'` (vs. `reason: 'mid_exit'` for an ordinary early exit) —
+   the same non-failure state and vocabulary, distinguished only for analytics, never in EM-facing copy (resolves **GQ-024**).
 3. **Manual increment — Ownership:** At **any time**, from the **Personal Treatment Library**, the Event Manager may **manually increase**
    **`use_count`** for any row—e.g. work **outside** the app, off-Player practice, or an intentional “log this session” choice. Manual
    entry honours **self-reported** experience without forcing Player completion.
@@ -298,7 +302,9 @@ meaning never depends on a technical judgment about which steps "counted."
 ## DEC-007 — Personal Treatment Library `use_count`: manual-edit sovereignty, multitype timeline (auto-decrement removed)
 
 **Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-004**; **amended (2026-07-02)** — removes auto-decrement on
-back-navigation per **DEC-015** (resolves **GQ-018**).
+back-navigation per **DEC-015** (resolves **GQ-018**); **reaffirmed (2026-07-13)** — the visibility-based state machine and
+Terminal NEMAR (**DEC-015**, resolving **GQ-024**) introduce no new decrement path; §1 below remains the complete and final
+correction model.
 
 **Context:** **GQ-004** asked how to handle mistaken increments. Original answer combined Player state sync, Event Manager
 ownership, and transparent logging.
@@ -885,7 +891,10 @@ or flow between them—whatever feels right. We log every discovery."
 ## DEC-015 — Unified Player: atomic units, visibility-based state machine, and sovereign completion
 
 **Status:** Agreed (2026-06-27, Yossef-Tal & Sigal) — resolves **GQ-012**; **substantially amended (2026-07-02)** — resolves
-**GQ-018** (Completion Semantics), fixing Audit Contradictions **1.1, 1.2, 1.3, 1.4**.
+**GQ-018** (Completion Semantics), fixing Audit Contradictions **1.1, 1.2, 1.3, 1.4**; **further amended (2026-07-13)** —
+resolves **GQ-024** (Visibility-Based Completion & Terminal NEMAR), replacing GQ-018's manual "Done"/"Skip"/"Back" buttons and
+"[Review Skipped]" / "[Finish Anyway]" terminal switch with automatic visibility-based state transitions and a mandatory
+Terminal NEMAR unit that branches Finish availability.
 
 **Context:** **DEC-006** defines Player **Finish** (סיום) as the trigger for auto +1 use_count. **DEC-014** establishes Atomic
 Discovery for treatment/cause selection. **GQ-012** originally refined Player architecture around **Event Manager Sovereignty**
@@ -897,10 +906,12 @@ completion models** for what should be one Player. This amendment replaces §1 a
 state machine — the **Unified Player** — that governs **every** sequence of atomic content in PiC: standalone treatments,
 techniques, and course lessons alike. §2 (Structured Markdown) and §3 (content pipeline) are retained essentially unchanged.
 
-**Amendment (2026-07-13, Visibility-Based Completion):** Further refined the Unit-Level Actions model (§2) to replace manual
-"Done"/"Skip"/"Back" buttons with an automatic visibility-based state machine. **Movement through content** (navigation or
+**Amendment (2026-07-13, Visibility-Based Completion — GQ-024):** Further refined the Unit-Level Actions model (§2) to replace
+manual "Done"/"Skip"/"Back" buttons with an automatic visibility-based state machine. **Movement through content** (navigation or
 rendering) now serves as the technical trigger for unit-state transitions, eliminating manual confirmation gates while preserving
-the EM's agency via the container-level **Finish** action.
+the EM's agency via the container-level **Finish** action. This amendment also replaces GQ-018's "[Review Skipped]" /
+"[Finish Anyway]" terminal switch (§4 below) with the mandatory **Terminal NEMAR** unit (§7b) as the sole gate before Finish,
+and canonicalizes the Terminal NEMAR "No" response as **Integrating** (§4, §7b) — see the new **GQ-024** entry for full context.
 
 **Decision:**
 
@@ -954,7 +965,7 @@ the EM's agency via the container-level **Finish** action.
    - **Intuitive progression, unchanged from the original decision:** the EM decides when a unit is complete based on
      internal readiness (whether they fully executed the action, understood it, or intuitively chose to skip it).
 
-4. **Container-Level Finish Action and Terminal Button Logic (Two-Option Switch):**
+4. **Container-Level Finish Action and Terminal Button Logic (Terminal-NEMAR Branch, resolves GQ-024):**
    - **Finish is the sole success trigger:** Available **only** after the **Terminal NEMAR** (§7b) has been engaged with a **Yes**
      response. The Terminal NEMAR is the mandatory final step preceding Finish (סיום) in all Unified Player instances. Pressing
      **[Finish]** (סיום) triggers **success metadata**:
@@ -964,8 +975,11 @@ the EM's agency via the container-level **Finish** action.
    - **Terminal button behavior — conditional branching based on Terminal NEMAR response:** At the Terminal NEMAR unit:
      - **If the EM selects "Yes":** The system displays a standard **[Finish]** button. Pressing it triggers success declaration
        immediately, recording the session as `"Successfully Completed"` and incrementing success metadata.
-     - **If the EM selects "No":** The specific remedial logic is TBD (awaiting therapeutic guidance). The session is marked
-       "In-Process, Not Yet Complete." The EM retains sovereign access to **[Finish Anyway]** (see below).
+     - **If the EM selects "No":** The specific remedial logic (what happens next) is TBD (awaiting therapeutic guidance). The
+       label, however, is settled: the session is marked **Integrating** (בהטמעה) — the same non-failure state already used for
+       ordinary mid-exits (**DEC-006** §2), never a new "incomplete" label. It is internally tagged `reason: 'terminal_nemar_no'`
+       (vs. `reason: 'mid_exit'`) so analytics can distinguish the two paths, though both surface identically to the EM
+       (resolves **GQ-024**). The EM retains sovereign access to **[Finish Anyway]** (see below).
    - **Sovereign bypass — [Finish Anyway] remains always available:** Regardless of Terminal NEMAR response or prior unit states,
      the EM may access **[Finish Anyway]** to force success declaration and close the session. This honors EM sovereignty: they
      are
@@ -1045,10 +1059,12 @@ the EM's agency via the container-level **Finish** action.
        wisdom).
      - The system enables the **[Finish]** (סיום) button, allowing the EM to trigger success metadata (`use_count` +1 for
        treatments, course status `"Successfully Completed"` for courses) and close the session.
-   - **The "No" Path (In-Progress Flow — Therapeutic Guidance TBD):**
+   - **The "No" Path (Integrating Flow — Remedial Logic TBD):**
      - If the EM selects **No**, it indicates the process is not yet complete or successful.
-     - **Specific remedial logic is TBD — awaiting therapeutic guidance.** For now, define the state as "In-Process, Not Yet
-       Complete" without specific next steps.
+     - **The state is canonically "Integrating" (בהטמעה)** — the same non-failure vocabulary used for ordinary mid-exits
+       (**DEC-006** §2), tagged internally `reason: 'terminal_nemar_no'` for analytics only (resolves **GQ-024**). **Specific
+       remedial logic (reminders, suggested re-attempt) is TBD — awaiting therapeutic guidance.** No new "in-progress" label is
+       introduced; only the reason tag is new.
      - The system does **not** block forward progress; the EM retains sovereign access to the **[Finish Anyway]** branch (§4)
        regardless of Terminal NEMAR response, honoring their authority over their own process.
    - **Non-Blocking Sovereignty:** While Terminal NEMAR is mandatory to reach, the EM's sovereign bypass (§4, **[Finish Anyway]**)
@@ -1156,6 +1172,9 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
     `is_recommended` in OpenSpec to avoid implying enforcement).
   - `inquiry_session` / `course_sessions` gain a `finished_at` timestamp (set only by the explicit Finish action) distinct
     from unit-level `unit_state` completion, and a `success_declared` boolean set **only** by Finish — never inferred.
+  - `inquiry_session` / `course_sessions` also gain an `integrating_reason` enum (`mid_exit` / `terminal_nemar_no`, nullable
+    when `success_declared` is true) — an analytics-only distinction; both values surface identically to the EM as
+    **Integrating** (**DEC-006** §2, resolves **GQ-024**).
   - `protocols` / course tables retain `content_format` (enum: `structured_markdown`, `other`).
   - A viewport/render event triggers the `unseen` → `in_view` transition; a navigation-forward event triggers the
     `in_view` → `completed` transition (no manual buttons required).
@@ -1200,7 +1219,9 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
   - Terminal NEMAR is a mandatory Atomic Unit that appears as the final step before Finish (סיום) in all Unified Player instances.
   - Binary inquiry: "Is it NEMAR that this [Treatment/Course/Technique] ended successfully?" (Yes/No muscle test).
   - **Yes path:** Enables standard [Finish] button, triggering success metadata (`use_count` +1, course completion).
-  - **No path:** Marks session as "In-Process, Not Yet Complete." Specific remedial logic TBD (awaiting therapeutic guidance).
+  - **No path:** Marks session as **Integrating** (`integrating_reason: 'terminal_nemar_no'`) — the same non-failure state as
+    an ordinary mid-exit (**DEC-006** §2), never a new "incomplete" label. Specific remedial logic (what happens next) is TBD
+    (awaiting therapeutic guidance); only the label and reason tag are settled (resolves **GQ-024**).
   - **Sovereign bypass remains always available:** [Finish Anyway] button available regardless of Terminal NEMAR response,
     honoring EM authority to close session on their terms.
   - Terminal NEMAR follows all visibility-based state transitions (§2) and Navigation Tree rules (§7a). Revisiting Terminal NEMAR
@@ -1217,7 +1238,9 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
 ## DEC-016 — Course architecture: polymorphic lesson blocks, subjective navigation, content versioning
 
 **Status:** Refined (2026-06-29, Yossef-Tal & Sigal) — resolves **GQ-013** with critical refinements; **amended (2026-07-02)** —
-§3–4 rewritten to adopt the unified Unified Player model per **DEC-015** (resolves **GQ-018**).
+§3–4 rewritten to adopt the unified Unified Player model per **DEC-015** (resolves **GQ-018**); **further amended (2026-07-13)**
+— §3–4 updated again to reflect **DEC-015**'s visibility-based state machine and Terminal NEMAR, replacing the manual
+"Done"/"Skip"/"Back" buttons and "[Review Skipped]" switch referenced below (resolves **GQ-024**).
 
 **Context:** **DEC-003** defines courses as a parallel lane with NEMAR, Player, Integrating. **DEC-015** establishes Structured Markdown
 (H3 = step) as the content standard for all protocols. **GQ-013** clarified how course lessons integrate with the Player, Personal Treatment Library, 
@@ -1261,24 +1284,32 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
      The system **trusts the EM's readiness**. (Unchanged.)
    - **No technical validation gates:** The system **never enforces** "required" blocks — this is now a hard architectural rule, not a
      course-specific one; see **DEC-015** §3.
-   - **Course lesson blocks use the exact same unit-level actions as every other Unified Player instance** — **"Done" (בוצע)**,
-     **"Skip" (דלג)**, **"Back" (חזור)** — defined once in **DEC-015** §2, not redefined here. There is **no separate course button set**;
-     a Treatment Reference block opens a **nested Unified Player** governed by the identical model (**DEC-015** §1).
-   - **Sovereignty Rule (unchanged):** The EM can mark a block or a whole lesson unit as "Done" at any time, based on internal readiness,
-     **regardless of physical execution**. (E.g., EM reads a treatment and says "I know this—done" without stepping through every instruction.)
+   - **Course lesson blocks use the exact same visibility-based state machine as every other Unified Player instance** — automatic
+     `unseen` / `in_view` / `skipped` / `completed` transitions, with the **Navigation Tree** as the sole manual mechanism for
+     forward jumps — defined once in **DEC-015** §2 and §7a, not redefined here. There is **no separate course button set** and
+     **no manual "Done"/"Skip"/"Back" buttons**; a Treatment Reference block opens a **nested Unified Player** governed by the
+     identical model (**DEC-015** §1).
+   - **Sovereignty Rule (unchanged in spirit, mechanism updated 2026-07-13):** The EM engages a block at their own pace; a unit
+     transitions to `completed` automatically once the EM navigates past it, **regardless of physical execution**. (E.g., an EM
+     who reads a treatment and feels ready may navigate forward immediately, without stepping through every instruction — the
+     system never validates *how* the unit was engaged, only that the EM moved past it.)
 
-4. **Course Completion & Success (rewritten 2026-07-02 — see DEC-015)**
-   - **Completion trigger:** A course is a Unified Player instance like any other. It is marked **"Successfully Completed"** when the EM
-     triggers the terminal button action at the final Atomic Unit (**DEC-015** §2) — either pressing **[Finish]** (if all units
-     completed) or choosing **[Finish Anyway]** (if units remain skipped/unseen), per the **Two-Option Switch** logic in **DEC-015** §4.
-     "Required" is now a purely editorial hint (**DEC-015** §3); it can never block or gate course completion.
-   - **Terminal button logic:** Per **DEC-015** §4, when skipped/unseen units remain, the EM sees **[Review Skipped]** and
-     **[Finish Anyway]** instead of a single Finish — allowing an optional pass through deferred content without ever forcing it.
-     **[Finish Anyway]** always succeeds — course completion never depends on how many units were skipped.
-   - **Optional success NEMAR:** Upon Finish, optional **NEMAR inquiry: "Is it NEMAR that this course ended successfully?"**
-     Result stored as metadata on session closure log. (Unchanged.)
-   - **Deepening after completion:** Per **DEC-015** §6, the EM may return to a "Successfully Completed" course and mark previously
-     skipped units "Done" without re-triggering completion metadata or a second success declaration.
+4. **Course Completion & Success (rewritten 2026-07-02, revised 2026-07-13 — see DEC-015)**
+   - **Completion trigger:** A course is a Unified Player instance like any other. Its final Atomic Unit is the mandatory
+     **Terminal NEMAR** (**DEC-015** §7b): "Is it NEMAR that this course ended successfully?" A **"Yes"** response enables the
+     standard **[Finish]** button, marking the course **"Successfully Completed"** and triggering success metadata. A **"No"**
+     response marks the course **Integrating** (`integrating_reason: 'terminal_nemar_no'`), while the EM retains sovereign
+     access to **[Finish Anyway]** (**DEC-015** §4) regardless of response. "Required" is now a purely editorial hint
+     (**DEC-015** §3); it can never block or gate course completion.
+   - **Terminal NEMAR, not "[Review Skipped]":** GQ-018's original "[Review Skipped]" / "[Finish Anyway]" terminal switch
+     (branching on whether skipped/unseen units remained) is superseded by **DEC-015** §4/§7b's Terminal-NEMAR-based branching
+     (resolves **GQ-024**). Skipped or unseen units never block reaching the Terminal NEMAR or Finish.
+   - **Optional success NEMAR is now the mandatory Terminal NEMAR:** the "optional NEMAR inquiry" originally described here is
+     superseded by the now-mandatory Terminal NEMAR unit (**DEC-015** §7b); the inquiry itself is unchanged, only its
+     mandatory status and terminal-button branching are new.
+   - **Deepening after completion:** Per **DEC-015** §6/§7a, the EM may return to a "Successfully Completed" course and revisit
+     previously skipped units — rendering and navigating past them upgrades their state to `completed` — without re-triggering
+     completion metadata or a second success declaration.
 
 
 5. **Content Versioning: Diary vs. Toolbox (Simple Model)**
@@ -1311,8 +1342,9 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 **Refines:**
 
 - **DEC-003 (Courses):** Adds mechanics for lesson structure, polymorphic context, and Player integration.
-- **DEC-015 (Unified Unified Player, amended 2026-07-02):** Course lesson units **are** Atomic Units — no separate Player model,
-  no separate button set, no required-blocks gate. §3–4 above now defer entirely to **DEC-015**'s state machine.
+- **DEC-015 (Unified Player, amended 2026-07-02, further amended 2026-07-13):** Course lesson units **are** Atomic Units — no
+  separate Player model, no manual button set, no required-blocks gate, and the same mandatory Terminal NEMAR before Finish.
+  §3–4 above now defer entirely to **DEC-015**'s state machine.
 - **DEC-005 & DEC-006 (Personal Treatment Library):** First-time course execution auto-populates library with provenance; use_count reciprocity.
 - **DEC-004 (Chronological Timeline):** Snapshot storage on timeline ensures diary integrity; library points to live version.
 
@@ -1332,13 +1364,17 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
   `contextual_binding` (nullable `symptom_group_id` or null for standalone), `retroactive_links` (JSONB: array of linked entities).
   - `course_lessons` table: `course_id`, `lesson_number`, `lesson_blocks` (JSONB: polymorphic array with `block_type`, `content`,
     `is_recommended` display hint — **not** an enforced gate, per **DEC-015** §3).
-  - `lesson_progress` is superseded by **DEC-015**'s unified `unit_state` (enum: `unseen` / `completed` / `skipped`) — one state
-    model for course blocks and treatment steps alike, not a course-specific table.
+  - `lesson_progress` is superseded by **DEC-015**'s unified `unit_state` (flat enum: `unseen` / `in_view` / `skipped` /
+    `completed`, with `in_view` ephemeral/session-based) — one state model for course blocks and treatment steps alike, not a
+    course-specific table.
+  - `course_sessions.course_status` gains `integrating` as a value populated when the course's Terminal NEMAR returns "No"
+    (`integrating_reason: 'terminal_nemar_no'`) — see **DEC-015** §7b (resolves **GQ-024**).
   - `personal_library_entries`: add `variant_type` (enum: 'original', 'personal', 'course_extracted'), `source_metadata` (JSONB).
   - `timeline_events`: add `snapshot` (JSONB, only for Finish events: stores static copy of protocol/course steps as performed).
 
-- **Player UX (course):** No course-specific button set. A course is a Unified Player instance; it uses the **same**
-  Done/Skip/Back unit-level actions and the **same** Finish container-level action defined once in **DEC-015** §2.
+- **Player UX (course):** No course-specific button set and no manual Done/Skip/Back buttons. A course is a Unified Player
+  instance; it uses the **same** automatic visibility-based unit-state transitions, the **same** Navigation Tree, the **same**
+  Terminal NEMAR, and the **same** Finish container-level action defined once in **DEC-015** §2, §7a, §7b.
   Treatment Reference blocks open a **nested** Unified Player instance (**DEC-015** §1), not a different component.
 
 - **Library sync:** On treatment Finish within a course → check library → create new entry with `variant_type: 'course_extracted'`
@@ -1348,7 +1384,8 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
   `timeline_event.metadata.protocol_snapshot`.
 
 - **Copy:**
-  - "Take lessons at your own pace. Mark 'Done' when you're ready—this step, or the whole lesson. No pressure to do every step step-by-step."
+  - "Take lessons at your own pace — move forward when you're ready, one step or the whole lesson. No pressure to do every
+    step step-by-step."
   - "When you reach the end, Finish is yours to declare — skipped units and all."
   - "Every technique you complete builds your personal toolbox. Revisit it anytime—always up-to-date with Sigal's latest guidance."
   - "You're the architect of your healing. Skip lessons now, return later. Nothing is forced."
@@ -1402,4 +1439,55 @@ while the final interaction choreography and layout remain UI/UX concerns per th
 **Resolved (total, updated):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**;
 **GQ-004** → **DEC-007**; **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**;
 **GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**; **GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**;
-**GQ-012** → **DEC-015**; **GQ-013** → **DEC-016**; **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-02).
+**GQ-012** → **DEC-015**; **GQ-013** → **DEC-016**; **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-02);
+**GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-13).
+
+---
+
+## GQ-024 — Visibility-Based Completion & Terminal NEMAR Canonicalization (2026-07-13)
+
+**Status:** Resolved (2026-07-13, Yossef-Tal & Sigal) — further amends **DEC-006**, **DEC-007**, **DEC-015**, **DEC-016**,
+building directly on **GQ-018**'s Unified Player resolution.
+
+**Context:** After GQ-018 closed Audit Contradictions 1.1–1.4 with a manual "Done"/"Skip"/"Back" unit-action model and a
+"[Review Skipped]" / "[Finish Anyway]" terminal switch, that model was superseded in practice by two further refinements that
+had only been written into **DEC-015**'s body directly, with no corresponding grill entry: (a) unit-level actions became fully
+**automatic and visibility-based** (no manual buttons at all — movement and rendering are the triggers), and (b) the terminal
+switch was replaced by a **mandatory Terminal NEMAR** unit ("Is it NEMAR that this ended successfully?") that branches Finish
+availability on a Yes/No muscle test rather than on how many units were skipped. This left **DEC-016**, the **GQ-018** entry
+itself, and `docs/grill-backlog.md` describing a model that no longer matched **DEC-015**'s actual text — a second, silent
+layer of drift on top of the one GQ-018 had just resolved.
+
+**Resolution:**
+
+- **Unit-level actions are abolished as manual buttons.** The flat 4-state model (`unseen` / `in_view` / `skipped` /
+  `completed`) transitions automatically via rendering and navigation (**DEC-015** §2). The **Navigation Tree** is the sole
+  manual mechanism for non-sequential movement (**DEC-015** §7a). This retires GQ-018's "Done (בוצע)" / "Skip (דלג)" /
+  "Back (חזור)" button vocabulary everywhere it still appeared (**DEC-016** §3, and course-specific copy).
+- **The terminal switch is replaced by Terminal NEMAR.** GQ-018's "[Review Skipped]" + "[Finish Anyway]" branching (keyed on
+  unit-skip counts) is superseded by a mandatory **Terminal NEMAR** Atomic Unit (**DEC-015** §7b) as the final step before
+  Finish in every Unified Player instance, standalone or course-nested. A "Yes" response enables **[Finish]**; **[Finish
+  Anyway]** remains sovereign and always available regardless of response.
+- **The Terminal NEMAR "No" path is canonically "Integrating."** Rather than introducing a new label ("In-Process, Not Yet
+  Complete"), the "No" response reuses the existing **Integrating** (בהטמעה) vocabulary already established for mid-exit
+  sessions (**DEC-006** §2, **CONTEXT.md**). This is a **label-only** resolution: the session is internally tagged
+  `integrating_reason: 'terminal_nemar_no'` (vs. `'mid_exit'`) purely for analytics — both surface identically to the EM. The
+  **remedial logic** (what, if anything, happens next after a "No" response — reminders, suggested re-attempt, etc.) remains
+  explicitly **TBD**, deferred to a future grill once therapeutic guidance from Sigal is available; it is tracked as remaining
+  scope under **GQ-015** (Integrating Lifecycle).
+- **No new decrement path.** GQ-018's removal of auto-decrement (**DEC-007** §1) is unaffected; visibility-based transitions
+  and Terminal NEMAR introduce no mechanism that alters `use_count` outside of Finish or the sovereign manual edit.
+
+**Amended decisions:** **DEC-006** §2 (Terminal NEMAR "No" clarified as non-incrementing, same as mid-exit); **DEC-007**
+(reaffirmed, no substantive change); **DEC-015** (already amended in-line as of 2026-07-13; this entry documents that
+amendment as its own tracked resolution); **DEC-016** §3–4 (button vocabulary and terminal-switch language updated to match).
+
+**Deferred to OpenSpec / future grill:** Terminal NEMAR "No" remedial flow (reminders, re-attempt UI) — tracked under
+**GQ-015**. Button/UI removal is a pure copy and interaction change; no new screens are implied beyond what **DEC-015**
+already specifies.
+
+**Resolved (total, updated):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**;
+**GQ-004** → **DEC-007**; **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**;
+**GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**; **GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**;
+**GQ-012** → **DEC-015**; **GQ-013** → **DEC-016**; **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-02);
+**GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-13).
