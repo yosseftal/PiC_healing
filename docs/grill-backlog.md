@@ -409,8 +409,10 @@ screen. **Deferred to a future grill:** Terminal NEMAR "No" remedial flow (GQ-01
 
 ---
 
-### 7. **Authentication & User Identity Model** (⚠️ BLOCKER — MUST PRECEDE ANY SCHEMA DESIGN)
-**Status:** Open (GQ-019, identified 2026-06-30 Architecture Stress-Test)
+### 7. **Authentication & User Identity Model** (✅ RESOLVED, GQ-019 → DEC-017)
+**Status:** ✅ Resolved (GQ-019, 2026-07-20, Yossef-Tal & Sigal) — new decision **DEC-017**. Practitioner/reciprocity
+access split out as **GQ-026** (open); GQ-016 (sync policy) and GQ-014 (freemium grants) remain open, with only
+forward-compatible schema fields (`device_id`, `last_sync_at`) reserved by DEC-017.
 
 **Context (Blind Spot 2.1):** No decision addresses the user account model, authentication mechanism, or
 RLS structure. Every table in the schema requires a `user_id` binding. Data sovereignty (promised in README)
@@ -449,6 +451,15 @@ creation, local data migrates to server-scoped storage. No data lost in transiti
 
 **Structural requirement (all paths):** Define the `users` record fields and the RLS anchor pattern
 before any other table schema is designed. Every table's `WHERE user_id = auth.uid()` depends on this.
+
+**Resolution (2026-07-20):** Path C rejected outright (migration window breaks data sovereignty). Adopted a hybrid of
+**Path B** (Social Auth + Magic Link fallback + biometric unlock, 30-day offline grace window) combined with a new
+**Guest Mode** concept not originally in this backlog entry: an unauthenticated EM can run a **full** NEMAR session
+(not a restricted preview) against an ephemeral, local-only Guest Group, gated only at Finish / Journal sync /
+explicit "Persist this Group" (the **Persistence Gate**). Account deletion adopted **Verified Sovereign Choice**:
+mandatory re-authentication, then a choice of Immediate Delete or a 14-day Safe Deletion recovery window. Practitioner
+access (raised during the grill as a possible Reciprocity extension) was explicitly **not** resolved here — split out
+as **GQ-026**. Full text: **DEC-017** in `decisions.md`.
 
 ---
 
@@ -663,42 +674,43 @@ mechanisms.
 
 ## Next Steps
 
-**Priority order revised after GQ-025 resolution (2026-07-20), next: GQ-019:**
+**Priority order revised after GQ-019 resolution (2026-07-20), next: GQ-020:**
 
 | Priority | GQ | Topic | Reason |
 |---|---|---|---|
-| 🔴 BLOCKER | GQ-019 | Auth & User Identity | Blocks all schema design (no RLS without user model) |
 | 🔴 BLOCKER | GQ-020 | Causes/Treatments Schema | Blocks all NEMAR flow implementation |
-| 🟠 HIGH | GQ-014 | Freemium Model | Blocks all access control (elevated from MEDIUM) |
+| 🟠 HIGH | GQ-014 | Freemium Model | Blocks all access control (elevated from MEDIUM); `profiles.role` from DEC-017 is identity-only, not an entitlement — grant schema still undefined |
 | 🟠 HIGH | GQ-021 | Intensity Scale & Rating Paths | Blocks all rating screen design |
 | 🟠 HIGH | GQ-022 | Library Sync Protocol | Blocks course → library integration |
 | 🟡 MEDIUM | GQ-023 | Content Authoring/Governance (CMS only) | Versioning resolved via GQ-025; retirement/deletion behavior for Pointer entries remains |
-| 🟡 MEDIUM | GQ-016 | Offline-First Sync | Session state model now unblocked by GQ-018/GQ-024's Finish-only sync unit |
+| 🟡 MEDIUM | GQ-016 | Offline-First Sync | `device_id`/`last_sync_at` scaffolding reserved by DEC-017; conflict-resolution policy (e.g. Finish-Event-Only Sync) still open |
 | 🟢 LOW | GQ-015 | Integrating Lifecycle (remaining scope) | Auto-decrement resolved via GQ-018; Terminal NEMAR "No" remedial flow (GQ-024) also carried here; visibility/reminders remain |
 | 🟢 LOW | GQ-017 | Journal & Smart-Linking | Foundation in place; refine when ready |
+| 🟢 LOW | GQ-026 | Practitioner / Reciprocity Access Model | New — split out of the GQ-019 grill (2026-07-20); no grounding yet in CONTEXT.md; grill when the Healing Circle feature is prioritized |
 
 **Resolved:**
 1. ✅ GQ-013 → **DEC-016** (Courses & Academy, 2026-06-27)
 2. ✅ **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (Completion Semantics, 2026-07-02)
 3. ✅ **GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (Visibility-Based Completion & Terminal NEMAR, 2026-07-13)
 4. ✅ **GQ-025** → further amends **DEC-006, DEC-015, DEC-016** (Linked Journey vs. Toolbox / Pointer-to-Copy, 2026-07-20)
+5. ✅ **GQ-019** → **DEC-017** (Identity & Authentication: Guest Mode, Persistence Gate, Verified Sovereign Deletion, 2026-07-20)
 
 **Next-step readiness:** GQ-018, GQ-024, and GQ-025 together fully resolve the Player/completion subsystem and the
-content-versioning model across `decisions.md`, `docs/grill-backlog.md`, `CLAUDE.md`, `CONTEXT.md`, and `README.md` — no
-lingering references to course-specific buttons, manual Done/Skip/Back actions, "required steps" validation gates, the
-superseded "[Review Skipped]" terminal switch, **textual/protocol snapshots**, or the deprecated **Diary vs. Toolbox**
-model remain in any of these files. **The documentation is ready to begin the GQ-019 (Auth & User Identity) grill
-session.**
+content-versioning model, and **GQ-019 now resolves identity and the RLS anchor** (**DEC-017**) — across `decisions.md`,
+`docs/grill-backlog.md`, `CLAUDE.md`, `CONTEXT.md`, and `README.md`. No lingering references to course-specific buttons,
+manual Done/Skip/Back actions, "required steps" validation gates, the superseded "[Review Skipped]" terminal switch,
+**textual/protocol snapshots**, the deprecated **Diary vs. Toolbox** model, or an undefined auth/identity model remain in
+any of these files. **The documentation is ready to begin the GQ-020 (Causes/Treatments Schema) grill session.**
 
 ---
 
 ## Grill Session Summary
 
-- **Grilled subsystems:** 15 questions → 16 decisions (+ GQ-025 amendments), 4 of them since amended three times
+- **Grilled subsystems:** 16 questions → 17 decisions (+ GQ-025 amendments), 4 of them since amended three times
   (DEC-006, DEC-015, DEC-016)
 
-- **Architecture Status (revised 2026-07-20): Foundation Aligned on Completion Logic and Content Versioning — Remaining
-  Gaps Unchanged**
+- **Architecture Status (revised 2026-07-20): Foundation Aligned on Completion Logic, Content Versioning, and Identity
+  — Remaining Gaps Narrowed**
 
   The 2026-06-30 stress-test found the Player/completion subsystem internally contradictory across four decisions
   (Audit 1.1–1.4). **GQ-018 (2026-07-02) resolved all four** by establishing one unified Unified Player state machine
@@ -709,12 +721,16 @@ session.**
   **Integrating** rather than a new "In-Process, Not Yet Complete" label. **GQ-025 (2026-07-20) decommissioned the
   Diary/Snapshot model** and established the **Linked Journey vs. Toolbox** architecture: Timeline events link to
   Personal Treatment Library entries (no snapshot); **Pointer / Hard Copy hybrid PTL** is the single source of truth
-  for all execution rendering. The foundation is no longer merely "conceptually sound" on completion logic — it is now
-  **internally consistent end-to-end**: one Player model, fully automatic unit-level transitions, one container-level
-  success trigger (Finish, gated by Terminal NEMAR), no technical gates, no silent auto-corrections, no orphaned button
-  vocabulary, and no per-execution protocol snapshots.
+  for all execution rendering. **GQ-019 (2026-07-20) then closed the identity blocker**: **DEC-017** establishes
+  Guest Mode (full NEMAR sessions on ephemeral, local-only data), the Persistence Gate (account required only at
+  Finish/Journal-sync/explicit persist), Path B auth with a bounded 30-day biometric offline window, and Verified
+  Sovereign Choice for account deletion — giving every future table its `WHERE user_id = auth.uid()` anchor. The
+  foundation is no longer merely "conceptually sound" on completion logic — it is now **internally consistent
+  end-to-end** on both the Player/completion subsystem and identity: one Player model, fully automatic unit-level
+  transitions, one container-level success trigger (Finish, gated by Terminal NEMAR), no technical gates, no silent
+  auto-corrections, no orphaned button vocabulary, no per-execution protocol snapshots, and a defined RLS anchor.
 
-  *What IS implementation-ready (tracer-bullet spike, now including Player logic and content versioning):*
+  *What IS implementation-ready (tracer-bullet spike, now including Player logic, content versioning, and identity):*
   - Symptom Group entity and archival lifecycle (DEC-002, DEC-013)
   - Polarity + Intensity as independent schema fields (DEC-010)
   - Timeline `log_type` categorization and filter architecture (DEC-007, DEC-008)
@@ -724,26 +740,28 @@ session.**
   - **Linked Journey vs. Toolbox** — Timeline-as-Link (`treatment_id` only), Pointer/Hard Copy hybrid PTL
     (`global_reference_id` + `protocol_content`), Lazy Flip on first edit, self-invented = `variant_type: 'personal'`
     Hard Copy (DEC-016 §5, GQ-025)
+  - **Identity & Auth** — `profiles` schema, RLS anchor (`auth.uid()`), Guest Mode / Persistence Gate, Path B auth +
+    biometric grace window, Verified Sovereign Choice deletion (DEC-017, GQ-019)
   - Structured Markdown → JSON content pipeline (DEC-015)
   - Smart-Link edge table concept (DEC-008)
 
-  *What is STILL NOT ready for general OpenSpec — gaps unaffected by GQ-018/GQ-024/GQ-025:*
-  - ⚠️ Auth/User model absent → no RLS policy can be written → nothing is deployable (GQ-019)
+  *What is STILL NOT ready for general OpenSpec — gaps unaffected by GQ-018/GQ-024/GQ-025/GQ-019:*
   - ⚠️ Freemium enforcement undefined → no access control on any feature (GQ-014)
   - ⚠️ Causes/Treatments Table schema undefined → NEMAR flow cannot be built (GQ-020)
   - ⚠️ Intensity scale direction deferred → rating UX and analytics are blocked (GQ-021)
   - ⚠️ First-time library detection undefined → course → library sync is not implementable (GQ-022)
+  - ⚠️ Practitioner/reciprocity access model undefined (GQ-026, newly split out — not a blocker for solo-EM MVP)
 
-- **Prior status ("Foundation Conceptually Sound — Critical Gaps Identified," 2026-06-30) is now partially resolved.**
-  The Player/completion contradiction — the deepest and most structurally entangled of the audit findings, spanning
-  four decisions — is closed. The remaining gaps (GQ-019 through GQ-023, minus GQ-018) are independent of each
-  other and do not share the same kind of cross-decision contradiction; they are missing subsystems, not
-  internal conflicts. Estimated 3 more resolution sessions before the first full sprint can proceed safely.
+- **Prior status ("Foundation Conceptually Sound — Critical Gaps Identified," 2026-06-30) is now further resolved.**
+  The Player/completion contradiction and the identity blocker — the two most structurally load-bearing audit
+  findings — are both closed. The remaining gaps (GQ-020 through GQ-023, GQ-014, GQ-016, GQ-026) are independent of
+  each other and do not share the same kind of cross-decision contradiction; they are missing subsystems, not
+  internal conflicts. Estimated 2–3 more resolution sessions before the first full sprint can proceed safely.
 
-- **What CAN begin now:** A tracer-bullet spike covering the simplest happy path — create a Symptom Group, add a
-  symptom, rate it, run a standalone treatment through the full Unified Player (automatic transitions, Navigation
-  Tree, Terminal NEMAR, Finish), view the timeline event — is feasible with current decisions, including the Player
-  logic for the first time.
+- **What CAN begin now:** A tracer-bullet spike covering the simplest happy path — sign in (or start in Guest Mode),
+  create a Symptom Group, add a symptom, rate it, run a standalone treatment through the full Unified Player
+  (automatic transitions, Navigation Tree, Terminal NEMAR, Finish), view the timeline event — is feasible with
+  current decisions, including the Player logic and identity model for the first time.
 
 ---
 
@@ -752,8 +770,8 @@ session.**
 - **Target:** 1–2 grill questions per session (batch closely related Qs).
 - **Documentation:** Each GQ gets its own DEC-xxx after resolution, or amends existing ones when it resolves a
   cross-decision contradiction (as GQ-018, GQ-024, and GQ-025 did).
-- **Critical path (updated 2026-07-20):** ~~GQ-018~~ → ~~GQ-024~~ → ~~GQ-025~~ → GQ-019 → GQ-020 → GQ-014 → GQ-021 →
+- **Critical path (updated 2026-07-20):** ~~GQ-018~~ → ~~GQ-024~~ → ~~GQ-025~~ → ~~GQ-019~~ → GQ-020 → GQ-014 → GQ-021 →
   GQ-022 → OpenSpec.
-- **Status:** GQ-018 resolved (2026-07-02); GQ-024 resolved (2026-07-13); GQ-025 resolved (2026-07-20). 9 GQs remain
-  open (GQ-014, GQ-015 remaining scope, GQ-016, GQ-017, GQ-019, GQ-020, GQ-021, GQ-022, GQ-023 CMS governance only).
-  Ready to grill GQ-019 (Auth & User Identity) next.
+- **Status:** GQ-018 resolved (2026-07-02); GQ-024 resolved (2026-07-13); GQ-025 resolved (2026-07-20); GQ-019
+  resolved → **DEC-017** (2026-07-20). 9 GQs remain open (GQ-014, GQ-015 remaining scope, GQ-016, GQ-017, GQ-020,
+  GQ-021, GQ-022, GQ-023 CMS governance only, GQ-026 new). Ready to grill GQ-020 (Causes/Treatments Schema) next.
