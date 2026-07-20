@@ -220,7 +220,9 @@ creep into time accounting.
 
 **Status:** Agreed (2026-06-08, Yossef-Tal & Sigal) — resolves **GQ-003**; **amended** same day (optional success muscle-test wording);
 **amended again (2026-07-02)** — removes the "required steps" gate per **DEC-015** (resolves **GQ-018**); **further amended
-(2026-07-13)** — confirms Terminal NEMAR "No" responses also stay **Integrating** and never auto-increment (resolves **GQ-024**).
+(2026-07-13)** — confirms Terminal NEMAR "No" responses also stay **Integrating** and never auto-increment (resolves **GQ-024**);
+**further amended (2026-07-20)** — no textual snapshot is ever produced on Finish; success metadata (`use_count` +1) is
+unaffected, but any prior implication of snapshot-writing alongside it is retracted (resolves **GQ-025**, see **DEC-016** §5).
 
 **Context:** **GQ-003** chose **option D (hybrid)** with **Ownership**, **NEMAR** alignment, **Integrating** language, and a **low-pressure**
 toolbox metaphor.
@@ -901,7 +903,9 @@ or flow between them—whatever feels right. We log every discovery."
 **GQ-018** (Completion Semantics), fixing Audit Contradictions **1.1, 1.2, 1.3, 1.4**; **further amended (2026-07-13)** —
 resolves **GQ-024** (Visibility-Based Completion & Terminal NEMAR), replacing GQ-018's manual "Done"/"Skip"/"Back" buttons and
 "[Review Skipped]" / "[Finish Anyway]" terminal switch with automatic visibility-based state transitions and a mandatory
-Terminal NEMAR unit that branches Finish availability.
+Terminal NEMAR unit that branches Finish availability; **further amended (2026-07-20)** — §4's success-metadata list no
+longer includes a Diary-model timeline snapshot; Finish links the Timeline event to the Personal Treatment Library entry
+only (resolves **GQ-025**, see **DEC-016** §5).
 
 **Context:** **DEC-006** defines Player **Finish** (סיום) as the trigger for auto +1 use_count. **DEC-014** establishes Atomic
 Discovery for treatment/cause selection. **GQ-012** originally refined Player architecture around **Event Manager Sovereignty**
@@ -978,7 +982,8 @@ and canonicalizes the Terminal NEMAR "No" response as **Integrating** (§4, §7b
      **[Finish]** (סיום) triggers **success metadata**:
      - If the instance maps to a Personal Treatment Library row: `use_count` +1 (**DEC-006**).
      - If the instance is a course: course status → `"Successfully Completed"` (**DEC-016** §4).
-     - A Diary-model timeline snapshot is recorded (**DEC-016** §5), unchanged.
+     - The Timeline event **links** to the Personal Treatment Library entry via `treatment_id` — **no snapshot is recorded**.
+       Rendering always resolves through that entry's current **Pointer or Hard Copy** state (**DEC-016** §5, **GQ-025**).
    - **Terminal button behavior — conditional branching based on Terminal NEMAR response:** At the Terminal NEMAR unit:
      - **If the EM selects "Yes":** The system displays a standard **[Finish]** button. Pressing it triggers success declaration
        immediately, recording the session as `"Successfully Completed"` and incrementing success metadata.
@@ -1247,7 +1252,9 @@ nature of healing (**CLAUDE.md** §2.E, §2.G) without requiring the EM to "undo
 **Status:** Refined (2026-06-29, Yossef-Tal & Sigal) — resolves **GQ-013** with critical refinements; **amended (2026-07-02)** —
 §3–4 rewritten to adopt the unified Unified Player model per **DEC-015** (resolves **GQ-018**); **further amended (2026-07-13)**
 — §3–4 updated again to reflect **DEC-015**'s visibility-based state machine and Terminal NEMAR, replacing the manual
-"Done"/"Skip"/"Back" buttons and "[Review Skipped]" switch referenced below (resolves **GQ-024**).
+"Done"/"Skip"/"Back" buttons and "[Review Skipped]" switch referenced below (resolves **GQ-024**); **further amended
+(2026-07-20)** — §5–6 rewritten to decommission the textual snapshot and adopt the hybrid Pointer-to-Copy Library model
+(resolves **GQ-025**).
 
 **Context:** **DEC-003** defines courses as a parallel lane with NEMAR, Player, Integrating. **DEC-015** establishes Structured Markdown
 (H3 = step) as the content standard for all protocols. **GQ-013** clarified how course lessons integrate with the Player, Personal Treatment Library, 
@@ -1319,22 +1326,41 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
      completion metadata or a second success declaration.
 
 
-5. **Content Versioning: Diary vs. Toolbox (Simple Model)**
-   - **Problem solved:** Prevent versioning clutter while ensuring both historical integrity and current guidance.
-   - **Timeline as a "Diary" (Static Record):**
-     - When EM clicks **Finish** in the Player, the system **saves a textual snapshot** of the protocol **as it was performed** at that moment.
-       This snapshot is stored as **timeline event metadata**.
-     - **Historical integrity:** If EM looks back a year later, they see **exactly what they did then** — textual record of the steps they followed.
+5. **Content Versioning: Linked Journey vs. Toolbox (Hybrid Pointer-to-Copy Model)** — **rewritten 2026-07-20, GQ-025**
+   - **Superseded (2026-07-20):** The original "Diary" half of this section (textual snapshot on Finish, stored as timeline
+     event metadata) is **decommissioned**. Snapshots were redundant technical noise: they froze content the EM might later
+     refine, preventing the Timeline from evolving with the EM's own growing wisdom. See **GQ-025** for full rationale.
+   - **Problem solved:** Prevent versioning clutter while ensuring both continuity of the EM's own record and current
+     guidance — without persisting a duplicate copy of protocol content per execution.
+   - **Timeline as a "Linked Journey" (no snapshot):**
+     - Every execution's Timeline event **links** to the **Personal Treatment Library** entry via `treatment_id`. There is
+       **no snapshot**, static or otherwise — the Timeline never stores its own copy of protocol content.
+     - **Historical integrity redefined:** looking back at a past execution shows **when it happened, that it happened, and
+       what it's linked to** (temporal / provenance integrity) — not necessarily the verbatim instructions followed at that
+       exact moment. For an unedited (**Pointer**) entry, a past execution renders **today's** live guidance, since the EM
+       never diverged from it. This is an intentional trade-off, not an oversight (**GQ-025**).
      - Supports both course lessons and ad-hoc treatments (same logic).
-   - **Library as a "Live Toolbox" (Dynamic Reference):**
-     - The **Personal Treatment Library card always points** to the **latest live version** of the protocol
-       from the **master Treatments Table** (maintained by Sigal).
-     - **No version alerts:** EM always accesses the most **updated guidance**. Updates are transparent and always-current.
-     - **No version history clutter:** Library remains clean and lightweight.
-   - **Manual Variants (for customization):**
-     - If EM wishes to **deviate** from the live version, they manually create a **"Personal Variant"** (tagged as `variant_type: 'personal'`) in the library.
-     - This **preserves Ownership:** EM can customize without system interference. Variants are **linked to provenance** (e.g., "Variant of Protocol X").
-     - System remains simple; EM remains architect.
+   - **The Personal Treatment Library entry is the single source of truth for rendering.** Every Timeline execution of that
+     treatment — past or future — renders through the *same* entry, in whichever state (**Pointer** or **Hard Copy**) it
+     currently holds. There is one row, not one row plus N frozen copies.
+   - **Hybrid entry state — Pointer (default) vs. Hard Copy (on edit):**
+     - **Pointer:** An unedited library entry stores `global_reference_id` (pointing at the master Treatments Table row) and
+       a **null** `protocol_content`. Rendering fetches live content from the Treatments Table. The EM always sees Sigal's
+       latest guidance for that protocol, with **no version alerts** and **no version-history clutter**.
+     - **Hard Copy (Lazy Flip):** The **first time** the EM edits an entry in any way — content, instructions, or otherwise
+       personalizes it — the system performs a **Copy-on-Write**: it persists the full protocol content into that same
+       row's `protocol_content` field and **severs** the live link (the row keeps its `global_reference_id` for provenance,
+       but no longer resolves rendering through it). From that point on, the entry renders from its own `protocol_content`,
+       and further edits update it in place. This is a **lazy, one-way flip per entry** — not a scheduled or bulk migration.
+     - **Self-invented treatments** (no Treatments Table origin) are **Hard Copy from creation**: `variant_type: 'original'`,
+       `protocol_content` populated immediately, `global_reference_id` null.
+     - **Named "Personal Variant" entries** (`variant_type: 'personal'`, opt-in fork per **DEC-005** §2) are **always** Hard
+       Copy by definition — creating a deliberately named variant *is* a content deviation, so it can never be a live
+       Pointer. This is a **separate row** from the original it was forked from (preserves the original's own Pointer
+       state), distinct from the in-place Lazy Flip described above.
+   - **Ownership, not versioning:** The EM is the sovereign architect of their own toolbox. If they refine a treatment, that
+     refined wisdom **is** the entry going forward — reflected consistently across every past and future Timeline link to
+     it. There is no separate "old version" to preserve once the EM has chosen to personalize their own copy.
 
 6. **Technique Extraction & Personal Treatment Library Sync**
    - **First-time execution trigger:** If EM **never executed** a course treatment, clicking **Finish** **automatically adds it** to
@@ -1342,9 +1368,9 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
    - **Provenance tracking:** Library entry includes **source metadata** (e.g., "Source: Course X, Lesson Y") and creation timestamp.
    - **Use count reciprocity:** Completing a treatment **within a course** **increments `use_count`** in the Personal Treatment Library.
      One unified counter, all sources contribute (courses, ad-hoc sessions, Treatments Table).
-   - **Content link vs. snapshot:**
-     - Library card points to **live version** (allows EM to see updated guidance).
-     - Timeline event embeds **static snapshot** (what was actually performed).
+   - **Content resolution (rewritten 2026-07-20, GQ-025):** No snapshot exists anywhere. The Timeline event links to the
+     library entry via `treatment_id`; the library entry itself resolves to either live Treatments Table content
+     (**Pointer**) or its own persisted content (**Hard Copy**) — see §5.
 
 **Refines:**
 
@@ -1353,7 +1379,8 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
   separate Player model, no manual button set, no required-blocks gate, and the same mandatory Terminal NEMAR before Finish.
   §3–4 above now defer entirely to **DEC-015**'s state machine.
 - **DEC-005 & DEC-006 (Personal Treatment Library):** First-time course execution auto-populates library with provenance; use_count reciprocity.
-- **DEC-004 (Chronological Timeline):** Snapshot storage on timeline ensures diary integrity; library points to live version.
+- **DEC-004 (Chronological Timeline):** Timeline events link to the Personal Treatment Library entry (no snapshot,
+  **GQ-025**); rendering resolves through that entry's current Pointer or Hard Copy state.
 
 **Rationale:**
 - **Polymorphic lesson blocks** enable course creators to mix original content with dynamic links to shared protocols, rapid assembly without duplication.
@@ -1361,7 +1388,9 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 - **"Done" semantics clarify EM sovereignty:** Declaration based on readiness, not execution. Removes friction between system and EM intent.
 - **Unifying with the standalone Unified Player (2026-07-02):** Removes the two-button-set contradiction and the required-blocks
   gate at their root — a course is not a special case, it is the same Player used everywhere.
-- **Diary vs. Toolbox model is elegant:** Preserves history, enables updates, avoids clutter. Ownership remains with EM (manual variants).
+- **Linked Journey vs. Toolbox model is elegant:** Avoids duplicated content and versioning clutter entirely by making the
+  Personal Treatment Library entry the single source of truth for every past and future rendering. Ownership remains with
+  EM — refining a treatment updates the entry the EM's whole history already points to (**GQ-025**).
 - **Retroactive linking** ensures full data reciprocity: courses can connect to any logical unit, any time.
 
 **Consequences:**
@@ -1376,8 +1405,12 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
     course-specific table.
   - `course_sessions.course_status` gains `integrating` as a value populated when the course's Terminal NEMAR returns "No"
     (`integrating_reason: 'terminal_nemar_no'`) — see **DEC-015** §7b (resolves **GQ-024**).
-  - `personal_library_entries`: add `variant_type` (enum: 'original', 'personal', 'course_extracted'), `source_metadata` (JSONB).
-  - `timeline_events`: add `snapshot` (JSONB, only for Finish events: stores static copy of protocol/course steps as performed).
+  - `personal_library_entries`: add `variant_type` (enum: 'original', 'personal', 'course_extracted'), `source_metadata` (JSONB),
+    `global_reference_id` (FK → Treatments Table row, nullable), `protocol_content` (JSONB, nullable). **Pointer** state = 
+    `protocol_content IS NULL` (rendering resolves via `global_reference_id`); **Hard Copy** state = `protocol_content IS NOT
+    NULL` (rendering resolves from this row; `global_reference_id` may remain for provenance only) (**GQ-025**, rewrites §5).
+  - `timeline_events.snapshot` (JSONB) is **deprecated** (2026-07-20, **GQ-025**). All rendering of a past execution fetches
+    content from `personal_library_entries` via the event's `treatment_id` — never from a stored snapshot.
 
 - **Player UX (course):** No course-specific button set and no manual Done/Skip/Back buttons. A course is a Unified Player
   instance; it uses the **same** automatic visibility-based unit-state transitions, the **same** Navigation Tree, the **same**
@@ -1387,8 +1420,9 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 - **Library sync:** On treatment Finish within a course → check library → create new entry with `variant_type: 'course_extracted'`
   or append source, increment `use_count` (per the amended, gate-free trigger in **DEC-006** §1).
 
-- **Timeline storage:** On Finish, embed snapshot of protocol/course steps (textual array) as
-  `timeline_event.metadata.protocol_snapshot`.
+- **Timeline storage (rewritten 2026-07-20, GQ-025):** On Finish, the Timeline event stores only a `treatment_id` link to
+  the Personal Treatment Library entry — no embedded protocol content. `timeline_event.metadata.protocol_snapshot` is
+  **removed**; do not write to it.
 
 - **Copy:**
   - "Take lessons at your own pace — move forward when you're ready, one step or the whole lesson. No pressure to do every
@@ -1497,4 +1531,73 @@ already specifies.
 **GQ-004** → **DEC-007**; **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**;
 **GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**; **GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**;
 **GQ-012** → **DEC-015**; **GQ-013** → **DEC-016**; **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-02);
-**GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-13).
+**GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-13); **GQ-025** → further amends **DEC-006,
+DEC-015, DEC-016** (2026-07-20).
+
+---
+
+## GQ-025 — Timeline Snapshot Decommission & Hybrid Pointer-to-Copy Library Logic (2026-07-20)
+
+**Status:** Resolved (2026-07-20, Yossef-Tal & Sigal) — amends **DEC-006** §1 (success-metadata description), **DEC-015**
+§4 (Finish success metadata), **DEC-016** §5–6 (Content Versioning model).
+
+**Context:** **DEC-016** §5 (the original "Diary vs. Toolbox" model) required a **textual snapshot** of the protocol to be
+saved into `timeline_events` metadata on every Finish, purely to preserve "historical integrity." In practice this was
+redundant technical noise: the Personal Treatment Library entry already carries the content, and a snapshot only froze it
+at a moment in time — actively working *against* the manifesto's Ownership principle by preventing the EM's own refined
+wisdom from reflecting in their own history. The grill confirmed a deliberate trade-off: the EM is the sovereign architect
+of their journey, so if they refine a treatment, that refined content should be what their history shows, not a fossilized
+copy of what they did before they learned better.
+
+**Resolution:**
+
+1. **No snapshot, anywhere.** The `timeline_events.snapshot` field is deprecated. A Timeline event links to a Personal
+   Treatment Library entry via `treatment_id`; all rendering of past executions resolves through that entry, live.
+2. **Hybrid Pointer-to-Copy entry state, keyed on existing fields:** no new orthogonal flag is introduced. Two new columns
+   on `personal_library_entries` — `global_reference_id` (nullable FK → Treatments Table) and `protocol_content` (nullable
+   JSONB) — combine with the existing `variant_type` enum to fully describe the state:
+   - **Pointer** (`protocol_content IS NULL`): renders live from the Treatments Table via `global_reference_id`. Default
+     for `'original'` and `'course_extracted'` entries until the EM edits them.
+   - **Hard Copy** (`protocol_content IS NOT NULL`): renders from its own persisted content. Reached via a **Lazy Flip**
+     (Copy-on-Write) the **first time** the EM edits an entry in **any** way — content or metadata, no distinction. Also
+     the **immediate, default state** for self-invented entries (`variant_type: 'original'`, no `global_reference_id`) and
+     for every named **Personal Variant** (`variant_type: 'personal'`, per **DEC-005** §2 — a deliberate fork is, by
+     definition, always a content deviation, so it can never be a live Pointer).
+3. **"Historical integrity" is redefined as temporal/provenance integrity, not content-verbatim integrity.** Reviewing a
+   past execution of a still-live Pointer entry shows **today's** guidance, even if the protocol's wording changed after
+   that execution happened. This is an explicit, accepted trade-off — not an oversight — in service of a single always-
+   current source of truth per entry.
+4. **Glossary rename:** "Diary vs. Toolbox Model" → **"Linked Journey vs. Toolbox Model"** in `CONTEXT.md`, since the
+   Timeline side of the pairing no longer behaves like a diary (a static written record) at all.
+5. **Terminology unaffected:** "Treatments Table" and "Personal Treatment Library" remain the canonical glossary terms;
+   "GTT" / "PTL" are informal shorthand only (e.g., in schema/technical discussion), not replacements.
+
+**Amended decisions:** **DEC-016** §5 (fully rewritten — Pointer/Hard Copy hybrid replaces static snapshot), §6 (Content
+resolution rewritten), Consequences (schema: add `global_reference_id`, `protocol_content`; deprecate `timeline_events.
+snapshot`); **DEC-015** §4 (success-metadata list no longer includes a snapshot); **DEC-006** §1 (success-metadata
+description retracts any snapshot implication; `use_count` +1 behavior on Finish is otherwise unchanged).
+
+**Rationale:** Removing the snapshot eliminates a redundant, ever-growing data structure whose only purpose was freezing
+content the EM might legitimately want to keep improving. The Pointer-to-Copy model gives the same practical guarantee
+("the EM's own record reflects what they actually rely on") with one row per logical treatment instead of one row plus N
+frozen copies, and makes explicit — rather than accidentally implied — that Sigal's live updates flow through to the EM
+automatically until the EM chooses to take ownership of their own copy.
+
+**Consequences:**
+
+- Schema: see **DEC-016** Consequences (`personal_library_entries.global_reference_id`, `personal_library_entries.
+  protocol_content`; `timeline_events.snapshot` deprecated).
+- Rendering: every surface that displays "what a past execution was" must fetch through `personal_library_entries` via
+  `treatment_id` — never from a stored snapshot value, which may still exist in old rows but should no longer be read.
+- Copy: avoid language implying the Timeline "remembers exactly what you did" for Pointer entries; frame it instead as
+  "your current guidance for this treatment," consistent across past and future.
+
+**Deferred to OpenSpec:** Any data migration plan for previously-collected `timeline_events.snapshot` values (out of scope
+for this documentation-only decision).
+
+**Resolved (total, updated):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**;
+**GQ-004** → **DEC-007**; **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**;
+**GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**; **GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**;
+**GQ-012** → **DEC-015**; **GQ-013** → **DEC-016**; **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-02);
+**GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-13); **GQ-025** → further amends **DEC-006,
+DEC-015, DEC-016** (2026-07-20).
