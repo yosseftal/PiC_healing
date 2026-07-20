@@ -1453,6 +1453,113 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
 
 ---
 
+## DEC-017 — Identity & Authentication: Guest Mode, the Persistence Gate, and Verified Sovereign Deletion
+
+**Status:** Resolved (2026-07-20, Yossef-Tal & Sigal) — resolves **GQ-019**. Establishes the RLS anchor (`profiles.id` /
+`auth.uid()`) required before any other schema design proceeds (unblocks **GQ-020, GQ-021, GQ-022**).
+
+**Context:** The 2026-06-30 Architecture Stress-Test (Blind Spot 2.1) found no decision addressing the EM's account
+model, authentication mechanism, or RLS anchor pattern — every table's `user_id` binding, and the README's data
+sovereignty promise, depend on this. Three paths were drafted in `docs/grill-backlog.md`: magic-link-only (Path A),
+social auth + biometric (Path B), and anonymous-first with account upgrade (Path C). The grill rejected Path C outright
+— an anonymous-to-account migration period would leave data sovereignty unenforceable (no server record exists to
+delete or export) — and adopted a hybrid of Path B with a deliberately bounded ephemeral mode.
+
+**Decision:**
+
+1. **Guest Mode (Ephemeral Inquiry):** An unauthenticated EM may run a **complete** NEMAR session — diagnosis and
+   treatment selection, including the mandatory Terminal NEMAR — against a temporary, local-only **Guest Group**. This
+   is a full "Value Moment," not a restricted demo; it honors "no barrier to starting your healing journey" without
+   Path C's migration complexity, because Guest Group data is disposable by design.
+   - Guest Group state lives entirely on-device (no server contact required), so it works in Flight Mode from the
+     first moment of use.
+2. **The Persistence Gate:** A registered account is required only at the point the EM tries to **anchor** the work —
+   not to perform it. The gate triggers on:
+   - Clicking **Finish** (סיום) in the Unified Player (Terminal NEMAR itself is pre-gate; only the Finish action that
+     follows a "Yes" — or a sovereign [Finish Anyway] — is gated).
+   - Attempting to sync a Reflective Journal entry to the Chronological Timeline.
+   - Manually choosing to "Persist this Group" for future tracking.
+   - **Promotion vs. Evaporation:** If the EM authenticates when the gate appears, the Guest Group and its findings
+     are promoted in place to the new account's UUID — no separate migration step. If the EM closes the app without
+     authenticating, the Guest Group evaporates. This trades unlimited anonymous accumulation for zero migration
+     logic, and keeps the sovereignty promise intact (there is never a period where server-side personal data exists
+     without an owning, authenticated account).
+3. **Authentication mechanism (Path B):** Apple Sign-In / Google OAuth as primary, with an email Magic Link fallback.
+   Required for App Store distribution (Apple Sign-In) and lowest friction for the majority of mobile EMs.
+4. **Offline Resilience — Biometric Unlock with a bounded grace window:** After the first successful server
+   authentication, the EM unlocks the local cache via biometric (Face ID / fingerprint) without contacting the server,
+   supporting Flight Mode and multi-day retreats. This is bounded: the device stores `last_server_auth_at`; once **30
+   days** have elapsed since the last successful server check-in, biometric-only unlock is disallowed and the EM must
+   re-authenticate online before continuing. This preserves Flight Mode for realistic offline periods while ensuring a
+   lost or stolen device cannot rely on biometrics indefinitely.
+5. **Minimal profile schema:** `profiles` carries only what identity, consent, and the offline-auth window require:
+   `id` (UUID, = `auth.uid()`), `email`, `consent_timestamp`, `role` (default `'event_manager'`), `last_server_auth_at`.
+   `device_id` and `last_sync_at` are also reserved on the session/device model as **forward-compatible scaffolding**
+   for **GQ-016** — this decision does **not** adopt a sync conflict-resolution policy; GQ-016 remains open.
+6. **Account Deletion — Verified Sovereign Choice:** Deletion is never a single accidental click.
+   - **Identity Lock (mandatory):** Before any deletion path is offered, the EM must perform a fresh re-authentication
+     (Magic Link re-verification or a Social Auth re-prompt) to confirm the request comes from the verified account
+     owner — protecting against a device left open to a family member, a child, or an opportunistic access.
+   - **Choice, post-verification:** Only after re-auth, the EM chooses between:
+     - **Immediate Delete:** a single-transaction, irreversible Cascade Hard-Delete of all linked Symptom Groups,
+       Timeline events, and Personal Treatment Library rows — the literal reading of the manifesto's "absolute right
+       to permanently delete... at any time."
+     - **Safe Deletion (14-day recovery window):** the account is marked soft-deleted (access revoked immediately);
+       an automated job hard-purges after 14 days unless the EM logs back in and reverses it. Exists because this is
+       a healing app where self-sabotage and emotional volatility are named symptom categories — the sovereignty
+       promise is honored either way (the EM's own request is what triggers eventual purge, with no staff
+       intervention), but a misclick or a distress-driven impulse doesn't have to be irreversible.
+   - Neither choice weakens the sovereignty guarantee: no data is retained against the EM's will, but "the will" being
+     acted on is verified as genuinely theirs, and — in the Safe Deletion case — genuinely final.
+
+**Explicitly deferred (not resolved by this decision):**
+- **GQ-026 — Practitioner / Reciprocity Access Model:** third-party sharing, "Healing Circle" access grants, and any
+  second user role are new product surface with no prior grounding in `CONTEXT.md` or `decisions.md`; split out as
+  its own future grill question rather than folded into EM identity.
+- **GQ-016 — Offline-First Sync:** conflict-resolution policy (e.g., Finish-Event-Only Sync) remains open; only the
+  `device_id` / `last_sync_at` schema scaffolding is reserved here.
+- **GQ-014 — Freemium Model:** entitlement/grant schema (`user_grants` for feature access) is untouched by this
+  decision; `profiles.role` is an identity field, not an entitlement field.
+
+**Rationale:**
+- Guest Mode's full-fidelity NEMAR session (rather than a locked-down preview) is what actually demonstrates the
+  product's core value before asking for commitment — matching the manifesto's "no barrier to starting" language
+  more literally than a marketing-only free tier would.
+- Evaporation-on-close is a deliberately simpler alternative to Path C's anonymous-to-account migration: there is
+  never a window where personal data persists on the server without an authenticated owner, so the sovereignty
+  promise never has an exception to explain.
+- A bounded (30-day) offline grace window matches standard mobile session lifecycle norms and gives Flight Mode a
+  concrete, auditable boundary instead of an undefined "trust forever" model.
+- Verified Sovereign Choice treats "absolute right to delete" and "protect the EM from their own worst moment" as
+  compatible, not competing — the EM still has the final word on both timing and irreversibility.
+
+**Consequences:**
+
+- **Schema:**
+  - `profiles`: `id` (UUID, PK, = `auth.uid()`), `email`, `consent_timestamp`, `role` (enum, default `'event_manager'`),
+    `last_server_auth_at` (timestamp), `deletion_status` (enum: `'active'` / `'pending_purge'`), `deletion_requested_at`
+    (nullable timestamp, starts the 14-day Safe Deletion clock when set).
+  - Session/device model: `device_id`, `last_sync_at` reserved (scaffolding only; no conflict policy attached yet —
+    **GQ-016** remains open).
+  - Every other table's RLS anchor is `WHERE user_id = auth.uid()` against `profiles.id`, unchanged from the existing
+    migration (`supabase/migrations/20260308164004_initial_schema.sql`).
+  - Guest Group data is **not** modeled in Supabase at all — it is a local-only (on-device) structure with no
+    `user_id`, promoted (assigned a real `user_id` and inserted) only on successful authentication.
+- **Auth flow:** Social Auth (Apple/Google) + Magic Link fallback via Supabase Auth; biometric unlock gates local
+  cache access, itself gated by the 30-day `last_server_auth_at` check.
+- **Deletion flow:** re-auth requirement precedes any deletion UI; Immediate Delete performs cascade hard-delete in
+  one transaction; Safe Deletion sets `deletion_status = 'pending_purge'` and a scheduled job purges after 14 days
+  unless the EM logs in and reverses it (clearing `deletion_status` back to `'active'`).
+- **Copy:** Frame the account not as a barrier but as a "Safe Container" for healing wisdom already discovered in
+  Guest Mode — the account is what makes the Finish the EM already earned actually stick.
+
+**Deferred to OpenSpec / future grill:** GQ-026 (Practitioner/Reciprocity Access), GQ-016 (Sync conflict policy),
+GQ-014 (Freemium/entitlement schema), exact re-authentication UX copy and Safe Deletion reminder cadence.
+
+**Resolved:** GQ-019 → **DEC-017** (2026-07-20, Yossef-Tal & Sigal).
+
+---
+
 ## GQ-018 — Completion Semantics Canonicalization (2026-07-02)
 
 **Status:** Resolved (2026-07-02, Yossef-Tal & Sigal) — amends **DEC-006**, **DEC-007**, **DEC-015**, **DEC-016**
@@ -1612,3 +1719,36 @@ for this documentation-only decision).
 **GQ-012** → **DEC-015**; **GQ-013** → **DEC-016**; **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-02);
 **GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-13); **GQ-025** → further amends **DEC-006,
 DEC-015, DEC-016** (2026-07-20).
+
+---
+
+## GQ-019 — Authentication & User Identity (2026-07-20)
+
+**Status:** Resolved (2026-07-20, Yossef-Tal & Sigal) — resolves to **DEC-017** (new decision, not an amendment).
+
+**Context:** See **DEC-017** for the full context — this entry is the grill-log record. Identified as a ⚠️ BLOCKER in
+the 2026-06-30 Architecture Stress-Test (Blind Spot 2.1): no table's `user_id` / RLS anchor could be designed without
+an identity model, making this the mandatory prerequisite to GQ-020 (Causes/Treatments Schema), GQ-021 (Intensity
+Scale), and GQ-022 (Library Sync Protocol).
+
+**Resolution summary:** Path C (anonymous-first with account upgrade) rejected outright — the migration window
+breaks the data sovereignty guarantee. Adopted a hybrid of Path B (Social Auth + Magic Link fallback + biometric
+unlock) with a **Guest Mode** that permits a **complete** NEMAR session (not a restricted preview) on ephemeral,
+local-only data, gated only at the point of **Finish**, Journal sync, or explicit "Persist this Group" — the
+**Persistence Gate**. Biometric-only offline access is bounded to a 30-day grace window since `last_server_auth_at`.
+Account deletion follows a **Verified Sovereign Choice** flow: mandatory re-authentication, then a choice between
+Immediate Delete and a 14-day Safe Deletion recovery window. Full decision recorded as **DEC-017**.
+
+**Explicitly split out / deferred during the grill:**
+- **GQ-026** (new) — Practitioner/Reciprocity Access Model ("Healing Circle" third-party sharing) — flagged as new
+  product surface with no grounding in existing domain docs; not resolved here.
+- **GQ-016** (existing, remains open) — Offline-First Sync conflict-resolution policy; only `device_id` /
+  `last_sync_at` schema scaffolding reserved by **DEC-017**.
+- **GQ-014** (existing, remains open) — Freemium/entitlement grant schema untouched by this decision.
+
+**Resolved (total, updated):** **GQ-001** → **DEC-004**; **GQ-002** → **DEC-005**; **GQ-003** → **DEC-006**;
+**GQ-004** → **DEC-007**; **GQ-005** → **DEC-008**; **GQ-006** → **DEC-009**; **GQ-007** → **DEC-010**;
+**GQ-008** → **DEC-011**; **GQ-009** → **DEC-012**; **GQ-010** → **DEC-013**; **GQ-011** → **DEC-014**;
+**GQ-012** → **DEC-015**; **GQ-013** → **DEC-016**; **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-02);
+**GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (2026-07-13); **GQ-025** → further amends **DEC-006,
+DEC-015, DEC-016** (2026-07-20); **GQ-019** → **DEC-017** (Identity & Authentication, 2026-07-20).
