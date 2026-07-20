@@ -1352,12 +1352,20 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
        row's `protocol_content` field and **severs** the live link (the row keeps its `global_reference_id` for provenance,
        but no longer resolves rendering through it). From that point on, the entry renders from its own `protocol_content`,
        and further edits update it in place. This is a **lazy, one-way flip per entry** — not a scheduled or bulk migration.
-     - **Self-invented treatments** (no Treatments Table origin) are **Hard Copy from creation**: `variant_type: 'original'`,
-       `protocol_content` populated immediately, `global_reference_id` null.
-     - **Named "Personal Variant" entries** (`variant_type: 'personal'`, opt-in fork per **DEC-005** §2) are **always** Hard
-       Copy by definition — creating a deliberately named variant *is* a content deviation, so it can never be a live
+       Every **Hard Copy** — whether reached via Lazy Flip or created from scratch — is the EM's sovereign **physical
+       reality**: their own persisted protocol, not a live template.
+     - **Self-invented treatments** (created directly by the EM in the Personal Treatment Library, with **no** Treatments
+       Table origin) are **Hard Copy from creation** and must be classified **`variant_type: 'personal'`** — never
+       `'original'`. At creation: `protocol_content` is populated immediately, and `global_reference_id` is **NULL**. This
+       prevents sync bugs where a self-invented row could be mistaken for an unedited Treatments Table template (`'original'`
+       + live Pointer). Provenance in `source_metadata` records self-invention (no parent protocol).
+     - **Named "Personal Variant" entries** (`variant_type: 'personal'`, opt-in fork per **DEC-005** §2) are also **always**
+       Hard Copy by definition — creating a deliberately named variant *is* a content deviation, so it can never be a live
        Pointer. This is a **separate row** from the original it was forked from (preserves the original's own Pointer
-       state), distinct from the in-place Lazy Flip described above.
+       state), distinct from both the in-place Lazy Flip and self-invention above; provenance links to the parent protocol.
+     - **`variant_type: 'original'`** is reserved for **Treatments Table–sourced** entries only (first execution from the
+       shared table): Pointer by default (`protocol_content` null, `global_reference_id` set) until the EM's first edit
+       triggers Lazy Flip on that same row.
    - **Ownership, not versioning:** The EM is the sovereign architect of their own toolbox. If they refine a treatment, that
      refined wisdom **is** the entry going forward — reflected consistently across every past and future Timeline link to
      it. There is no separate "old version" to preserve once the EM has chosen to personalize their own copy.
@@ -1406,9 +1414,11 @@ accordingly; §1, §2, §5, and §6 are unchanged in substance.
   - `course_sessions.course_status` gains `integrating` as a value populated when the course's Terminal NEMAR returns "No"
     (`integrating_reason: 'terminal_nemar_no'`) — see **DEC-015** §7b (resolves **GQ-024**).
   - `personal_library_entries`: add `variant_type` (enum: 'original', 'personal', 'course_extracted'), `source_metadata` (JSONB),
-    `global_reference_id` (FK → Treatments Table row, nullable), `protocol_content` (JSONB, nullable). **Pointer** state = 
+    `global_reference_id` (FK → Treatments Table row, nullable), `protocol_content` (JSONB, nullable). **Pointer** state =
     `protocol_content IS NULL` (rendering resolves via `global_reference_id`); **Hard Copy** state = `protocol_content IS NOT
-    NULL` (rendering resolves from this row; `global_reference_id` may remain for provenance only) (**GQ-025**, rewrites §5).
+    NULL` (rendering resolves from this row; `global_reference_id` may remain for provenance only). **`'original'`** =
+    Treatments Table–sourced only; **`'personal'`** = self-invented (`global_reference_id` NULL at creation) or named fork
+    (per **DEC-005** §2); never classify self-invented rows as `'original'` (**DEC-016** §5).
   - `timeline_events.snapshot` (JSONB) is **deprecated** (2026-07-20, **GQ-025**). All rendering of a past execution fetches
     content from `personal_library_entries` via the event's `treatment_id` — never from a stored snapshot.
 
@@ -1560,9 +1570,10 @@ copy of what they did before they learned better.
      for `'original'` and `'course_extracted'` entries until the EM edits them.
    - **Hard Copy** (`protocol_content IS NOT NULL`): renders from its own persisted content. Reached via a **Lazy Flip**
      (Copy-on-Write) the **first time** the EM edits an entry in **any** way — content or metadata, no distinction. Also
-     the **immediate, default state** for self-invented entries (`variant_type: 'original'`, no `global_reference_id`) and
-     for every named **Personal Variant** (`variant_type: 'personal'`, per **DEC-005** §2 — a deliberate fork is, by
-     definition, always a content deviation, so it can never be a live Pointer).
+     the **immediate, default state** for self-invented entries (`variant_type: 'personal'`, `global_reference_id` NULL,
+     `protocol_content` populated at creation — never `'original'`) and for every named **Personal Variant** (`variant_type:
+     'personal'`, per **DEC-005** §2 — a deliberate fork is, by definition, always a content deviation, so it can never be a
+     live Pointer; distinguished from self-invention via `source_metadata` parent link).
 3. **"Historical integrity" is redefined as temporal/provenance integrity, not content-verbatim integrity.** Reviewing a
    past execution of a still-live Pointer entry shows **today's** guidance, even if the protocol's wording changed after
    that execution happened. This is an explicit, accepted trade-off — not an oversight — in service of a single always-
