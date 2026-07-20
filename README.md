@@ -89,7 +89,12 @@ The app is designed to support
 "Flight Mode" to ensure therapy
 continuity without distractions,
 radiation, or dependency on
-network connectivity.
+network connectivity. After first
+sign-in, biometric unlock (Face ID /
+fingerprint) keeps the local cache
+available offline for up to 30 days
+before an online check-in is needed
+again (**DEC-017**).
 
 ---
 
@@ -282,6 +287,45 @@ prompts all authored in **Structured Markdown**
   grows organically with every healing
   intervention (**DEC-016**).
 
+### 7. Identity, Guest Mode & The Persistence Gate
+* **Guest Mode (no barrier to starting):**
+  Before creating an account, an Event Manager
+  can run a **complete** NEMAR inquiry —
+  diagnosis and treatment selection, including
+  the closing Terminal NEMAR — against a
+  temporary, local-only Guest Group. This is a
+  full experience of the method, not a locked
+  preview (**DEC-017**).
+* **The Persistence Gate:** An account is only
+  requested at the moment the EM tries to
+  **anchor** the work — pressing **Finish**
+  (סיום), syncing a Reflective Journal entry, or
+  choosing to persist a group for future
+  tracking. Signing in at that point **promotes**
+  the Guest Group into the new account; leaving
+  without signing in lets it quietly evaporate,
+  with no migration step and no personal data
+  ever stored server-side without an owner
+  (**DEC-017**).
+* **Sign-in:** Apple Sign-In / Google OAuth,
+  with an email Magic Link fallback. Biometric
+  unlock (Face ID / fingerprint) keeps the local
+  cache available in Flight Mode for **30 days**
+  since the last server check-in, after which
+  the EM reconnects and re-authenticates online
+  (**DEC-017**).
+* **Verified Sovereign Choice (account
+  deletion):** Deletion always begins with a
+  fresh re-authentication to confirm the request
+  is genuinely the account owner's. The EM then
+  chooses between an **immediate, irreversible
+  delete** or a **14-day Safe Deletion** recovery
+  window before the automated purge — protecting
+  years of healing history from a misclick or a
+  moment of emotional volatility, without
+  weakening the EM's absolute right to delete
+  (**DEC-017**).
+
 ---
 
 ## 🏗️ Technical Architecture
@@ -295,7 +339,20 @@ prompts all authored in **Structured Markdown**
 * **Data Sovereignty:** Users have the
   absolute right to permanently delete
   all personal data from the app's
-  databases at any time.
+  databases at any time, via a
+  **Verified Sovereign Choice** flow: a
+  mandatory re-authentication, then a
+  choice of immediate hard-delete or a
+  14-day Safe Deletion recovery window
+  (**DEC-017**).
+* **Identity & RLS Anchor:** Every table
+  is scoped to `WHERE user_id = auth.uid()`
+  against a minimal `profiles` row (`id`,
+  `email`, `consent_timestamp`, `role`,
+  `last_server_auth_at`). Unauthenticated
+  Guest Mode inquiry data is local-only and
+  never written to Supabase until the EM
+  signs in (**DEC-017**).
 * **AI Ready:** Structured data infrastructure
   optimized for future **AI Agent** integration
   to analyze personal trends within the journal.
@@ -382,6 +439,23 @@ them with generic tech jargon:
   flexible step order (see Principles 3–5).
 * **Empty Vessel (הכלי הריק):** Optional free
   writing gate; not only a symptom list.
+* **Guest Group / Guest Mode:** A temporary,
+  local-only Symptom Group letting an
+  unauthenticated EM run a complete NEMAR
+  session before ever signing up. Promotes to
+  the EM's account on sign-in, or evaporates
+  on close—never modeled server-side
+  (`decisions.md` **DEC-017**).
+* **The Persistence Gate:** The moment an
+  account is requested—only when the EM tries
+  to anchor work (Finish, Journal sync, or
+  explicit persist), never to run the inquiry
+  itself (`decisions.md` **DEC-017**).
+* **Verified Sovereign Choice:** The account
+  deletion flow—mandatory re-authentication,
+  then a choice of immediate hard-delete or a
+  14-day Safe Deletion recovery window
+  (`decisions.md` **DEC-017**).
 
 Full glossary: `CONTEXT.md`. Architecture
 agreements: `decisions.md`.
@@ -543,7 +617,14 @@ PiC מספקת את הכלים והמתודולוגיה
 תמיכה מלאה ב"מצב טיסה"
 לעבודה נקייה מהסחות דעת,
 ללד קרינה ובכל מקום,
-ללא תלות בחיבור לרשת.
+ללא תלות בחיבור לרשת. לאחר
+ההתחברות הראשונית, פתיחת
+נעילה ביומטרית (Face ID /
+טביעת אצבע) מאפשרת גישה
+למטמון המקומי במצב לא
+מקוון למשך עד 30 יום, ולאחריהן
+נדרש אימות מקוון מחדש
+(**DEC-017**).
 
 ---
 
@@ -698,6 +779,42 @@ PiC מספקת את הכלים והמתודולוגיה
   וסשנים אד-הוק—ארגז הכלים גדל
   אורגנית בכל התערבות ריפוי (**DEC-016**).
 
+### 7. זהות, מצב אורח ו"שער השמירה" (Persistence Gate)
+* **מצב אורח (ללא חסם כניסה):** לפני
+  יצירת חשבון, מנהל אירוע יכול להריץ
+  סשן נמ"ר **מלא**—אבחון ובחירת טיפול,
+  כולל הנמ"ר הסוגר—מול קבוצת סימפטומים
+  זמנית המאוחסנת מקומית בלבד. זו חוויה
+  מלאה של השיטה, לא תצוגה מקדימה
+  נעולה (**DEC-017**).
+* **שער השמירה (Persistence Gate):**
+  חשבון נדרש רק ברגע שמנהל האירוע
+  מנסה **לעגן** את העבודה—לחיצה על
+  **סיום** (סיום), סנכרון רשומת יומן
+  רפלקטיבי, או בחירה מפורשת לשמר
+  קבוצה למעקב עתידי. התחברות באותו
+  רגע **מקדמת** את קבוצת האורח לחשבון
+  החדש; עזיבה בלי להתחבר מאפשרת לה
+  **להתפוגג** בשקט—בלי שלב הגירה ובלי
+  מידע אישי שנשמר בשרת בלי בעלים
+  (**DEC-017**).
+* **התחברות:** Apple Sign-In / Google
+  OAuth, עם קישור קסם באימייל כגיבוי.
+  נעילה ביומטרית שומרת על גישה למטמון
+  המקומי במצב טיסה למשך 30 יום מאז
+  אימות השרת האחרון (**DEC-017**).
+* **בחירה ריבונית מאומתת (מחיקת
+  חשבון):** מחיקה מתחילה תמיד באימות
+  מחדש שמאשר שהבקשה היא אכן של בעל
+  החשבון. לאחר מכן, מנהל האירוע בוחר
+  בין **מחיקה מיידית ובלתי הפיכה** לבין
+  **חלון החזרה בטוח של 14 יום** לפני
+  המחיקה האוטומטית—הגנה על שנים של
+  היסטוריית ריפוי מלחיצה שגויה או רגע
+  של תנודתיות רגשית, מבלי לפגוע בזכות
+  המוחלטת של מנהל האירוע למחוק
+  (**DEC-017**).
+
 ---
 
 ## 🏗️ תשתית טכנית
@@ -710,7 +827,18 @@ PiC מספקת את הכלים והמתודולוגיה
   מובייל עם קוד מקור משותף.
 * **פרטיות ושליטה:** זכות מוחלטת
   למשתמש למחוק באופן קבוע ומלא
-  את כל המידע האישי שלו בכל עת.
+  את כל המידע האישי שלו בכל עת, בתהליך
+  **בחירה ריבונית מאומתת**—אימות מחדש
+  מחויב, ולאחריו בחירה בין מחיקה מיידית
+  לחלון "מחיקה בטוחה" של 14 יום
+  (**DEC-017**).
+* **עוגן זהות ו-RLS:** כל טבלה מוגבלת
+  ל-`WHERE user_id = auth.uid()` מול
+  רשומת `profiles` מינימלית (`id`,
+  `email`, `consent_timestamp`, `role`,
+  `last_server_auth_at`). מידע מסשן
+  במצב אורח נשאר מקומי בלבד ולא נכתב
+  ל-Supabase עד להתחברות (**DEC-017**).
 * **מוכנות ל-AI:** תשתית נתונים
   מאורגנת המוכנה לשילוב עתידי
   של סוכן חכם לניתוח מגמות.
@@ -784,6 +912,21 @@ PiC מספקת את הכלים והמתודולוגיה
   סדר שלבים גמיש (עקרונות 3–5).
 * **הכלי הריק:** שער כתיבה חופשית; לא רק
   רשימת תסמינים.
+* **קבוצת אורח / מצב אורח:** קבוצת סימפטומים
+  זמנית ומקומית בלבד, המאפשרת למנהל אירוע
+  לא מחובר להריץ סשן נמ"ר מלא לפני הרשמה.
+  מתקדמת לחשבון המנהל האירוע בהתחברות, או
+  מתפוגגת בסגירה — ואינה קיימת אף פעם בשרת
+  (`decisions.md` **DEC-017**).
+* **שער השמירה (Persistence Gate):** הרגע שבו
+  מבוקש חשבון — רק כשמנהל האירוע מנסה לעגן
+  עבודה (סיום, סנכרון יומן, או שמירה מפורשת),
+  לעולם לא כדי להריץ את השאילתה עצמה
+  (`decisions.md` **DEC-017**).
+* **בחירה ריבונית מאומתת:** תהליך מחיקת
+  החשבון — אימות מחדש מחויב, ולאחריו בחירה
+  בין מחיקה מיידית ובלתי הפיכה לחלון "מחיקה
+  בטוחה" של 14 יום (`decisions.md` **DEC-017**).
 
 מילון מלא: `CONTEXT.md`. החלטות ארכיטקטורה:
 `decisions.md`.
