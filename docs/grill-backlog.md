@@ -6,7 +6,8 @@ Living list of subsystems requiring architectural grill questions.
 
 ## Completed Grill Questions (DEC-001–DEC-015)
 
-**Resolved:** GQ-001 → GQ-012 → DEC-004 through DEC-015 (2026-06-22 through 2026-06-27).
+**Resolved:** GQ-001 → GQ-012 → DEC-004 through DEC-015 (2026-06-22 through 2026-06-27); **GQ-025** → amends **DEC-006,
+DEC-015, DEC-016** (Linked Journey vs. Toolbox / Pointer-to-Copy, 2026-07-20).
 
 See `decisions.md` for full context and rationale.
 
@@ -26,7 +27,9 @@ Content Pipeline, optional closing success NEMAR inquiry, and Integrating state.
 transitions and Navigation Tree (no manual buttons, no "required blocks" gate — **DEC-015**, resolved by **GQ-018**/
 **GQ-024**). **Course completion** when the EM presses Finish at the final unit, gated only by the mandatory Terminal
 NEMAR. **Auto library sync:** first-time course treatment auto-adds to Personal Treatment Library with use count
-reciprocity. ✅
+reciprocity. **Content versioning** resolved via **GQ-025** (2026-07-20): **Linked Journey vs. Toolbox** — Timeline
+events link to Personal Treatment Library entries (no snapshot); Pointer/Hard Copy hybrid PTL is the single source of
+truth for all rendering. ✅
 
 ---
 
@@ -225,7 +228,7 @@ simultaneous Finish conflict (two devices), first-received Finish wins; the seco
 - *Risk:* If EM deliberately restarted from step 1 on Device B (not merely offline lag), Device A's higher
   index overrides their intent silently.
 
-**Path 2 — Snapshot-on-Finish Only (Recommended — most PiC-native):**
+**Path 2 — Finish-Event-Only Sync (Recommended — most PiC-native):**
 `current_step_index` is ephemeral and never continuously synced. Only three meaningful state transitions sync:
 Finish (Complete), Integrating exit, Session opened. The step index is local-only until one of these fires.
 Healing happens in the present moment — the mid-session step count is not a healing record.
@@ -586,7 +589,7 @@ The Personal Library row is keyed by `protocol_id`. "First-time" check: does a l
 Variants have their own `protocol_id` linked to a parent `protocol_id`.
 - *Manifesto alignment:* Deterministic. No ambiguity. The algorithm is a single lookup, not inference.
 - *Risk:* Requires Sigal's content authoring process to assign IDs consistently. Self-invented EM entries
-  need a client-generated UUID.
+  (`variant_type: 'personal'`, `global_reference_id` NULL — per **DEC-016** §5) use a client-generated UUID.
 
 **Path B — Fuzzy Name Matching with EM Confirmation:**
 On first execution of a treatment, system checks the library by name similarity. If a close match exists,
@@ -609,51 +612,58 @@ Path C's background deduplication for race condition handling. These are complem
 ---
 
 ### 11. **Content Authoring, Governance & Mid-Session Protocol Updates**
-**Status:** Open (GQ-023, identified 2026-06-30 Architecture Stress-Test — MEDIUM PRIORITY)
+**Status:** Partially resolved — content versioning closed via **GQ-025** (2026-07-20); CMS governance remains open (GQ-023)
 
-**Context (Blind Spot 2.3 + Contradiction 1.8):** No CMS or content governance model is defined. When Sigal
-updates a protocol in the master Treatments Table, active course sessions see changed content mid-enrollment
-without any warning — the "no version alerts" rule (DEC-016) creates a silent content drift problem for
-in-progress sessions.
+**Resolved via GQ-025 (2026-07-20) — Linked Journey vs. Toolbox:**
+The original "Diary vs. Toolbox" model (textual snapshot on Finish, enrollment snapshots) is **decommissioned**.
+Current architecture (**DEC-016** §5):
+- **Timeline as Linked Journey:** execution events link to a Personal Treatment Library entry via `treatment_id` — no
+  snapshot, no embedded protocol content.
+- **Pointer / Hard Copy hybrid PTL:** unedited entries are **Pointers** (live from Treatments Table); any edit or
+  self-invention produces a **Hard Copy** (EM's sovereign persisted protocol). The library entry is the **single source
+  of truth** for all past and future rendering.
+- **Mid-session content drift for Pointer entries is an accepted trade-off:** when Sigal updates a protocol in the
+  Treatments Table, active sessions whose linked PTL entry is still a Pointer will see the updated content — by design,
+  not silently. Hard Copy entries (post-edit or self-invented) are unaffected.
 
-**Information requirements:** Content governance must express:
+**Remaining open (GQ-023 — CMS governance):**
 - Who can create, edit, and publish content (Sigal only? Certified practitioners? Tiered access?).
 - What states content items can be in (draft / published / retired).
-- What happens to active course sessions when a linked protocol is updated or retired.
-- How a Treatment Reference block in a course maintains its link to the master protocol if that protocol
-  is deleted.
+- What happens to active course sessions and Pointer PTL entries when a linked Treatments Table protocol is updated
+  or **retired/deleted**.
+- How a Treatment Reference block in a course maintains its link if the master protocol is removed.
 
-**Proposed Solution Paths:**
+**Proposed Solution Paths (governance only — versioning paths superseded by GQ-025):**
 
-**Path A — Snapshot on Enrollment (Recommended — most PiC-native):**
-When EM enrolls in a course, the system saves a snapshot of the current protocol versions used by that
-course's Treatment Reference blocks. The enrolled session uses these snapshots. Sigal's updates do not
-affect active sessions. EM must explicitly "Refresh course content" to adopt updated versions.
-The library card always points to the live version (Diary vs. Toolbox model per DEC-016 §5). The enrolled
-session becomes the "Diary entry" at enrollment time — consistent with the model already agreed.
-- *Manifesto alignment:* Strongest historical integrity. EM never experiences surprise content changes
-  mid-healing journey. Precisely extends the Diary vs. Toolbox model to course enrollment.
-- *Risk:* Slightly more storage (enrollment snapshots). Refresh mechanism requires explicit design.
+**~~Path A — Snapshot on Enrollment~~ (SUPERSEDED by GQ-025):**
+Originally proposed saving protocol snapshots at course enrollment. **Retired:** contradicts the Linked Journey model.
+Timeline events and course sessions both resolve through PTL entries (Pointer or Hard Copy), never through stored
+snapshots. Do not implement.
 
-**Path B — Live Content with Change Notification:**
-Course sessions always display live content. When Sigal updates a protocol, active sessions receive an
-in-app notification: "Sigal updated this protocol. [See what changed] [Dismiss]."
-- *Manifesto alignment:* EM always has the latest guidance. But content change mid-session interrupts
-  Atomic Focus and may confuse an EM mid-protocol.
-- *Risk:* Notification complexity; mid-session content drift undermines healing continuity.
+**Path B — Live Content with Change Notification (reframed for governance):**
+Course sessions and Pointer PTL entries always display live Treatments Table content (per **GQ-025**). When Sigal
+updates or retires a protocol, active sessions whose PTL entry is still a Pointer may receive an in-app notification:
+"Sigal updated this protocol. [See what changed] [Dismiss]." Hard Copy entries are unaffected.
+- *Manifesto alignment:* EM always has the latest guidance for Pointer entries. Notification is optional UX, not a
+  versioning gate.
+- *Risk:* Notification complexity; mid-session content change may interrupt Atomic Focus for Pointer entries.
 
-**Path C — Versioned Content with EM-Controlled Upgrade:**
-Sigal publishes protocol versions (v1, v2). Active sessions stay on their enrolled version. EM sees:
-"A newer version is available. [Upgrade] [Stay on current]."
-- *Manifesto alignment:* Maximum EM control over their content experience.
-- *Risk:* "Version" language is software vocabulary that conflicts with the healing tone of the product.
-  Adds UI complexity for a scenario (mid-enrollment updates) that should be invisible to most EMs.
+**Path C — Retired-Protocol Handling with EM-Controlled Adoption:**
+Sigal marks a protocol **retired** (not deleted). Pointer PTL entries and active course Treatment References continue
+to resolve until the EM explicitly adopts a replacement or performs a Lazy Flip to Hard Copy. EM sees:
+"A newer protocol is available. [Adopt] [Keep current]."
+- *Manifesto alignment:* Maximum EM control; avoids surprise deletion. Aligns with Ownership principle.
+- *Risk:* "Version" language must be framed in healing tone, not software vocabulary. Adds UI for an edge case.
+
+**Recommendation:** GQ-025 closes the versioning architecture. Remaining GQ-023 grill should focus on CMS governance
+(who publishes, lifecycle states, retirement/deletion behavior for Pointer entries) — not on snapshot or enrollment-freeze
+mechanisms.
 
 ---
 
 ## Next Steps
 
-**Priority order revised after GQ-024 resolution (2026-07-13), next: GQ-019:**
+**Priority order revised after GQ-025 resolution (2026-07-20), next: GQ-019:**
 
 | Priority | GQ | Topic | Reason |
 |---|---|---|---|
@@ -662,7 +672,7 @@ Sigal publishes protocol versions (v1, v2). Active sessions stay on their enroll
 | 🟠 HIGH | GQ-014 | Freemium Model | Blocks all access control (elevated from MEDIUM) |
 | 🟠 HIGH | GQ-021 | Intensity Scale & Rating Paths | Blocks all rating screen design |
 | 🟠 HIGH | GQ-022 | Library Sync Protocol | Blocks course → library integration |
-| 🟡 MEDIUM | GQ-023 | Content Authoring/Governance | Blocks content operations pipeline |
+| 🟡 MEDIUM | GQ-023 | Content Authoring/Governance (CMS only) | Versioning resolved via GQ-025; retirement/deletion behavior for Pointer entries remains |
 | 🟡 MEDIUM | GQ-016 | Offline-First Sync | Session state model now unblocked by GQ-018/GQ-024's Finish-only sync unit |
 | 🟢 LOW | GQ-015 | Integrating Lifecycle (remaining scope) | Auto-decrement resolved via GQ-018; Terminal NEMAR "No" remedial flow (GQ-024) also carried here; visibility/reminders remain |
 | 🟢 LOW | GQ-017 | Journal & Smart-Linking | Foundation in place; refine when ready |
@@ -671,20 +681,24 @@ Sigal publishes protocol versions (v1, v2). Active sessions stay on their enroll
 1. ✅ GQ-013 → **DEC-016** (Courses & Academy, 2026-06-27)
 2. ✅ **GQ-018** → amends **DEC-006, DEC-007, DEC-015, DEC-016** (Completion Semantics, 2026-07-02)
 3. ✅ **GQ-024** → further amends **DEC-006, DEC-007, DEC-015, DEC-016** (Visibility-Based Completion & Terminal NEMAR, 2026-07-13)
+4. ✅ **GQ-025** → further amends **DEC-006, DEC-015, DEC-016** (Linked Journey vs. Toolbox / Pointer-to-Copy, 2026-07-20)
 
-**Next-step readiness:** GQ-018 and GQ-024 together fully resolve the Player/completion subsystem across
-`decisions.md`, `docs/grill-backlog.md`, `CLAUDE.md`, `CONTEXT.md`, and `README.md` — no lingering references to
-course-specific buttons, manual Done/Skip/Back actions, "required steps" validation gates, or the superseded
-"[Review Skipped]" terminal switch remain in any of these files. **The documentation is ready to begin the GQ-019
-(Auth & User Identity) grill session.**
+**Next-step readiness:** GQ-018, GQ-024, and GQ-025 together fully resolve the Player/completion subsystem and the
+content-versioning model across `decisions.md`, `docs/grill-backlog.md`, `CLAUDE.md`, `CONTEXT.md`, and `README.md` — no
+lingering references to course-specific buttons, manual Done/Skip/Back actions, "required steps" validation gates, the
+superseded "[Review Skipped]" terminal switch, **textual/protocol snapshots**, or the deprecated **Diary vs. Toolbox**
+model remain in any of these files. **The documentation is ready to begin the GQ-019 (Auth & User Identity) grill
+session.**
 
 ---
 
 ## Grill Session Summary
 
-- **Grilled subsystems:** 14 questions → 16 decisions, 4 of them since amended twice (DEC-001 through DEC-016)
+- **Grilled subsystems:** 15 questions → 16 decisions (+ GQ-025 amendments), 4 of them since amended three times
+  (DEC-006, DEC-015, DEC-016)
 
-- **Architecture Status (revised 2026-07-13): Foundation Aligned on Completion Logic — Remaining Gaps Unchanged**
+- **Architecture Status (revised 2026-07-20): Foundation Aligned on Completion Logic and Content Versioning — Remaining
+  Gaps Unchanged**
 
   The 2026-06-30 stress-test found the Player/completion subsystem internally contradictory across four decisions
   (Audit 1.1–1.4). **GQ-018 (2026-07-02) resolved all four** by establishing one unified Unified Player state machine
@@ -692,22 +706,28 @@ course-specific buttons, manual Done/Skip/Back actions, "required steps" validat
   (2026-07-13) then closed a second, silent drift layer**: GQ-018's manual Done/Skip/Back buttons and
   "[Review Skipped]"/"[Finish Anyway]" terminal switch were replaced by fully automatic visibility-based unit
   transitions and a mandatory Terminal NEMAR unit, and the Terminal NEMAR "No" path was canonicalized as
-  **Integrating** rather than a new "In-Process, Not Yet Complete" label. The foundation is no longer merely
-  "conceptually sound" on completion logic — it is now **internally consistent end-to-end**: one Player model, fully
-  automatic unit-level transitions, one container-level success trigger (Finish, gated by Terminal NEMAR), no
-  technical gates, no silent auto-corrections, no orphaned button vocabulary.
+  **Integrating** rather than a new "In-Process, Not Yet Complete" label. **GQ-025 (2026-07-20) decommissioned the
+  Diary/Snapshot model** and established the **Linked Journey vs. Toolbox** architecture: Timeline events link to
+  Personal Treatment Library entries (no snapshot); **Pointer / Hard Copy hybrid PTL** is the single source of truth
+  for all execution rendering. The foundation is no longer merely "conceptually sound" on completion logic — it is now
+  **internally consistent end-to-end**: one Player model, fully automatic unit-level transitions, one container-level
+  success trigger (Finish, gated by Terminal NEMAR), no technical gates, no silent auto-corrections, no orphaned button
+  vocabulary, and no per-execution protocol snapshots.
 
-  *What IS implementation-ready (tracer-bullet spike, now including Player logic):*
+  *What IS implementation-ready (tracer-bullet spike, now including Player logic and content versioning):*
   - Symptom Group entity and archival lifecycle (DEC-002, DEC-013)
   - Polarity + Intensity as independent schema fields (DEC-010)
   - Timeline `log_type` categorization and filter architecture (DEC-007, DEC-008)
   - **Unified Player state machine** — Atomic Units, automatic visibility-based transitions (`unseen` / `in_view` /
     `skipped` / `completed`), Navigation Tree, Terminal NEMAR, Finish, no gates, no auto-decrement
     (DEC-015, amended 2026-07-02 and 2026-07-13)
+  - **Linked Journey vs. Toolbox** — Timeline-as-Link (`treatment_id` only), Pointer/Hard Copy hybrid PTL
+    (`global_reference_id` + `protocol_content`), Lazy Flip on first edit, self-invented = `variant_type: 'personal'`
+    Hard Copy (DEC-016 §5, GQ-025)
   - Structured Markdown → JSON content pipeline (DEC-015)
   - Smart-Link edge table concept (DEC-008)
 
-  *What is STILL NOT ready for general OpenSpec — gaps unaffected by GQ-018/GQ-024:*
+  *What is STILL NOT ready for general OpenSpec — gaps unaffected by GQ-018/GQ-024/GQ-025:*
   - ⚠️ Auth/User model absent → no RLS policy can be written → nothing is deployable (GQ-019)
   - ⚠️ Freemium enforcement undefined → no access control on any feature (GQ-014)
   - ⚠️ Causes/Treatments Table schema undefined → NEMAR flow cannot be built (GQ-020)
@@ -731,7 +751,9 @@ course-specific buttons, manual Done/Skip/Back actions, "required steps" validat
 
 - **Target:** 1–2 grill questions per session (batch closely related Qs).
 - **Documentation:** Each GQ gets its own DEC-xxx after resolution, or amends existing ones when it resolves a
-  cross-decision contradiction (as GQ-018 and GQ-024 did).
-- **Critical path (updated 2026-07-13):** ~~GQ-018~~ → ~~GQ-024~~ → GQ-019 → GQ-020 → GQ-014 → GQ-021 → GQ-022 → OpenSpec.
-- **Status:** GQ-018 resolved (2026-07-02); GQ-024 resolved (2026-07-13). 9 GQs remain open (GQ-014, GQ-015 remaining
-  scope, GQ-016, GQ-017, GQ-019, GQ-020, GQ-021, GQ-022, GQ-023). Ready to grill GQ-019 (Auth & User Identity) next.
+  cross-decision contradiction (as GQ-018, GQ-024, and GQ-025 did).
+- **Critical path (updated 2026-07-20):** ~~GQ-018~~ → ~~GQ-024~~ → ~~GQ-025~~ → GQ-019 → GQ-020 → GQ-014 → GQ-021 →
+  GQ-022 → OpenSpec.
+- **Status:** GQ-018 resolved (2026-07-02); GQ-024 resolved (2026-07-13); GQ-025 resolved (2026-07-20). 9 GQs remain
+  open (GQ-014, GQ-015 remaining scope, GQ-016, GQ-017, GQ-019, GQ-020, GQ-021, GQ-022, GQ-023 CMS governance only).
+  Ready to grill GQ-019 (Auth & User Identity) next.
