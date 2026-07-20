@@ -23,6 +23,13 @@ full responsibility for their health.
 The user acts as the "Event Manager"
 of their healing process, managing it
 based on a deep understanding of their needs.
+When the Event Manager refines a treatment
+in their Personal Treatment Library, that
+update is **live** across their entire
+timeline — reflecting their current healing
+understanding, never a frozen record of an
+earlier one (`decisions.md` **DEC-016**,
+**GQ-025**).
 
 ### 2. The Body as the Database
 The system serves as an intelligent
@@ -353,7 +360,14 @@ them with generic tech jargon:
   (`decisions.md` **DEC-006**, **DEC-015**); keep the count
   **quiet**—reflection, not pressure. Fed from
   courses, the Treatments Table, or self-invented
-  work (`CONTEXT.md`).
+  work (`CONTEXT.md`). Each card is a **Pointer**
+  (unedited, always live from the Treatments Table)
+  or a **Hard Copy** (after the EM's first edit, or
+  from self-invention/named variant) — the card is
+  the **single source of truth** every linked
+  Timeline execution renders through; there is no
+  snapshot anywhere (`decisions.md` **DEC-016**,
+  **GQ-025**).
 * **Symptom Group (הקשר):** Symptoms treated
   together per a joint muscle test; equals
   מכלי הסימפטומים and one Work Session.
@@ -475,6 +489,13 @@ PiC מספקת את הכלים והמתודולוגיה
 המשתמש הוא "מנהל האירוע"
 של תהליך הריפוי שלו,
 הפועל מתוך הבנה עמוקה של צרכיו.
+כשמנהל האירוע מדייק טיפול
+בספרייה האישית שלו, העדכון
+**חי** על פני כל ציר הזמן שלו —
+משקף את ההבנה הנוכחית שלו
+בתהליך הריפוי, ולא רישום קפוא
+של הבנה קודמת (`decisions.md`
+**DEC-016**, **GQ-025**).
 
 ### 2. הגוף כמאגר המידע
 המערכת משמשת כממשק חכם
@@ -745,7 +766,15 @@ PiC מספקת את הכלים והמתודולוגיה
   **עדכון ידני +1** בכל עת
   (`decisions.md` **DEC-006**, **DEC-015**); המונה **משני**
   ולא מלחיץ. מזינים מקורס, טבלת טיפולים,
-  או עבודה עצמית (`CONTEXT.md`).
+  או עבודה עצמית (`CONTEXT.md`). כל כרטיס הוא
+  **מצביע (Pointer)** — לא נערך, חי מטבלת
+  הטיפולים הראשית — או **עותק קשיח (Hard Copy)**
+  לאחר עדכון ראשון של מנהל האירוע, או מטיפול
+  שהומצא באופן עצמאי או וריאנט בשם. הכרטיס הוא
+  **מקור האמת היחיד** שכל ביצוע מקושר בציר הזמן
+  מוצג לפיו; אין שום עותק קפוא (snapshot) בשום
+  מקום במערכת (`decisions.md` **DEC-016**,
+  **GQ-025**).
 * **קבוצת סימפטומים (הקשר):** תסמינים
   לטיפול משותף לפי מבחן משותף; שווה
   למכלי הסימפטומים ולסשן עבודה אחד.
