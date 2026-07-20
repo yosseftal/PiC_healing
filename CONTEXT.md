@@ -58,8 +58,13 @@ gate** — gated only by the mandatory closing **Terminal NEMAR** (**yes/no**: *
 the counter stays **secondary** and low-pressure (**DEC-006**). 
 It is **separate** from any single Symptom Group’s Work Session; **Smart-Linking**
 connects into a group or course when the Event Manager decides.
+Each row is also a **hybrid Pointer or Hard Copy** entry (**DEC-016** §5, **GQ-025**): a **Pointer** renders live from the master
+Treatments Table until the Event Manager's first edit performs a **Lazy Flip** to a self-contained **Hard Copy**. The library entry —
+whichever state it holds — is the **single source of truth for rendering** every past and future Timeline execution linked to it; the
+Timeline itself stores no snapshot.
 _Avoid_: Collapsing the library into one Symptom Group, or treating it as the same thing as the global Treatments Table; duration or
-stopwatch-style totals **on the library row** (v1 is **use count only**); scoreboard pressure or clutter around the counter (**DEC-006**).
+stopwatch-style totals **on the library row** (v1 is **use count only**); scoreboard pressure or clutter around the counter (**DEC-006**);
+implying a past execution froze the exact content followed at that moment (see **Linked Journey vs. Toolbox Model**).
 
 **NEMAR** (נמ"ר):
 Right, Accurate, Desirable — the muscle-test framing for whether to proceed with a line of inquiry or choice.
@@ -214,12 +219,17 @@ Structured Markdown. **Hidden by default** (pull-based visibility) and surfaced 
 never competes with the primary unit content or interrupts **Atomic Focus** (**DEC-015**).
 _Avoid_: Showing rationale by default; treating it as required reading; letting it affect unit-state transitions or Finish
 
-**Diary vs. Toolbox Model** (DEC-016):
-**Dual versioning approach** for treating content stability and updates:
-- **Timeline as a "Diary" (Static Record):** When EM clicks **Finish** in Player, system saves a **textual snapshot** of the protocol as performed
-  at that moment (stored as timeline event metadata). Ensures historical integrity: EM can review exactly what they did months or years ago.
-- **Library as a "Live Toolbox" (Dynamic Reference):** Personal Treatment Library card **always points** to the **latest live version** of protocol
-  from master Treatments Table (maintained by Sigal). No version alerts; EM always accesses current guidance.
-- **Manual Variants (Ownership):** If EM wishes to deviate from live version, they manually create a **"Personal Variant"** (`variant_type: 'personal'`).
-  Preserves Ownership principle; system stays simple (**DEC-016**).
-_Avoid_: Version histories cluttering the library; forcing EM to decide which version to use; silent auto-updates confusing historical records
+**Linked Journey vs. Toolbox Model** (DEC-016, renamed **GQ-025**):
+**Hybrid Pointer-to-Copy approach** — no textual snapshot exists anywhere in the system:
+- **Timeline as a "Linked Journey" (no snapshot):** A Timeline event never embeds protocol content; it **links** to the Personal
+  Treatment Library entry via `treatment_id`. Reviewing a past execution renders through that entry's **current** state — live guidance
+  for a Pointer entry, or the EM's own persisted content for a Hard Copy entry. Historical integrity means **temporal/provenance**
+  integrity (when it happened, that it happened, what it links to) — not a verbatim record of the exact wording followed at that moment.
+- **Library entry: hybrid Pointer / Hard Copy state:** Every Personal Treatment Library entry is either a **Pointer** (unedited: renders
+  live from the master Treatments Table, no version alerts, always current) or a **Hard Copy** (edited or self-invented: renders from
+  its own persisted content, live link severed). The **first** edit of any kind performs a **Lazy Flip** (Copy-on-Write) from Pointer to
+  Hard Copy for that entry. Self-invented entries and named **Personal Variants** are Hard Copy from creation.
+- **Single source of truth:** The library entry — in whichever state it holds — is what every past and future Timeline execution of
+  that treatment renders through. There is one row, never one row plus frozen copies per execution.
+_Avoid_: Reintroducing per-execution snapshots; treating "historical integrity" as a promise of verbatim content; forcing EM to decide
+which version to use; a separate orthogonal "is it live" flag (state is derived from `protocol_content` presence + `variant_type`)
