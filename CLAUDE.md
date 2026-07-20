@@ -163,9 +163,14 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
 - **Course Completion:** Course marked "Successfully Completed" when EM clicks **"Finish"** at the final Atomic Unit, gated by
   the same mandatory **Terminal NEMAR** as any other Unified Player instance (**DEC-015 §4, §7b**). Both `skipped` and
   `completed` units are "past" states and do not block completion.
-- **Content Versioning (Diary vs. Toolbox):** Timeline stores **static snapshot** of protocol as performed (historical integrity).
-  **Personal Treatment Library** always points to **latest live version** from master Treatments Table (no version alerts, always
-  current). **Manual variants** preserve EM ownership (custom adaptations, `variant_type: 'personal'`) (**DEC-016**).
+- **Content Versioning (Linked Journey vs. Toolbox, DEC-016 §5, GQ-025):** No snapshot is ever stored on the Timeline. A Timeline
+ event **links** to its Personal Treatment Library entry, which is either a **Pointer** (unedited, always renders **live** from the
+ master Treatments Table — no version alerts) or a **Hard Copy** (renders from its own persisted content). The EM's **first edit of
+ any kind** performs a lazy **Copy-on-Write** flip from Pointer to Hard Copy; self-invented treatments and named **Personal Variants**
+ (`variant_type: 'personal'`) are Hard Copy from creation. **Ownership principle:** when the EM updates a protocol in their library,
+ that update is **live** across every past and future execution linked to it — their current healing wisdom, not a frozen snapshot of
+ an earlier understanding. "Historical integrity" means *when and that it happened*, not a verbatim record of the exact wording
+ followed at that moment.
 - **Library Sync:** Completing a treatment in a course **auto-adds it** to Personal Treatment Library (first-time execution).
   **Use count reciprocity:** Course execution increments universal `use_count` in library. Toolbox grows organically
   (**DEC-016**).
