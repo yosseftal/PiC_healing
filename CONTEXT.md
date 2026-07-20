@@ -58,11 +58,16 @@ gate** — gated only by the mandatory closing **Terminal NEMAR** (**yes/no**: *
 the counter stays **secondary** and low-pressure (**DEC-006**). 
 It is **separate** from any single Symptom Group’s Work Session; **Smart-Linking**
 connects into a group or course when the Event Manager decides.
-Each row is also a **hybrid Pointer or Hard Copy** entry (**DEC-016** §5, **GQ-025**): a **Pointer** renders live from the master
-Treatments Table until the Event Manager's first edit performs a **Lazy Flip** to a self-contained **Hard Copy**. The library entry —
-whichever state it holds — is the **single source of truth for rendering** every past and future Timeline execution linked to it; the
-Timeline itself stores no snapshot.
-_Avoid_: Collapsing the library into one Symptom Group, or treating it as the same thing as the global Treatments Table; duration or
+Each row is also a **hybrid Pointer or Hard Copy** entry (**DEC-016** §5, **GQ-025**): a **Pointer** (`variant_type:
+`'original'` or `'course_extracted'`, `protocol_content` null) renders live from the master Treatments Table until the Event
+Manager's first edit performs a **Lazy Flip** to a self-contained **Hard Copy**. **Self-invented** treatments (created directly
+in the library, no Treatments Table origin) are **`variant_type: 'personal'`**, **Hard Copy from creation** (`protocol_content`
+populated immediately, `global_reference_id` **NULL**) — never `'original'`, so they cannot be mistaken for a live template.
+Every Hard Copy is the EM's sovereign **physical reality** — their own persisted protocol, whether from self-invention, a
+named Personal Variant fork, or Lazy Flip. The library entry — whichever state it holds — is the **single source of truth for rendering** 
+every past and future Timeline execution linked to it; the Timeline itself stores no snapshot.
+_Avoid_: Collapsing the library into one Symptom Group, or treating it as the same thing as the global Treatments Table; classifying
+self-invented treatments as `variant_type: 'original'`; duration or
 stopwatch-style totals **on the library row** (v1 is **use count only**); scoreboard pressure or clutter around the counter (**DEC-006**);
 implying a past execution froze the exact content followed at that moment (see **Linked Journey vs. Toolbox Model**).
 
@@ -228,7 +233,8 @@ _Avoid_: Showing rationale by default; treating it as required reading; letting 
 - **Library entry: hybrid Pointer / Hard Copy state:** Every Personal Treatment Library entry is either a **Pointer** (unedited: renders
   live from the master Treatments Table, no version alerts, always current) or a **Hard Copy** (edited or self-invented: renders from
   its own persisted content, live link severed). The **first** edit of any kind performs a **Lazy Flip** (Copy-on-Write) from Pointer to
-  Hard Copy for that entry. Self-invented entries and named **Personal Variants** are Hard Copy from creation.
+  Hard Copy for that entry. **Self-invented** entries are **`variant_type: 'personal'`** with `global_reference_id` NULL (Hard
+  Copy from creation); named **Personal Variant** forks share `'personal'` but link to a parent in provenance.
 - **Single source of truth:** The library entry — in whichever state it holds — is what every past and future Timeline execution of
   that treatment renders through. There is one row, never one row plus frozen copies per execution.
 _Avoid_: Reintroducing per-execution snapshots; treating "historical integrity" as a promise of verbatim content; forcing EM to decide
