@@ -1,7 +1,7 @@
 # PiC Healing - Project Manifesto & Guidelines V2
 
 This document operationalizes the manifesto for product, UX, and implementation decisions.
-Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-016).
+Canonical domain terms: `CONTEXT.md`. Agreed architecture: `decisions.md` (DEC-001–DEC-017).
 
 ## 1. Project Vision
 PiC (Personal Information Center) is a knowledge-management platform for self-healing.
@@ -187,6 +187,29 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
   **manual edit anytime** for Event Manager sovereignty (**DEC-007**); **Multitype Timeline** with
   **`log_type`** categorization + **smart filtering** (corrections hidden by default) for clean workspace (**DEC-007**). Keep the metric
   **secondary** and non-pressuring.
+
+### H. Identity, Guest Mode & Data Sovereignty (DEC-017)
+- **Guest Mode (Ephemeral Inquiry):** An unauthenticated EM may run a **complete** NEMAR session — diagnosis,
+  treatment selection, and the mandatory Terminal NEMAR — against a temporary, local-only **Guest Group**. This is a
+  full Value Moment, not a restricted preview; it works in Flight Mode from the first use, since no server contact is
+  required until the EM chooses to anchor the work.
+- **The Persistence Gate:** An account is required only at the moment the EM tries to **anchor** the work — clicking
+  **Finish** (סיום), syncing a Reflective Journal entry, or explicitly choosing "Persist this Group" — never to run
+  the inquiry itself. Authenticating at the gate **promotes** the Guest Group to the new account in place; closing
+  without authenticating lets it **evaporate** (no migration logic, no server-side data without an owner). Frame the
+  account as a **Safe Container** for wisdom already discovered, never as a barrier to starting.
+- **Authentication mechanism:** Social Auth (Apple Sign-In / Google OAuth) as primary, Email Magic Link as fallback.
+  Biometric unlock (Face ID / fingerprint) grants offline access to the local cache after first server auth, bounded
+  by a **30-day grace window** since `last_server_auth_at` — past that, online re-authentication is required even if
+  biometrics succeed.
+- **Account deletion — Verified Sovereign Choice:** a mandatory re-authentication ("Identity Lock") must precede any
+  deletion path, confirming the request is genuinely the account owner's. Only then does the EM choose between
+  **Immediate Delete** (irreversible, single transaction) and **Safe Deletion** (14-day soft-delete recovery window
+  before automated purge) — protecting the Ownership pillar's "absolute right to delete" without letting a misclick
+  or a moment of emotional volatility be irreversible.
+- **Explicitly out of scope for DEC-017:** third-party/practitioner access sharing (tracked as **GQ-026**), the
+  offline sync conflict-resolution policy (**GQ-016**, `device_id`/`last_sync_at` only reserved as scaffolding), and
+  the freemium entitlement/grant schema (**GQ-014**) — `profiles.role` is an identity field, not an entitlement flag.
 
 ## 3. Technical Standards
 - **Line length:** no line may exceed 130 characters (enforced on staged files via
