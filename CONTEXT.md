@@ -239,3 +239,25 @@ _Avoid_: Showing rationale by default; treating it as required reading; letting 
   that treatment renders through. There is one row, never one row plus frozen copies per execution.
 _Avoid_: Reintroducing per-execution snapshots; treating "historical integrity" as a promise of verbatim content; forcing EM to decide
 which version to use; a separate orthogonal "is it live" flag (state is derived from `protocol_content` presence + `variant_type`)
+
+**Guest Group / Guest Mode** (DEC-017):
+A temporary, **local-only** Symptom Group an unauthenticated EM can create to run a **complete** NEMAR session (diagnosis,
+treatment selection, Terminal NEMAR) before ever signing up — a full "Value Moment," not a restricted preview. If the EM
+authenticates before closing the app, the Guest Group **promotes** in place to the new account; otherwise it **evaporates**
+on close. Never modeled in Supabase; exists only on-device until promotion.
+_Avoid_: Treating Guest Mode as a locked-down demo; server-side rows for unauthenticated data; silent data loss without the
+EM's own choice to walk away
+
+**Persistence Gate** (DEC-017):
+The point at which an unauthenticated EM is asked to create an account — never before or during inquiry, only when the EM
+tries to **anchor** the work: clicking **Finish** (סיום), syncing a Reflective Journal entry, or explicitly choosing "Persist
+this Group." Framed as a "Safe Container" for wisdom already discovered, not a barrier to starting.
+_Avoid_: Gating NEMAR inquiry or Terminal NEMAR itself; framing account creation as blocking access to the method
+
+**Verified Sovereign Choice** (DEC-017):
+The account deletion flow: a mandatory re-authentication ("Identity Lock") confirms the request is genuinely the account
+owner's, then the EM chooses between **Immediate Delete** (irreversible, single-transaction) and **Safe Deletion** (14-day
+soft-delete recovery window before automated purge). Both honor data sovereignty; the choice protects against unauthorized
+access and against an irreversible action taken during emotional volatility.
+_Avoid_: A single unverified delete action; treating the 14-day window as reducing the EM's absolute right to delete —it is
+still their request that triggers the eventual purge, with no staff intervention
