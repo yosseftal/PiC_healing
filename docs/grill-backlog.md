@@ -521,6 +521,11 @@ to see "what causes are still active in this group" is essential for the healing
 ### 9. **Intensity Scale Direction & Rating Entry Path Scope**
 **Status:** Open (GQ-021, identified 2026-06-30 Architecture Stress-Test — HIGH PRIORITY)
 
+**Cross-reference (2026-07-29):** `docs/specs/tracer-bullet-happy-path.md` provisionally implements
+**Path A1 (Absolute Magnitude)** below for its Symptom Group and Player-feedback-loop rating UI, explicitly
+labeled non-final, in order to exercise the growth-tracking data model before this GQ formally resolves.
+Treat the spike's outcome as input to this grill session, not as a decision that closed it.
+
 **Context (Blind Spot 2.5 + Contradiction 1.7):** DEC-010 §4 explicitly defers: "does higher = better or
 worse?" to OpenSpec. DEC-011 does not specify whether blind rating applies to all three rating modes
 defined in DEC-009 (session-scoped, Smart-Link triggered, ad-hoc). Both gaps block every rating screen.
