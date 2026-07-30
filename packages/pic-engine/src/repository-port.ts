@@ -54,7 +54,13 @@ export interface RepositoryPort {
 
   getOrCreateLibraryRow(treatmentId: string, provenance: LibraryRowProvenance): Promise<LibraryRow>;
 
-  incrementUseCount(libraryRowId: string): Promise<LibraryRow>;
+  /**
+   * Increments a `LibraryRow`'s `use_count` by exactly one (DEC-006). Spec's Testing Decisions require
+   * this call to be "idempotent under retry": `idempotencyKey` should naturally be sourced from the
+   * completing `PlayerSession.id` - the same session retrying its own Finish call must never double-count
+   * `use_count`, while a different session later finishing the same treatment must still increment.
+   */
+  incrementUseCount(libraryRowId: string, idempotencyKey: string): Promise<LibraryRow>;
 
   appendTimelineEvent(event: Omit<TimelineEvent, "id" | "created_at">): Promise<TimelineEvent>;
 
