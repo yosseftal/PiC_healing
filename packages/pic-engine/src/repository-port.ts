@@ -20,6 +20,14 @@ export interface PromoteGuestToAccountInput {
   idempotencyKey: string;
   group: SymptomGroup;
   playerSession: PlayerSession;
+  /**
+   * The newly authenticated account's identity, per spec §E:
+   * `SessionEngine.promote(guestState, newUserId)` calls `RepositoryPort.promoteGuestToAccount(...)`.
+   * Required because this is the one `RepositoryPort` method that crosses from no-identity (Guest) to a
+   * real identity - there is no ambient `auth.uid()` session on the Guest side for an adapter to rely on,
+   * unlike the port's other seven methods.
+   */
+  newUserId: string;
 }
 
 /** The five entities `promoteGuestToAccount` lands atomically, now owned by the new account. */
