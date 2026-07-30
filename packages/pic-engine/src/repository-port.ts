@@ -18,7 +18,12 @@ export interface PromoteGuestToAccountInput {
    * must be a no-op the second time.
    */
   idempotencyKey: string;
-  group: SymptomGroup;
+  /**
+   * Promotion only ever fires on an already-finalized group: ticket 13's RPC skeleton inserts
+   * `joint_treatment_muscle_test` directly into a Postgres `not null` column, so a Guest Group can only
+   * reach `promoteGuestToAccount` once `GroupEngine.finalizeGroup` has already accepted it.
+   */
+  group: FinalizedSymptomGroup;
   playerSession: PlayerSession;
   /**
    * The newly authenticated account's identity, per spec §E:

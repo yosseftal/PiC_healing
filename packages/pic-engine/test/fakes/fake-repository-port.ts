@@ -120,13 +120,7 @@ export class FakeRepositoryPort implements RepositoryPort {
     });
 
     const result: PromoteGuestToAccountResult = {
-      // `PromoteGuestToAccountInput.group` is typed `SymptomGroup` (draft-or-finalized union), while
-      // `PromoteGuestToAccountResult.group` is typed `FinalizedSymptomGroup`. The fake performs no
-      // business-rule check here (it never inspects or rejects an unfinalized group, per this ticket's
-      // "no business-rule validation in the port" constraint) - this is a type-level pass-through only,
-      // trusting the caller to have already finalized the group before promotion, as the real happy path
-      // guarantees (spec §E: promotion is only triggered from Player Finish, which follows finalization).
-      group: input.group as PromoteGuestToAccountResult["group"],
+      group: input.group,
       playerSession: input.playerSession,
       libraryRow,
       timelineEvent,
