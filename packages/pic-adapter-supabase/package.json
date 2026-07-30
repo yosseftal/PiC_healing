@@ -1,0 +1,10 @@
+{
+  "name": "pic-adapter-supabase",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}
