@@ -71,6 +71,22 @@ self-invented treatments as `variant_type: 'original'`; duration or
 stopwatch-style totals **on the library row** (v1 is **use count only**); scoreboard pressure or clutter around the counter (**DEC-006**);
 implying a past execution froze the exact content followed at that moment (see **Linked Journey vs. Toolbox Model**).
 
+**Global Content** (row ownership):
+A database row with no owning Event Manager — `user_id` is `NULL` by design, e.g. seed `treatments` rows authored by
+the content team and shared identically across every EM. Readable by all (including unauthenticated Guests, subject to
+each adapter's own access rules), writable only by system/migration processes, never by a single EM's own actions.
+_Avoid_: "Sovereign" for this concept (that term already means EM agency/autonomy over their own healing process — see
+**Verified Sovereign Choice**, **[Finish Anyway]** — not row ownership); "public" alone (ambiguous with network exposure);
+treating a Global row as anyone's personal data.
+
+**Personal Content** (row ownership):
+A database row owned by exactly one Event Manager — `user_id` is a real UUID matching that EM's `auth.uid()`, e.g. any
+row in the **Personal Treatment Library**, a **Symptom Group**, or a **Timeline** event. Readable and writable only by
+its owner (enforced via RLS `auth.uid() = user_id`).
+_Avoid_: Confusing with **Global Content**; assuming every table needs one or the other exclusively — a **hybrid**
+table (nullable `user_id`) can hold both kinds of row side by side (e.g. a shared seed catalog today, EM-authored
+entries in the same table later) without a schema migration to add ownership after the fact.
+
 **NEMAR** (נמ"ר):
 Right, Accurate, Desirable — the muscle-test framing for whether to proceed with a line of inquiry or choice.
 _Avoid_: NAMER (typo), yes/no without the three-part meaning where the method requires it
