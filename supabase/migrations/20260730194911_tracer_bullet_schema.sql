@@ -184,9 +184,9 @@ alter table public.timeline_events enable row level security;
 create policy "Treatments are readable when global or owned" on public.treatments
   for select using (user_id is null or auth.uid() = user_id);
 
-create policy "Users manage own player sessions" on public.player_sessions
+create policy "Event Managers manage own player sessions" on public.player_sessions
   for all using (auth.uid() = user_id);
-create policy "Users manage own library rows" on public.personal_treatment_library
+create policy "Event Managers manage own library rows" on public.personal_treatment_library
   for all using (auth.uid() = user_id);
-create policy "Users manage own timeline events" on public.timeline_events
+create policy "Event Managers manage own timeline events" on public.timeline_events
   for all using (auth.uid() = user_id);
