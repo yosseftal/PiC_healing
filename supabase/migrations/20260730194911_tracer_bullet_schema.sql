@@ -153,7 +153,7 @@ create table public.personal_treatment_library (
   provenance jsonb,
   variant_type text not null default 'original' check (variant_type = 'original'),
   global_reference_id uuid references public.treatments(id),
-  protocol_content text,
+  protocol_content jsonb,
   created_at timestamptz not null default now(),
   constraint personal_treatment_library_user_treatment_unique unique (user_id, treatment_id)
 );
