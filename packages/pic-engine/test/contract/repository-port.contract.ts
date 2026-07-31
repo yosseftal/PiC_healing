@@ -219,6 +219,148 @@ export function runRepositoryPortContractTests(makePort: () => RepositoryPort): 
         );
         expect(rowAfterRetry.id).toBe(firstPromotion.libraryRow.id);
       });
+
+      const crossIdentityRetryTitle =
+        "called twice with the same idempotencyKey but a different newUserId (and a fully different " +
+        "group/session payload) is inert on the second call: it returns only the first identity's " +
+        "result and writes nothing for the second identity";
+
+      it(crossIdentityRetryTitle, async () => {
+        const idempotencyKey = uniqueId("idempotency-key");
+
+        const firstGroup = buildFinalizedGroup();
+        const firstPlayerSession = buildPlayerSession({ linked_group_id: firstGroup.id });
+        const firstNewUserId = uniqueId("user");
+
+        const firstPromotion = await port.promoteGuestToAccount({
+          idempotencyKey,
+          group: firstGroup,
+          playerSession: firstPlayerSession,
+          newUserId: firstNewUserId,
+        });
+
+        // `idempotencyKey` is documented (repository-port.ts) as the Guest Group's own client-generated
+        // UUID, so a real retry (dropped response, SessionEngine.promote called again) always resubmits
+        // the same newUserId alongside it. A different newUserId on the same key is therefore never a
+        // legitimate retry - it is exactly the anomalous, adversarial shape this test targets. The port
+        // must stay safe under it regardless: no silent reassignment of the first promotion to the
+        // second identity, and no second, independent set of rows forked under one key.
+        const secondGroup = buildFinalizedGroup();
+        const secondPlayerSession = buildPlayerSession({ linked_group_id: secondGroup.id });
+        const secondNewUserId = uniqueId("user");
+
+        const secondPromotion = await port.promoteGuestToAccount({
+          idempotencyKey,
+          group: secondGroup,
+          playerSession: secondPlayerSession,
+          newUserId: secondNewUserId,
+        });
+
+        // The second call is fully inert: it echoes back exactly the first identity's result, never any
+        // trace of the second identity's own group/session.
+        expect(secondPromotion).toEqual(firstPromotion);
+        expect(secondPromotion.group.id).toBe(firstGroup.id);
+        expect(secondPromotion.playerSession.id).toBe(firstPlayerSession.id);
+
+        // The second identity's payload must never become durably retrievable through the port either -
+        // proving this isn't merely "the return value hides it" while a side write still landed.
+        await expect(port.getGroup(secondGroup.id)).resolves.toBeNull();
+        await expect(port.getPlayerSession(secondPlayerSession.id)).resolves.toBeNull();
+
+        // The first identity's own promotion remains exactly as it was - untouched by the second,
+        // mismatched-identity call.
+        await expect(port.getGroup(firstGroup.id)).resolves.toEqual(firstPromotion.group);
+        await expect(port.getPlayerSession(firstPlayerSession.id)).resolves.toEqual(
+          firstPromotion.playerSession,
+        );
+      });
+
+      const independentPromotionsDifferentTreatmentsTitle =
+        "two separate promotions (different idempotencyKey, different newUserId, different treatments) " +
+        "produce fully independent group, player session, library row, and timeline event - neither " +
+        "promotion's data is retrievable as, or merged into, the other's";
+
+      it(independentPromotionsDifferentTreatmentsTitle, async () => {
+        const groupA = buildFinalizedGroup();
+        const playerSessionA = buildPlayerSession({ linked_group_id: groupA.id });
+
+        const groupB = buildFinalizedGroup();
+        const playerSessionB = buildPlayerSession({ linked_group_id: groupB.id });
+
+        const promotionA = await port.promoteGuestToAccount({
+          idempotencyKey: uniqueId("idempotency-key"),
+          group: groupA,
+          playerSession: playerSessionA,
+          newUserId: uniqueId("user"),
+        });
+        const promotionB = await port.promoteGuestToAccount({
+          idempotencyKey: uniqueId("idempotency-key"),
+          group: groupB,
+          playerSession: playerSessionB,
+          newUserId: uniqueId("user"),
+        });
+
+        // Distinct treatments never share a library row (getOrCreateLibraryRow's "same row per
+        // treatment" contract keys strictly on treatment_id) - a fully independent result set end to end.
+        expect(promotionB.group.id).not.toBe(promotionA.group.id);
+        expect(promotionB.playerSession.id).not.toBe(promotionA.playerSession.id);
+        expect(promotionB.libraryRow.id).not.toBe(promotionA.libraryRow.id);
+        expect(promotionB.timelineEvent.id).not.toBe(promotionA.timelineEvent.id);
+
+        // Each promotion's data is retrievable on its own terms, and retrieving one never yields the
+        // other's rows.
+        await expect(port.getGroup(groupA.id)).resolves.toEqual(promotionA.group);
+        await expect(port.getGroup(groupB.id)).resolves.toEqual(promotionB.group);
+        await expect(port.getPlayerSession(playerSessionA.id)).resolves.toEqual(promotionA.playerSession);
+        await expect(port.getPlayerSession(playerSessionB.id)).resolves.toEqual(promotionB.playerSession);
+      });
+
+      const independentPromotionsSharedTreatmentTitle =
+        "two separate promotions that happen to use the same treatment correctly share one library row " +
+        "(per getOrCreateLibraryRow's contract) while their group, player session, and timeline event " +
+        "stay fully independent";
+
+      it(independentPromotionsSharedTreatmentTitle, async () => {
+        const sharedTreatmentId = uniqueId("treatment");
+
+        const groupA = buildFinalizedGroup();
+        const playerSessionA = buildPlayerSession({
+          treatment_id: sharedTreatmentId,
+          linked_group_id: groupA.id,
+        });
+
+        const groupB = buildFinalizedGroup();
+        const playerSessionB = buildPlayerSession({
+          treatment_id: sharedTreatmentId,
+          linked_group_id: groupB.id,
+        });
+
+        const promotionA = await port.promoteGuestToAccount({
+          idempotencyKey: uniqueId("idempotency-key"),
+          group: groupA,
+          playerSession: playerSessionA,
+          newUserId: uniqueId("user"),
+        });
+        const promotionB = await port.promoteGuestToAccount({
+          idempotencyKey: uniqueId("idempotency-key"),
+          group: groupB,
+          playerSession: playerSessionB,
+          newUserId: uniqueId("user"),
+        });
+
+        // The current RepositoryPort has no per-user scoping on getOrCreateLibraryRow(treatmentId, ...)
+        // (types.ts: "no field expresses an adapter-specific identity concept... ownership/RLS scoping is
+        // an adapter concern") - so one shared row per treatment, regardless of which promotion created
+        // it, is the correct contract here, not a cross-account leak.
+        expect(promotionB.libraryRow.id).toBe(promotionA.libraryRow.id);
+
+        // Everything else about the two promotions still stays fully independent.
+        expect(promotionB.group.id).not.toBe(promotionA.group.id);
+        expect(promotionB.playerSession.id).not.toBe(promotionA.playerSession.id);
+        expect(promotionB.timelineEvent.id).not.toBe(promotionA.timelineEvent.id);
+        await expect(port.getGroup(groupA.id)).resolves.toEqual(promotionA.group);
+        await expect(port.getGroup(groupB.id)).resolves.toEqual(promotionB.group);
+      });
     });
   });
 }
