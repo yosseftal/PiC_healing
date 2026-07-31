@@ -1,10 +1,31 @@
 import type { LibraryRow, LibraryRowProvenance, PlayerSession, TimelineEvent } from "../../src/types";
-import type {
-  PromoteGuestToAccountInput,
-  PromoteGuestToAccountResult,
-  RepositoryPort,
-  SymptomGroup,
+import {
+  PromoteGuestToAccountIdentityMismatchError,
+  type PromoteGuestToAccountInput,
+  type PromoteGuestToAccountResult,
+  type RepositoryPort,
+  type SymptomGroup,
 } from "../../src/repository-port";
+
+/**
+ * Compares only the fields `promoteGuestToAccount` treats as this idempotencyKey's "payload"
+ * (`newUserId`, `group`, `playerSession`) - deliberately not `idempotencyKey` itself, which is the lookup
+ * key, not part of what must match. `JSON.stringify` equality is intentionally simple: every field these
+ * domain types carry (per `src/types.ts`) is a plain, JSON-safe value (strings, numbers, arrays, plain
+ * objects) with no functions or `Date` instances, so structural inequality here can only ever produce a
+ * false *mismatch* (the safe failure mode - reject), never a false *match* that would silently let a real
+ * mismatch slip through.
+ */
+function promotionPayloadMatches(
+  recorded: PromoteGuestToAccountInput,
+  incoming: PromoteGuestToAccountInput,
+): boolean {
+  return (
+    recorded.newUserId === incoming.newUserId &&
+    JSON.stringify(recorded.group) === JSON.stringify(incoming.group) &&
+    JSON.stringify(recorded.playerSession) === JSON.stringify(incoming.playerSession)
+  );
+}
 
 /**
  * In-memory `RepositoryPort` test double (spec's "Primary seam, primary test target"; ticket 03). Every
@@ -21,7 +42,10 @@ export class FakeRepositoryPort implements RepositoryPort {
   private readonly libraryRowsById = new Map<string, LibraryRow>();
   private readonly libraryRowIdByTreatmentId = new Map<string, string>();
   private readonly usedIncrementIdempotencyKeysByRowId = new Map<string, Set<string>>();
-  private readonly promotionResultsByIdempotencyKey = new Map<string, PromoteGuestToAccountResult>();
+  private readonly promotionRecordsByIdempotencyKey = new Map<
+    string,
+    { input: PromoteGuestToAccountInput; result: PromoteGuestToAccountResult }
+  >();
 
   private nextGeneratedIdSuffix = 0;
 
@@ -98,9 +122,12 @@ export class FakeRepositoryPort implements RepositoryPort {
   }
 
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
-    const existingResult = this.promotionResultsByIdempotencyKey.get(input.idempotencyKey);
-    if (existingResult !== undefined) {
-      return existingResult;
+    const existingRecord = this.promotionRecordsByIdempotencyKey.get(input.idempotencyKey);
+    if (existingRecord !== undefined) {
+      if (!promotionPayloadMatches(existingRecord.input, input)) {
+        throw new PromoteGuestToAccountIdentityMismatchError(input.idempotencyKey);
+      }
+      return existingRecord.result;
     }
 
     await this.saveGroup(input.group);
@@ -126,7 +153,7 @@ export class FakeRepositoryPort implements RepositoryPort {
       timelineEvent,
     };
 
-    this.promotionResultsByIdempotencyKey.set(input.idempotencyKey, result);
+    this.promotionRecordsByIdempotencyKey.set(input.idempotencyKey, { input, result });
     return result;
   }
 }

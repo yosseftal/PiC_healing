@@ -222,8 +222,8 @@ export function runRepositoryPortContractTests(makePort: () => RepositoryPort): 
 
       const crossIdentityRetryTitle =
         "called twice with the same idempotencyKey but a different newUserId (and a fully different " +
-        "group/session payload) is inert on the second call: it returns only the first identity's " +
-        "result and writes nothing for the second identity";
+        "group/session payload) rejects on the second call, writes nothing for the second identity, and " +
+        "leaves the first promotion fully intact";
 
       it(crossIdentityRetryTitle, async () => {
         const idempotencyKey = uniqueId("idempotency-key");
@@ -241,34 +241,31 @@ export function runRepositoryPortContractTests(makePort: () => RepositoryPort): 
 
         // `idempotencyKey` is documented (repository-port.ts) as the Guest Group's own client-generated
         // UUID, so a real retry (dropped response, SessionEngine.promote called again) always resubmits
-        // the same newUserId alongside it. A different newUserId on the same key is therefore never a
-        // legitimate retry - it is exactly the anomalous, adversarial shape this test targets. The port
-        // must stay safe under it regardless: no silent reassignment of the first promotion to the
-        // second identity, and no second, independent set of rows forked under one key.
+        // the exact same payload alongside it. A different newUserId (or group/session) on the same key
+        // is therefore never a legitimate retry - it is exactly the anomalous, adversarial shape this test
+        // targets, and per the Wave 2.5 hardening decision must reject outright: a silent no-op here would
+        // let this second caller believe its own payload was what got persisted, when actually the first
+        // caller's (possibly a different account's) data was kept.
         const secondGroup = buildFinalizedGroup();
         const secondPlayerSession = buildPlayerSession({ linked_group_id: secondGroup.id });
         const secondNewUserId = uniqueId("user");
 
-        const secondPromotion = await port.promoteGuestToAccount({
-          idempotencyKey,
-          group: secondGroup,
-          playerSession: secondPlayerSession,
-          newUserId: secondNewUserId,
-        });
+        await expect(
+          port.promoteGuestToAccount({
+            idempotencyKey,
+            group: secondGroup,
+            playerSession: secondPlayerSession,
+            newUserId: secondNewUserId,
+          }),
+        ).rejects.toThrow();
 
-        // The second call is fully inert: it echoes back exactly the first identity's result, never any
-        // trace of the second identity's own group/session.
-        expect(secondPromotion).toEqual(firstPromotion);
-        expect(secondPromotion.group.id).toBe(firstGroup.id);
-        expect(secondPromotion.playerSession.id).toBe(firstPlayerSession.id);
-
-        // The second identity's payload must never become durably retrievable through the port either -
-        // proving this isn't merely "the return value hides it" while a side write still landed.
+        // The rejected call must never have written anything for the second identity's payload - proving
+        // this isn't merely "the return value hides it" while a side write still landed.
         await expect(port.getGroup(secondGroup.id)).resolves.toBeNull();
         await expect(port.getPlayerSession(secondPlayerSession.id)).resolves.toBeNull();
 
-        // The first identity's own promotion remains exactly as it was - untouched by the second,
-        // mismatched-identity call.
+        // The rejection must not corrupt or roll back the already-successful first promotion - it remains
+        // exactly as it was, retrievable through the same port.
         await expect(port.getGroup(firstGroup.id)).resolves.toEqual(firstPromotion.group);
         await expect(port.getPlayerSession(firstPlayerSession.id)).resolves.toEqual(
           firstPromotion.playerSession,
