@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import subprocess
 import sys
 from pathlib import Path
@@ -82,6 +83,28 @@ def staged_paths() -> list[Path]:
     return paths
 
 
+def load_grandfather_patterns(path: Path) -> list[str]:
+    """Read newline-separated repo-relative paths/glob patterns, skipping blanks and `#` comments."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"check-max-line-length: cannot read grandfather list {path}: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+    patterns: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        patterns.append(stripped)
+    return patterns
+
+
+def is_grandfathered(path: Path, patterns: list[str]) -> bool:
+    rel = path.relative_to(REPO_ROOT).as_posix()
+    return any(rel == pattern or fnmatch.fnmatch(rel, pattern) for pattern in patterns)
+
+
 def all_paths() -> list[Path]:
     paths: list[Path] = []
     for path in REPO_ROOT.rglob("*"):
@@ -128,6 +151,16 @@ def main() -> None:
         help="Check all tracked text files in the repository.",
     )
     parser.add_argument("paths", nargs="*", help="Explicit files to check.")
+    parser.add_argument(
+        "--grandfather",
+        metavar="<file>",
+        default=None,
+        help=(
+            "Path to a newline-separated file of repo-relative paths/glob patterns to exclude "
+            "from whatever set --all/--staged/explicit paths already selected. Additive/opt-in "
+            "only: default --staged and --all behavior is unchanged when this is not passed."
+        ),
+    )
     args = parser.parse_args()
 
     if args.paths:
@@ -136,6 +169,10 @@ def main() -> None:
         paths = all_paths()
     else:
         paths = staged_paths()
+
+    if args.grandfather:
+        patterns = load_grandfather_patterns((REPO_ROOT / args.grandfather).resolve())
+        paths = [p for p in paths if not is_grandfathered(p, patterns)]
 
     errors = check_paths(paths)
     if errors:

@@ -1,0 +1,17 @@
+# Pre-existing files that predate CI-wide (--all) line-length enforcement.
+#
+# The pre-commit hook (CLAUDE.md §3's actual documented enforcement point) only ever checked
+# --staged files, so it was never retroactive: these files already contained over-length lines
+# before `npm run ci` started sweeping every tracked/working-tree text file with --all.
+#
+# Do not add new files to this list — fix new violations instead. This list should only shrink
+# over time as these files are reflowed under 130 characters; it must never grow.
+CLAUDE.md
+CONTEXT.md
+decisions.md
+docs/agents/domain.md
+docs/agents/issue-tracker.md
+docs/agents/triage-labels.md
+docs/docs/inquiry-session-flow-diagram.md
+docs/grill-backlog.md
+stam.md
