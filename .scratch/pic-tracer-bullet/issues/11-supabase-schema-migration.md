@@ -131,3 +131,13 @@ This ticket has no `pic-engine` unit tests — it is pure SQL. Its acceptance cr
 - [ ] `profiles` has the four missing DEC-017 columns added.
 - [ ] RLS is enabled with an `auth.uid() = user_id` policy on all four new tables.
 - [ ] At least 2–3 seed `treatments` rows exist with valid Structured Markdown.
+
+## Resolution
+
+See `docs/adr/0001-hybrid-ownership-for-shared-reference-tables.md`. This ticket's DoD text above ("RLS
+... with an `auth.uid() = user_id` policy on all four new tables") did not anticipate that `treatments` has
+no natural per-EM owner — it is a shared, unowned seed catalog, not per-user data like the other three new
+tables. The shipped migration gives `treatments` a nullable `user_id` (Global Content when `null`, Personal
+Content when set to a real owner) with policy `using (user_id is null or auth.uid() = user_id)`; the other
+three tables keep the strict `auth.uid() = user_id` policy exactly as originally specified. See `CONTEXT.md`
+— **Global Content** / **Personal Content** — for the vocabulary this introduced.
