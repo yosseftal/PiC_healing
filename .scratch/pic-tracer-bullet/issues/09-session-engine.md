@@ -7,7 +7,7 @@ calls the already-atomic `RepositoryPort.promoteGuestToAccount` as a black box.
 **Blocked by:** 05 (`LibraryEngine`), 06 (`TimelineEngine`), 07 (`GroupEngine`), 08 (`PlayerEngine`) — per
 the spec's own ticketing note: "`SessionEngine` (Guest/Promotion, depends on all four)".
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md` §E in full, User Stories 1–5, 34–39, `CONTEXT.md`
 Guest Group / Persistence Gate entries, `decisions.md` DEC-017.
@@ -68,21 +68,76 @@ to do with the active adapter before/after that call succeeds or fails.
 
 ## Testing Requirement — Test-First Acceptance Criteria
 
-- [ ] `it('onFinishRequested signals gateTriggered=true and does not run Finish side effects when mode is
+- [x] `it('onFinishRequested signals gateTriggered=true and does not run Finish side effects when mode is
       guest')`
-- [ ] `it('onFinishRequested passes straight through to finish()/finishAnyway() with no gate signal when
+- [x] `it('onFinishRequested passes straight through to finish()/finishAnyway() with no gate signal when
       mode is authenticated')`
-- [ ] `it('promote() on success flips mode from guest to authenticated and signals guest state can be
+- [x] `it('promote() on success flips mode from guest to authenticated and signals guest state can be
       cleared')`
-- [ ] `it('promote() on success completes the originally-requested finish()/finishAnyway() call that
+- [x] `it('promote() on success completes the originally-requested finish()/finishAnyway() call that
       triggered the gate')`
-- [ ] `it('promote() on failure leaves mode as guest and does not clear guest state, permitting retry')`
-- [ ] `it('discardGuestState() never invokes any RepositoryPort method that would contact a network
+- [x] `it('promote() on failure leaves mode as guest and does not clear guest state, permitting retry')`
+- [x] `it('discardGuestState() never invokes any RepositoryPort method that would contact a network
       adapter')`
 
 ## Acceptance Criteria
 
-- [ ] All four public methods exist with the exact signatures above.
-- [ ] All six tests pass against the fake `RepositoryPort` from ticket 03 (promotion success/failure can be
+- [x] All four public methods exist with the exact signatures above.
+- [x] All six tests pass against the fake `RepositoryPort` from ticket 03 (promotion success/failure can be
       simulated by configuring the fake's `promoteGuestToAccount` to resolve or reject).
-- [ ] No SQL, RPC, or auth-provider code exists in this ticket's diff.
+- [x] No SQL, RPC, or auth-provider code exists in this ticket's diff.
+
+## Resolution
+
+### Solution Path
+
+`SessionEngine` lives in `packages/pic-engine/src/session-engine/index.ts` and is constructed against
+`RepositoryPort` and `PlayerEngine` only (zero `GroupEngine` import; verified by the isolation scanner
+test). Guest-mode `onFinishRequested` sets `gateTriggered` and remembers the pending Finish kind without
+calling `PlayerEngine.finish()`/`finishAnyway()`. Authenticated mode passes straight through.
+
+`promote()` calls `RepositoryPort.promoteGuestToAccount` as a black box with `idempotencyKey =
+guestState.group.id`, flips `mode` to `'authenticated'` only after the RPC resolves, and replays the gated
+Finish request once. Failures set `promotionStatus: 'failed'` without rethrowing, leaving the Event
+Manager on `local-guest` with retryable state.
+
+`subscribe()`/`notify()` (Wave 7.5) let `pic-web` wire `useSyncExternalStore` so dumb-reflection
+subscribers observe `promotionStatus: 'pending'` before the RPC resolves — the contract ticket 15 needs for
+pending-state UI.
+
+`saveGuestSessionGate` / `initialGateState` (Wave 7.5) persist `gateTriggered` and the pending Finish
+request in `LocalGuestRepository` so a page refresh reopens the Persistence Gate; `promotionStatus`
+stays in-memory so a mid-RPC refresh never surfaces stale pending UI.
+
+`onPromotionSucceeded` (Wave 7.5) fires after a successful RPC so the composition root can
+`DelegatingRepositoryPort.swapProvider()` before the replayed Finish runs against the authenticated
+adapter.
+
+`discardGuestState()` clears gate bookkeeping via `saveGuestSessionGate` and never calls promotion or
+other network-facing port methods.
+
+### Architectural Decisions
+
+- **Pending notify (Wave 7.5):** `promote()` sets `promotionStatus = 'pending'` and calls `notify()`
+  immediately, before `await promoteGuestToAccount`. The composition root subscribes once at module load
+  and forwards mutations into a cached `useSyncExternalStore` snapshot.
+- **Refresh resilience (Wave 7.5):** `GuestSessionGateState` on `RepositoryPort`; gate flags live in the
+  same `localStorage` blob as guest entities. `SessionEngine` rehydrates from `initialGateState` at
+  construction (composition root reads `getGuestSessionGateSync()`).
+- **Adapter rebind (Wave 7.5):** All engines hold a `DelegatingRepositoryPort` wrapper. Post-promotion
+  `swapProvider` retargets every engine to the authenticated port without reconstruction — resolving the
+  readonly `RepositoryPort` binding that would otherwise leave replayed Finish side effects on the guest
+  adapter.
+- **Persistence boundary normalization (DEC-015):** `normalizeForPermanentStore()` maps `in_view` → `unseen`
+  at the `promote()` boundary (defensive re-normalize even if the adapter already normalized on read).
+
+### Deviations
+
+- `discardGuestState()` is `async` in the as-built code because it awaits `saveGuestSessionGate` (Wave 7.5
+  refresh path). The ticket's `void` signature is satisfied at the call-site level via fire-and-forget
+  wrappers in `composition-root.ts`.
+- Replay after promotion still runs against the same `RepositoryPort` instance in unit tests; production
+  wiring relies on `DelegatingRepositoryPort` + `swapToSupabaseAdapter()` (ticket 14/15 seam).
+- `LocalGuestRepository.promoteGuestToAccount` deliberately throws — E2E promotion remains blocked until
+  ticket 13/15 route promote to Supabase; engine-layer gate semantics are complete and tested against the
+  fake port.

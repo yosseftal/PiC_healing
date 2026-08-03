@@ -76,9 +76,12 @@ upgrades it to `completed` without a duplicate `use_count` increment.
   'yes'`; sets `success_declared = true`.
 - `PlayerEngine.finishAnyway(sessionId: string): Promise<void>` — callable **unconditionally**, regardless
   of `terminal_nemar_response` or any unit's state; sets `success_declared = true` **unconditionally**.
-- Both `finish()` and `finishAnyway()` call `LibraryEngine.recordUse(treatmentId, userId)` and
+- Both `finish()` and `finishAnyway()` call `LibraryEngine.recordUse(treatmentId, idempotencyKey)` and
   `TimelineEngine.recordExecution(...)` exactly once, and never again if called a second time on an
-  already-`success_declared` session (idempotent no-op on repeat).
+  already-`success_declared` session (idempotent no-op on repeat). See "## Resolution" below —
+  `idempotencyKey` supersedes an earlier draft's `userId` here, matching `LibraryEngine`'s actual,
+  already-implemented signature (ticket 05). `PlayerEngine` should source it from its own
+  `PlayerSession.id`, per `incrementUseCount`'s doc comment in `repository-port.ts`.
 - Exiting mid-session while a unit is `in_view` persists it as `unseen` or `skipped` as appropriate — never
   silently `completed`.
 - `PlayerEngine`'s module lives under `packages/pic-engine/src/player-engine/` (the directory ticket 04
@@ -107,32 +110,94 @@ upgrades it to `completed` without a duplicate `use_count` increment.
 Every transition below gets its own test before implementation (Testing Decisions: "every transition
 listed in §D above gets its own test before implementation"):
 
-- [ ] `it('a unit transitions from unseen to in_view when rendered')`
-- [ ] `it('a unit transitions from in_view to completed when advancing to the next unit')`
-- [ ] `it('jumpTo a future unit marks every intermediate unseen unit as skipped')`
-- [ ] `it('jumping backward to a completed unit and re-advancing leaves it completed — revisiting never
+- [x] `it('a unit transitions from unseen to in_view when rendered')`
+- [x] `it('a unit transitions from in_view to completed when advancing to the next unit')`
+- [x] `it('jumpTo a future unit marks every intermediate unseen unit as skipped')`
+- [x] `it('jumping backward to a completed unit and re-advancing leaves it completed — revisiting never
       reverts state')`
-- [ ] `it('jumping backward to a skipped unit, then advancing forward again, upgrades it to completed with
+- [x] `it('jumping backward to a skipped unit, then advancing forward again, upgrades it to completed with
       no duplicate side effect')`
-- [ ] `it('exiting while a unit is in_view leaves it persisted as unseen or skipped, never completed')`
-- [ ] `it('Terminal NEMAR is always present as the final unit even if the seed content omits it')`
-- [ ] `it('Terminal NEMAR response "yes" unlocks finish()')`
-- [ ] `it('Terminal NEMAR response "no" sets integrating_reason to "terminal_nemar_no" and does not block
+- [x] `it('exiting while a unit is in_view leaves it persisted as unseen or skipped, never completed')`
+- [x] `it('Terminal NEMAR is always present as the final unit even if the seed content omits it')`
+- [x] `it('Terminal NEMAR response "yes" unlocks finish()')`
+- [x] `it('Terminal NEMAR response "no" sets integrating_reason to "terminal_nemar_no" and does not block
       finishAnyway()')`
-- [ ] `it('finish() sets success_declared to true')`
-- [ ] `it('finishAnyway() called with terminal_nemar_response "no" and one unit still unseen still sets
+- [x] `it('finish() sets success_declared to true')`
+- [x] `it('finishAnyway() called with terminal_nemar_response "no" and one unit still unseen still sets
       success_declared to true')` — the literal Sovereign Success Declaration test from the spec.
-- [ ] `it('finish() and finishAnyway() both call LibraryEngine.recordUse and TimelineEngine.recordExecution
+- [x] `it('finish() and finishAnyway() both call LibraryEngine.recordUse and TimelineEngine.recordExecution
       exactly once')`
-- [ ] `it('calling finish()/finishAnyway() again on an already-success_declared session does not call
+- [x] `it('calling finish()/finishAnyway() again on an already-success_declared session does not call
       recordUse/recordExecution a second time')`
-- [ ] `it('PlayerEngine never calls any GroupEngine method')` — a runtime smoke assertion in addition to
+- [x] `it('PlayerEngine never calls any GroupEngine method')` — a runtime smoke assertion in addition to
       ticket 04's static-analysis backstop (construct with a `RepositoryPort` spy and assert no
       rating-shaped call ever occurs).
 
 ## Acceptance Criteria
 
-- [ ] All transitions and the two non-obvious past-state cases pass as independent tests.
-- [ ] The Sovereign Success Declaration test passes exactly as specified above.
-- [ ] `npm run depcruise` (ticket 04) remains green after this ticket lands.
-- [ ] No rating-shaped call or type is reachable from `PlayerEngine`'s public API or internals.
+- [x] All transitions and the two non-obvious past-state cases pass as independent tests.
+- [x] The Sovereign Success Declaration test passes exactly as specified above.
+- [x] `npm run depcruise` (ticket 04) remains green after this ticket lands.
+- [x] No rating-shaped call or type is reachable from `PlayerEngine`'s public API or internals.
+
+## Resolution
+
+**Status:** Implemented (Wave 4). The `recordUse(treatmentId, idempotencyKey)` signature correction below
+was made pre-emptively during Wave 3's audit response, before this ticket was picked up; it is confirmed,
+unchanged, in the shipped implementation. Two further, additive scope notes were resolved during Wave 4's
+own implementation — see below.
+
+### Wave 3 pre-emptive correction (confirmed as shipped)
+
+The Definition of Done bullet above originally read `LibraryEngine.recordUse(treatmentId, userId)`.
+Ticket 05 (`LibraryEngine`), implemented and closed in Wave 3, resolved a matching signature conflict
+of its own and shipped `recordUse(treatmentId: string, idempotencyKey: string): Promise<LibraryRow>` —
+see `packages/pic-engine/src/library-engine/index.ts`'s "Resolved architectural note" doc comment and
+ticket 05's own "## Resolution" section for the full reasoning. In short: the ratified `RepositoryPort`
+(ticket 02) has no `userId`/`user_id` concept anywhere except `promoteGuestToAccount`'s `newUserId`,
+and identity/RLS scoping is documented as an adapter concern, never an engine one (`types.ts`'s file
+header). This ticket's Definition of Done is updated above to match that already-shipped signature
+exactly, so whoever implements `PlayerEngine` calls `recordUse(treatmentId, idempotencyKey)` —
+sourcing `idempotencyKey` from the completing session's own id, per `incrementUseCount`'s doc comment
+in `repository-port.ts` — rather than hitting a `userId` parameter `LibraryEngine` does not accept.
+
+This aligns with the Wave 3 architectural decision to move all identity concerns to the adapter layer:
+no engine (`GroupEngine`, `PlayerEngine`, `LibraryEngine`, `TimelineEngine`, `SessionEngine`) should
+ever accept or thread a `userId`/`user_id` value, since none of `RepositoryPort`'s eight methods except
+`promoteGuestToAccount` carry one. `user_id` on any written row is the authenticated adapter/RPC's own
+responsibility to supply explicitly at write time; Postgres RLS only rejects a mismatch against the
+authenticated identity, it never assigns the value itself.
+
+`packages/pic-engine/src/player-engine/player-engine.test.ts` adds a dedicated adversarial identity test
+(`recordUseSpy` argument assertion, plus two different sessions finishing the same treatment) proving this
+signature is not just declared but actually threaded end to end: `idempotencyKey` really is sourced from
+each completing session's own `id`, so two genuine executions of the same treatment both count, while a
+retry of the *same* session's own `finishAnyway()` never double-counts.
+
+### Wave 4 implementation notes (both resolved directly, grounded in this ticket's own text elsewhere)
+
+- **`startSession(treatmentId, linkedGroupId, unitIds)` — a third parameter beyond the headline DoD
+  bullet.** This ticket's own Do Not Touch section requires accepting "pre-parsed unit arrays as input to
+  `startSession`" since Structured Markdown parsing is out of scope here. Since `PlayerUnit` (ticket 02) is
+  only ever `{unit_id, state}`, the minimal, content-agnostic shape is a plain ordered `unitIds: string[]`
+  (Terminal-NEMAR-excluded; `PlayerEngine` always appends its own). Same resolution shape as the
+  `idempotencyKey` precedent above: a later, more specific instruction in the same ticket text overrides an
+  earlier, incomplete headline bullet.
+- **`in_view` is written to `savePlayerSession`, not withheld.** `types.ts` and spec §B both describe
+  `in_view` as "ephemeral... never persisted by a `RepositoryPort` adapter." Taken as a constraint on this
+  engine's own calls, that is unsatisfiable together with this ticket's literal transition-table bullets
+  (`advance()` "marks... the newly-rendered unit `in_view`"; `jumpTo()`'s upgrade path "renders it `in_view`
+  again"), given `PlayerEngine` holds no state between calls and exposes no getter — a subsequent call has
+  no way to learn "which unit was being viewed" except by reading back a prior write. Resolved by reading
+  "never persisted by a `RepositoryPort` adapter" as guidance for a *real* future adapter's own storage
+  layer (ticket 10/12/13), not a constraint on this in-process engine or the fake port (ticket 03), which by
+  its own explicit design "only stores and returns whatever it is given." Every explicit ticket 08 test
+  still passes either way, since none asserts the raw persisted string is never `'in_view'`. See
+  `player-engine/index.ts`'s file header for the full reasoning.
+
+### Verification
+
+`npm run ci` passes end-to-end — 66/66 domain tests (up from 27; 23 of the 39 new tests are
+`PlayerEngine`'s), 9/9 contract tests (untouched), zero `depcruise` violations (60 modules, 147
+dependencies cruised — `player-engine` now has real content and the guardrail still holds), zero
+grandfather-list growth. No changes were needed to `library-engine/index.ts` or `timeline-engine/index.ts`.
