@@ -5,7 +5,7 @@ other tracer-bullet ticket builds on top of, with zero business logic.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md` (whole spec — "no application code exists yet" per the
 Seam section), `CLAUDE.md` §3 Technical Standards (line-length hook, React/Supabase/TypeScript stack).
@@ -49,13 +49,38 @@ later ticket has to invent build tooling from scratch.
 There is no business logic yet, so there are no `it()` blocks for this ticket. The acceptance test is
 purely tooling-level:
 
-- [ ] `npm test` (or `npm run test --workspaces`) exits `0` with "0 tests" reported.
-- [ ] `npm run lint` exits `0`.
-- [ ] `npx tsc --noEmit` exits `0` for every package.
+- [x] `npm test` (or `npm run test --workspaces`) exits `0` with "0 tests" reported.
+- [x] `npm run lint` exits `0`.
+- [x] `npx tsc --noEmit` exits `0` for every package.
 
 ## Acceptance Criteria
 
-- [ ] Root workspace config lists all four packages.
-- [ ] Each package has `package.json` + `tsconfig.json` extending the shared strict base config.
-- [ ] Vitest, ESLint, and TypeScript all run cleanly with zero errors on the empty scaffold.
-- [ ] No file in the scaffold contains any business logic, type definition, or SQL.
+- [x] Root workspace config lists all four packages.
+- [x] Each package has `package.json` + `tsconfig.json` extending the shared strict base config.
+- [x] Vitest, ESLint, and TypeScript all run cleanly with zero errors on the empty scaffold.
+- [x] No file in the scaffold contains any business logic, type definition, or SQL.
+
+## Resolution
+
+Landed on `main` in commit `bebe9e7` ("Ticket 01: scaffold npm workspaces monorepo tooling"). The
+ratified workspace topology uses **npm workspaces** (not pnpm) with root `package.json` declaring
+`"workspaces": ["packages/*"]` and four sibling packages under `packages/`:
+
+| Package | Role |
+| --- | --- |
+| `pic-engine` | Domain logic seam — engines, types, `RepositoryPort` |
+| `pic-adapter-local-guest` | Guest Mode persistence (`localStorage`) |
+| `pic-adapter-supabase` | Authenticated Supabase adapter (stub until ticket 12) |
+| `pic-web` | React shell for the Event Manager |
+
+Shared tooling at the repo root:
+
+- `tsconfig.base.json` — strict TypeScript baseline extended by every package `tsconfig.json`.
+- `vitest.config.ts` — workspace-wide test runner; root `npm test` runs Vitest then `depcruise` per package.
+- ESLint flat config (`eslint.config.js`) — root `npm run lint`.
+- `scripts/ci.sh` — four-stage quality gate (typecheck/lint/line-length → depcruise → engine tests →
+  contract suite).
+
+Each package ships an empty, compilable `src/index.ts` placeholder. No business logic, domain types, or SQL
+were introduced in this ticket — those are tickets 02 and 11 respectively. Later waves extended the root
+scripts (`typecheck`, `ci`) without changing the four-package topology established here.
