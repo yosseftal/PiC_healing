@@ -33,6 +33,8 @@ export {
   PromoteGuestToAccountIdentityMismatchError,
 } from "./repository-port";
 
+export { DelegatingRepositoryPort } from "./delegating-repository-port";
+
 export {
   EmptyRatingUpdateError,
   GroupEngine,

@@ -64,6 +64,12 @@ interface PendingFinishRequest {
 
 export interface SessionEngineOptions {
   /**
+   * Called after `promoteGuestToAccount` resolves successfully and *before* the replayed gated Finish
+   * request runs - the composition root uses this to `swapProvider` on a `DelegatingRepositoryPort` so the
+   * replay targets the authenticated adapter (Wave 7.5 adapter rebind).
+   */
+  onPromotionSucceeded?: () => void;
+  /**
    * Gate flags rehydrated at boot from `LocalGuestRepository` (DEC-017 refresh resilience). Omitted in
    * unit tests that do not model page reload.
    */
@@ -96,12 +102,14 @@ export class SessionEngine {
   private promotionStatus: PromotionStatus = "idle";
   private pendingFinishRequest: PendingFinishRequest | null = null;
   private readonly listeners = new Set<() => void>();
+  private readonly onPromotionSucceeded?: () => void;
 
   constructor(
     private readonly repositoryPort: RepositoryPort,
     private readonly playerEngine: PlayerEngine,
     options: SessionEngineOptions = {},
   ) {
+    this.onPromotionSucceeded = options.onPromotionSucceeded;
     if (options.initialGateState !== undefined) {
       this.applyGateState(options.initialGateState);
     }
@@ -172,6 +180,8 @@ export class SessionEngine {
       this.notify();
       return;
     }
+
+    this.onPromotionSucceeded?.();
 
     const pending = this.pendingFinishRequest;
     this.mode = "authenticated";
