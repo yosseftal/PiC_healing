@@ -13,5 +13,7 @@ docs/agents/domain.md
 docs/agents/issue-tracker.md
 docs/agents/triage-labels.md
 docs/docs/inquiry-session-flow-diagram.md
+docs/audits/wave-4-audit.md
+docs/audits/wave-5-wave-7-audit.md
 docs/grill-backlog.md
 stam.md
