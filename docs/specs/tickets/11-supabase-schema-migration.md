@@ -7,7 +7,7 @@ DEC-017's missing `profiles` columns, and seed `treatments` rows.
 **Blocked by:** None — pure SQL against the spec's §B, can start immediately in parallel with Phase 1–3
 engine work.
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md` §B in full, `decisions.md` DEC-017 §5 (Consequences →
 Schema), existing `supabase/migrations/20260308164004_initial_schema.sql`.
@@ -118,26 +118,52 @@ From `decisions.md` DEC-017 §5 (Consequences → Schema), the `profiles` column
 
 This ticket has no `pic-engine` unit tests — it is pure SQL. Its acceptance criteria are:
 
-- [ ] `supabase db reset` succeeds locally with zero errors.
-- [ ] A manual smoke check: `insert` a row into each of the four new tables under a test `auth.uid()`
+- [x] `supabase db reset` succeeds locally with zero errors.
+- [x] A manual smoke check: `insert` a row into each of the four new tables under a test `auth.uid()`
       session succeeds; a `select` under a **different** `auth.uid()` session returns zero rows (RLS smoke
       check) — this becomes the fixture ticket 12's and ticket 13's Supabase-backed tests build on.
-- [ ] Seed `treatments` rows are queryable and contain valid H3-delimited Structured Markdown.
+- [x] Seed `treatments` rows are queryable and contain valid H3-delimited Structured Markdown.
 
 ## Acceptance Criteria
 
-- [ ] All four new tables exist with the exact columns specified above.
-- [ ] `symptom_groups` and `symptoms` are extended, not replaced.
-- [ ] `profiles` has the four missing DEC-017 columns added.
-- [ ] RLS is enabled with an `auth.uid() = user_id` policy on all four new tables.
-- [ ] At least 2–3 seed `treatments` rows exist with valid Structured Markdown.
+- [x] All four new tables exist with the exact columns specified above.
+- [x] `symptom_groups` and `symptoms` are extended, not replaced.
+- [x] `profiles` has the four missing DEC-017 columns added.
+- [x] RLS is enabled with an `auth.uid() = user_id` policy on all four new tables.
+- [x] At least 2–3 seed `treatments` rows exist with valid Structured Markdown.
 
 ## Resolution
 
-See `docs/adr/0001-hybrid-ownership-for-shared-reference-tables.md`. This ticket's DoD text above ("RLS
-... with an `auth.uid() = user_id` policy on all four new tables") did not anticipate that `treatments` has
-no natural per-EM owner — it is a shared, unowned seed catalog, not per-user data like the other three new
-tables. The shipped migration gives `treatments` a nullable `user_id` (Global Content when `null`, Personal
-Content when set to a real owner) with policy `using (user_id is null or auth.uid() = user_id)`; the other
-three tables keep the strict `auth.uid() = user_id` policy exactly as originally specified. See `CONTEXT.md`
-— **Global Content** / **Personal Content** — for the vocabulary this introduced.
+Landed on `main` in `supabase/migrations/20260730194911_tracer_bullet_schema.sql` (commits `3f8b0bd` and
+Wave 2.5 hardening `7f2e722`, `71fbcd2`, `48fbefe`).
+
+**Profiles (DEC-017):** added `email`, `consent_timestamp`, `role` (default `'event_manager'`),
+`last_server_auth_at`. `deletion_status` / `deletion_requested_at` intentionally omitted (out of spike
+scope).
+
+**Symptom Groups & Symptoms (existing tables extended):**
+
+- `symptom_groups` — `joint_treatment_muscle_test` (`'together' | 'split_suggested'`, DEC-002) and
+  `joint_treatment_test_at`; safe backfill to `'together'` before `NOT NULL` enforcement.
+- `symptoms` — `polarity` (`'positive' | 'negative'`, DEC-009) and `intensity` (0–10 check, DEC-010);
+  independent dimensions, never derived from each other.
+
+**Four new tables:**
+
+| Table | Purpose |
+| --- | --- |
+| `treatments` | Seed catalog — Structured Markdown (H3 = Atomic Unit), 2–3 seed rows |
+| `player_sessions` | Unified Player execution state; `integrating_reason` for Integrating mid-exits |
+| `personal_treatment_library` | Per-EM toolbox; `use_count`, `unique(user_id, treatment_id)` |
+| `timeline_events` | Chronological persistence spine; `log_type: 'treatment_execution'` for spike |
+
+**Hybrid ownership (ADR-0001):** `treatments` has nullable `user_id` — `NULL` = **Global Content** (shared
+seed catalog), non-null = **Personal Content** (EM-authored). RLS policy:
+`using (user_id is null or auth.uid() = user_id)`. The other three new tables keep strict per-EM ownership
+(`auth.uid() = user_id`). See `docs/adr/0001-hybrid-ownership-for-shared-reference-tables.md`.
+
+**Wave 2.5 hardening:** `protocol_content` migrated to `jsonb`; RLS policy names use "Event Managers"
+vocabulary; `personal_treatment_library` enforces `unique(user_id, treatment_id)`.
+
+Ticket 13 (`promote_guest_to_account` RPC) remains deferred — this migration supplies the table shapes the
+RPC will target.
