@@ -1,6 +1,8 @@
 import type { LibraryRow, LibraryRowProvenance, PlayerSession, TimelineEvent } from "../../src/types";
 import {
   PromoteGuestToAccountIdentityMismatchError,
+  DEFAULT_GUEST_SESSION_GATE_STATE,
+  type GuestSessionGateState,
   type PromoteGuestToAccountInput,
   type PromoteGuestToAccountResult,
   type RepositoryPort,
@@ -46,6 +48,8 @@ export class FakeRepositoryPort implements RepositoryPort {
     string,
     { input: PromoteGuestToAccountInput; result: PromoteGuestToAccountResult }
   >();
+
+  private guestSessionGate: GuestSessionGateState = { ...DEFAULT_GUEST_SESSION_GATE_STATE };
 
   private nextGeneratedIdSuffix = 0;
 
@@ -155,5 +159,13 @@ export class FakeRepositoryPort implements RepositoryPort {
 
     this.promotionRecordsByIdempotencyKey.set(input.idempotencyKey, { input, result });
     return result;
+  }
+
+  async getGuestSessionGate(): Promise<GuestSessionGateState> {
+    return { ...this.guestSessionGate };
+  }
+
+  async saveGuestSessionGate(state: GuestSessionGateState): Promise<void> {
+    this.guestSessionGate = { ...state };
   }
 }

@@ -9,11 +9,14 @@ import { findForbiddenModuleReference, getModuleSpecifiersFromFile } from "../te
 import { SessionEngine, type GuestSnapshot } from "./index";
 
 describe("SessionEngine", () => {
-  function buildEngine(port: RepositoryPort = new FakeRepositoryPort()) {
+  function buildEngine(
+    port: RepositoryPort = new FakeRepositoryPort(),
+    options: { initialGateState?: import("../repository-port").GuestSessionGateState } = {},
+  ) {
     const libraryEngine = new LibraryEngine(port);
     const timelineEngine = new TimelineEngine(port);
     const playerEngine = new PlayerEngine(port, libraryEngine, timelineEngine);
-    const sessionEngine = new SessionEngine(port, playerEngine);
+    const sessionEngine = new SessionEngine(port, playerEngine, options);
     return { port, libraryEngine, timelineEngine, playerEngine, sessionEngine };
   }
 
@@ -250,6 +253,35 @@ describe("SessionEngine", () => {
     });
   });
 
+  describe("gate state refresh resilience", () => {
+    it("rehydrates gateTriggered and pendingFinishRequest from persisted gate state at construction", async () => {
+      const port = new FakeRepositoryPort();
+      await port.saveGuestSessionGate({
+        gateTriggered: true,
+        pendingFinishRequest: { sessionId: "guest-session-1", kind: "finish" },
+      });
+      const { sessionEngine } = buildEngine(port, {
+        initialGateState: await port.getGuestSessionGate(),
+      });
+
+      expect(sessionEngine.getState().gateTriggered).toBe(true);
+    });
+
+    it("persists gateTriggered=true so a simulated page reload can re-open the Persistence Gate", async () => {
+      const port = new FakeRepositoryPort();
+      const { playerEngine, sessionEngine } = buildEngine(port);
+      const sessionId = await playerEngine.startSession("treatment-1", null, ["a"]);
+      await sessionEngine.onFinishRequested(sessionId, "finish");
+
+      const persisted = await port.getGuestSessionGate();
+      expect(persisted.gateTriggered).toBe(true);
+      expect(persisted.pendingFinishRequest).toEqual({ sessionId, kind: "finish" });
+
+      const reloaded = buildEngine(port, { initialGateState: persisted });
+      expect(reloaded.sessionEngine.getState().gateTriggered).toBe(true);
+    });
+  });
+
   describe("discardGuestState", () => {
     it("never invokes any RepositoryPort method that would contact a network adapter", async () => {
       const port = new FakeRepositoryPort();
@@ -283,7 +315,7 @@ describe("SessionEngine", () => {
       await sessionEngine.promote(buildGuestSnapshot(), "user-1");
       expect(sessionEngine.getState().promotionStatus).toBe("failed");
 
-      sessionEngine.discardGuestState();
+      await sessionEngine.discardGuestState();
 
       expect(sessionEngine.getState()).toEqual({
         mode: "guest",

@@ -81,6 +81,24 @@ export interface PromoteGuestToAccountInput {
   newUserId: string;
 }
 
+/**
+ * Persistence Gate orchestration state stored alongside the Guest blob (DEC-017 refresh resilience). Only
+ * `gateTriggered` and the pending Finish request survive a page reload - `promotionStatus` is intentionally
+ * in-memory so a mid-RPC refresh never surfaces a stale "pending" UI.
+ */
+export interface GuestSessionGateState {
+  gateTriggered: boolean;
+  pendingFinishRequest: {
+    sessionId: string;
+    kind: "finish" | "finishAnyway";
+  } | null;
+}
+
+export const DEFAULT_GUEST_SESSION_GATE_STATE: GuestSessionGateState = {
+  gateTriggered: false,
+  pendingFinishRequest: null,
+};
+
 /** The five entities `promoteGuestToAccount` lands atomically, now owned by the new account. */
 export interface PromoteGuestToAccountResult {
   group: FinalizedSymptomGroup;
@@ -127,4 +145,10 @@ export interface RepositoryPort {
    * rationale and scope decision.
    */
   promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult>;
+
+  /** Reads the persisted Persistence Gate flags for Guest Mode refresh resilience (DEC-017). */
+  getGuestSessionGate(): Promise<GuestSessionGateState>;
+
+  /** Persists the Persistence Gate flags alongside the Guest blob (DEC-017). */
+  saveGuestSessionGate(state: GuestSessionGateState): Promise<void>;
 }
