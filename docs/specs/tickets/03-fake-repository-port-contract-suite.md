@@ -5,7 +5,7 @@ the one shared contract-test suite that both real adapters (tickets 10, 12/13) m
 
 **Blocked by:** 02 (`RepositoryPort` interface + domain types).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md`, Testing Decisions — "Primary seam, primary test
 target" and "Contract tests, run against both adapters".
@@ -46,20 +46,44 @@ target" and "Contract tests, run against both adapters".
 
 Write these `it()` blocks inside the shared contract-suite function, then make the fake pass all of them:
 
-- [ ] `it('incrementUseCount increments use_count by exactly 1')`
-- [ ] `it('incrementUseCount called twice with the same idempotency key increments exactly once')`
-- [ ] `it('getOrCreateLibraryRow creates a new row on first call and returns the same row id on a second
+- [x] `it('incrementUseCount increments use_count by exactly 1')`
+- [x] `it('incrementUseCount called twice with the same idempotency key increments exactly once')`
+- [x] `it('getOrCreateLibraryRow creates a new row on first call and returns the same row id on a second
       call for the same user+treatment')`
-- [ ] `it('appendTimelineEvent never removes or mutates previously appended events')`
-- [ ] `it('promoteGuestToAccount writes group, symptoms, player session, library row, and timeline event
+- [x] `it('appendTimelineEvent never removes or mutates previously appended events')`
+- [x] `it('promoteGuestToAccount writes group, symptoms, player session, library row, and timeline event
       all under the new user id')`
-- [ ] `it('promoteGuestToAccount called twice with the same idempotency key results in exactly one set of
+- [x] `it('promoteGuestToAccount called twice with the same idempotency key results in exactly one set of
       rows (no duplication)')`
 
 ## Acceptance Criteria
 
-- [ ] `FakeRepositoryPort` implements all eight `RepositoryPort` methods with in-memory storage only.
-- [ ] The contract-suite function is adapter-agnostic (takes a `makePort` factory, asserts only through the
+- [x] `FakeRepositoryPort` implements all eight `RepositoryPort` methods with in-memory storage only.
+- [x] The contract-suite function is adapter-agnostic (takes a `makePort` factory, asserts only through the
       `RepositoryPort` interface).
-- [ ] All six contract tests above pass against the fake in this ticket.
-- [ ] No business-rule validation lives inside the fake.
+- [x] All six contract tests above pass against the fake in this ticket.
+- [x] No business-rule validation lives inside the fake.
+
+## Resolution
+
+Landed on `main` as the shared test infrastructure for all engine and adapter work.
+
+**`FakeRepositoryPort`** (`packages/pic-engine/test/fakes/fake-repository-port.ts`):
+
+- Full in-memory `RepositoryPort` using `Map` storage; no I/O, no business-rule validation.
+- Implements idempotent `incrementUseCount` via idempotency-key deduplication.
+- Implements `promoteGuestToAccount` atomically in memory, including Wave 2.5 hardening: same-key-same-payload
+  retries are silent no-ops; same-key-different-payload calls throw
+  `PromoteGuestToAccountIdentityMismatchError`.
+
+**Contract suite** (`packages/pic-engine/test/contract/repository-port.contract.ts`):
+
+- Exports `runRepositoryPortContractTests(makePort)` — adapter-agnostic, asserts only through the port
+  interface.
+- All six original acceptance `it()` blocks pass against the fake.
+- Extended in later waves with identity-mismatch rejection coverage for `promoteGuestToAccount`.
+- Wired into `scripts/ci.sh` stage 4 ("Contract Parity") and invoked by `pic-adapter-local-guest` (ticket
+  10); `pic-adapter-supabase` (ticket 12) will import the same suite unmodified.
+
+This is the **primary seam, primary test target** for business rules: engines test in-process against the
+fake; adapters prove parity by running the identical contract suite.
