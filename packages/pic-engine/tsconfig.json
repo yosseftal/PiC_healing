@@ -1,7 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    // Scoped to this package only (not tsconfig.base.json) so every other package stays exactly as
+    // ambient-type-free as it was. Needed only by the `library-engine`/`timeline-engine` module-isolation
+    // tests' source-scan (node:fs, node:url, import.meta.url) - the engine sources under src/ still import
+    // zero Node/DOM/React modules; this only makes those ambient globals visible to the compiler.
+    "types": ["node"]
   },
   "include": ["src", "test"]
 }

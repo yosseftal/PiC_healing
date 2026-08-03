@@ -9,6 +9,7 @@
     "depcruise": "npx depcruise --validate .dependency-cruiser.cjs src"
   },
   "devDependencies": {
+    "@types/node": "^26.1.2",
     "dependency-cruiser": "^18.1.0"
   }
 }
