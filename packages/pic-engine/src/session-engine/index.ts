@@ -45,11 +45,27 @@ export class SessionEngine {
   private gateTriggered = false;
   private promotionStatus: PromotionStatus = "idle";
   private pendingFinishRequest: PendingFinishRequest | null = null;
+  private readonly listeners = new Set<() => void>();
 
   constructor(
     private readonly repositoryPort: RepositoryPort,
     private readonly playerEngine: PlayerEngine,
   ) {}
+
+  /**
+   * Subscribes to any `SessionEngine` state mutation so dumb-reflection subscribers observe
+   * `promotionStatus: 'pending'` immediately when `promote()` starts, not only after the RPC resolves.
+   */
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
+  }
 
   getState(): SessionState {
     return { mode: this.mode, gateTriggered: this.gateTriggered, promotionStatus: this.promotionStatus };
@@ -62,10 +78,12 @@ export class SessionEngine {
     }
     this.gateTriggered = true;
     this.pendingFinishRequest = { sessionId, kind };
+    this.notify();
   }
 
   async promote(guestState: GuestSnapshot, newUserId: string): Promise<void> {
     this.promotionStatus = "pending";
+    this.notify();
 
     try {
       await this.repositoryPort.promoteGuestToAccount({
@@ -76,6 +94,7 @@ export class SessionEngine {
       });
     } catch {
       this.promotionStatus = "failed";
+      this.notify();
       return;
     }
 
@@ -84,6 +103,7 @@ export class SessionEngine {
     this.promotionStatus = "succeeded";
     this.gateTriggered = false;
     this.pendingFinishRequest = null;
+    this.notify();
 
     if (pending !== null) {
       await this.runFinish(pending.sessionId, pending.kind);
@@ -94,6 +114,7 @@ export class SessionEngine {
     this.gateTriggered = false;
     this.promotionStatus = "idle";
     this.pendingFinishRequest = null;
+    this.notify();
   }
 
   private async runFinish(sessionId: string, kind: PendingFinishKind): Promise<void> {

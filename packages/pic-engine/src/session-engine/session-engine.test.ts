@@ -83,6 +83,52 @@ describe("SessionEngine", () => {
   });
 
   describe("promote", () => {
+    it("notifies subscribers with promotionStatus pending before promoteGuestToAccount resolves", async () => {
+      const port = new FakeRepositoryPort();
+      let resolvePromotion: (() => void) | undefined;
+      vi.spyOn(port, "promoteGuestToAccount").mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolvePromotion = () => resolve({
+              group: buildGuestSnapshot().group,
+              playerSession: buildGuestSnapshot().playerSession,
+              libraryRow: {
+                id: "library-row-1",
+                treatment_id: "treatment-1",
+                use_count: 0,
+                provenance: { source: "guest_promotion", first_seen_at: new Date().toISOString() },
+                variant_type: "original",
+                global_reference_id: "treatment-1",
+                protocol_content: null,
+                created_at: new Date().toISOString(),
+              },
+              timelineEvent: {
+                id: "timeline-1",
+                log_type: "treatment_execution",
+                treatment_id: "treatment-1",
+                library_row_id: "library-row-1",
+                linked_group_id: null,
+                metadata: null,
+                created_at: new Date().toISOString(),
+              },
+            });
+          }),
+      );
+      const { sessionEngine } = buildEngine(port);
+      const observed: string[] = [];
+      sessionEngine.subscribe(() => observed.push(sessionEngine.getState().promotionStatus));
+
+      const promotePromise = sessionEngine.promote(buildGuestSnapshot(), "user-1");
+
+      expect(observed).toContain("pending");
+      expect(sessionEngine.getState().promotionStatus).toBe("pending");
+
+      resolvePromotion?.();
+      await promotePromise;
+
+      expect(sessionEngine.getState().promotionStatus).toBe("succeeded");
+    });
+
     it("on success flips mode from guest to authenticated and signals guest state can be cleared", async () => {
       const { sessionEngine } = buildEngine();
 
