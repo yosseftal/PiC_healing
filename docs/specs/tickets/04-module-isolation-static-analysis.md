@@ -6,7 +6,7 @@ real logic, so it is a guardrail from day one rather than a check bolted on afte
 
 **Blocked by:** 02 (`RepositoryPort` interface + domain types).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md`, "Seam" section and Testing Decisions.
 
@@ -72,16 +72,40 @@ module.exports = {
 
 The acceptance test for this ticket is the tool run itself, not a Vitest `it()` block:
 
-- [ ] `npx depcruise --validate .dependency-cruiser.cjs src` exits `0` with both stub files in place.
-- [ ] The same command, run against a deliberately-reintroduced violating import (verified manually, then
+- [x] `npx depcruise --validate .dependency-cruiser.cjs src` exits `0` with both stub files in place.
+- [x] The same command, run against a deliberately-reintroduced violating import (verified manually, then
       reverted), exits non-zero — this proof must be described in the PR description since the violating
       state itself must not be committed.
-- [ ] The check is wired into a command (`npm test` or `npm run lint`) that tickets 07 and 08 cannot bypass
+- [x] The check is wired into a command (`npm test` or `npm run lint`) that tickets 07 and 08 cannot bypass
       without their CI run going non-zero.
 
 ## Acceptance Criteria
 
-- [ ] `.dependency-cruiser.cjs` forbids imports in both directions between `group-engine` and
+- [x] `.dependency-cruiser.cjs` forbids imports in both directions between `group-engine` and
       `player-engine`.
-- [ ] Placeholder stub directories exist for both modules, empty of logic.
-- [ ] `npm run depcruise` runs as part of the standard test/lint command and exits `0` on the stubs.
+- [x] Placeholder stub directories exist for both modules, empty of logic.
+- [x] `npm run depcruise` runs as part of the standard test/lint command and exits `0` on the stubs.
+
+## Resolution
+
+Landed on `main` with two complementary isolation mechanisms:
+
+**1. dependency-cruiser firewall** (`packages/pic-engine/.dependency-cruiser.cjs`):
+
+- Bidirectional forbidden rules: `no-player-into-group` and `no-group-into-player`.
+- `npm run depcruise` in `pic-engine`; root `npm test` and `scripts/ci.sh` stage 2 run depcruise across all
+  workspaces.
+- `pic-web` has its own `.dependency-cruiser.cjs` guarding the web layer against importing engine internals
+  directly (ticket 14).
+
+**2. Module isolation scanner** (`packages/pic-engine/src/test-helpers/isolation-scanner.ts`):
+
+- Lightweight source-scan helper for engine pairs **outside** the player↔group boundary (ticket 04 explicitly
+  scoped depcruiser to only that pair).
+- Used by `library-engine`, `timeline-engine`, and `session-engine` tests to assert zero import/export-from
+  edges into forbidden sibling modules.
+- Hardened in Wave 3 audit: strips comments, scans full source for relative module specifiers (handles
+  multi-line imports and `export * from` re-exports).
+
+Together these enforce Atomic Focus at the module boundary: `PlayerEngine` is a pure execution engine with
+zero knowledge of symptom Polarity, Intensity, or rating logic — that lives exclusively in `GroupEngine`.
