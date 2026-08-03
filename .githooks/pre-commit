@@ -1,0 +1,3 @@
+#!/bin/sh
+# Enforce max line length on staged text files only (honors ci-linelength-grandfather.txt).
+exec python3 scripts/check-max-line-length.py --staged --grandfather scripts/ci-linelength-grandfather.txt
