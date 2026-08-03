@@ -15,15 +15,43 @@
 /** ISO 8601 timestamp string. */
 export type Timestamp = string;
 
+/** A symptom's directional valence (DEC-009). Named so ticket 08 has a concrete type to forbid importing. */
+export type Polarity = "positive" | "negative";
+
+/**
+ * A symptom's magnitude, a plain integer (DEC-010 §1's Path A1 "Absolute Magnitude" semantics enforced by
+ * `GroupEngine`, ticket 07 - this alias only fixes the name; the 0-10 bound is runtime-validated, not
+ * type-level, per ticket 02's "no runtime validation lives here" rule). Named for the same reason as
+ * `Polarity` above.
+ */
+export type Intensity = number;
+
 /**
  * One named concern inside a Symptom Group (CONTEXT.md "Symptom"). `polarity` and `intensity` are
  * independent dimensions (DEC-009, DEC-010) - neither is ever derived from, or overwrites, the other.
+ *
+ * **`rated_at` (added, ticket 07):** the ratified shape below originally carried only `polarity` /
+ * `intensity` as always-required fields, matching spec §B's `guest_group.symptoms` shape and the live
+ * migration's `not null` `symptoms.polarity` / `.intensity` columns exactly. Ticket 07's Blind-by-Default
+ * API (`GroupEngine.hasPriorRating`) needs to distinguish "named via `addSymptom`, never yet rated" from
+ * "has gone through at least one `rate()` call" - a real distinction `addSymptom` (name only, no rating
+ * ever forces both eventual calls to be in scope, ticket 07's Definition of Done) inherently creates, and
+ * one the original two fields alone cannot express once both remain always-required (a struct with no
+ * "unset" representation for either field). `rated_at: Timestamp | null` is the minimal, additive fix:
+ * `null` until the first `rate()` call, then the timestamp of the most recent one. `polarity` / `intensity`
+ * stay non-null throughout (matching the live `not null` columns exactly, so a future adapter never has to
+ * translate a null into a placeholder at the SQL boundary) - `addSymptom` seeds them with the *same*
+ * `'negative'` / `0` placeholder values `20260730194911_tracer_bullet_schema.sql` already uses to backfill
+ * pre-existing rows, since `rated_at`, not the placeholder values, is the sole source of truth for "has
+ * this been rated." Neither `hasPriorRating` nor `revealPriorRating` ever reads `polarity`/`intensity`
+ * without first checking `rated_at`.
  */
 export interface Symptom {
   id: string;
   name: string;
-  polarity: "positive" | "negative";
-  intensity: number;
+  polarity: Polarity;
+  intensity: Intensity;
+  rated_at: Timestamp | null;
 }
 
 /** The Joint Treatment Muscle Test's persisted answer (DEC-002, spec §C). */
