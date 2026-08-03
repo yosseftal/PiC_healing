@@ -103,26 +103,73 @@ ticket 04's dependency-cruiser rule is what makes it enforceable at build time.
 
 These mirror the Testing Decisions section verbatim:
 
-- [ ] `it('finalizeGroup throws when joint_treatment_muscle_test is unset')`
-- [ ] `it('finalizeGroup succeeds when joint_treatment_muscle_test is "together"')`
-- [ ] `it('finalizeGroup succeeds when joint_treatment_muscle_test is "split_suggested"')`
-- [ ] `it("rate()'s return value contains no previousPolarity or previousIntensity field")`
-- [ ] `it('hasPriorRating returns false before any rating exists and true after the first rate() call')`
-- [ ] `it('revealPriorRating only returns a value when explicitly called, never as a side effect of
+- [x] `it('finalizeGroup throws when joint_treatment_muscle_test is unset')`
+- [x] `it('finalizeGroup succeeds when joint_treatment_muscle_test is "together"')`
+- [x] `it('finalizeGroup succeeds when joint_treatment_muscle_test is "split_suggested"')`
+- [x] `it("rate()'s return value contains no previousPolarity or previousIntensity field")`
+- [x] `it('hasPriorRating returns false before any rating exists and true after the first rate() call')`
+- [x] `it('revealPriorRating only returns a value when explicitly called, never as a side effect of
       rate()')`
-- [ ] `it('flipping polarity via rate() leaves the existing intensity value untouched when intensity is
+- [x] `it('flipping polarity via rate() leaves the existing intensity value untouched when intensity is
       omitted from the call')`
-- [ ] `it('changing intensity via rate() leaves the existing polarity value untouched when polarity is
+- [x] `it('changing intensity via rate() leaves the existing polarity value untouched when polarity is
       omitted from the call')`
-- [ ] `it('intensity outside the 0-10 range is rejected')`
-- [ ] `it('GroupEngine has zero import edges into player-engine')` (backed by ticket 04's tooling; add a
+- [x] `it('intensity outside the 0-10 range is rejected')`
+- [x] `it('GroupEngine has zero import edges into player-engine')` (backed by ticket 04's tooling; add a
       lightweight assertion or rely on the shared `npm run depcruise` command passing as part of CI for
       this ticket too).
 
 ## Acceptance Criteria
 
-- [ ] All seven public methods exist with the exact signatures above.
-- [ ] All ten tests above pass against the fake `RepositoryPort` from ticket 03.
-- [ ] `npm run depcruise` (ticket 04) remains green after this ticket lands.
-- [ ] No rating value is ever observable except through an explicit `rate()` argument or
+- [x] All seven public methods exist, with two resolved signature/type refinements - see "## Resolution"
+      below.
+- [x] All ten tests above pass against the fake `RepositoryPort` from ticket 03 (plus five extras: three
+      `createDraftGroup`/`addSymptom` plumbing tests, one adversarial cross-group isolation test, and one
+      `EmptyRatingUpdateError` test).
+- [x] `npm run depcruise` (ticket 04) remains green after this ticket lands.
+- [x] No rating value is ever observable except through an explicit `rate()` argument or
       `revealPriorRating()` return value.
+
+## Resolution
+
+**Status:** Implemented (Wave 4).
+
+Implemented in `packages/pic-engine/src/group-engine/index.ts` / `group-engine.test.ts`, matching this
+ticket's Definition of Done with two deliberate, documented refinements beyond the literal headline text -
+both resolved directly (not escalated), per the Orchestrator's "grounded in Living Documentation" mandate,
+since both rest on this ticket's *own* text elsewhere, not a new architectural judgment call:
+
+- **`Symptom.rated_at: Timestamp | null` (types.ts widening).** `hasPriorRating`'s own acceptance test -
+  "returns false before any rating exists and true after the first `rate()` call" - requires a real,
+  persisted distinction between "named via `addSymptom`, never rated" and "has gone through `rate()` at
+  least once." The ratified `Symptom` type (ticket 02) had no such distinction: `polarity`/`intensity` were
+  always-required, so a struct satisfying that shape can't represent "unset." This is additive only
+  (`rated_at` is a new, always-present-but-nullable field; `polarity`/`intensity` stay non-null exactly as
+  before, matching the live migration's `not null` `symptoms.polarity`/`.intensity` columns) - `addSymptom`
+  seeds new symptoms with the placeholder values (`'negative'`, `0`) the migration itself already uses to
+  backfill pre-existing rows, and `rated_at`, never the placeholder values, is the sole source of truth
+  `hasPriorRating`/`revealPriorRating` read. See `types.ts`'s `Symptom` doc comment for the full reasoning.
+  `Polarity`/`Intensity` were also extracted as named type aliases (`types.ts`) purely so ticket 08 has a
+  concrete, greppable name for the types it must never import.
+- **`rate()`'s update parameter is `{ polarity?: Polarity; intensity?: Intensity }` (both optional), not the
+  both-required literal shape the ticket's headline Definition-of-Done bullet shows.** The very same
+  ticket's Definition of Done goes on to require "flipping `polarity`... without passing a new `intensity`
+  leaves the existing `intensity` untouched, and vice versa" - a requirement that only has meaning if a
+  caller may omit either field. The fuller, more specific bullet wins over the earlier, incomplete one, the
+  same resolution shape as Wave 3's `idempotencyKey` precedent. An empty `{}` call is rejected
+  (`EmptyRatingUpdateError`) rather than silently accepted as a no-op, so a caller bug can never masquerade
+  as an intentional "confirm current rating with no change" action (not tested by the ticket, but a
+  reasonable defensive default worth documenting).
+
+**Symptom-id-only lookups (`hasPriorRating`/`rate`/`revealPriorRating` take no `groupId`), scope note, not a
+deviation:** `RepositoryPort` (ticket 02) has no "find group by symptom id" or list-all-groups method, so
+`GroupEngine` resolves a bare `symptomId` via a private in-memory `Map<symptomId, groupId>` populated by
+`addSymptom`. This is sound for every path this spike exercises (ticket 07's own Out of Scope section
+explicitly excludes "resume an existing group" - the one flow that would need a *fresh* engine instance to
+resolve a symptom it never saw) but is a known limitation a future "resume" ticket must revisit (rebuild the
+index from `RepositoryPort.getGroup`, or widen the port). Flagged in `index.ts`'s file header for whoever
+picks that up next.
+
+**Verification:** `npm run ci` passes end-to-end - 66/66 domain tests (up from 27; 15 of the 39 new tests
+are `GroupEngine`'s), 9/9 contract tests (untouched), zero `depcruise` violations, zero grandfather-list
+growth. No changes were needed to `library-engine/index.ts` or `timeline-engine/index.ts`.

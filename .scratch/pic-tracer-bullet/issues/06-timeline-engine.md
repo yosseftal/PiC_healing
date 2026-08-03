@@ -59,16 +59,46 @@ From `CONTEXT.md`'s Linked Journey vs. Toolbox Model entry:
 
 ## Testing Requirement — Test-First Acceptance Criteria
 
-- [ ] `it('recordExecution appends an event with log_type "treatment_execution"')`
-- [ ] `it('recordExecution links treatment_id and library_row_id without embedding any content or markdown
+- [x] `it('recordExecution appends an event with log_type "treatment_execution"')`
+- [x] `it('recordExecution links treatment_id and library_row_id without embedding any content or markdown
       snapshot')`
-- [ ] `it('recordExecution accepts a null linked_group_id when no group link was chosen')`
-- [ ] `it('recordExecution accepts a linked_group_id when the EM opted to link the treatment to a Symptom
+- [x] `it('recordExecution accepts a null linked_group_id when no group link was chosen')`
+- [x] `it('recordExecution accepts a linked_group_id when the EM opted to link the treatment to a Symptom
       Group')`
 
 ## Acceptance Criteria
 
-- [ ] `recordExecution` matches the signature and behavior above exactly.
-- [ ] All four tests pass against the fake `RepositoryPort` from ticket 03.
-- [ ] No content/markdown field ever appears in a constructed event, verified by an explicit test asserting
+- [x] `recordExecution` matches the signature and behavior above, with one resolved deviation — see
+      "## Resolution" below.
+- [x] All four tests pass against the fake `RepositoryPort` from ticket 03 (plus extra coverage:
+      call-count, adversarial cross-treatment isolation, and a dedicated module-isolation test).
+- [x] No content/markdown field ever appears in a constructed event, verified by an explicit test asserting
       the absence of those keys.
+
+## Resolution
+
+**Status:** Implemented (Wave 3).
+
+Implemented in `packages/pic-engine/src/timeline-engine/index.ts` / `timeline-engine.test.ts`, exactly
+as specified, with one deliberate, documented signature deviation from this ticket's draft text:
+
+- **`recordExecution({ treatmentId, libraryRowId, linkedGroupId?, metadata? }): Promise<TimelineEvent>`**
+  — this ticket's original text above reads `{ userId, treatmentId, libraryRowId, linkedGroupId,
+  metadata }`. The ratified `TimelineEvent` domain type and `RepositoryPort.appendTimelineEvent`
+  signature (ticket 02, already implemented and Wave-2.5-audited by the time this ticket was picked up)
+  carry no `user_id` field at all. Concretely, this means the `user_id` on a `timeline_events` row must
+  be **explicitly supplied by the authenticated adapter/RPC at write time**; Postgres RLS acts as a
+  sanctuary gate, rejecting any mismatch against the authenticated identity, but it does not assign the
+  value itself (corrected from an earlier draft of this note, which incorrectly stated RLS populates
+  `user_id` — the live schema shows the column is `not null` with no `default` and no trigger, so an
+  adapter/RPC must still set it explicitly; RLS only ever rejects a bad or missing value, never fills
+  one in). Threading a `userId` through `TimelineEngine` would still be architectural drift *away from*
+  ticket 02's actual contract regardless of that correction — the decision to drop it rests on
+  `types.ts`'s "identity is an adapter concern" principle, not on any specific RLS mechanism — so it was
+  dropped; identity/RLS scoping stays exactly where `types.ts` already documents it living (the adapter,
+  never the engine). See the "Resolved architectural note" doc comment at the top of `index.ts` for the
+  full reasoning, and the identical ruling applied to `LibraryEngine.recordUse` (ticket 05).
+
+This was resolved directly (not escalated) because it is fully grounded in already-merged,
+Wave-2.5-audited Living Documentation (`repository-port.ts`, `types.ts`, the live migration) rather
+than a new architectural judgment call.

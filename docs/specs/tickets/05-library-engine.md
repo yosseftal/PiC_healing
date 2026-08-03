@@ -5,7 +5,7 @@ Personal Treatment Library row creation.
 
 **Blocked by:** 02 (`RepositoryPort` + domain types), 03 (fake port + contract suite).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md` §A, §B (`personal_treatment_library` schema), §D
 ("Exactly-once side effects"), `CONTEXT.md` Personal Treatment Library entry, `decisions.md` DEC-005/DEC-006.
