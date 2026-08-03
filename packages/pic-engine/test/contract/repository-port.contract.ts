@@ -22,6 +22,7 @@ function buildSymptom(overrides: Partial<Symptom> = {}): Symptom {
     name: "Lower Back Pain",
     polarity: "negative",
     intensity: 6,
+    rated_at: new Date().toISOString(),
     ...overrides,
   };
 }
@@ -68,8 +69,28 @@ function buildProvenance(overrides: Partial<LibraryRowProvenance> = {}): Library
  * "What good test means here" (spec's Testing Decisions): every assertion below is made only through
  * `RepositoryPort`'s own return values / re-fetched state - never through a fake-specific or
  * adapter-specific back door.
+ *
+ * **`options.skipPromoteGuestToAccount` (added, ticket 10, Wave 5/7):** ticket 10's own Definition of Done
+ * requires `pic-adapter-local-guest` to pass this suite "excluding the `promoteGuestToAccount`-specific
+ * assertions" - that adapter's `promoteGuestToAccount` is a deliberate no-op-or-error (Guest data
+ * structurally cannot promote against itself; promotion always targets `pic-adapter-supabase`, ticket 13),
+ * so every assertion in the `promoteGuestToAccount` block below would otherwise fail for a reason this
+ * suite was never meant to police. Additive and opt-in: omitting `options` (as the existing
+ * `FakeRepositoryPort` call site does) runs every block exactly as before.
  */
-export function runRepositoryPortContractTests(makePort: () => RepositoryPort): void {
+export interface RepositoryPortContractOptions {
+  /**
+   * When `true`, skips the entire `promoteGuestToAccount` describe block (via `describe.skipIf`, so the
+   * exemption is visible in the test run's own output as explicitly skipped, never silently omitted) -
+   * see this file's header comment for why `pic-adapter-local-guest` needs this.
+   */
+  skipPromoteGuestToAccount?: boolean;
+}
+
+export function runRepositoryPortContractTests(
+  makePort: () => RepositoryPort,
+  options: RepositoryPortContractOptions = {},
+): void {
   describe("RepositoryPort contract", () => {
     let port: RepositoryPort;
 
@@ -156,7 +177,7 @@ export function runRepositoryPortContractTests(makePort: () => RepositoryPort): 
       });
     });
 
-    describe("promoteGuestToAccount", () => {
+    describe.skipIf(options.skipPromoteGuestToAccount)("promoteGuestToAccount", () => {
       const writesAllFivePromotedEntitiesTitle =
         "writes group (with its embedded symptoms), player session, library row, and timeline event, " +
         "all attached to input.newUserId";
