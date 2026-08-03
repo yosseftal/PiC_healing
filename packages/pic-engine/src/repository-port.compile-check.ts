@@ -31,6 +31,11 @@ const completePort: RepositoryPort = {
   promoteGuestToAccount: async () => {
     throw new Error("compile-check only - never called");
   },
+  getGuestSessionGate: async () => ({
+    gateTriggered: false,
+    pendingFinishRequest: null,
+  }),
+  saveGuestSessionGate: async () => undefined,
 };
 void completePort;
 

@@ -26,8 +26,12 @@ export type {
   PromoteGuestToAccountResult,
   RepositoryPort,
   SymptomGroup,
+  GuestSessionGateState,
 } from "./repository-port";
-export { PromoteGuestToAccountIdentityMismatchError } from "./repository-port";
+export {
+  DEFAULT_GUEST_SESSION_GATE_STATE,
+  PromoteGuestToAccountIdentityMismatchError,
+} from "./repository-port";
 
 export {
   EmptyRatingUpdateError,
@@ -51,5 +55,5 @@ export {
   UnknownPlayerUnitError,
 } from "./player-engine/index";
 
-export type { GuestSnapshot, PromotionStatus, SessionMode, SessionState } from "./session-engine/index";
+export type { GuestSnapshot, PromotionStatus, SessionEngineOptions, SessionMode, SessionState } from "./session-engine/index";
 export { SessionEngine } from "./session-engine/index";
