@@ -5,7 +5,7 @@ speaks in. Types and an interface only — zero implementation.
 
 **Blocked by:** 01 (monorepo & tooling scaffold).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md` §A "Modules", §B "Data Schema" (Guest store shapes).
 
@@ -71,13 +71,42 @@ instead of `any`.
 
 No runtime tests exist for a types-only ticket. The only check is:
 
-- [ ] `npx tsc --noEmit` passes with zero errors across `packages/pic-engine`.
-- [ ] A trivial type-level check (e.g. a file that imports `RepositoryPort` and assigns an object literal
+- [x] `npx tsc --noEmit` passes with zero errors across `packages/pic-engine`.
+- [x] A trivial type-level check (e.g. a file that imports `RepositoryPort` and assigns an object literal
       missing one method) fails to compile, proving the interface is enforced, not just documented.
 
 ## Acceptance Criteria
 
-- [ ] `RepositoryPort` interface matches the eight-method list verbatim.
-- [ ] All Guest-store-shaped domain types are exported and match §B's field names and nullability.
-- [ ] Zero React/Supabase/DOM imports anywhere in the package.
-- [ ] No engine implementation exists yet.
+- [x] `RepositoryPort` interface matches the eight-method list verbatim.
+- [x] All Guest-store-shaped domain types are exported and match §B's field names and nullability.
+- [x] Zero React/Supabase/DOM imports anywhere in the package.
+- [x] No engine implementation exists yet.
+
+## Resolution
+
+Landed on `main` as the ratified persistence seam for all tracer-bullet engines and adapters.
+
+**Domain types** (`packages/pic-engine/src/types.ts`):
+
+- `Symptom` — `id`, `name`, `polarity` (`'positive' | 'negative'`), `intensity` (0–10); ratings live on
+  the Symptom Group, never on `PlayerSession`.
+- `SymptomGroupDraft` / `FinalizedSymptomGroup` — Guest and authenticated group shapes with Joint Treatment
+  Muscle Test metadata (`joint_treatment_muscle_test`, `joint_treatment_test_at`).
+- `PlayerUnitState` — flat four-state model (`unseen` | `in_view` | `skipped` | `completed`); `in_view` is
+  ephemeral, never persisted.
+- `PlayerSession` — treatment execution record with `terminal_nemar_response`, `success_declared`,
+  `integrating_reason` (`'mid_exit' | 'terminal_nemar_no'`), and `finished_at`; no rating column.
+- `LibraryRow`, `TimelineEvent` — Personal Treatment Library and chronological timeline spine shapes per §B.
+
+**`RepositoryPort`** (`packages/pic-engine/src/repository-port.ts`) — eight core methods as specified, plus
+Wave 2.5/7.5 hardening that did not change engine call sites:
+
+- `PromoteGuestToAccountIdentityMismatchError` — rejects idempotency-key reuse with a divergent payload
+  (hard failure, not silent no-op).
+- `PromoteGuestToAccountInput` — bundles `idempotencyKey`, `newUserId`, `group`, and `playerSession` for the
+  atomic promotion seam (ticket 13 RPC deferred; port contract is ratified now).
+
+Identity scoping (`user_id`, RLS) is documented as an **adapter concern** — engines never thread a `userId`
+through `getOrCreateLibraryRow` or `incrementUseCount`. A compile-time guard
+(`repository-port.compile-check.ts`) proves the interface is enforced, not merely documented. Zero
+React/Supabase/DOM imports under `packages/pic-engine`.
