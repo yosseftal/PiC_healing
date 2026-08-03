@@ -2,12 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 import { FakeRepositoryPort } from "../../test/fakes/fake-repository-port";
 import type { RepositoryPort } from "../repository-port";
 import type { FinalizedSymptomGroup, PlayerSession } from "../types";
+import { DelegatingRepositoryPort } from "../delegating-repository-port";
 import { LibraryEngine } from "../library-engine/index";
 import { TimelineEngine } from "../timeline-engine/index";
 import { PlayerEngine } from "../player-engine/index";
 import { findForbiddenModuleReference, getModuleSpecifiersFromFile } from "../test-helpers/isolation-scanner";
 import { SessionEngine, type GuestSnapshot } from "./index";
 
+/**
+ * Ticket 09's Test-First Acceptance Criteria, run against the fake `RepositoryPort` (ticket 03) plus real
+ * `PlayerEngine`/`LibraryEngine`/`TimelineEngine` instances - mirrors `player-engine.test.ts`'s
+ * `buildEngine` pattern. Each `it()` below is titled to match a checkbox in
+ * `.scratch/pic-tracer-bullet/issues/09-session-engine.md` exactly, plus additional coverage for
+ * finishAnyway completion, a no-pending-request promotion, and a fail-then-retry-succeeds sequence.
+ */
 describe("SessionEngine", () => {
   function buildEngine(
     port: RepositoryPort = new FakeRepositoryPort(),
@@ -72,6 +80,8 @@ describe("SessionEngine", () => {
       "passes straight through to finish()/finishAnyway() with no gate signal when mode is authenticated";
     it(passthroughTitle, async () => {
       const { port, playerEngine, sessionEngine } = buildEngine();
+      // The only documented way to reach 'authenticated' is a successful promote() call (ticket 09 DoD) -
+      // this doubles as coverage that promote() correctly flips mode with no pending finish request queued.
       await sessionEngine.promote(buildGuestSnapshot(), "user-1");
       expect(sessionEngine.getState().mode).toBe("authenticated");
 
@@ -137,6 +147,9 @@ describe("SessionEngine", () => {
 
       await sessionEngine.promote(buildGuestSnapshot(), "user-1");
 
+      // No dedicated "clearable" field exists on getState() (ticket 09's own 3-field shape) - reaching
+      // mode: 'authenticated' + promotionStatus: 'succeeded' together *is* the documented signal a caller
+      // (pic-web) reads before it calls LocalGuestRepository's own clear/reset and swaps its active adapter.
       expect(sessionEngine.getState()).toEqual({
         mode: "authenticated",
         gateTriggered: false,
@@ -150,7 +163,7 @@ describe("SessionEngine", () => {
       const { port, playerEngine, sessionEngine } = buildEngine();
       const sessionId = await playerEngine.startSession("treatment-1", null, ["a"]);
       await playerEngine.respondTerminalNemar(sessionId, "yes");
-      await sessionEngine.onFinishRequested(sessionId, "finish");
+      await sessionEngine.onFinishRequested(sessionId, "finish"); // gated - guest mode, not yet run
 
       const gatedSession = await port.getPlayerSession(sessionId);
       await sessionEngine.promote(buildGuestSnapshot({ playerSession: gatedSession! }), "user-1");
@@ -163,6 +176,8 @@ describe("SessionEngine", () => {
     it("on success completes an originally-requested finishAnyway() call the same way", async () => {
       const { port, playerEngine, sessionEngine } = buildEngine();
       const sessionId = await playerEngine.startSession("treatment-1", null, ["a", "b"]);
+      // terminal_nemar_response stays null - finish() would throw, proving this really routed through
+      // finishAnyway() and not a silent fallback to finish().
       await sessionEngine.onFinishRequested(sessionId, "finishAnyway");
 
       const gatedSession = await port.getPlayerSession(sessionId);
@@ -193,16 +208,16 @@ describe("SessionEngine", () => {
       await sessionEngine.onFinishRequested(sessionId, "finish");
       const snapshot = buildGuestSnapshot({ playerSession: (await port.getPlayerSession(sessionId))! });
 
-      await sessionEngine.promote(snapshot, "user-1");
+      await sessionEngine.promote(snapshot, "user-1"); // first attempt: rejected
 
       expect(sessionEngine.getState()).toEqual({
         mode: "guest",
-        gateTriggered: true,
+        gateTriggered: true, // still gating - the EM's pending Finish is still waiting, not abandoned
         promotionStatus: "failed",
       });
       expect((await port.getPlayerSession(sessionId))?.success_declared).toBe(false);
 
-      await sessionEngine.promote(snapshot, "user-1");
+      await sessionEngine.promote(snapshot, "user-1"); // retry with the identical payload: succeeds
 
       expect(sessionEngine.getState()).toEqual({
         mode: "authenticated",
@@ -251,6 +266,40 @@ describe("SessionEngine", () => {
         { unit_id: "b", state: "unseen" },
       ]);
     });
+    it("replays the gated finish against the swapped authenticated adapter after promotion", async () => {
+      const guestPort = new FakeRepositoryPort();
+      const authenticatedPort = new FakeRepositoryPort();
+      const delegatingPort = new DelegatingRepositoryPort(guestPort);
+      const libraryEngine = new LibraryEngine(delegatingPort);
+      const timelineEngine = new TimelineEngine(delegatingPort);
+      const playerEngine = new PlayerEngine(delegatingPort, libraryEngine, timelineEngine);
+      const sessionEngine = new SessionEngine(delegatingPort, playerEngine, {
+        onPromotionSucceeded: () => delegatingPort.swapProvider(authenticatedPort),
+      });
+
+      const promoteGuest = guestPort.promoteGuestToAccount.bind(guestPort);
+      vi.spyOn(guestPort, "promoteGuestToAccount").mockImplementation(async (input) => {
+        const result = await promoteGuest(input);
+        await authenticatedPort.saveGroup(input.group);
+        await authenticatedPort.savePlayerSession(input.playerSession);
+        await authenticatedPort.getOrCreateLibraryRow(input.playerSession.treatment_id, {
+          source: "guest_promotion",
+          first_seen_at: new Date().toISOString(),
+        });
+        return result;
+      });
+
+      const sessionId = await playerEngine.startSession("treatment-1", null, ["a"]);
+      await playerEngine.respondTerminalNemar(sessionId, "yes");
+      await sessionEngine.onFinishRequested(sessionId, "finish");
+
+      const gatedSession = await guestPort.getPlayerSession(sessionId);
+      await sessionEngine.promote(buildGuestSnapshot({ playerSession: gatedSession! }), "user-1");
+
+      expect(delegatingPort.getProvider()).toBe(authenticatedPort);
+      expect((await authenticatedPort.getPlayerSession(sessionId))?.success_declared).toBe(true);
+      expect((await guestPort.getPlayerSession(sessionId))?.success_declared).toBe(false);
+    });
   });
 
   describe("gate state refresh resilience", () => {
@@ -287,7 +336,7 @@ describe("SessionEngine", () => {
       const port = new FakeRepositoryPort();
       const { playerEngine, sessionEngine } = buildEngine(port);
       const sessionId = await playerEngine.startSession("treatment-1", null, ["a"]);
-      await sessionEngine.onFinishRequested(sessionId, "finish");
+      await sessionEngine.onFinishRequested(sessionId, "finish"); // gate the state first, then abandon it
 
       const methodNames = [
         "getGroup",
@@ -301,7 +350,7 @@ describe("SessionEngine", () => {
       ] as const;
       const spies = methodNames.map((methodName) => vi.spyOn(port, methodName));
 
-      sessionEngine.discardGuestState();
+      await sessionEngine.discardGuestState();
 
       for (const spy of spies) {
         expect(spy).not.toHaveBeenCalled();
@@ -312,7 +361,7 @@ describe("SessionEngine", () => {
       const port = new FakeRepositoryPort();
       vi.spyOn(port, "promoteGuestToAccount").mockRejectedValueOnce(new Error("network drop"));
       const { sessionEngine } = buildEngine(port);
-      await sessionEngine.promote(buildGuestSnapshot(), "user-1");
+      await sessionEngine.promote(buildGuestSnapshot(), "user-1"); // fails, leaves promotionStatus 'failed'
       expect(sessionEngine.getState().promotionStatus).toBe("failed");
 
       await sessionEngine.discardGuestState();
