@@ -182,11 +182,59 @@ One `it()` per matrix row above, named after the scenario column, e.g.:
 
 ## Resolution
 
-**Status: PAUSED at the migration checkpoint — NOT done.** Per the orchestrator's brief, this ticket
-cannot apply SQL migrations in this sandbox (no Docker/Supabase CLI/direct Postgres connection). The
-migration below is fully drafted, committed, and red-proofed against the current (pre-migration) remote
-project, then work stopped exactly as instructed. `**Status:**` above intentionally remains
-`ready-for-agent` until resumed post-migration and driven to green.
+**Status: PAUSED at a SECOND migration checkpoint — NOT done.** The first migration
+(`20260813141210_promote_guest_to_account_rpc.sql`, drafted/committed/red-proofed in the session
+documented below) was confirmed applied by the Event Manager. On resuming and re-running the suite
+against the now-migrated remote project, a genuine bug in that applied SQL surfaced (see "Resumed
+session" below): `encode(digest(...), 'sha256')` fails with `function digest(text, unknown) does not
+exist`, because this Supabase project installs `pgcrypto` into its own `extensions` schema, not
+`public`, and the function restricts `search_path` to `public`. A hotfix migration
+(`20260813173036_promote_guest_to_account_rpc_fix_digest.sql`, swapping to core Postgres `md5()`,
+which needs no extension at all) has been drafted and committed, per this wave's same discipline —
+this sandbox still cannot apply SQL itself, so this checkpoint requires the same manual-application
+step as the first. `**Status:**` above intentionally remains `ready-for-agent`.
+
+### Resumed session — second checkpoint (this pass)
+
+1. Confirmed via `scripts/wave6-supabase-audit.mjs` that the first migration's schema surface (RPC
+   present, both new columns present) and clean-state baseline (all Wave 6 tables at 0 rows, `treatments`
+   at 3 seed rows) matched the orchestrator's independent pulse-audit exactly.
+2. Re-ran the full `promoteGuestToAccount` suite against the now-migrated project: **7 of 8 failed**, all
+   with the identical `function digest(text, unknown) does not exist` error (including row 3's
+   constraint-violation test, which never even reaches its own FK-violating insert — the fingerprint
+   computation runs first, unconditionally, for every call) — **1 of 8 passed** (row 7, partial-payload
+   rejection), but for a subtly wrong reason: my own test asserted the wrong expected message.
+3. **Fixed a test-side bug** (not an RPC bug): row 7 sent `p_symptoms: null` expecting the RPC's
+   `jsonb_typeof(p_symptoms) is distinct from 'array'` check to fire ("must be a jsonb array"), but the
+   function's earlier, more generic null-argument check (`p_guest_group is null or p_symptoms is null or
+   ...`) correctly catches `null` first — a null value can't be typeof-checked as an array in the first
+   place. Updated the test's expected message to match this actual, correct validation order. Zero rows
+   written either way, so the ticket's own row-7 assertion ("the RPC rejects cleanly with an error; zero
+   rows written") still holds — only the specific expected error text was wrong.
+4. **Diagnosed the real RPC bug**: drafted a hotfix migration
+   (`20260813173036_promote_guest_to_account_rpc_fix_digest.sql`) that re-supplies the function's full body
+   with `md5(...)` (core Postgres, `pg_catalog`, no extension dependency, always resolvable under any
+   `search_path`) in place of `encode(digest(...), 'sha256')` — a pure internal-implementation swap to a
+   write-only fingerprint (never returned to any caller), no behavior/column/return-shape change. Does
+   **not** edit the already-applied first migration file, per this wave's established rule.
+5. Re-ran the suite again after the test fix: **row 7 now passes** (confirming the fix was correct and the
+   RPC's actual validation order is sound), and the **same 7 tests fail with the exact same digest error**
+   — confirming this is the single remaining blocker, not a symptom of several different problems.
+6. Re-verified clean state via `scripts/wave6-supabase-audit.mjs` before and after this diagnostic run: all
+   4 Wave 6 tables at 0 rows, `treatments` at 3 seed rows, both times — every one of these 7 failing calls
+   raised inside its own transaction before any insert ever ran, so nothing needed manual sweeping.
+7. Committed both the test fix and the hotfix migration in one `[13]`-prefixed commit, then stopped here
+   to report back rather than assuming the fix is correct without the Event Manager applying and
+   re-verifying it against the real project (same "don't skip the real-project proof" discipline as the
+   first checkpoint, and as ticket 12 established before this one).
+
+**What still needs to happen once the hotfix migration is applied:** re-run the full suite (this is now
+expected to be the final iteration — no other bug is currently known or suspected), confirm all 8 tests
+pass with real (not error-message-derived) timing/`use_count` observations for rows 4/5/6, run ≥3
+consecutive stability passes, re-confirm zero regressions workspace-wide, re-confirm clean state, then
+finalize this section to reflect the fully green state and flip `**Status:**` to `done`.
+
+### First checkpoint (original session, preserved verbatim below)
 
 ### Solution Path (so far)
 
