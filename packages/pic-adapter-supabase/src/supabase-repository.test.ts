@@ -870,11 +870,15 @@ describe("SupabaseRepository", () => {
       // Asserted against the RPC's own specific validation message, not merely "error is not null" (nor
       // merely "mentions p_symptoms" - PostgREST's own "could not find the function" error already lists
       // every parameter name it was looking for, p_symptoms included, so that weaker check would still
-      // trivially pass for the wrong reason pre-migration). Requiring "must be a jsonb array" verbatim
-      // means this test properly fails red right now (the real error is "Could not find the
-      // function...", which does not contain that phrase) and will only pass once the migration is
+      // trivially pass for the wrong reason pre-migration). A null p_symptoms hits the RPC's generic
+      // required-arguments check (it runs before the more specific jsonb_typeof array check, since a null
+      // argument can't be typeof-checked in the first place) - so "are all required" is the actual, correct
+      // validation message for this exact payload, not "must be a jsonb array" (that message is reserved
+      // for a non-null p_symptoms of the wrong jsonb type, e.g. an object instead of an array). Requiring
+      // this verbatim means the test properly fails red right now (the real pre-migration error is "Could
+      // not find the function...", which contains neither phrase) and will only pass once the migration is
       // applied *and* this exact validation path behaves as designed.
-      expect(error?.message).toMatch(/must be a jsonb array/i);
+      expect(error?.message).toMatch(/p_guest_group, p_symptoms, p_player_session, and p_new_user_id are all required/i);
 
       await expectNoPromotionRowsLanded({
         groupId: group.id,
