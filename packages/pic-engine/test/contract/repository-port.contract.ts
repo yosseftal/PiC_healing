@@ -85,12 +85,31 @@ export interface RepositoryPortContractOptions {
    * see this file's header comment for why `pic-adapter-local-guest` needs this.
    */
   skipPromoteGuestToAccount?: boolean;
+  /**
+   * Factory for a `treatmentId` to use in fixtures that need one (added, ticket 12/Wave 6). Defaults to a
+   * synthetic, non-UUID string (`uniqueId("treatment")`) - safe for the fake and `pic-adapter-local-guest`,
+   * neither of which enforces any existence or format constraint on a `treatmentId`.
+   *
+   * A real Postgres-backed adapter (`pic-adapter-supabase`) enforces `personal_treatment_library.treatment_id`
+   * / `timeline_events.treatment_id` as `uuid` foreign keys into `treatments` (ticket 11's migration), with no
+   * insert policy letting an authenticated session create its own `treatments` row. A synthetic id fails
+   * there before RLS is even consulted - a genuine structural mismatch between this adapter-agnostic suite
+   * and that adapter's strict relational schema, found and escalated during ticket 12 (Wave 6). Every real
+   * call site in the shipped product already only ever passes a real, pre-existing `treatments.id` (
+   * `LibraryEngine.recordUse` receives it from `PlayerEngine`, which only ever runs a real treatment), so a
+   * Postgres-backed adapter's test file should supply a factory returning one of its own real, pre-seeded
+   * treatment ids here instead of accepting the default - see `pic-adapter-supabase`'s test file for the
+   * concrete factory it passes.
+   */
+  makeTreatmentId?: () => string;
 }
 
 export function runRepositoryPortContractTests(
   makePort: () => RepositoryPort,
   options: RepositoryPortContractOptions = {},
 ): void {
+  const makeTreatmentId = options.makeTreatmentId ?? (() => uniqueId("treatment"));
+
   describe("RepositoryPort contract", () => {
     let port: RepositoryPort;
 
@@ -100,7 +119,7 @@ export function runRepositoryPortContractTests(
 
     describe("incrementUseCount", () => {
       it("increments use_count by exactly 1", async () => {
-        const row = await port.getOrCreateLibraryRow(uniqueId("treatment"), buildProvenance());
+        const row = await port.getOrCreateLibraryRow(makeTreatmentId(), buildProvenance());
         expect(row.use_count).toBe(0);
 
         const updated = await port.incrementUseCount(row.id, uniqueId("idempotency-key"));
@@ -109,7 +128,7 @@ export function runRepositoryPortContractTests(
       });
 
       it("called twice with the same idempotencyKey increments exactly once", async () => {
-        const row = await port.getOrCreateLibraryRow(uniqueId("treatment"), buildProvenance());
+        const row = await port.getOrCreateLibraryRow(makeTreatmentId(), buildProvenance());
         const sameKey = uniqueId("idempotency-key");
 
         const firstCall = await port.incrementUseCount(row.id, sameKey);
@@ -129,7 +148,7 @@ export function runRepositoryPortContractTests(
 
     describe("getOrCreateLibraryRow", () => {
       it("creates a new row on first call and returns the same row id on a second call for the same treatment", async () => {
-        const treatmentId = uniqueId("treatment");
+        const treatmentId = makeTreatmentId();
         const provenance = buildProvenance();
 
         const firstCall = await port.getOrCreateLibraryRow(treatmentId, provenance);
@@ -144,7 +163,7 @@ export function runRepositoryPortContractTests(
       it("never removes or mutates previously appended events", async () => {
         const firstEvent = await port.appendTimelineEvent({
           log_type: "treatment_execution",
-          treatment_id: uniqueId("treatment"),
+          treatment_id: makeTreatmentId(),
           library_row_id: null,
           linked_group_id: null,
           metadata: { note: "first" },
@@ -153,7 +172,7 @@ export function runRepositoryPortContractTests(
 
         const secondEvent = await port.appendTimelineEvent({
           log_type: "treatment_execution",
-          treatment_id: uniqueId("treatment"),
+          treatment_id: makeTreatmentId(),
           library_row_id: null,
           linked_group_id: null,
           metadata: { note: "second" },
@@ -165,7 +184,7 @@ export function runRepositoryPortContractTests(
         // `getTimelineEvents` read method) is that previously-returned event objects stay unchanged.
         await port.appendTimelineEvent({
           log_type: "treatment_execution",
-          treatment_id: uniqueId("treatment"),
+          treatment_id: makeTreatmentId(),
           library_row_id: null,
           linked_group_id: null,
           metadata: { note: "third" },

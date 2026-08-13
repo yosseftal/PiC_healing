@@ -132,6 +132,85 @@ beforeAll(async () => {
   seedTreatmentId = data.id as string;
 });
 
+/**
+ * A small pool of **fresh, ephemeral** real `treatments` rows for the shared contract suite's
+ * `makeTreatmentId` factory (see `repository-port.contract.ts`'s doc comment on that option). A single
+ * fixed id (like `seedTreatmentId` above) is wrong here: the contract suite reuses one shared
+ * authenticated session across every `it()`, so two tests calling `getOrCreateLibraryRow` with the *same*
+ * `(user_id, treatment_id)` pair would collide on the same real row and leak `use_count` state between
+ * tests - exactly the cross-test contamination a fresh-per-call id is supposed to prevent. Each pool row
+ * is deleted in `afterAll`, so this file leaves no debris in the Event Manager's real project.
+ */
+const ephemeralContractTreatmentIds: string[] = [];
+let contractTreatmentIdPool: string[] = [];
+
+beforeAll(async () => {
+  const poolSize = 10;
+  const { data, error } = await serviceClient
+    .from("treatments")
+    .insert(
+      Array.from({ length: poolSize }, (_, index) => ({
+        title: `Wave 6 contract-suite fixture treatment ${index + 1}`,
+        structured_markdown: "### Fixture\n\nEphemeral treatment row for RepositoryPort contract-suite isolation.",
+        user_id: null,
+      })),
+    )
+    .select("id");
+  if (error || !data) {
+    throw new Error(`Failed to create ephemeral contract-suite treatment pool: ${error?.message ?? "no rows"}`);
+  }
+  const ids = data.map((row) => row.id as string);
+  contractTreatmentIdPool = ids;
+  ephemeralContractTreatmentIds.push(...ids);
+});
+
+/**
+ * Self-contained cleanup, not dependent on hook-ordering luck with the user-cleanup `afterAll` above:
+ * dependent rows (created by the contract suite's own `getOrCreateLibraryRow`/`appendTimelineEvent`
+ * calls against these ephemeral ids) are deleted explicitly first, since `treatments` has no `on delete
+ * cascade` from its dependents (ticket 11's migration deliberately leaves referential integrity strict -
+ * "no insert/update/delete policy... only service_role may write here for now"). Deleting in the wrong
+ * order previously surfaced as `error code 23503` (foreign key violation) - caught during this ticket's
+ * own verification, not a hypothetical.
+ */
+afterAll(async () => {
+  if (ephemeralContractTreatmentIds.length === 0) {
+    return;
+  }
+  const { error: libraryError } = await serviceClient
+    .from("personal_treatment_library")
+    .delete()
+    .in("treatment_id", ephemeralContractTreatmentIds);
+  if (libraryError) {
+    throw new Error(`Failed to clean up dependent personal_treatment_library rows: ${libraryError.message}`);
+  }
+  const { error: timelineError } = await serviceClient
+    .from("timeline_events")
+    .delete()
+    .in("treatment_id", ephemeralContractTreatmentIds);
+  if (timelineError) {
+    throw new Error(`Failed to clean up dependent timeline_events rows: ${timelineError.message}`);
+  }
+  const { error: treatmentsError } = await serviceClient
+    .from("treatments")
+    .delete()
+    .in("id", ephemeralContractTreatmentIds);
+  if (treatmentsError) {
+    throw new Error(`Failed to clean up ephemeral contract-suite treatments: ${treatmentsError.message}`);
+  }
+});
+
+function makeContractTreatmentId(): string {
+  const next = contractTreatmentIdPool.shift();
+  if (next === undefined) {
+    throw new Error(
+      "makeContractTreatmentId: ephemeral treatment id pool exhausted - increase poolSize above " +
+        "(the shared RepositoryPort contract suite needs one fresh id per isolation-sensitive call).",
+    );
+  }
+  return next;
+}
+
 function buildProvenance(overrides: Partial<LibraryRowProvenance> = {}): LibraryRowProvenance {
   return { source: "standalone_player", first_seen_at: new Date().toISOString(), ...overrides };
 }
@@ -145,20 +224,17 @@ function buildProvenance(overrides: Partial<LibraryRowProvenance> = {}): Library
  * `skipPromoteGuestToAccount: true` - ticket 13 owns that RPC exclusively; see
  * `SupabaseRepositoryPromotionNotImplementedError`'s own doc comment.
  *
- * **Known, escalated limitation (see this ticket's Resolution Deviations for the full writeup):** this
- * suite's own fixture builders (`uniqueId("treatment")` in `repository-port.contract.ts`) generate opaque,
- * non-UUID strings like `"treatment-1"` as `treatmentId` values. Every real usage of this port in the
- * shipped product always passes a real `treatments.id` UUID (`LibraryEngine.recordUse` receives it from
- * `PlayerEngine`, which only ever runs a real treatment) - but `personal_treatment_library.treatment_id`
- * and `timeline_events.treatment_id` are real Postgres `uuid` columns with foreign keys into `treatments`
- * (ticket 11's already-applied migration), and only `service_role` may write to `treatments` at all (no
- * insert policy exists for authenticated Event Managers yet). Postgres rejects a non-UUID string at the
- * type-parsing stage before RLS or the foreign key are even consulted, so the `getOrCreateLibraryRow`,
- * `incrementUseCount`, and `appendTimelineEvent` blocks below are expected to fail against this real
- * schema - a genuine structural mismatch between ticket 03's adapter-agnostic fixtures and ticket 11's
- * strict relational schema, not a bug in this adapter. This adapter's own correctness for exactly these
- * same three methods is proven immediately below, in the "Adapter-specific Testing Requirement" describe
- * block, using real seeded `treatmentId` values.
+ * **`makeTreatmentId` override (Wave 6 fix, orchestrator-approved):** this suite's own default fixture
+ * builder (`uniqueId("treatment")` in `repository-port.contract.ts`) generates opaque, non-UUID strings
+ * like `"treatment-1"`. `personal_treatment_library.treatment_id` / `timeline_events.treatment_id` are
+ * real Postgres `uuid` foreign keys into `treatments` (ticket 11's migration), with no insert policy
+ * letting an authenticated session create its own `treatments` row - so a synthetic id fails at the
+ * type-parsing stage before RLS or the foreign key are even consulted. `repository-port.contract.ts` now
+ * exposes an optional `makeTreatmentId` factory (default preserved for the fake / `pic-adapter-local-guest`,
+ * neither of which cares about id format) - this adapter supplies `makeContractTreatmentId`, which hands
+ * out a fresh, ephemeral, real `treatments.id` per call (see that function's doc comment for why a single
+ * fixed id is not enough), so every block in the shared suite now exercises this adapter's genuine
+ * referential-integrity constraint instead of tripping over it.
  */
 let sharedContractTestUser: TestUser | undefined;
 
@@ -173,7 +249,7 @@ runRepositoryPortContractTests(
     }
     return new SupabaseRepository(sharedContractTestUser.client);
   },
-  { skipPromoteGuestToAccount: true },
+  { skipPromoteGuestToAccount: true, makeTreatmentId: makeContractTreatmentId },
 );
 
 describe("SupabaseRepository", () => {

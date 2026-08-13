@@ -52,10 +52,11 @@ before the highest-risk piece (the promotion RPC, ticket 13) is layered on top.
 ## Acceptance Criteria
 
 - [x] All seven non-promotion `RepositoryPort` methods are implemented against real Supabase.
-- [~] The shared contract suite passes against a local `supabase start` instance - approved substitution to
-      the real remote project; **partially green, with an escalated, documented structural conflict** for 3
-      of the 4 non-promotion blocks. See Resolution → Deviations #5 below for the full analysis and
-      evidence; this adapter's own correctness for the exact same three methods is separately proven green.
+- [x] The shared contract suite passes against the real remote project (approved substitution for local
+      `supabase start`) - **100% green**: 16 passed, 5 skipped (`promoteGuestToAccount`, deferred to ticket
+      13), 0 failed, stable across three consecutive runs. The structural conflict originally found here
+      (Deviation #5) was root-caused and fixed at the orchestrator's direction - see Deviation #5's
+      "Resolution" addendum below.
 - [x] `promoteGuestToAccount` is a clearly-labeled stub, not a silent no-op.
 - [x] No manual `user_id` filtering exists as a substitute for RLS.
 
@@ -192,3 +193,35 @@ reproduced identically across three separate runs with distinct error messages c
    policy for authenticated Event Managers creating their own Personal Content `treatments` rows (ADR-0001
    already anticipates this as "a plausible future," just not yet built). Neither option is in this
    ticket's permission table, so neither was attempted here.
+
+   **Resolution (orchestrator, same wave):** Event Manager chose option (a). `repository-port.contract.ts`
+   now exposes an optional `makeTreatmentId?: () => string` on `RepositoryPortContractOptions`, defaulting
+   to the original `uniqueId("treatment")` (zero behavior change for the fake / `pic-adapter-local-guest`,
+   neither of which passes this option). The three affected blocks
+   (`incrementUseCount` ×2 `it()`s, `getOrCreateLibraryRow`, `appendTimelineEvent` ×3 calls) now call
+   `makeTreatmentId()` instead of `uniqueId("treatment")` directly.
+
+   `supabase-repository.test.ts` supplies `makeContractTreatmentId`, which hands out one id per call from a
+   pool of **fresh, ephemeral** real `treatments` rows (`user_id: null`, Global Content per ADR-0001)
+   created in a `beforeAll` and deleted in an `afterAll` - a single fixed id (e.g. the existing
+   `seedTreatmentId`) was tried first and found insufficient: the contract suite reuses one shared
+   authenticated session across every `it()`, so two tests calling `getOrCreateLibraryRow` with the same
+   `(user_id, treatment_id)` pair collided on the same real row and leaked `use_count` state between tests
+   (caught immediately by the very next run after the uuid-format fix alone - `1 failed | 15 passed`,
+   `expected 2 to be 1`). A pool of 10 fresh ids per run resolved this fully.
+
+   The ephemeral pool's own cleanup surfaced a second real bug, also caught via this same verification
+   pass, not assumed away: the first cleanup attempt (`treatments` delete only) hit Postgres error `23503`
+   ("still referenced from table personal_treatment_library") - deleting `treatments` before its dependent
+   rows, relying on hook-execution-order luck with the *other* `afterAll` in this file (user cleanup, which
+   cascades those dependents away via `profiles.user_id on delete cascade`) that never actually held. Fixed
+   by making the pool's own `afterAll` self-contained: it explicitly deletes any `personal_treatment_library`
+   / `timeline_events` rows referencing its own ephemeral ids before deleting the `treatments` rows
+   themselves, and now throws (rather than silently swallowing) on any cleanup error.
+
+   **Final, independently re-verified result:** 16 passed, 5 skipped, 0 failed - stable across three
+   consecutive full runs, with a full `scripts/wave6-supabase-audit.mjs` clean-state sweep (`treatments`
+   back to exactly 3 seed rows, all four Wave 6 tables at 0 rows) confirmed after each run. `npx tsc --noEmit`
+   and `depcruise` (both `pic-engine` and `pic-web`, zero violations) re-verified after the fix. The 30
+   orphaned fixture rows left behind by the diagnostic process (two buggy cleanup attempts before the
+   self-contained fix landed) were swept up by hand before the final verification pass - none remain.
