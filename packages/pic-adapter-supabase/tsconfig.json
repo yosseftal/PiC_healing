@@ -2,7 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    // Scoped to this package only (mirrors pic-adapter-local-guest/tsconfig.json's identical note): this
+    // package's test file uses `node:fs`/`node:url`/`node:crypto`/`import.meta.url` to load `.env.local`
+    // and provision ephemeral test users, and there is no TS project-references build here, so a
+    // single-package `tsc --noEmit` run also type-checks those Node-only call sites.
+    "types": ["node"]
   },
   "include": ["src"]
 }
