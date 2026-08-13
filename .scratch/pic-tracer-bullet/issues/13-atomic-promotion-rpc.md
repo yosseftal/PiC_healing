@@ -7,7 +7,7 @@ event — into a newly authenticated account, all-or-nothing. Then wire it into 
 **Blocked by:** 09 (`SessionEngine` — defines the shape of `guestState`/`newUserId` this RPC receives), 11
 (Supabase schema migration), 12 (`pic-adapter-supabase` standard CRUD + stub to fill in).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Source:** `docs/specs/tracer-bullet-happy-path.md` §E in full, Testing Decisions
 ("Guest→Promotion is the highest-risk integration point"), User Stories 34–39.
@@ -163,38 +163,101 @@ Assertion: the RPC rejects cleanly with an error; zero rows written; no orphaned
 
 One `it()` per matrix row above, named after the scenario column, e.g.:
 
-- [ ] `it('happy path with no group link promotes all five entities and clears local guest state')`
-- [ ] `it('happy path with a group link carries the link onto the player session and timeline event')`
-- [ ] `it('mid-transaction failure via forced constraint violation leaves zero rows in any table')`
-- [ ] `it('mid-transaction failure via connection drop leaves zero rows and permits a clean retry')`
-- [ ] `it('calling promote() twice with the same idempotency key produces exactly one row-set and one
+- [x] `it('happy path with no group link promotes all five entities and clears local guest state')`
+- [x] `it('happy path with a group link carries the link onto the player session and timeline event')`
+- [x] `it('mid-transaction failure via forced constraint violation leaves zero rows in any table')`
+- [x] `it('mid-transaction failure via connection drop leaves zero rows and permits a clean retry')`
+- [x] `it('calling promote() twice with the same idempotency key produces exactly one row-set and one
       use_count increment')`
-- [ ] `it('a dropped-response retry produces exactly one row-set and one use_count increment')`
-- [ ] `it('a partial payload is rejected with zero rows written')`
+- [x] `it('a dropped-response retry produces exactly one row-set and one use_count increment')`
+- [x] `it('a partial payload is rejected with zero rows written')`
 
 ## Acceptance Criteria
 
-- [ ] All 7 adversarial matrix rows pass as independent tests against a local `supabase start` instance.
-- [ ] `pic-adapter-supabase.promoteGuestToAccount` calls the RPC exactly once per invocation.
-- [ ] No client-side multi-insert fallback exists anywhere — the RPC is the sole transaction boundary.
-- [ ] `use_count` is never observed to be anything other than exactly `1` after any successful promotion,
+- [x] All 7 adversarial matrix rows pass as independent tests against the real remote project (this
+      sandbox has no local `supabase start`; see Resolution for why the remote project was used instead,
+      matching tickets 11/12's own precedent).
+- [x] `pic-adapter-supabase.promoteGuestToAccount` calls the RPC exactly once per invocation.
+- [x] No client-side multi-insert fallback exists anywhere — the RPC is the sole transaction boundary.
+- [x] `use_count` is never observed to be anything other than exactly `1` after any successful promotion,
       no matter how many retries preceded it.
 
 ## Resolution
 
-**Status: PAUSED at a SECOND migration checkpoint — NOT done.** The first migration
-(`20260813141210_promote_guest_to_account_rpc.sql`, drafted/committed/red-proofed in the session
-documented below) was confirmed applied by the Event Manager. On resuming and re-running the suite
-against the now-migrated remote project, a genuine bug in that applied SQL surfaced (see "Resumed
-session" below): `encode(digest(...), 'sha256')` fails with `function digest(text, unknown) does not
-exist`, because this Supabase project installs `pgcrypto` into its own `extensions` schema, not
-`public`, and the function restricts `search_path` to `public`. A hotfix migration
-(`20260813173036_promote_guest_to_account_rpc_fix_digest.sql`, swapping to core Postgres `md5()`,
-which needs no extension at all) has been drafted and committed, per this wave's same discipline —
-this sandbox still cannot apply SQL itself, so this checkpoint requires the same manual-application
-step as the first. `**Status:**` above intentionally remains `ready-for-agent`.
+**Status: DONE — fully green against the real remote project.** Both migrations
+(`20260813141210_promote_guest_to_account_rpc.sql`, the original RPC/columns, and
+`20260813173036_promote_guest_to_account_rpc_fix_digest.sql`, the `digest()` → `md5()` hotfix found on
+the first resumed run) are confirmed applied by the Event Manager. All 7 required adversarial matrix
+rows plus the extra 8th hardening test now pass, consistently, across multiple runs, against the real
+project — see "Final checkpoint" below for the real observed values the Event Manager specifically
+asked for (Row 4 timing, Row 5/6 `use_count`), plus regression/clean-state confirmation.
 
-### Resumed session — second checkpoint (this pass)
+### Final checkpoint — fully green (this pass)
+
+Resumed after the Event Manager confirmed the `digest()` hotfix migration applied. Re-verified via
+`scripts/wave6-supabase-audit.mjs` that the schema/RPC surface and clean-state baseline still matched
+before touching anything.
+
+**1. All 8 tests pass** (`NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run packages/pic-adapter-supabase -t
+"promoteGuestToAccount"`): happy path (no link), happy path (with link), forced-FK-violation, connection
+drop, retry-idempotency, dropped-response-retry, partial-payload-rejection, and the extra
+cross-identity-mismatch test — **8 passed, 20 skipped** (the skipped are the frozen `RepositoryPort`
+contract suite's own `promoteGuestToAccount` block, `skipPromoteGuestToAccount: true` for this adapter,
+and ticket 11/12's own tests not matched by the `-t` filter).
+
+**2. Row 4 (connection drop) — real observed timing, not just "assertion passed":** temporarily
+instrumented the test with `Date.now()` timestamps around the abort (removed immediately after capturing
+this data; the committed test file is unchanged). Observed: the client's `AbortController` fired and the
+RPC call rejected after **308ms** (target: 300ms — the ~8ms delta is normal `setTimeout`/event-loop
+scheduling slop), with error message **`"AbortError: This operation was aborted"`** — well before the
+server-side `pg_sleep(3)` (3000ms) could ever complete, confirming the abort genuinely wins the race
+against a real 3-second server-side sleep on this project's real latency profile, not merely "plausible on
+paper." The test's own subsequent 3200ms wait (to let the server-side statement actually finish rolling
+back before asserting zero rows) then elapses, and the whole test completes in ~4.8s total — consistent
+with 308ms (abort) + ~3200ms (wait) + ~1.2s (the clean retry call that follows).
+
+**3. Rows 5 & 6 (retry idempotency) — real observed `use_count` values, not just "test passed":** same
+temporary-instrumentation approach (added, captured, removed).
+- **Row 5** (clean success then retry): `first.libraryRow.use_count = 1`, `second.libraryRow.use_count =
+  1` — the retry's own returned value equals the original, not `2`.
+- **Row 6** (dropped-response retry): `dropped.libraryRow.use_count = 1`, `retry.libraryRow.use_count =
+  1` — same guarantee under the "caller never saw the first reply" framing.
+- Both also independently assert exactly one `timeline_events` row for the session id (verified directly
+  via `serviceClient`, bypassing RLS) — no duplicate row, no duplicate increment, under either retry
+  framing.
+
+**4. Stability — 4 consecutive full-suite runs** (`NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run
+packages/pic-adapter-supabase`), all against the real project:
+- Run 1 (instrumented, `-t` filtered to `promoteGuestToAccount` only): 8/8 passed.
+- Run 2: 22 passed, 1 failed, 5 skipped — the *one* failure was
+  `createAuthenticatedTestUser: fetch failed` inside a **ticket-12 test** (`"a query for another user's
+  data returns empty due to RLS"`), a transient network error during sign-in, unrelated to
+  `promoteGuestToAccount` and to any of this ticket's changes. All 8 `promoteGuestToAccount` tests in this
+  same run passed.
+- Run 3: 23 passed, 0 failed, 5 skipped — clean.
+- Run 4: 23 passed, 0 failed, 5 skipped — clean.
+- Every `promoteGuestToAccount` row passed in every single run, all 4 times — the only observed flakiness
+  was one unrelated, transient network blip in a pre-existing ticket-12 test, immediately reproduced-clean
+  on the very next run.
+
+**5. Zero regressions confirmed:**
+- `npm run typecheck --workspaces --if-present` (all 4 packages: `pic-adapter-local-guest`,
+  `pic-adapter-supabase`, `pic-engine`, `pic-web`) — 0 errors.
+- `npm run depcruise` in `pic-engine` — **0 violations** (63 modules, 174 dependencies cruised).
+- `npm run depcruise` in `pic-web` — **0 violations** (286 modules, 472 dependencies cruised).
+- `NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run packages/pic-engine packages/pic-web
+  packages/pic-adapter-local-guest` — **109 passed, 5 skipped**, exactly matching the Event Manager's
+  expected baseline, zero regressions.
+
+**6. Clean-state confirmed before and after this entire session** via
+`scripts/wave6-supabase-audit.mjs`: all 4 Wave 6 tables (`symptom_groups`, `symptoms`, `player_sessions`,
+`personal_treatment_library`, `timeline_events` — 5 tables, all read as 0) at 0 rows, `treatments` at
+exactly 3 seed rows, both before the first test run of this session and after the very last one. No
+leftover debris was found from either of the two earlier paused-checkpoint sessions — every ephemeral test
+user's data cascaded away via the existing `afterAll` cleanup as designed, so no manual service-role sweep
+was ever needed.
+
+### Second checkpoint — the digest() bug (preceding pass, preserved for history)
 
 1. Confirmed via `scripts/wave6-supabase-audit.mjs` that the first migration's schema surface (RPC
    present, both new columns present) and clean-state baseline (all Wave 6 tables at 0 rows, `treatments`
@@ -228,11 +291,8 @@ step as the first. `**Status:**` above intentionally remains `ready-for-agent`.
    re-verifying it against the real project (same "don't skip the real-project proof" discipline as the
    first checkpoint, and as ticket 12 established before this one).
 
-**What still needs to happen once the hotfix migration is applied:** re-run the full suite (this is now
-expected to be the final iteration — no other bug is currently known or suspected), confirm all 8 tests
-pass with real (not error-message-derived) timing/`use_count` observations for rows 4/5/6, run ≥3
-consecutive stability passes, re-confirm zero regressions workspace-wide, re-confirm clean state, then
-finalize this section to reflect the fully green state and flip `**Status:**` to `done`.
+*(This was the second checkpoint's own "what's left" note — superseded by the "Final checkpoint" section
+above; the hotfix migration was applied, and every item listed here was subsequently completed.)*
 
 ### First checkpoint (original session, preserved verbatim below)
 
@@ -432,3 +492,8 @@ suite creates cascades away its own data via the existing `afterAll`, migration 
 
 No orphan-data risk, logic conflict, or ambiguity was found that blocks proceeding past this checkpoint —
 the two items above are both "please confirm this design choice," not "I don't know how to proceed."
+
+**Resolved:** the Event Manager explicitly reviewed and accepted both items (this authorization check,
+and the timeline-event-id-reuses-session-id deviation), along with the connection-drop gating mechanism,
+before applying the first migration — no changes requested to the drafted SQL. Both closed, no longer
+open.
