@@ -5,5 +5,4 @@ export {
   SupabaseLibraryRowNotFoundError,
   SupabaseRepository,
   SupabaseRepositoryNotAuthenticatedError,
-  SupabaseRepositoryPromotionNotImplementedError,
 } from "./supabase-repository";

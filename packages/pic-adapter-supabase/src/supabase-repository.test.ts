@@ -18,8 +18,9 @@ import { fileURLToPath } from "node:url";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FinalizedSymptomGroup, LibraryRowProvenance, PlayerSession, Symptom } from "pic-engine";
+import { PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 import { runRepositoryPortContractTests } from "pic-engine/test/contract/repository-port.contract";
-import { SupabaseRepository, SupabaseRepositoryPromotionNotImplementedError } from "./index";
+import { SupabaseRepository } from "./index";
 
 function loadEnvLocal(path: string): Record<string, string> {
   const content = readFileSync(path, "utf8");
@@ -524,41 +525,404 @@ describe("SupabaseRepository", () => {
     });
   });
 
+  /**
+   * Ticket 13's mandatory 7-row adversarial matrix (`.scratch/pic-tracer-bullet/issues/13-atomic-promotion-rpc.md`),
+   * plus one additional test (beyond the required 7) for the Wave 2.5 cross-identity-mismatch hardening
+   * the ticket's own Frozen Requirements section calls out in detail. Every `it()` provisions its own
+   * fresh ephemeral user (cleaned up by the file's top-level `afterAll`) so no test's promotion can ever
+   * collide with another's on `symptom_groups.id`/`player_sessions.id` (both real random UUIDs) or on
+   * `personal_treatment_library`'s `(user_id, treatment_id)` unique constraint (fresh `user_id` per test).
+   *
+   * `rated_at: null` on every fixture symptom (rather than the contract suite's default non-null value)
+   * deliberately sidesteps ticket 12's already-escalated, already-tested schema gap (`symptoms` has no
+   * `rated_at` column - see `SymptomRow`'s doc comment and this file's own
+   * "rated_at always reads back as null" test above) rather than re-proving it here; a real Guest symptom
+   * promoted through this same adapter would lose that field for the identical, already-documented
+   * reason, regardless of anything ticket 13 itself does.
+   */
   describe("promoteGuestToAccount", () => {
-    it("is a clearly-labeled stub that always throws, never a silent no-op", async () => {
-      const user = await createAuthenticatedTestUser();
-      const repository = new SupabaseRepository(user.client);
-      const group: FinalizedSymptomGroup = {
+    function buildGuestSymptom(overrides: Partial<Symptom> = {}): Symptom {
+      return {
+        id: randomUUID(),
+        name: "Lower Back Pain",
+        polarity: "negative",
+        intensity: 6,
+        rated_at: null,
+        ...overrides,
+      };
+    }
+
+    function buildGuestGroup(overrides: Partial<FinalizedSymptomGroup> = {}): FinalizedSymptomGroup {
+      return {
         id: randomUUID(),
         name: "Lower Back",
-        symptoms: [],
+        symptoms: [buildGuestSymptom()],
         created_at: new Date().toISOString(),
         joint_treatment_muscle_test: "together",
         joint_treatment_test_at: new Date().toISOString(),
+        ...overrides,
       };
-      const playerSession: PlayerSession = {
+    }
+
+    function buildGuestPlayerSession(overrides: Partial<PlayerSession> = {}): PlayerSession {
+      return {
         id: randomUUID(),
         treatment_id: seedTreatmentId,
-        linked_group_id: group.id,
-        units: [{ unit_id: randomUUID(), state: "unseen" }],
-        terminal_nemar_response: null,
-        success_declared: false,
-        finished_at: null,
+        linked_group_id: null,
+        units: [{ unit_id: randomUUID(), state: "completed" }],
+        terminal_nemar_response: "yes",
+        success_declared: true,
+        finished_at: new Date().toISOString(),
         integrating_reason: null,
+        ...overrides,
       };
+    }
 
+    /** Raw RPC payload shape - mirrors exactly what `SupabaseRepository.promoteGuestToAccount` itself
+     * sends, so row 4's and row 7's direct `client.rpc(...)` calls (which deliberately bypass the
+     * strongly-typed adapter method - the only way to inject the test-only connection-drop marker, or a
+     * genuinely malformed payload the adapter's own types could never construct) exercise the exact same
+     * wire shape as every other row. */
+    function toRpcPayload(
+      group: FinalizedSymptomGroup,
+      playerSession: PlayerSession,
+      newUserId: string,
+      options: { symptoms?: unknown; testOnlyConnectionDrop?: boolean } = {},
+    ) {
+      return {
+        p_guest_group: {
+          id: group.id,
+          name: group.name,
+          joint_treatment_muscle_test: group.joint_treatment_muscle_test,
+          joint_treatment_test_at: group.joint_treatment_test_at,
+          created_at: group.created_at,
+          ...(options.testOnlyConnectionDrop ? { __test_only_connection_drop__: true } : {}),
+        },
+        p_symptoms:
+          options.symptoms !== undefined
+            ? options.symptoms
+            : group.symptoms.map((symptom) => ({
+                id: symptom.id,
+                name: symptom.name,
+                polarity: symptom.polarity,
+                intensity: symptom.intensity,
+              })),
+        p_player_session: {
+          id: playerSession.id,
+          treatment_id: playerSession.treatment_id,
+          linked_group_id: playerSession.linked_group_id,
+          units: playerSession.units,
+          terminal_nemar_response: playerSession.terminal_nemar_response,
+          success_declared: playerSession.success_declared,
+          integrating_reason: playerSession.integrating_reason,
+          finished_at: playerSession.finished_at,
+        },
+        p_new_user_id: newUserId,
+      };
+    }
+
+    /** Queries every one of the 5 promoted tables directly (service role, bypassing RLS) so "zero rows
+     * landed" is verified against ground truth, not merely against what the calling session can see. */
+    async function expectNoPromotionRowsLanded(params: {
+      groupId: string;
+      sessionId: string;
+      newUserId: string;
+      treatmentId: string;
+    }): Promise<void> {
+      const { groupId, sessionId, newUserId, treatmentId } = params;
+      const [groupRows, symptomRows, sessionRows, libraryRows, timelineRows] = await Promise.all([
+        serviceClient.from("symptom_groups").select("id").eq("id", groupId),
+        serviceClient.from("symptoms").select("id").eq("group_id", groupId),
+        serviceClient.from("player_sessions").select("id").eq("id", sessionId),
+        serviceClient
+          .from("personal_treatment_library")
+          .select("id")
+          .eq("user_id", newUserId)
+          .eq("treatment_id", treatmentId),
+        serviceClient.from("timeline_events").select("id").eq("id", sessionId),
+      ]);
+      expect(groupRows.data ?? []).toHaveLength(0);
+      expect(symptomRows.data ?? []).toHaveLength(0);
+      expect(sessionRows.data ?? []).toHaveLength(0);
+      expect(libraryRows.data ?? []).toHaveLength(0);
+      expect(timelineRows.data ?? []).toHaveLength(0);
+    }
+
+    it("happy path with no group link promotes all five entities and clears local guest state", async () => {
+      const user = await createAuthenticatedTestUser();
+      const repository = new SupabaseRepository(user.client);
+      const group = buildGuestGroup();
+      const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+
+      const result = await repository.promoteGuestToAccount({
+        idempotencyKey: group.id,
+        group,
+        playerSession,
+        newUserId: user.userId,
+      });
+
+      expect(result.group).toEqual(group);
+      expect(result.playerSession).toEqual(playerSession);
+      expect(result.libraryRow.treatment_id).toBe(seedTreatmentId);
+      expect(result.libraryRow.use_count).toBe(1);
+      expect(result.timelineEvent.treatment_id).toBe(seedTreatmentId);
+      expect(result.timelineEvent.library_row_id).toBe(result.libraryRow.id);
+      expect(result.timelineEvent.linked_group_id).toBeNull();
+
+      // Every one of the 5 rows is genuinely durable and RLS-scoped to newUserId - re-read independently
+      // through the same port, not merely echoed back in the call's own return value.
+      await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+      await expect(repository.getPlayerSession(playerSession.id)).resolves.toEqual(playerSession);
+
+      // "local guest state cleared" (spec §E's "no partial adapter swap... only after the RPC call
+      // returns success") is SessionEngine's responsibility (ticket 09, read-only/off-limits for this
+      // ticket) - SessionEngine.promote() only clears Guest state and flips mode to "authenticated" after
+      // this exact RepositoryPort call resolves (see its own source, `session-engine/index.ts`'s
+      // `promote()`). This adapter-level test proves the half of that guarantee that is actually this
+      // ticket's to prove: the call resolves with a fully, durably promoted state for SessionEngine to
+      // act on.
+    });
+
+    it("happy path with a group link carries the link onto the player session and timeline event", async () => {
+      const user = await createAuthenticatedTestUser();
+      const repository = new SupabaseRepository(user.client);
+      const group = buildGuestGroup();
+      const playerSession = buildGuestPlayerSession({ linked_group_id: group.id });
+
+      const result = await repository.promoteGuestToAccount({
+        idempotencyKey: group.id,
+        group,
+        playerSession,
+        newUserId: user.userId,
+      });
+
+      expect(result.playerSession.linked_group_id).toBe(group.id);
+      expect(result.timelineEvent.linked_group_id).toBe(group.id);
+      expect(result.libraryRow.use_count).toBe(1);
+
+      // The group itself was promoted exactly once - not duplicated, not carrying duplicated symptoms.
+      const reloadedGroup = await repository.getGroup(group.id);
+      expect(reloadedGroup).toEqual(group);
+      expect(reloadedGroup?.symptoms).toHaveLength(group.symptoms.length);
+    });
+
+    it("mid-transaction failure via forced constraint violation leaves zero rows in any table", async () => {
+      const user = await createAuthenticatedTestUser();
+      const repository = new SupabaseRepository(user.client);
+      const group = buildGuestGroup();
+      // A syntactically valid uuid that is guaranteed not to exist in `treatments` - forces a foreign key
+      // violation on the player_sessions insert, which happens after the symptom_groups/symptoms inserts
+      // earlier in the same function call, proving the whole implicit transaction rolls back together.
+      const nonExistentTreatmentId = randomUUID();
+      const playerSession = buildGuestPlayerSession({
+        treatment_id: nonExistentTreatmentId,
+        linked_group_id: null,
+      });
+
+      // Asserted against the specific Postgres foreign-key-violation signal (code 23503 / "foreign key"),
+      // not merely "rejects.toThrow()" - a bare "it threw" assertion would trivially pass for the wrong
+      // reason even before this migration exists (any call to a not-yet-existing RPC rejects too), which
+      // would defeat this row's whole purpose. Asserting the specific signal means this test properly
+      // fails red right now (the real error is "Could not find the function...") and will only pass once
+      // the migration is applied *and* this exact constraint-violation path behaves as designed.
       await expect(
         repository.promoteGuestToAccount({
-          idempotencyKey: randomUUID(),
+          idempotencyKey: group.id,
           group,
           playerSession,
-          newUserId: randomUUID(),
+          newUserId: user.userId,
         }),
-      ).rejects.toBeInstanceOf(SupabaseRepositoryPromotionNotImplementedError);
+      ).rejects.toThrow(/23503|foreign key/i);
 
-      // The rejected call must not have written the group/session it was given as a side effect.
-      await expect(repository.getGroup(group.id)).resolves.toBeNull();
-      await expect(repository.getPlayerSession(playerSession.id)).resolves.toBeNull();
+      await expectNoPromotionRowsLanded({
+        groupId: group.id,
+        sessionId: playerSession.id,
+        newUserId: user.userId,
+        treatmentId: nonExistentTreatmentId,
+      });
     });
+
+    it(
+      "mid-transaction failure via connection drop leaves zero rows and permits a clean retry",
+      async () => {
+        const user = await createAuthenticatedTestUser();
+        const repository = new SupabaseRepository(user.client);
+        const group = buildGuestGroup();
+        const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+
+        // Bypasses the strongly-typed adapter method deliberately - it is the only way to inject the
+        // test-only `__test_only_connection_drop__` marker (see this migration's own doc comment: the
+        // real adapter method never emits this key for any input it can construct). The server-side gate
+        // this triggers does `pg_sleep(3)` then an unconditional `raise exception`, guaranteeing a
+        // deterministic rollback; the AbortController below aborts the *client's* wait well before that
+        // 3-second window elapses, so this test never actually observes the RPC's response either way -
+        // exactly the "connection drop mid-call" shape being approximated.
+        const controller = new AbortController();
+        const droppedCall = user.client
+          .rpc("promote_guest_to_account", toRpcPayload(group, playerSession, user.userId, {
+            testOnlyConnectionDrop: true,
+          }))
+          .abortSignal(controller.signal);
+        setTimeout(() => controller.abort(), 300);
+
+        const droppedResult = await droppedCall;
+        // Asserted against the specific client-side abort signal (postgrest-js's own documented shape:
+        // `"AbortError: The user aborted a request."`), not merely "error is not null" - a bare not-null
+        // check would trivially pass for the wrong reason even before this migration exists (any call to
+        // a not-yet-existing RPC errors near-instantly too, well before this test's 300ms abort fires).
+        // Requiring the abort-specific message means this properly fails red right now for a *different*,
+        // legible reason (the pre-migration response arrives too fast for the abort to ever apply, so the
+        // real "Could not find the function..." message shows up here instead) and will only pass once
+        // the migration's real `pg_sleep(3)` gate is slow enough for the abort to actually win the race.
+        expect(droppedResult.error?.message).toMatch(/abort/i);
+
+        // Give the server-side pg_sleep(3) + forced raise time to actually finish and roll back - the
+        // client abort above only stops this test from ever seeing that response, it does not stop the
+        // server-side statement, which keeps running (and then rolling back) independently.
+        await new Promise((resolve) => setTimeout(resolve, 3200));
+
+        await expectNoPromotionRowsLanded({
+          groupId: group.id,
+          sessionId: playerSession.id,
+          newUserId: user.userId,
+          treatmentId: seedTreatmentId,
+        });
+
+        // A subsequent retry with the identical idempotency key (and no test marker) succeeds cleanly
+        // with exactly one full row-set.
+        const retryResult = await repository.promoteGuestToAccount({
+          idempotencyKey: group.id,
+          group,
+          playerSession,
+          newUserId: user.userId,
+        });
+        expect(retryResult.libraryRow.use_count).toBe(1);
+        await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+        await expect(repository.getPlayerSession(playerSession.id)).resolves.toEqual(playerSession);
+      },
+      15_000,
+    );
+
+    it(
+      "calling promote() twice with the same idempotency key produces exactly one row-set and one " +
+        "use_count increment",
+      async () => {
+        const user = await createAuthenticatedTestUser();
+        const repository = new SupabaseRepository(user.client);
+        const group = buildGuestGroup();
+        const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+        const input = { idempotencyKey: group.id, group, playerSession, newUserId: user.userId };
+
+        const first = await repository.promoteGuestToAccount(input);
+        const second = await repository.promoteGuestToAccount(input);
+
+        expect(second).toEqual(first);
+        expect(second.libraryRow.use_count).toBe(1);
+
+        const { data: timelineRows } = await serviceClient
+          .from("timeline_events")
+          .select("id")
+          .eq("id", playerSession.id);
+        expect(timelineRows).toHaveLength(1);
+      },
+    );
+
+    it("a dropped-response retry produces exactly one row-set and one use_count increment", async () => {
+      const user = await createAuthenticatedTestUser();
+      const repository = new SupabaseRepository(user.client);
+      const group = buildGuestGroup();
+      const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+      const input = { idempotencyKey: group.id, group, playerSession, newUserId: user.userId };
+
+      // "The RPC succeeding server-side but the client never receiving the response" is, from the
+      // function's own idempotency logic, indistinguishable from the row above's "clean success then
+      // retry" - promote_guest_to_account has no way to know, and does not need to know, whether its
+      // caller ever read the previous reply. This test exercises that identical guarantee under the
+      // distinct real-world framing the ticket names separately: the first call is allowed to fully
+      // succeed and its result is deliberately never inspected here (simulating a caller that lost the
+      // response), and only the retry's own return value is asserted against. A byte-for-byte network
+      // "response never arrives" simulation is not practically reproducible against a managed remote
+      // Postgres/PostgREST instance without raw socket control (unlike row 4's deterministic
+      // pg_sleep+abort, which works precisely because it manufactures a long, controllable window) - see
+      // this ticket's Resolution for the full note.
+      await repository.promoteGuestToAccount(input);
+      const retry = await repository.promoteGuestToAccount(input);
+
+      expect(retry.libraryRow.use_count).toBe(1);
+      await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+      const { data: timelineRows } = await serviceClient
+        .from("timeline_events")
+        .select("id")
+        .eq("id", playerSession.id);
+      expect(timelineRows).toHaveLength(1);
+    });
+
+    it("a partial payload is rejected with zero rows written", async () => {
+      const user = await createAuthenticatedTestUser();
+      const group = buildGuestGroup();
+      const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+
+      const { error } = await user.client.rpc(
+        "promote_guest_to_account",
+        toRpcPayload(group, playerSession, user.userId, { symptoms: null }),
+      );
+
+      // Asserted against the RPC's own specific validation message, not merely "error is not null" (nor
+      // merely "mentions p_symptoms" - PostgREST's own "could not find the function" error already lists
+      // every parameter name it was looking for, p_symptoms included, so that weaker check would still
+      // trivially pass for the wrong reason pre-migration). Requiring "must be a jsonb array" verbatim
+      // means this test properly fails red right now (the real error is "Could not find the
+      // function...", which does not contain that phrase) and will only pass once the migration is
+      // applied *and* this exact validation path behaves as designed.
+      expect(error?.message).toMatch(/must be a jsonb array/i);
+
+      await expectNoPromotionRowsLanded({
+        groupId: group.id,
+        sessionId: playerSession.id,
+        newUserId: user.userId,
+        treatmentId: seedTreatmentId,
+      });
+    });
+
+    it(
+      "(extra, beyond the required 7) a retry with the same idempotency key but a different payload " +
+        "rejects without overwriting the original promotion",
+      async () => {
+        const user = await createAuthenticatedTestUser();
+        const repository = new SupabaseRepository(user.client);
+        const group = buildGuestGroup();
+        const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+
+        const original = await repository.promoteGuestToAccount({
+          idempotencyKey: group.id,
+          group,
+          playerSession,
+          newUserId: user.userId,
+        });
+
+        // Same idempotencyKey (== group.id) as the original call, but a genuinely different payload
+        // (a different group name, a flipped success_declared) - the exact "same key, different payload"
+        // shape PromoteGuestToAccountIdentityMismatchError's own doc comment describes.
+        const divergentGroup: FinalizedSymptomGroup = { ...group, name: `${group.name} (divergent retry)` };
+        const divergentPlayerSession: PlayerSession = {
+          ...playerSession,
+          success_declared: !playerSession.success_declared,
+        };
+
+        await expect(
+          repository.promoteGuestToAccount({
+            idempotencyKey: group.id,
+            group: divergentGroup,
+            playerSession: divergentPlayerSession,
+            newUserId: user.userId,
+          }),
+        ).rejects.toBeInstanceOf(PromoteGuestToAccountIdentityMismatchError);
+
+        // The original promotion remains fully, exactly intact - the rejected divergent call wrote
+        // nothing and overwrote nothing.
+        await expect(repository.getGroup(group.id)).resolves.toEqual(original.group);
+        await expect(repository.getPlayerSession(playerSession.id)).resolves.toEqual(original.playerSession);
+      },
+    );
   });
 });

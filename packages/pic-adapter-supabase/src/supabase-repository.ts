@@ -28,7 +28,7 @@ import type {
   SymptomGroupDraft,
   TimelineEvent,
 } from "pic-engine";
-import { DEFAULT_GUEST_SESSION_GATE_STATE } from "pic-engine";
+import { DEFAULT_GUEST_SESSION_GATE_STATE, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 
 /** Thrown when an operation needs the current Event Manager's identity but no session is present. */
 export class SupabaseRepositoryNotAuthenticatedError extends Error {
@@ -51,23 +51,6 @@ export class SupabaseLibraryRowNotFoundError extends Error {
         "that belongs to a different Event Manager).",
     );
     this.name = "SupabaseLibraryRowNotFoundError";
-  }
-}
-
-/**
- * `promoteGuestToAccount` is exclusively ticket 13's RPC-wiring responsibility (see this file's header
- * comment and the ticket's Definition of Done: "this ticket does not implement the RPC call itself").
- * This is a clearly-labeled stub, not a silent no-op - it always throws, on every call, with no partial
- * behavior.
- */
-export class SupabaseRepositoryPromotionNotImplementedError extends Error {
-  constructor() {
-    super(
-      "SupabaseRepository.promoteGuestToAccount: not implemented - see ticket 13. This adapter's other " +
-        "seven RepositoryPort methods (ticket 12) are ready; the atomic promotion RPC and its wiring here " +
-        "are ticket 13's exclusive scope.",
-    );
-    this.name = "SupabaseRepositoryPromotionNotImplementedError";
   }
 }
 
@@ -276,8 +259,10 @@ function rowToTimelineEvent(row: TimelineEventRow): TimelineEvent {
  * "RLS is the enforcement layer, not a backup" requirement. The one place `user_id` is supplied at all is
  * on inserts that must satisfy the policy's `with check` clause, via `currentUserId()` below.
  *
- * `promoteGuestToAccount` is intentionally not implemented here - see
- * `SupabaseRepositoryPromotionNotImplementedError`'s doc comment; ticket 13 owns it exclusively.
+ * `promoteGuestToAccount` (ticket 13) is the one exception to "RLS is the enforcement layer": it calls
+ * the `promote_guest_to_account` Postgres RPC (`security definer`, one implicit transaction - see that
+ * migration's own header comment for the full atomicity/idempotency design), which necessarily bypasses
+ * RLS for its own internal inserts. See that method's own doc comment for why this is still safe.
  */
 export class SupabaseRepository implements RepositoryPort {
   constructor(private readonly client: SupabaseClient) {}
@@ -520,9 +505,118 @@ export class SupabaseRepository implements RepositoryPort {
     return rowToTimelineEvent(insertedRow as TimelineEventRow);
   }
 
+  /** Internal-only fetch, used solely to re-hydrate `promoteGuestToAccount`'s return value below. */
+  private async getLibraryRowById(id: string): Promise<LibraryRow | null> {
+    const { data, error } = await this.client
+      .from("personal_treatment_library")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) {
+      throw wrapError("promoteGuestToAccount", error);
+    }
+    return data ? rowToLibraryRow(data as PersonalTreatmentLibraryRow) : null;
+  }
+
+  /** Internal-only fetch, used solely to re-hydrate `promoteGuestToAccount`'s return value below. */
+  private async getTimelineEventById(id: string): Promise<TimelineEvent | null> {
+    const { data, error } = await this.client
+      .from("timeline_events")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) {
+      throw wrapError("promoteGuestToAccount", error);
+    }
+    return data ? rowToTimelineEvent(data as TimelineEventRow) : null;
+  }
+
+  /**
+   * Ticket 13. Calls the `promote_guest_to_account` RPC exactly once - see that migration's own header
+   * comment for the full atomicity/idempotency design this method leans on entirely; there is no
+   * client-side multi-insert fallback anywhere in this method (or this file).
+   *
+   * `input.idempotencyKey` is documented (`PromoteGuestToAccountInput`'s own doc comment) to always *be*
+   * `input.group.id` ("the Guest Group's client-side UUID, reused as the eventual `symptom_groups.id`") -
+   * the RPC's own conflict/mismatch tracking is keyed on that id, not on a separate column, so this
+   * method asserts the invariant up front rather than silently ignoring a caller that violates it.
+   *
+   * Only `p_guest_group`/`p_symptoms`/`p_player_session`'s own fixed, known fields are ever sent - never
+   * an arbitrary passthrough of `input.group/playerSession` - which is also what structurally guarantees
+   * the RPC's test-only `__test_only_connection_drop__` gate can never be reached by this method (see the
+   * migration's own doc comment on that gate).
+   *
+   * After the RPC returns success, every promoted entity is re-fetched through this same (RLS-scoped,
+   * now-authenticated-as-`newUserId`) client rather than echoing back the caller's own input - correct on
+   * both a fresh write and a matching-retry no-op, and reusing `getGroup`/`getPlayerSession` rather than
+   * duplicating their row-to-domain-object mapping here.
+   */
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
-    void input; // never read - see SupabaseRepositoryPromotionNotImplementedError's doc comment for why
-    throw new SupabaseRepositoryPromotionNotImplementedError();
+    if (input.idempotencyKey !== input.group.id) {
+      throw new Error(
+        "SupabaseRepository.promoteGuestToAccount: idempotencyKey must equal group.id (see " +
+          "PromoteGuestToAccountInput.idempotencyKey's doc comment) - this adapter's RPC tracks " +
+          "idempotency/cross-identity-mismatch state on symptom_groups.id itself, not a separate column, " +
+          "so a mismatched idempotencyKey/group.id pair cannot be honored.",
+      );
+    }
+
+    const { data, error } = await this.client.rpc("promote_guest_to_account", {
+      p_guest_group: {
+        id: input.group.id,
+        name: input.group.name,
+        joint_treatment_muscle_test: input.group.joint_treatment_muscle_test,
+        joint_treatment_test_at: input.group.joint_treatment_test_at,
+        created_at: input.group.created_at,
+      },
+      p_symptoms: input.group.symptoms.map((symptom) => ({
+        id: symptom.id,
+        name: symptom.name,
+        polarity: symptom.polarity,
+        intensity: symptom.intensity,
+      })),
+      p_player_session: {
+        id: input.playerSession.id,
+        treatment_id: input.playerSession.treatment_id,
+        linked_group_id: input.playerSession.linked_group_id,
+        units: input.playerSession.units,
+        terminal_nemar_response: input.playerSession.terminal_nemar_response,
+        success_declared: input.playerSession.success_declared,
+        integrating_reason: input.playerSession.integrating_reason,
+        finished_at: input.playerSession.finished_at,
+      },
+      p_new_user_id: input.newUserId,
+    });
+    if (error) {
+      if (error.message.includes("already used with a different payload")) {
+        throw new PromoteGuestToAccountIdentityMismatchError(input.idempotencyKey);
+      }
+      throw wrapError("promoteGuestToAccount", error);
+    }
+
+    const rpcResult = data as {
+      group_id: string;
+      session_id: string;
+      library_row_id: string;
+      timeline_event_id: string;
+    };
+
+    const [group, playerSession, libraryRow, timelineEvent] = await Promise.all([
+      this.getGroup(rpcResult.group_id),
+      this.getPlayerSession(rpcResult.session_id),
+      this.getLibraryRowById(rpcResult.library_row_id),
+      this.getTimelineEventById(rpcResult.timeline_event_id),
+    ]);
+    if (!group || !playerSession || !libraryRow || !timelineEvent) {
+      throw new Error(
+        "SupabaseRepository.promoteGuestToAccount: the RPC reported success but at least one promoted " +
+          "row could not be re-fetched immediately afterward - this should be structurally impossible " +
+          "given the RPC's own atomicity guarantee, so this is surfaced as a hard error rather than a " +
+          "partial result.",
+      );
+    }
+
+    return { group: group as FinalizedSymptomGroup, playerSession, libraryRow, timelineEvent };
   }
 
   /**
