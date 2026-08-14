@@ -19,19 +19,19 @@ import type {
   LibraryRow,
   LibraryRowProvenance,
   PlayerSession,
-  PlayerUnit,
   PromoteGuestToAccountInput,
   PromoteGuestToAccountResult,
   RepositoryPort,
   SymptomGroup,
   TimelineEvent,
 } from "pic-engine";
-import { DEFAULT_GUEST_SESSION_GATE_STATE } from "pic-engine";
+import { DEFAULT_GUEST_SESSION_GATE_STATE, normalizeInViewUnit } from "pic-engine";
 
 /** The minimal Web Storage shape this adapter needs - satisfied by real `localStorage` or a test double. */
 export interface GuestKeyValueStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
+  removeItem(key: string): void;
 }
 
 /**
@@ -63,6 +63,10 @@ class InMemoryGuestKeyValueStorage implements GuestKeyValueStorage {
 
   setItem(key: string, value: string): void {
     this.values.set(key, value);
+  }
+
+  removeItem(key: string): void {
+    this.values.delete(key);
   }
 }
 
@@ -107,26 +111,6 @@ function emptySnapshot(): GuestRepositorySnapshot {
 }
 
 /**
- * DEC-015's flat 4-state Unified Player model treats `in_view` as ephemeral: the single unit currently
- * being rendered, never a state a *permanent* store should durably persist. `PlayerEngine` owns no storage
- * of its own, though, and legitimately writes `in_view` into whatever `RepositoryPort` it is given so it
- * can read back "which unit was being viewed" on a later call - a deliberate, already-shipped upstream
- * design, not a bug for this adapter to reject or work around.
- *
- * This adapter is exactly the permanent-store boundary that normalization belongs at instead: any unit
- * whose `state` is `in_view` is downgraded to `unseen` here, applied identically on write
- * (`savePlayerSession`) and, defensively, on read (`getPlayerSession` - in case a stored snapshot predates
- * this rule, or `storage` was edited out-of-band). `unseen`, never `skipped`, is the conservative choice:
- * this adapter cannot always know whether a given unit was `unseen` or `skipped` immediately before the
- * render that produced its `in_view` write, and understating "reached" (`unseen`) is the safe failure
- * mode - never fabricating a false claim of having been bypassed via a Navigation-Tree jump (`skipped`)
- * for a unit that may never actually have been jumped over.
- */
-function withInViewNormalized(unit: PlayerUnit): PlayerUnit {
-  return unit.state === "in_view" ? { ...unit, state: "unseen" } : unit;
-}
-
-/**
  * Guest data structurally cannot "promote" against itself. Promotion (DEC-017) means moving a Guest
  * Group's no-identity data into a newly authenticated account, and an authenticated account's durable home
  * is `pic-adapter-supabase` (ticket 13) - never this adapter, whose entire reason to exist is Guest Mode's
@@ -145,8 +129,9 @@ export class GuestRepositoryCannotPromoteError extends Error {
 
 /**
  * The `localStorage`-backed (or in-memory, off-browser) `RepositoryPort` Guest Mode runs against (ticket
- * 10). See this file's header comment for the storage design, and `withInViewNormalized` /
- * `GuestRepositoryCannotPromoteError` for the two behaviors that depart from a "dumb" pass-through store.
+ * 10). See this file's header comment for the storage design, `normalizeInViewUnit` (DEC-015 boundary
+ * normalization on read/write), and `GuestRepositoryCannotPromoteError` for behaviors that depart from a
+ * "dumb" pass-through store.
  */
 export class LocalGuestRepository implements RepositoryPort {
   private readonly storage: GuestKeyValueStorage;
@@ -187,12 +172,12 @@ export class LocalGuestRepository implements RepositoryPort {
     if (session === undefined) {
       return null;
     }
-    return { ...session, units: session.units.map(withInViewNormalized) };
+    return { ...session, units: session.units.map(normalizeInViewUnit) };
   }
 
   async savePlayerSession(session: PlayerSession): Promise<void> {
     const snapshot = this.readSnapshot();
-    snapshot.playerSessions[session.id] = { ...session, units: session.units.map(withInViewNormalized) };
+    snapshot.playerSessions[session.id] = { ...session, units: session.units.map(normalizeInViewUnit) };
     this.writeSnapshot(snapshot);
   }
 
@@ -284,5 +269,14 @@ export class LocalGuestRepository implements RepositoryPort {
       pendingFinishRequest:
         gate.pendingFinishRequest === null ? null : { ...gate.pendingFinishRequest },
     };
+  }
+
+  /**
+   * Physically removes the guest blob from storage (DEC-017 evaporate). Adapter-specific — not on
+   * `RepositoryPort`. Uses `removeItem` so the key is deleted rather than overwritten with an empty JSON
+   * blob.
+   */
+  async clear(): Promise<void> {
+    this.storage.removeItem(this.storageKey);
   }
 }

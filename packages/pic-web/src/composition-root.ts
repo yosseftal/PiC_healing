@@ -35,6 +35,7 @@ const sessionEngine = new SessionEngine(repositoryPort, playerEngine, {
     if (authenticatedPort !== null) {
       repositoryPort.swapProvider(authenticatedPort);
     }
+    void guestRepository.clear();
   },
   initialGateState: guestRepository.getGuestSessionGateSync(),
 });
@@ -87,6 +88,7 @@ const sessionEngineActions = {
   },
   async discardGuestState(): Promise<void> {
     await sessionEngine.discardGuestState();
+    await guestRepository.clear();
   },
 };
 

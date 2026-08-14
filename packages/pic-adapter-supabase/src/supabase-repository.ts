@@ -28,7 +28,7 @@ import type {
   SymptomGroupDraft,
   TimelineEvent,
 } from "pic-engine";
-import { DEFAULT_GUEST_SESSION_GATE_STATE, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
+import { DEFAULT_GUEST_SESSION_GATE_STATE, normalizeInViewUnit, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 
 /** Thrown when an operation needs the current Event Manager's identity but no session is present. */
 export class SupabaseRepositoryNotAuthenticatedError extends Error {
@@ -137,16 +137,6 @@ interface TimelineEventRow {
 }
 
 /**
- * DEC-015's flat 4-state Unified Player model treats `in_view` as ephemeral, never a state a permanent
- * store should durably persist - the exact same rule `pic-adapter-local-guest` already enforces (see that
- * package's `withInViewNormalized` doc comment for the full rationale this adapter matches verbatim).
- * Applied identically on write (`savePlayerSession`) and, defensively, on read (`getPlayerSession`).
- */
-function withInViewNormalized(unit: PlayerUnit): PlayerUnit {
-  return unit.state === "in_view" ? { ...unit, state: "unseen" } : unit;
-}
-
-/**
  * Postgres's `timestamptz` columns round-trip through PostgREST as e.g. `"2026-08-13T11:32:10.31+00:00"`
  * - valid ISO 8601, but not byte-identical to the `Timestamp` strings this codebase writes via
  * `new Date().toISOString()` (e.g. `"2026-08-13T11:32:10.310Z"`, always millisecond-padded and
@@ -209,7 +199,7 @@ function rowToPlayerSession(row: PlayerSessionRow): PlayerSession {
     id: row.id,
     treatment_id: row.treatment_id,
     linked_group_id: row.linked_group_id,
-    units: row.units.map(withInViewNormalized),
+    units: row.units.map(normalizeInViewUnit),
     terminal_nemar_response: row.terminal_nemar_response,
     success_declared: row.success_declared,
     finished_at: toNullableTimestamp(row.finished_at),
@@ -366,7 +356,7 @@ export class SupabaseRepository implements RepositoryPort {
 
   async savePlayerSession(session: PlayerSession): Promise<void> {
     const userId = await this.currentUserId();
-    const normalizedUnits = session.units.map(withInViewNormalized);
+    const normalizedUnits = session.units.map(normalizeInViewUnit);
 
     const { error } = await this.client.from("player_sessions").upsert({
       id: session.id,

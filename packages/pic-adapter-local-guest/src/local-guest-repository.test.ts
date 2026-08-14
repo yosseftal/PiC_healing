@@ -80,7 +80,28 @@ function createSharedInMemoryStorage(): GuestKeyValueStorage {
     setItem: (key, value) => {
       values.set(key, value);
     },
+    removeItem: (key) => {
+      values.delete(key);
+    },
   };
+}
+
+function storageHasGuestEntityData(raw: string | null): boolean {
+  if (raw === null) {
+    return false;
+  }
+  const snapshot = JSON.parse(raw) as {
+    groups?: Record<string, unknown>;
+    playerSessions?: Record<string, unknown>;
+    libraryRows?: Record<string, unknown>;
+    timelineEvents?: unknown[];
+  };
+  return (
+    Object.keys(snapshot.groups ?? {}).length > 0 ||
+    Object.keys(snapshot.playerSessions ?? {}).length > 0 ||
+    Object.keys(snapshot.libraryRows ?? {}).length > 0 ||
+    (snapshot.timelineEvents ?? []).length > 0
+  );
 }
 
 describe("LocalGuestRepository", () => {
@@ -221,6 +242,31 @@ describe("LocalGuestRepository", () => {
       await expect(repository.getGroup(group.id)).resolves.toBeNull();
       await expect(repository.getPlayerSession(playerSession.id)).resolves.toBeNull();
     });
+  });
+
+  describe("clear", () => {
+    it(
+      "clear() removes the guest data such that a fresh LocalGuestRepository against the same storage " +
+        "reads back an empty snapshot",
+      async () => {
+        const storage = createSharedInMemoryStorage();
+        const storageKey = uniqueId("storage-key");
+        const repository = new LocalGuestRepository({ storage, storageKey });
+        const group = buildDraftGroup();
+        const session = buildPlayerSession();
+
+        await repository.saveGroup(group);
+        await repository.savePlayerSession(session);
+        expect(storageHasGuestEntityData(storage.getItem(storageKey))).toBe(true);
+
+        await repository.clear();
+
+        expect(storage.getItem(storageKey)).toBeNull();
+        const freshRepository = new LocalGuestRepository({ storage, storageKey });
+        await expect(freshRepository.getGroup(group.id)).resolves.toBeNull();
+        await expect(freshRepository.getPlayerSession(session.id)).resolves.toBeNull();
+      },
+    );
   });
 
   describe("network isolation", () => {

@@ -32,8 +32,9 @@
  * own tests never assert on Timeline event *count*, deliberately, since that count is ticket 13's contract
  * to honor, not this ticket's.
  */
+import { normalizeInViewUnit } from "../normalize-in-view-unit";
 import type { GuestSessionGateState, RepositoryPort } from "../repository-port";
-import type { FinalizedSymptomGroup, PlayerSession, PlayerUnit } from "../types";
+import type { FinalizedSymptomGroup, PlayerSession } from "../types";
 import type { PlayerEngine } from "../player-engine/index";
 
 export type SessionMode = "guest" | "authenticated";
@@ -77,23 +78,16 @@ export interface SessionEngineOptions {
 }
 
 /**
- * Persistence Boundary Normalization (DEC-015, this sprint's mandatory carry-over): `in_view` is ephemeral
- * and must never cross into a truly permanent store still labeled `in_view`. `guestState.playerSession` is
- * expected to already be normalized by whatever `RepositoryPort` it was read from (e.g.
- * `LocalGuestRepository.getPlayerSession`), but `promote()` re-applies the identical mapping defensively at
- * this exact guest-to-account crossing point rather than trusting an upstream caller it does not control.
- * Maps to `unseen`, never `skipped`: this function cannot know whether a given `in_view` unit was
- * `unseen` or `skipped` immediately before its most recent render, and under-stating "reached" is the safe
- * failure mode here - it never fabricates a Navigation-Tree skip that did not structurally happen.
+ * Persistence Boundary Normalization (DEC-015): re-applies `normalizeInViewUnit` defensively at the
+ * guest-to-account crossing point. `guestState.playerSession` is expected to already be normalized by
+ * whatever `RepositoryPort` it was read from, but `promote()` does not trust an upstream caller it does
+ * not control.
  */
 function normalizeForPermanentStore(session: PlayerSession): PlayerSession {
   if (!session.units.some((unit) => unit.state === "in_view")) {
     return session;
   }
-  const units: PlayerUnit[] = session.units.map((unit) =>
-    unit.state === "in_view" ? { ...unit, state: "unseen" } : unit,
-  );
-  return { ...session, units };
+  return { ...session, units: session.units.map(normalizeInViewUnit) };
 }
 
 export class SessionEngine {
