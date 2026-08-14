@@ -130,7 +130,7 @@ describe("symptoms.rated_at column (ticket 01 — direct Supabase client)", () =
       .eq("id", symptomId)
       .single();
     expect(selectError).toBeNull();
-    expect(data?.rated_at).toBe(ratedAt);
+    expect(new Date(data?.rated_at ?? "").toISOString()).toBe(ratedAt);
   });
 
   it("a symptoms row written with no rated_at reads back as null (existing rows unaffected)", async () => {

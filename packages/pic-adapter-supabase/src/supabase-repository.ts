@@ -74,13 +74,7 @@ interface SymptomGroupRow {
   joint_treatment_test_at: string;
 }
 
-/**
- * Row shape of `public.symptoms`. **Known schema gap (Wave 4/5 audit SF-1, carried into this ticket's
- * scope):** the live migration adds `polarity`/`intensity` but never added a `rated_at` column - ticket
- * 12's own permission table forbids adding a new migration, so this adapter cannot close that gap by
- * adding the column here. See `rowToSymptom` / `symptomToRow` for the resulting honest (lossy, not
- * fabricated) mapping, and this ticket's Resolution Deviations section for the full writeup.
- */
+/** Row shape of `public.symptoms` (includes `rated_at` from ticket 01 / Wave 6.5). */
 interface SymptomRow {
   id: string;
   group_id: string;
@@ -88,6 +82,7 @@ interface SymptomRow {
   name: string;
   polarity: string;
   intensity: number;
+  rated_at: string | null;
 }
 
 interface PlayerSessionRow {
@@ -164,22 +159,13 @@ function rowToSymptomGroup(row: SymptomGroupRow, symptoms: Symptom[]): SymptomGr
   return draftOrFinalized;
 }
 
-/**
- * `rated_at` is always reported as `null` when read from Supabase - see this file's header comment on
- * `SymptomRow` for why: the live `public.symptoms` schema has no column to hold it, and no migration may
- * be added in this ticket to introduce one. This is an honest, documented degradation (never a fabricated
- * timestamp) - `GroupEngine.hasPriorRating` will therefore always answer "never rated" for any symptom
- * loaded through this adapter today. Flagged in this ticket's Resolution as needing a fast-follow
- * migration (a real `rated_at timestamptz null` column) before Blind-by-Default rating is trustworthy
- * against Supabase.
- */
 function rowToSymptom(row: SymptomRow): Symptom {
   return {
     id: row.id,
     name: row.name,
     polarity: row.polarity as Symptom["polarity"],
     intensity: row.intensity,
-    rated_at: null,
+    rated_at: toNullableTimestamp(row.rated_at),
   };
 }
 
@@ -191,6 +177,7 @@ function symptomToRow(symptom: Symptom, groupId: string, userId: string): Sympto
     name: symptom.name,
     polarity: symptom.polarity,
     intensity: symptom.intensity,
+    rated_at: symptom.rated_at,
   };
 }
 

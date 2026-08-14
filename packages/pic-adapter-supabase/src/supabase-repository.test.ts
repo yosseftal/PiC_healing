@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { FinalizedSymptomGroup, LibraryRowProvenance, PlayerSession, Symptom } from "pic-engine";
-import { PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
+import { GroupEngine, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 import { runRepositoryPortContractTests } from "pic-engine/test/contract/repository-port.contract";
 import { SupabaseRepository } from "./index";
 
@@ -386,9 +386,6 @@ describe("SupabaseRepository", () => {
     });
 
     it("returns exactly what was saved, including nested symptoms, for a finalized group", async () => {
-      // rated_at is asserted as null on both sides of the round trip - see SymptomRow's doc comment in
-      // supabase-repository.ts (and this ticket's Resolution Deviations) for the live schema's missing
-      // rated_at column, an escalated, honest limitation rather than a fabricated round-trip.
       const symptom: Symptom = {
         id: randomUUID(),
         name: "Lower Back Pain",
@@ -410,13 +407,14 @@ describe("SupabaseRepository", () => {
       await expect(repository.getGroup(group.id)).resolves.toEqual(group);
     });
 
-    it("rated_at always reads back as null - a documented schema-gap limitation, not fabricated data", async () => {
+    it("saveGroup persists a symptom's rated_at, and getGroup reads that exact value back", async () => {
+      const ratedAt = new Date().toISOString();
       const ratedSymptom: Symptom = {
         id: randomUUID(),
         name: "Neck Tension",
         polarity: "positive",
         intensity: 3,
-        rated_at: new Date().toISOString(),
+        rated_at: ratedAt,
       };
       const group: FinalizedSymptomGroup = {
         id: randomUUID(),
@@ -430,8 +428,61 @@ describe("SupabaseRepository", () => {
       await repository.saveGroup(group);
       const reloaded = await repository.getGroup(group.id);
 
+      expect(reloaded?.symptoms[0]?.rated_at).toBe(ratedAt);
+    });
+
+    it("a freshly added, never-rated symptom round-trips with rated_at: null", async () => {
+      const unratedSymptom: Symptom = {
+        id: randomUUID(),
+        name: "Shoulder Tension",
+        polarity: "negative",
+        intensity: 2,
+        rated_at: null,
+      };
+      const group: FinalizedSymptomGroup = {
+        id: randomUUID(),
+        name: "Shoulder",
+        symptoms: [unratedSymptom],
+        created_at: new Date().toISOString(),
+        joint_treatment_muscle_test: "together",
+        joint_treatment_test_at: new Date().toISOString(),
+      };
+
+      await repository.saveGroup(group);
+      const reloaded = await repository.getGroup(group.id);
+
       expect(reloaded?.symptoms[0]?.rated_at).toBeNull();
     });
+
+    it(
+      "GroupEngine.hasPriorRating returns false before rate() and true after it, backed by " +
+        "SupabaseRepository end-to-end",
+      async () => {
+        const groupId = randomUUID();
+        const now = new Date().toISOString();
+        const emptyFinalizedGroup: FinalizedSymptomGroup = {
+          id: groupId,
+          name: "Blind-by-Default integration",
+          symptoms: [],
+          created_at: now,
+          joint_treatment_muscle_test: "together",
+          joint_treatment_test_at: now,
+        };
+        await repository.saveGroup(emptyFinalizedGroup);
+
+        const engine = new GroupEngine(repository);
+        const symptomId = await engine.addSymptom(groupId, "Lower Back Pain");
+
+        expect(await engine.hasPriorRating(symptomId)).toBe(false);
+
+        await engine.rate(symptomId, { polarity: "negative", intensity: 6 });
+
+        expect(await engine.hasPriorRating(symptomId)).toBe(true);
+
+        const reloaded = await repository.getGroup(groupId);
+        expect(reloaded?.symptoms[0]?.rated_at).not.toBeNull();
+      },
+    );
 
     it("a second saveGroup call removes symptoms no longer present (full-replace semantics)", async () => {
       const keptSymptom: Symptom = {
