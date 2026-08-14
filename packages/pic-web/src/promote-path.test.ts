@@ -265,6 +265,9 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
       return { gateTriggered: false, pendingFinishRequest: null };
     },
     async saveGuestSessionGate() {},
+    async listTreatments() {
+      return [];
+    },
   };
 }
 

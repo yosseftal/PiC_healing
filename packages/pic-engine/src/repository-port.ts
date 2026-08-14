@@ -99,6 +99,12 @@ export const DEFAULT_GUEST_SESSION_GATE_STATE: GuestSessionGateState = {
   pendingFinishRequest: null,
 };
 
+/** Read-only treatment row for flat picker lists (Ticket 08-07 / orig. 18). */
+export interface TreatmentListItem {
+  id: string;
+  title: string;
+}
+
 /** The five entities `promoteGuestToAccount` lands atomically, now owned by the new account. */
 export interface PromoteGuestToAccountResult {
   group: FinalizedSymptomGroup;
@@ -151,4 +157,10 @@ export interface RepositoryPort {
 
   /** Persists the Persistence Gate flags alongside the Guest blob (DEC-017). */
   saveGuestSessionGate(state: GuestSessionGateState): Promise<void>;
+
+  /**
+   * Flat, read-only treatment catalog for the tracer-bullet picker (spec §G — no diagnosis engine).
+   * Global seed rows (`user_id is null`) and the caller's own rows per ADR-0001 / RLS on Supabase.
+   */
+  listTreatments(): Promise<TreatmentListItem[]>;
 }

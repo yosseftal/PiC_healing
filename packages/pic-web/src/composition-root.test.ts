@@ -97,6 +97,9 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
       return { ...DEFAULT_GUEST_SESSION_GATE_STATE };
     },
     async saveGuestSessionGate() {},
+    async listTreatments() {
+      return [];
+    },
   };
 }
 

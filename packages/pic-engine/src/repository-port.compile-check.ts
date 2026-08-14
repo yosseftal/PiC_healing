@@ -36,6 +36,7 @@ const completePort: RepositoryPort = {
     pendingFinishRequest: null,
   }),
   saveGuestSessionGate: async () => undefined,
+  listTreatments: async () => [],
 };
 void completePort;
 

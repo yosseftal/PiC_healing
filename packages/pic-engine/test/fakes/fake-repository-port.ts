@@ -7,6 +7,7 @@ import {
   type PromoteGuestToAccountResult,
   type RepositoryPort,
   type SymptomGroup,
+  type TreatmentListItem,
 } from "../../src/repository-port";
 
 /**
@@ -50,6 +51,8 @@ export class FakeRepositoryPort implements RepositoryPort {
   >();
 
   private guestSessionGate: GuestSessionGateState = { ...DEFAULT_GUEST_SESSION_GATE_STATE };
+
+  private treatmentCatalog: TreatmentListItem[] = [];
 
   private nextGeneratedIdSuffix = 0;
 
@@ -167,5 +170,14 @@ export class FakeRepositoryPort implements RepositoryPort {
 
   async saveGuestSessionGate(state: GuestSessionGateState): Promise<void> {
     this.guestSessionGate = { ...state };
+  }
+
+  /** Test helper: seed the flat treatment catalog returned by `listTreatments`. */
+  seedTreatments(treatments: TreatmentListItem[]): void {
+    this.treatmentCatalog = [...treatments];
+  }
+
+  async listTreatments(): Promise<TreatmentListItem[]> {
+    return [...this.treatmentCatalog];
   }
 }

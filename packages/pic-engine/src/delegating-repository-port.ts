@@ -62,4 +62,8 @@ export class DelegatingRepositoryPort implements RepositoryPort {
   saveGuestSessionGate(state: GuestSessionGateState): Promise<void> {
     return this.provider.saveGuestSessionGate(state);
   }
+
+  listTreatments() {
+    return this.provider.listTreatments();
+  }
 }

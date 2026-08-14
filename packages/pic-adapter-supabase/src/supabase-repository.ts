@@ -27,6 +27,7 @@ import type {
   SymptomGroup,
   SymptomGroupDraft,
   TimelineEvent,
+  TreatmentListItem,
 } from "pic-engine";
 import { DEFAULT_GUEST_SESSION_GATE_STATE, normalizeInViewUnit, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 
@@ -580,6 +581,17 @@ export class SupabaseRepository implements RepositoryPort {
     }
 
     return { group: group as FinalizedSymptomGroup, playerSession, libraryRow, timelineEvent };
+  }
+
+  async listTreatments(): Promise<TreatmentListItem[]> {
+    const { data, error } = await this.client.from("treatments").select("id, title").order("title");
+    if (error) {
+      throw wrapError("listTreatments", error);
+    }
+    return (data ?? []).map((row) => ({
+      id: row.id as string,
+      title: row.title as string,
+    }));
   }
 
   /**

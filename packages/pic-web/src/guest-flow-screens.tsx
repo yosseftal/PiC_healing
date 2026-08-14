@@ -3,16 +3,20 @@
  */
 import type { GuestFlowScreen } from "./guest-flow-facts";
 import { SymptomGroupCreateScreen } from "./SymptomGroupCreateScreen";
+import { TreatmentPickerScreen } from "./TreatmentPickerScreen";
 
-const SCREEN_HEADINGS: Record<Exclude<GuestFlowScreen, "create-group">, string> = {
+const SCREEN_HEADINGS: Record<Exclude<GuestFlowScreen, "create-group" | "pick-treatment">, string> = {
   "joint-treatment": "Joint Treatment Muscle Test",
-  "pick-treatment": "Pick Treatment",
   player: "Unified Player",
 };
 
 export function GuestFlowScreenStub({ screen }: { screen: GuestFlowScreen }) {
   if (screen === "create-group") {
     return <SymptomGroupCreateScreen />;
+  }
+
+  if (screen === "pick-treatment") {
+    return <TreatmentPickerScreen />;
   }
 
   return (

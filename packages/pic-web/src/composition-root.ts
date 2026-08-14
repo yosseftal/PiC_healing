@@ -268,6 +268,12 @@ void import("./guest-flow-facts").then(({ initGuestFlowFacts }) => {
   });
 });
 
+const catalogActions = {
+  listTreatments(): Promise<import("pic-engine").TreatmentListItem[]> {
+    return repositoryPort.listTreatments();
+  },
+};
+
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
   repositoryPort,
@@ -280,4 +286,5 @@ export const compositionRoot = {
   playerSessionStore,
   playerEngineActions,
   promotePathActions,
+  catalogActions,
 };
