@@ -1,4 +1,4 @@
-import { SessionEngineProvider } from "./session-engine-context";
+import { AppProviders } from "./app-providers";
 import { GuestModeShell } from "./GuestModeShell";
 
 /**
@@ -8,13 +8,13 @@ import { GuestModeShell } from "./GuestModeShell";
  */
 export function App() {
   return (
-    <SessionEngineProvider>
+    <AppProviders>
       <GuestModeShell>
         <main>
           <h1>PiC</h1>
           <p>Guest Mode is active. Screens land in later tickets.</p>
         </main>
       </GuestModeShell>
-    </SessionEngineProvider>
+    </AppProviders>
   );
 }

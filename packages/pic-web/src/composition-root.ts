@@ -10,18 +10,22 @@
  * pic-adapter-local-guest or pic-adapter-supabase directly"):** `./composition-root.ts` and
  * `./promote-path.ts` are the only files in `pic-web` allowed to import either adapter package.
  * `./.dependency-cruiser.cjs` enforces this mechanically; every other file reaches the currently-active
- * `RepositoryPort` and engine instances exclusively through `./session-engine-context.tsx`'s React Context,
- * never via a direct adapter import.
+ * `RepositoryPort` and engine instances exclusively through `./session-engine-context.tsx`,
+ * `./group-engine-context.tsx`, and `./player-engine-context.tsx` React Context boundaries, never via a
+ * direct adapter import.
  */
 import { LocalGuestRepository } from "pic-adapter-local-guest";
 import {
   DelegatingRepositoryPort,
+  GroupEngine,
   LibraryEngine,
   PlayerEngine,
   SessionEngine,
   TimelineEngine,
 } from "pic-engine";
+import type { Intensity, JointTreatmentMuscleTestResult, Polarity } from "pic-engine";
 import type { GuestSnapshot, RepositoryPort } from "pic-engine";
+import type { PlayerSession } from "pic-engine";
 import {
   assembleGuestSnapshotForPendingGate,
   createSupabaseBrowserClient,
@@ -38,6 +42,7 @@ const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(gu
 const libraryEngine = new LibraryEngine(repositoryPort);
 const timelineEngine = new TimelineEngine(repositoryPort);
 const playerEngine = new PlayerEngine(repositoryPort, libraryEngine, timelineEngine);
+const groupEngine = new GroupEngine(repositoryPort);
 
 let authenticatedPort: RepositoryPort | null = null;
 
@@ -85,6 +90,38 @@ const sessionEngineStore = createExternalStore(() => sessionEngine.getState());
 
 sessionEngine.subscribe(() => sessionEngineStore.notify());
 
+/** Composition-layer flow fact: last group created via wrapped `createDraftGroup` (Ticket 08-03). */
+let activeGroupId: string | null = null;
+
+const groupEngineStore = createExternalStore(() => ({ activeGroupId }));
+
+/**
+ * `useSyncExternalStore`-compatible cache for `RepositoryPort.getPlayerSession` reads (Ticket 08-03).
+ * `getSnapshot` is synchronous; `refresh` repopulates from the shared `repositoryPort` after mutations.
+ */
+function createPlayerSessionStore(port: DelegatingRepositoryPort) {
+  const listeners = new Set<() => void>();
+  const snapshots = new Map<string, PlayerSession | null>();
+
+  return {
+    getSnapshot(sessionId: string): PlayerSession | null {
+      return snapshots.get(sessionId) ?? null;
+    },
+    subscribe(listener: () => void): () => void {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    async refresh(sessionId: string): Promise<void> {
+      snapshots.set(sessionId, await port.getPlayerSession(sessionId));
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+  };
+}
+
+const playerSessionStore = createPlayerSessionStore(repositoryPort);
+
 /**
  * The only way any component may trigger a `SessionEngine` mutation - each action calls straight through
  * to the real engine method. `SessionEngine` owns all `notify()` timing (including `promotionStatus:
@@ -100,6 +137,61 @@ const sessionEngineActions = {
   async discardGuestState(): Promise<void> {
     await sessionEngine.discardGuestState();
     await guestRepository.clear();
+  },
+};
+
+const groupEngineActions = {
+  async createDraftGroup(name: string): Promise<string> {
+    const groupId = await groupEngine.createDraftGroup(name);
+    activeGroupId = groupId;
+    groupEngineStore.notify();
+    return groupId;
+  },
+  addSymptom(groupId: string, name: string): Promise<string> {
+    return groupEngine.addSymptom(groupId, name);
+  },
+  hasPriorRating(symptomId: string): Promise<boolean> {
+    return groupEngine.hasPriorRating(symptomId);
+  },
+  rate(symptomId: string, update: { polarity?: Polarity; intensity?: Intensity }): Promise<void> {
+    return groupEngine.rate(symptomId, update);
+  },
+  revealPriorRating(symptomId: string): Promise<{ polarity: Polarity; intensity: Intensity } | null> {
+    return groupEngine.revealPriorRating(symptomId);
+  },
+  setJointTreatmentMuscleTest(groupId: string, answer: JointTreatmentMuscleTestResult): Promise<void> {
+    return groupEngine.setJointTreatmentMuscleTest(groupId, answer);
+  },
+  finalizeGroup(groupId: string) {
+    return groupEngine.finalizeGroup(groupId);
+  },
+};
+
+const playerEngineActions = {
+  async startSession(treatmentId: string, linkedGroupId: string | null, unitIds: string[]): Promise<string> {
+    const sessionId = await playerEngine.startSession(treatmentId, linkedGroupId, unitIds);
+    await playerSessionStore.refresh(sessionId);
+    return sessionId;
+  },
+  async advance(sessionId: string): Promise<void> {
+    await playerEngine.advance(sessionId);
+    await playerSessionStore.refresh(sessionId);
+  },
+  async jumpTo(sessionId: string, unitId: string): Promise<void> {
+    await playerEngine.jumpTo(sessionId, unitId);
+    await playerSessionStore.refresh(sessionId);
+  },
+  async respondTerminalNemar(sessionId: string, response: "yes" | "no"): Promise<void> {
+    await playerEngine.respondTerminalNemar(sessionId, response);
+    await playerSessionStore.refresh(sessionId);
+  },
+  async finish(sessionId: string): Promise<void> {
+    await playerEngine.finish(sessionId);
+    await playerSessionStore.refresh(sessionId);
+  },
+  async finishAnyway(sessionId: string): Promise<void> {
+    await playerEngine.finishAnyway(sessionId);
+    await playerSessionStore.refresh(sessionId);
   },
 };
 
@@ -157,10 +249,16 @@ const promotePathActions = {
   },
 };
 
-/** Everything a consumer needs, handed down exactly once via `SessionEngineProvider`. */
+/** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
   repositoryPort,
+  groupEngine,
+  playerEngine,
   sessionEngineStore,
   sessionEngineActions,
+  groupEngineStore,
+  groupEngineActions,
+  playerSessionStore,
+  playerEngineActions,
   promotePathActions,
 };

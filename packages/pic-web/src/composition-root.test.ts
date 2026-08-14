@@ -140,6 +140,22 @@ function buildGuestSnapshot(overrides: Partial<GuestSnapshot> = {}): GuestSnapsh
   return { group, playerSession, ...overrides };
 }
 
+describe("composition root engine wiring", () => {
+  it("composition root exposes a single shared DelegatingRepositoryPort to all engines", async () => {
+    const { repositoryPort, groupEngineActions, playerEngineActions } = compositionRoot;
+
+    const groupId = await groupEngineActions.createDraftGroup("Shared Port Group");
+    const groupFromPort = await repositoryPort.getGroup(groupId);
+    expect(groupFromPort).not.toBeNull();
+    expect(groupFromPort?.name).toBe("Shared Port Group");
+
+    const sessionId = await playerEngineActions.startSession("treatment-shared-port", groupId, ["unit-a"]);
+    const sessionFromPort = await repositoryPort.getPlayerSession(sessionId);
+    expect(sessionFromPort).not.toBeNull();
+    expect(sessionFromPort?.linked_group_id).toBe(groupId);
+  });
+});
+
 describe("composition root guest storage lifecycle", () => {
   beforeEach(() => {
     localStorage.clear();
