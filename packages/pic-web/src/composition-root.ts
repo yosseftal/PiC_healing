@@ -138,6 +138,23 @@ const promotePathActions = {
       registerAuthenticatedPort: swapToSupabaseAdapter,
     });
   },
+  /** Dev tracer stub: assemble pending gate snapshot, sign in from env, and run promotion (Ticket 08-02). */
+  async promoteGuestSessionFromEnv(env: Record<string, string | undefined>): Promise<void> {
+    const guestSnapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
+    if (guestSnapshot === null) {
+      return;
+    }
+    const { userId, repository } = await signInAsTestUserFromEnv(env);
+    await promoteWithAuthenticatedRepository({
+      delegatingPort: repositoryPort,
+      authenticatedPort: repository,
+      guestSnapshot,
+      newUserId: userId,
+      promote: sessionEngineActions.promote.bind(sessionEngineActions),
+      getPromotionStatus: () => sessionEngineStore.getSnapshot().promotionStatus,
+      registerAuthenticatedPort: swapToSupabaseAdapter,
+    });
+  },
 };
 
 /** Everything a consumer needs, handed down exactly once via `SessionEngineProvider`. */

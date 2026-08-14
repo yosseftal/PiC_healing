@@ -8,16 +8,21 @@ import type { SessionState } from "pic-engine";
 import { compositionRoot } from "./composition-root";
 
 type SessionEngineActions = typeof compositionRoot.sessionEngineActions;
+type PromotePathActions = typeof compositionRoot.promotePathActions;
 
 interface SessionEngineContextValue {
   actions: SessionEngineActions;
+  promotePathActions: PromotePathActions;
 }
 
 const SessionEngineContext = createContext<SessionEngineContextValue | null>(null);
 
 /** Wraps the whole app once, at the top (see `App.tsx`) - never re-constructed by a re-render. */
 export function SessionEngineProvider({ children }: { children: ReactNode }) {
-  const value: SessionEngineContextValue = { actions: compositionRoot.sessionEngineActions };
+  const value: SessionEngineContextValue = {
+    actions: compositionRoot.sessionEngineActions,
+    promotePathActions: compositionRoot.promotePathActions,
+  };
   return <SessionEngineContext.Provider value={value}>{children}</SessionEngineContext.Provider>;
 }
 
@@ -43,4 +48,9 @@ export function useSessionEngineState(): SessionState {
 /** The only way any component may trigger a `SessionEngine` mutation. */
 export function useSessionEngineActions(): SessionEngineActions {
   return useSessionEngineContext().actions;
+}
+
+/** Promote-path actions from the composition root (Wave 8 ticket 08-01). */
+export function usePromotePathActions(): PromotePathActions {
+  return useSessionEngineContext().promotePathActions;
 }

@@ -1,20 +1,64 @@
-import { useSessionEngineState } from "./session-engine-context";
+import {
+  usePromotePathActions,
+  useSessionEngineActions,
+  useSessionEngineState,
+} from "./session-engine-context";
 
 /**
- * Stub mount point (ticket 14) - ticket 15 fills in the real auth UI and retry affordance. Already wired
- * to live `SessionEngine` state via the Dumb Reflection hook, so ticket 15 only has to add markup, never
- * plumbing. Renders nothing while `gateTriggered` is `false`, which happens to already satisfy ticket 15's
- * own first acceptance criterion - but this file's purpose here is only to prove the subscription wiring
- * end-to-end, not to build the modal's contents.
+ * Dumb-reflection Persistence Gate (Wave 8 ticket 08-02). Renders only when `SessionEngine` signals
+ * `gateTriggered`; auth and retry delegate to composition-root `promotePathActions` — never direct adapter
+ * imports. Holds zero local state for engine-derivable fields (DEC-017).
  */
 export function PersistenceGateModal() {
-  const { gateTriggered } = useSessionEngineState();
+  const { gateTriggered, promotionStatus } = useSessionEngineState();
+  const { discardGuestState } = useSessionEngineActions();
+  const { promoteGuestSessionFromEnv } = usePromotePathActions();
 
   if (!gateTriggered) {
     return null;
   }
 
-  // TODO(ticket 15): render Social Auth / Magic Link options while promotionStatus is 'idle'/'pending',
-  // and a retry affordance while it is 'failed' - never a "partially saved" message (DEC-017).
-  return null;
+  function anchorSession(): void {
+    void promoteGuestSessionFromEnv(import.meta.env as Record<string, string | undefined>);
+  }
+
+  return (
+    <dialog open aria-labelledby="persistence-gate-title">
+      <h2 id="persistence-gate-title">Keep your session</h2>
+
+      {promotionStatus === "pending" ? (
+        <p>Anchoring your session…</p>
+      ) : null}
+
+      {promotionStatus === "idle" ? (
+        <>
+          <p>Sign in to keep this session — your work stays on this device until you choose to anchor it.</p>
+          <button type="button" onClick={anchorSession}>
+            Sign in (dev tracer stub)
+          </button>
+          <button type="button" disabled aria-disabled="true">
+            Sign in with Apple (stub)
+          </button>
+          <button type="button" disabled aria-disabled="true">
+            Sign in with Google (stub)
+          </button>
+        </>
+      ) : null}
+
+      {promotionStatus === "failed" ? (
+        <>
+          <p>We could not anchor your session yet. You can try again whenever you are ready.</p>
+          <button type="button" onClick={anchorSession}>
+            Try again
+          </button>
+        </>
+      ) : null}
+
+      {promotionStatus === "idle" || promotionStatus === "failed" ? (
+        <button type="button" onClick={() => void discardGuestState()}>
+          Continue without saving
+        </button>
+      ) : null}
+    </dialog>
+  );
 }
