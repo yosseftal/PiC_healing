@@ -32,9 +32,9 @@ describe("pic-web app shell", () => {
   });
 
   it("renders the full App shell without throwing at boot", () => {
-    const { getByText } = render(<App />);
+    const { getByTestId } = render(<App />);
 
-    expect(getByText("PiC")).toBeTruthy();
+    expect(getByTestId("guest-flow-create-group")).toBeTruthy();
   });
 
   const singletonTitle =

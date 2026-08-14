@@ -162,8 +162,10 @@ const groupEngineActions = {
   setJointTreatmentMuscleTest(groupId: string, answer: JointTreatmentMuscleTestResult): Promise<void> {
     return groupEngine.setJointTreatmentMuscleTest(groupId, answer);
   },
-  finalizeGroup(groupId: string) {
-    return groupEngine.finalizeGroup(groupId);
+  async finalizeGroup(groupId: string) {
+    await groupEngine.finalizeGroup(groupId);
+    const { setGuestFlowGroupFinalized } = await import("./guest-flow-facts");
+    setGuestFlowGroupFinalized(true);
   },
 };
 
@@ -171,6 +173,8 @@ const playerEngineActions = {
   async startSession(treatmentId: string, linkedGroupId: string | null, unitIds: string[]): Promise<string> {
     const sessionId = await playerEngine.startSession(treatmentId, linkedGroupId, unitIds);
     await playerSessionStore.refresh(sessionId);
+    const { setGuestFlowPlayerSession } = await import("./guest-flow-facts");
+    setGuestFlowPlayerSession(sessionId);
     return sessionId;
   },
   async advance(sessionId: string): Promise<void> {
@@ -248,6 +252,21 @@ const promotePathActions = {
     });
   },
 };
+
+/** Resets composition-layer group flow pointer between tests (Ticket 08-04). */
+export function resetGroupFlowFactsForTest(): void {
+  activeGroupId = null;
+  groupEngineStore.notify();
+}
+
+void import("./guest-flow-facts").then(({ initGuestFlowFacts }) => {
+  initGuestFlowFacts({
+    getActiveGroupId: () => activeGroupId,
+    getSessionState: () => sessionEngine.getState(),
+    subscribeToGroup: groupEngineStore.subscribe,
+    subscribeToSession: sessionEngineStore.subscribe,
+  });
+});
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
