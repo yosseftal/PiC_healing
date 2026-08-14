@@ -278,7 +278,7 @@ describe("SupabaseRepository", () => {
       expect(second.id).toBe(row.id);
     });
 
-    it("incrementUseCount is idempotent under retry against the real table", async () => {
+    it("incrementUseCount is idempotent under retry using the new uuid[] column", async () => {
       const row = await repository.getOrCreateLibraryRow(seedTreatmentId, buildProvenance());
       const idempotencyKey = randomUUID();
 
@@ -286,12 +286,48 @@ describe("SupabaseRepository", () => {
       const retryWithSameKey = await repository.incrementUseCount(row.id, idempotencyKey);
 
       expect(retryWithSameKey.use_count).toBe(firstCall.use_count);
+      expect(firstCall.use_count).toBe(1);
+    });
 
-      // A genuinely different Finish (a different idempotency key) must still increment - proving this
-      // isn't merely "always a no-op after the first call".
-      const differentKey = randomUUID();
-      const afterDifferentKey = await repository.incrementUseCount(row.id, differentKey);
-      expect(afterDifferentKey.use_count).toBe(firstCall.use_count + 1);
+    it(
+      "a LibraryRow returned to a caller never exposes the idempotency-key column or the old " +
+        "_usedIncrementIdempotencyKeys provenance field",
+      async () => {
+        const row = await repository.getOrCreateLibraryRow(seedTreatmentId, buildProvenance());
+        const idempotencyKey = randomUUID();
+
+        const returned = await repository.incrementUseCount(row.id, idempotencyKey);
+
+        expect(returned).not.toHaveProperty("used_increment_idempotency_keys");
+        expect(
+          Object.prototype.hasOwnProperty.call(returned as object, "used_increment_idempotency_keys"),
+        ).toBe(false);
+
+        const { data: rawRow, error } = await serviceClient
+          .from("personal_treatment_library")
+          .select("provenance, used_increment_idempotency_keys")
+          .eq("id", row.id)
+          .single();
+        expect(error).toBeNull();
+        expect(rawRow?.used_increment_idempotency_keys).toContain(idempotencyKey);
+        expect(
+          (rawRow?.provenance as Record<string, unknown> | null)?._usedIncrementIdempotencyKeys,
+        ).toBeUndefined();
+      },
+    );
+
+    it("two distinct idempotency keys against the same row both increment use_count, once each", async () => {
+      const row = await repository.getOrCreateLibraryRow(seedTreatmentId, buildProvenance());
+      const keyA = randomUUID();
+      const keyB = randomUUID();
+
+      const afterA = await repository.incrementUseCount(row.id, keyA);
+      const retryA = await repository.incrementUseCount(row.id, keyA);
+      const afterB = await repository.incrementUseCount(row.id, keyB);
+
+      expect(afterA.use_count).toBe(1);
+      expect(retryA.use_count).toBe(1);
+      expect(afterB.use_count).toBe(2);
     });
 
     it("appendTimelineEvent never mutates or removes prior events in the real table", async () => {

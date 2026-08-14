@@ -97,23 +97,13 @@ interface PlayerSessionRow {
   finished_at: string | null;
 }
 
-/**
- * Internal-only bookkeeping key, namespaced with a leading underscore, smuggled inside the otherwise
- * free-form `personal_treatment_library.provenance` jsonb column. See `incrementUseCount`'s doc comment
- * for why this table needs idempotency-key tracking with no dedicated column available to hold it.
- */
-const USED_INCREMENT_IDEMPOTENCY_KEYS_FIELD = "_usedIncrementIdempotencyKeys";
-
-interface StoredProvenance extends Partial<LibraryRowProvenance> {
-  [USED_INCREMENT_IDEMPOTENCY_KEYS_FIELD]?: string[];
-}
-
 interface PersonalTreatmentLibraryRow {
   id: string;
   user_id: string;
   treatment_id: string;
   use_count: number;
-  provenance: StoredProvenance | null;
+  provenance: LibraryRowProvenance | null;
+  used_increment_idempotency_keys: string[];
   variant_type: "original";
   global_reference_id: string | null;
   protocol_content: string | null;
@@ -194,14 +184,19 @@ function rowToPlayerSession(row: PlayerSessionRow): PlayerSession {
   };
 }
 
-function stripInternalProvenanceFields(provenance: StoredProvenance | null): LibraryRowProvenance | null {
+/** Legacy rows may still carry ticket-12's `_usedIncrementIdempotencyKeys` in provenance jsonb — never expose it. */
+function stripInternalProvenanceFields(
+  provenance: LibraryRowProvenance | Record<string, unknown> | null,
+): LibraryRowProvenance | null {
   if (provenance === null) {
     return null;
   }
-  if (provenance.source === undefined || provenance.first_seen_at === undefined) {
+  const source = provenance.source;
+  const firstSeenAt = provenance.first_seen_at;
+  if (typeof source !== "string" || typeof firstSeenAt !== "string") {
     return null;
   }
-  return { source: provenance.source, first_seen_at: provenance.first_seen_at };
+  return { source, first_seen_at: firstSeenAt };
 }
 
 function rowToLibraryRow(row: PersonalTreatmentLibraryRow): LibraryRow {
@@ -412,20 +407,12 @@ export class SupabaseRepository implements RepositoryPort {
 
   /**
    * Idempotent per `idempotencyKey` (DEC-006), matching `LocalGuestRepository`'s
-   * `usedIncrementIdempotencyKeysByRowId` pattern - but persisted differently, because
-   * `personal_treatment_library` has no dedicated column to hold a per-row list of previously-used
-   * idempotency keys (a real schema gap, same category as `SymptomRow`'s `rated_at` above; adding a
-   * column requires a migration, which this ticket's permission table forbids). The already-existing,
-   * otherwise-free-form `provenance` jsonb column is the least invasive place to keep this bookkeeping:
-   * the list lives under a clearly namespaced `_usedIncrementIdempotencyKeys` key
-   * (`USED_INCREMENT_IDEMPOTENCY_KEYS_FIELD`) alongside the real `LibraryRowProvenance` fields, and is
-   * always stripped back out by `stripInternalProvenanceFields` before any `LibraryRow` is returned to a
-   * caller - the public shape never leaks this adapter's internal storage choice.
+   * `usedIncrementIdempotencyKeysByRowId` pattern and ticket 13's `promoted_session_ids uuid[]` column
+   * style. Keys are tracked in `personal_treatment_library.used_increment_idempotency_keys` (ticket 05) —
+   * never in `provenance` jsonb.
    *
-   * Not wrapped in a single atomic SQL statement (a plain read-check-write, like the fake/local adapters):
-   * acceptable for this tracer-bullet ticket's scope, since the required test is "idempotent under
-   * *retry*" (a sequential resubmission), not concurrent-write safety - true atomicity for concurrent
-   * increments is explicitly ticket 13's (`promoteGuestToAccount`'s RPC) concern, not this method's.
+   * Plain read-check-write (not one atomic SQL statement): acceptable for sequential retry idempotency;
+   * concurrent-write atomicity is ticket 13's RPC concern, not this method's.
    */
   async incrementUseCount(libraryRowId: string, idempotencyKey: string): Promise<LibraryRow> {
     const { data: row, error: selectError } = await this.client
@@ -441,18 +428,17 @@ export class SupabaseRepository implements RepositoryPort {
     }
 
     const currentRow = row as PersonalTreatmentLibraryRow;
-    const usedKeys = currentRow.provenance?.[USED_INCREMENT_IDEMPOTENCY_KEYS_FIELD] ?? [];
+    const usedKeys = currentRow.used_increment_idempotency_keys ?? [];
     if (usedKeys.includes(idempotencyKey)) {
       return rowToLibraryRow(currentRow);
     }
 
-    const nextProvenance: StoredProvenance = {
-      ...currentRow.provenance,
-      [USED_INCREMENT_IDEMPOTENCY_KEYS_FIELD]: [...usedKeys, idempotencyKey],
-    };
     const { data: updatedRow, error: updateError } = await this.client
       .from("personal_treatment_library")
-      .update({ use_count: currentRow.use_count + 1, provenance: nextProvenance })
+      .update({
+        use_count: currentRow.use_count + 1,
+        used_increment_idempotency_keys: [...usedKeys, idempotencyKey],
+      })
       .eq("id", libraryRowId)
       .select("*")
       .single();
