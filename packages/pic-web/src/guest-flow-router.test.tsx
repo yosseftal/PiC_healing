@@ -23,17 +23,31 @@ describe("deriveGuestFlowScreen", () => {
       activeGroupId: null,
       activePlayerSessionId: null,
       sessionState: emptySessionState,
+      symptomAdditionComplete: false,
       groupFinalized: false,
     };
     expect(deriveGuestFlowScreen(facts)).toBe("create-group");
   });
 
-  it("derives joint-treatment when a draft group exists", () => {
+  it("stays on create-group while symptoms are being added to a draft group", () => {
     expect(
       deriveGuestFlowScreen({
         activeGroupId: "group-1",
         activePlayerSessionId: null,
         sessionState: emptySessionState,
+        symptomAdditionComplete: false,
+        groupFinalized: false,
+      }),
+    ).toBe("create-group");
+  });
+
+  it("derives joint-treatment when symptom addition is complete", () => {
+    expect(
+      deriveGuestFlowScreen({
+        activeGroupId: "group-1",
+        activePlayerSessionId: null,
+        sessionState: emptySessionState,
+        symptomAdditionComplete: true,
         groupFinalized: false,
       }),
     ).toBe("joint-treatment");
@@ -45,6 +59,7 @@ describe("deriveGuestFlowScreen", () => {
         activeGroupId: "group-1",
         activePlayerSessionId: null,
         sessionState: emptySessionState,
+        symptomAdditionComplete: true,
         groupFinalized: true,
       }),
     ).toBe("pick-treatment");
@@ -56,6 +71,7 @@ describe("deriveGuestFlowScreen", () => {
         activeGroupId: "group-1",
         activePlayerSessionId: "session-1",
         sessionState: emptySessionState,
+        symptomAdditionComplete: true,
         groupFinalized: true,
       }),
     ).toBe("player");

@@ -11,6 +11,8 @@ export interface GuestFlowFacts {
   activeGroupId: string | null;
   activePlayerSessionId: string | null;
   sessionState: SessionState;
+  /** True once the EM finishes the symptom-addition phase (Ticket 08-05). */
+  symptomAdditionComplete: boolean;
   groupFinalized: boolean;
 }
 
@@ -18,7 +20,7 @@ export function deriveGuestFlowScreen(facts: GuestFlowFacts): GuestFlowScreen {
   if (facts.activePlayerSessionId !== null) {
     return "player";
   }
-  if (facts.activeGroupId === null) {
+  if (facts.activeGroupId === null || !facts.symptomAdditionComplete) {
     return "create-group";
   }
   if (!facts.groupFinalized) {
@@ -56,6 +58,7 @@ let getSessionState: () => SessionState = () => ({
 });
 
 let activePlayerSessionId: string | null = null;
+let symptomAdditionComplete = false;
 let groupFinalized = false;
 
 function collectGuestFlowFacts(): GuestFlowFacts {
@@ -63,6 +66,7 @@ function collectGuestFlowFacts(): GuestFlowFacts {
     activeGroupId: getActiveGroupId(),
     activePlayerSessionId,
     sessionState: getSessionState(),
+    symptomAdditionComplete,
     groupFinalized,
   };
 }
@@ -98,8 +102,14 @@ export function setGuestFlowGroupFinalized(finalized: boolean): void {
   guestFlowStore.notify();
 }
 
+export function setGuestFlowSymptomAdditionComplete(complete: boolean): void {
+  symptomAdditionComplete = complete;
+  guestFlowStore.notify();
+}
+
 export function resetGuestFlowFactsForTest(): void {
   activePlayerSessionId = null;
+  symptomAdditionComplete = false;
   groupFinalized = false;
   resetGroupFlowFactsForTest();
   guestFlowStore.notify();
@@ -117,15 +127,18 @@ export async function advanceGuestFlowForTest(screen: GuestFlowScreen): Promise<
     case "joint-treatment":
       resetGuestFlowFactsForTest();
       await compositionRoot.groupEngineActions.createDraftGroup("test-group");
+      setGuestFlowSymptomAdditionComplete(true);
       break;
     case "pick-treatment":
       resetGuestFlowFactsForTest();
       await compositionRoot.groupEngineActions.createDraftGroup("test-group");
+      setGuestFlowSymptomAdditionComplete(true);
       setGuestFlowGroupFinalized(true);
       break;
     case "player":
       resetGuestFlowFactsForTest();
       await compositionRoot.groupEngineActions.createDraftGroup("test-group");
+      setGuestFlowSymptomAdditionComplete(true);
       setGuestFlowGroupFinalized(true);
       setGuestFlowPlayerSession("test-player-session");
       break;
