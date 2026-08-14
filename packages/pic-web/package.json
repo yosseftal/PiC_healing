@@ -11,7 +11,9 @@
     "depcruise": "npx depcruise --validate .dependency-cruiser.cjs src"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "pic-adapter-local-guest": "*",
+    "pic-adapter-supabase": "*",
     "pic-engine": "*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

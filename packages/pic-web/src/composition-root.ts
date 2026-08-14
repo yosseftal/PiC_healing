@@ -7,10 +7,11 @@
  * `guestRepository`/`sessionEngine` instances; nothing here is reconstructed by a re-render.
  *
  * **Convention (ticket 14 DoD - "no component other than this composition root imports
- * pic-adapter-local-guest or pic-adapter-supabase directly"):** this file is the *only* one in `pic-web`
- * allowed to import either adapter package. `./.dependency-cruiser.cjs` enforces this mechanically; every
- * other file reaches the currently-active `RepositoryPort` and engine instances exclusively through
- * `./session-engine-context.tsx`'s React Context, never via a direct adapter import.
+ * pic-adapter-local-guest or pic-adapter-supabase directly"):** `./composition-root.ts` and
+ * `./promote-path.ts` are the only files in `pic-web` allowed to import either adapter package.
+ * `./.dependency-cruiser.cjs` enforces this mechanically; every other file reaches the currently-active
+ * `RepositoryPort` and engine instances exclusively through `./session-engine-context.tsx`'s React Context,
+ * never via a direct adapter import.
  */
 import { LocalGuestRepository } from "pic-adapter-local-guest";
 import {
@@ -21,6 +22,16 @@ import {
   TimelineEngine,
 } from "pic-engine";
 import type { GuestSnapshot, RepositoryPort } from "pic-engine";
+import {
+  assembleGuestSnapshotForPendingGate,
+  createSupabaseBrowserClient,
+  createSupabaseRepositoryFromClient,
+  promoteWithAuthenticatedRepository,
+  readSupabasePublicConfigFromEnv,
+  readTestUserCredentialsFromEnv,
+  signInAsTestUser,
+  signInAsTestUserFromEnv,
+} from "./promote-path";
 
 const guestRepository = new LocalGuestRepository();
 const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(guestRepository);
@@ -101,9 +112,38 @@ export function swapToSupabaseAdapter(port: RepositoryPort): void {
   authenticatedPort = port;
 }
 
+/** Wave 8 ticket 08-01: promote-path actions for Persistence Gate wiring (Ticket 08-02 consumes these). */
+const promotePathActions = {
+  assembleGuestSnapshotForPendingGate(): Promise<GuestSnapshot | null> {
+    return assembleGuestSnapshotForPendingGate(guestRepository);
+  },
+  createSupabaseBrowserClient,
+  createSupabaseRepositoryFromClient,
+  readSupabasePublicConfigFromEnv,
+  readTestUserCredentialsFromEnv,
+  signInAsTestUser,
+  signInAsTestUserFromEnv,
+  promoteWithAuthenticatedRepository(
+    port: RepositoryPort,
+    guestSnapshot: GuestSnapshot,
+    newUserId: string,
+  ): Promise<void> {
+    return promoteWithAuthenticatedRepository({
+      delegatingPort: repositoryPort,
+      authenticatedPort: port,
+      guestSnapshot,
+      newUserId,
+      promote: sessionEngineActions.promote.bind(sessionEngineActions),
+      getPromotionStatus: () => sessionEngineStore.getSnapshot().promotionStatus,
+      registerAuthenticatedPort: swapToSupabaseAdapter,
+    });
+  },
+};
+
 /** Everything a consumer needs, handed down exactly once via `SessionEngineProvider`. */
 export const compositionRoot = {
   repositoryPort,
   sessionEngineStore,
   sessionEngineActions,
+  promotePathActions,
 };

@@ -9,7 +9,12 @@ module.exports = {
       // Test files are exempt - the DoD's concern is the *runtime* component tree never bypassing the
       // composition root, not test code verifying it (e.g. an `instanceof LocalGuestRepository` smoke
       // assertion) - a common, deliberate carve-out for this style of layering rule.
-      from: { pathNot: ["^src/composition-root\\.ts$", "\\.test\\.tsx?$"] },
+      from: {
+        // Only pic-web runtime source — depcruise follows workspace adapter packages; without this
+        // anchor, internal `pic-adapter-supabase` imports are falsely flagged.
+        path: "^src/",
+        pathNot: ["^src/composition-root\\.ts$", "^src/promote-path\\.ts$", "\\.test\\.tsx?$"],
+      },
       // Workspace-linked packages resolve to a relative filesystem path (e.g.
       // "../pic-adapter-local-guest/src/index.ts"), not the bare specifier - match the package directory
       // name as a path segment, wherever it falls, rather than anchoring to the start of the string.
