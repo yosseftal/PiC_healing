@@ -1,138 +1,99 @@
-# Draft Merge Request — Wave 6: The Pivot to Cloud
+# Merge Request — Wave 6 + Wave 6.5: Cloud-First Baseline
 
-**Status:** Draft (orchestrator-prepared; not yet opened on remote)
-**Base branch:** `origin/main` (pre-Wave-6)
-**Head branch:** `main` (fixed point `a77e854` + handoff tooling at `8c2899d`)
-**Wave:** 6 — Tickets 12 & 13
+**Status:** Ready to merge (local `main` at `773fa43`; push to `origin/main` at Event Manager discretion)
+**Base:** `origin/main` pre-Wave-6 (`cc98b3d` area)
+**Head:** `main` @ `773fa43`
+**Waves:** 6 (Tickets 12–13) + 6.5 Hardening (Tickets 01–06)
 
 ---
 
 ## Summary
 
-Wave 6 delivers the cloud persistence layer for the PiC tracer bullet: a production-grade
-`pic-adapter-supabase` implementing every `RepositoryPort` method against real Postgres/RLS, plus the
-**Atomic Promotion RPC** — the single highest-risk integration point in the product (DEC-017 Persistence
-Gate). An Event Manager's full Guest inquiry (Symptom Group, symptoms, Unified Player session, Personal
-Treatment Library row, Timeline event) can now promote into a newly authenticated account in one
-all-or-nothing Postgres transaction, with idempotent retry safety.
-
-This MR closes Wave 6. **Wave 6.5 Hardening** (six carry-forward tickets) is listed below for transparency
-and will land as a follow-up wave before UI-heavy Wave 8.
+Establishes the **Cloud-First baseline**: `pic-adapter-supabase` implements the full `RepositoryPort`
+against real Postgres/RLS, including the **Atomic Promotion RPC** (Ticket 13 — highest-risk integration
+point, DEC-017 Persistence Gate). Wave 6.5 hardening closes every Should-fix carry-forward from the Wave 6
+handoff so Wave 8 UI work lands on a trustworthy foundation.
 
 ---
 
-## What landed
+## Wave 6 — What landed
 
 ### Ticket 12 — `pic-adapter-supabase` standard CRUD
 
-- Implements all seven non-promotion `RepositoryPort` methods against real Supabase Postgres/Auth, scoped
-  exclusively by RLS (`auth.uid() = user_id`) — no client-side-only authorization substitutes.
-- Shared `RepositoryPort` contract suite runs green against the **real remote Supabase project** (orchestrator-
-  approved substitution for unavailable local `supabase start`).
-- `promoteGuestToAccount` left as a clearly-labeled stub (ticket 13 scope).
-- Honest degradation documented for `Symptom.rated_at` (no column yet — Wave 6.5 Ticket 01/02).
+- All seven non-promotion `RepositoryPort` methods; RLS-only scoping (`auth.uid() = user_id`).
+- Contract suite green against real remote Supabase (orchestrator-approved for unavailable local `supabase start`).
 
-**Test result:** 23 passed, 5 skipped (`pic-adapter-supabase`); zero regressions elsewhere (109 passed, 5
-skipped).
+### Ticket 13 — Atomic Promotion RPC
 
-### Ticket 13 — Atomic Promotion RPC (`promoteGuestToAccount`) — HIGHEST RISK
-
-- New `promote_guest_to_account` Postgres function (`security definer`, one implicit transaction, no
-  swallowed exceptions).
-- `personal_treatment_library.promoted_session_ids uuid[]` prevents double `use_count` increment on retry.
-- `symptom_groups.promotion_payload_fingerprint` enforces identity-mismatch hardening
-  (`PromoteGuestToAccountIdentityMismatchError` contract).
-- `SupabaseRepository.promoteGuestToAccount` calls the RPC exactly once per invocation — no client-side
-  multi-insert fallback.
-- `auth.uid() = p_new_user_id` authorization guard (Event Manager reviewed and accepted before apply).
-
-#### 7-row Adversarial Matrix — all green
-
-| Row | Scenario | Result |
-|-----|----------|--------|
-| 1 | Happy path, no group link | All 5 rows promoted; `use_count = 1`; guest cleared |
-| 2 | Happy path, with group link | Link carried on session + timeline |
-| 3 | Mid-transaction failure (forced FK violation) | Zero rows in any table |
-| 4 | Mid-transaction failure (connection drop) | Zero rows; clean retry succeeds |
-| 5 | Retry idempotency (success then retry) | Exactly one row-set; `use_count = 1` |
-| 6 | Dropped-response retry | Exactly one row-set; `use_count = 1` |
-| 7 | Partial-payload rejection | Clean error; zero rows written |
-
-**Plus** 1 extra hardening test: cross-identity-mismatch rejection.
-
-#### Connection Drop win (Row 4 — real observed timing)
-
-Instrumented abort race against server-side `pg_sleep(3)`:
-
-- Client `AbortController` fired at **308ms** (target 300ms) — error: `AbortError: This operation was aborted`
-- Abort wins well before the 3-second server sleep completes
-- Subsequent zero-row assertion + clean retry both pass
-- Confirms the all-or-nothing guarantee is real on this project's latency profile, not aspirational prose
-
-#### Retry idempotency (Rows 5 & 6 — real observed values)
-
-- Row 5: `first.libraryRow.use_count = 1`, `second.libraryRow.use_count = 1`
-- Row 6: `dropped.libraryRow.use_count = 1`, `retry.libraryRow.use_count = 1`
-- Exactly one `timeline_events` row per session id under both retry framings
-
-**Test result:** 8/8 `promoteGuestToAccount` tests pass; full adapter suite 23 passed, 5 skipped; stable
-across 4 consecutive runs.
+- `promote_guest_to_account` — single transaction, idempotent under retry.
+- **7-row adversarial matrix** all green + cross-identity-mismatch hardening.
+- **Connection drop (Row 4):** client abort at **308ms** vs 3000ms `pg_sleep(3)`; clean retry succeeds.
+- **Retry idempotency (Rows 5 & 6):** `use_count` stays **1** under both retry framings.
 
 ---
 
-## Integrity gates (Wave 6 close-out)
+## Wave 6.5 — Hardening (all verified)
+
+| Ticket | Deliverable | Verified |
+|--------|-------------|----------|
+| **01** | `symptoms.rated_at` column | EM manual apply + schema round-trip tests green |
+| **02** | `SupabaseRepository` honors `rated_at` | `GroupEngine.hasPriorRating` E2E via adapter |
+| **03** | `LocalGuestRepository.clear()` | Discard + successful promotion both evaporate localStorage |
+| **04** | Shared `normalizeInViewUnit` | Single owner in `pic-engine`; 0 duplicate helpers |
+| **05** | `used_increment_idempotency_keys uuid[]` | JSONB piggyback removed; contract `makeIdempotencyKey` |
+| **06** | Tooling cleanup | `supabase-connectivity-check.mjs` + `docs/testing/supabase-remote-testing.md` |
+
+---
+
+## Final verification sweep (Wave 6.5 close-out)
+
+### Connectivity check (`node scripts/supabase-connectivity-check.mjs`)
+
+- [x] PostgREST reachable (200 OK)
+- [x] All expected tables/columns present (including `rated_at`, `promoted_session_ids`, `used_increment_idempotency_keys`)
+- [x] RPC `promote_guest_to_account` present
+- [x] Clean-state: Wave 6 data tables at **0 rows**; `treatments` at **3** seed rows; `profiles` at **1** (EM account)
+
+### Test suite (post-6.5)
+
+| Package | Result |
+|---------|--------|
+| `pic-adapter-supabase` | **31 passed, 5 skipped** |
+| `pic-engine` / `pic-web` / `pic-adapter-local-guest` | **113 passed, 5 skipped** |
+
+### Integrity gates
 
 | Gate | Status |
 |------|--------|
-| `depcruise` (`pic-engine`) | 0 violations (63 modules) |
-| `depcruise` (`pic-web`) | 0 violations (286 modules) |
-| Workspace regressions | None (109 + 23 passed) |
-| `pic-engine` touched | No — by design (adapter-only wave) |
-| Clean-state sweep | All Wave 6 tables at 0 rows after every run |
+| `depcruise` (`pic-engine`) | **0 violations** (65 modules) |
+| `depcruise` (`pic-web`) | **0 violations** (288 modules) |
+| `pic-engine` business logic in Wave 6 | Untouched by design |
+| Manual-apply migrations (01, 05) | Applied and verified by EM |
 
 ---
 
-## Environment deviation (wave-wide, orchestrator-approved)
+## Test plan checklist (reviewer)
 
-No Docker / Supabase CLI in this sandbox. All adapter tests ran against the Event Manager's **real remote
-Supabase project** with `NODE_TLS_REJECT_UNAUTHORIZED=0` at the shell invocation only (never in shipped
-source). Schema/RPC changes applied manually by the Event Manager via Supabase SQL Editor at three
-checkpoints (ticket 11 carry-over, ticket 13 RPC, ticket 13 `digest()` → `md5()` hotfix).
-
----
-
-## Carry-forward Hardening — Wave 6.5 (not in this MR)
-
-The following six tracer-bullet tickets address Should-fix items from `docs/audits/wave-6-handoff.md`. They
-are **out of scope for this MR** and will land in Wave 6.5 before Wave 8 UI work begins.
-
-| Ticket | Title | Blocked by |
-|--------|-------|------------|
-| **01** | Schema: `symptoms.rated_at` column | — |
-| **02** | Adapter: Supabase honors `Symptom.rated_at` | 01 |
-| **03** | Data Sovereignty: `LocalGuestRepository.clear()` | — |
-| **04** | Architectural Integrity: shared `withInViewNormalized` helper | — |
-| **05** | Idempotency Unification: single `uuid[]` standard | 02 |
-| **06** | Tooling Cleanup: retire Wave 6 audit script | 01, 02, 05 |
-
-**Frontier (in progress):** Tickets 01, 03, 04 dispatched in parallel.
+- [x] `NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run packages/pic-adapter-supabase` — 31 passed, 5 skipped
+- [x] `npx vitest run packages/pic-engine packages/pic-web packages/pic-adapter-local-guest` — 113 passed, 5 skipped
+- [x] `npm run depcruise` in `pic-engine` and `pic-web` — 0 violations
+- [x] `node scripts/supabase-connectivity-check.mjs` — schema authoritative, clean-state confirmed
+- [x] `symptoms.rated_at` persistence trustworthy (Ticket 02)
+- [x] Guest `clear()` on discard and promotion (Ticket 03)
+- [x] Idempotency unified on `uuid[]` column (Ticket 05)
 
 ---
 
-## Test plan (for reviewers)
+## Environment note
 
-- [ ] `NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run packages/pic-adapter-supabase` — 23 passed, 5 skipped
-- [ ] `npx vitest run packages/pic-engine packages/pic-web packages/pic-adapter-local-guest` — 109 passed, 5 skipped
-- [ ] `npm run depcruise` in `pic-engine` and `pic-web` — 0 violations
-- [ ] `npm run typecheck --workspaces --if-present` — 0 errors
-- [ ] Confirm `promote_guest_to_account` RPC exists in Supabase (SQL Editor or audit script)
-- [ ] Confirm clean-state: Wave 6 tables at 0 rows, `treatments` at 3 seed rows
+Remote Supabase project; `NODE_TLS_REJECT_UNAUTHORIZED=0` at shell only for tests. Manual SQL Editor apply
+for migrations. Documented in `docs/testing/supabase-remote-testing.md`.
 
 ---
 
 ## Related docs
 
-- `docs/audits/wave-6-handoff.md` — full wave close-out note
-- `.scratch/pic-tracer-bullet/issues/12-adapter-supabase-crud.md` — ticket 12 Resolution
-- `.scratch/pic-tracer-bullet/issues/13-atomic-promotion-rpc.md` — ticket 13 Resolution (adversarial matrix)
-- `.scratch/pic-tracer-bullet-6.5/issues/` — Wave 6.5 hardening tickets
+- `docs/audits/wave-6-handoff.md` — Wave 6 close-out
+- `docs/audits/wave-6.5-handoff.md` — Wave 6.5 close-out
+- `.scratch/pic-tracer-bullet/issues/12-*.md`, `13-*.md` — adapter + RPC resolutions
+- `.scratch/pic-tracer-bullet-6.5/issues/` — hardening tickets 01–06
