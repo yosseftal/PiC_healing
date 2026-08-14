@@ -3,7 +3,8 @@
  * substitution for "local `supabase start`" - this sandbox has no Docker/Supabase CLI; see this ticket's
  * `.scratch/pic-tracer-bullet/issues/12-adapter-supabase-crud.md` Resolution for the full writeup).
  *
- * `.env.local` loading below mirrors `scripts/wave6-supabase-audit.mjs`'s parsing pattern exactly, as a
+ * `.env.local` loading below mirrors `scripts/supabase-connectivity-check.mjs`'s parsing pattern — see
+ * `docs/testing/supabase-remote-testing.md`.
  * module-level side effect before any Supabase client is constructed - this file never logs the values it
  * reads, only sanitized ids/counts.
  *
@@ -250,7 +251,7 @@ runRepositoryPortContractTests(
     }
     return new SupabaseRepository(sharedContractTestUser.client);
   },
-  { skipPromoteGuestToAccount: true, makeTreatmentId: makeContractTreatmentId },
+  { skipPromoteGuestToAccount: true, makeTreatmentId: makeContractTreatmentId, makeIdempotencyKey: randomUUID },
 );
 
 describe("SupabaseRepository", () => {
@@ -279,7 +280,7 @@ describe("SupabaseRepository", () => {
     });
 
     it("incrementUseCount is idempotent under retry using the new uuid[] column", async () => {
-      const row = await repository.getOrCreateLibraryRow(seedTreatmentId, buildProvenance());
+      const row = await repository.getOrCreateLibraryRow(makeContractTreatmentId(), buildProvenance());
       const idempotencyKey = randomUUID();
 
       const firstCall = await repository.incrementUseCount(row.id, idempotencyKey);
@@ -293,7 +294,7 @@ describe("SupabaseRepository", () => {
       "a LibraryRow returned to a caller never exposes the idempotency-key column or the old " +
         "_usedIncrementIdempotencyKeys provenance field",
       async () => {
-        const row = await repository.getOrCreateLibraryRow(seedTreatmentId, buildProvenance());
+        const row = await repository.getOrCreateLibraryRow(makeContractTreatmentId(), buildProvenance());
         const idempotencyKey = randomUUID();
 
         const returned = await repository.incrementUseCount(row.id, idempotencyKey);
@@ -317,7 +318,7 @@ describe("SupabaseRepository", () => {
     );
 
     it("two distinct idempotency keys against the same row both increment use_count, once each", async () => {
-      const row = await repository.getOrCreateLibraryRow(seedTreatmentId, buildProvenance());
+      const row = await repository.getOrCreateLibraryRow(makeContractTreatmentId(), buildProvenance());
       const keyA = randomUUID();
       const keyB = randomUUID();
 

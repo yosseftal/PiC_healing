@@ -102,6 +102,13 @@ export interface RepositoryPortContractOptions {
    * concrete factory it passes.
    */
   makeTreatmentId?: () => string;
+  /**
+   * Optional factory for `incrementUseCount`'s `idempotencyKey`. Defaults to `uniqueId("idempotency-key")`
+   * (fine for fake / local-guest). `pic-adapter-supabase` stores keys in a Postgres `uuid[]` column (ticket
+   * 05) - pass `randomUUID` here so contract-suite keys satisfy that constraint. Production call sites
+   * already source keys from `player_session.id` (a real uuid).
+   */
+  makeIdempotencyKey?: () => string;
 }
 
 export function runRepositoryPortContractTests(
@@ -109,6 +116,7 @@ export function runRepositoryPortContractTests(
   options: RepositoryPortContractOptions = {},
 ): void {
   const makeTreatmentId = options.makeTreatmentId ?? (() => uniqueId("treatment"));
+  const makeIdempotencyKey = options.makeIdempotencyKey ?? (() => uniqueId("idempotency-key"));
 
   describe("RepositoryPort contract", () => {
     let port: RepositoryPort;
@@ -122,14 +130,14 @@ export function runRepositoryPortContractTests(
         const row = await port.getOrCreateLibraryRow(makeTreatmentId(), buildProvenance());
         expect(row.use_count).toBe(0);
 
-        const updated = await port.incrementUseCount(row.id, uniqueId("idempotency-key"));
+        const updated = await port.incrementUseCount(row.id, makeIdempotencyKey());
 
         expect(updated.use_count).toBe(1);
       });
 
       it("called twice with the same idempotencyKey increments exactly once", async () => {
         const row = await port.getOrCreateLibraryRow(makeTreatmentId(), buildProvenance());
-        const sameKey = uniqueId("idempotency-key");
+        const sameKey = makeIdempotencyKey();
 
         const firstCall = await port.incrementUseCount(row.id, sameKey);
         const secondCallWithSameKey = await port.incrementUseCount(row.id, sameKey);
@@ -139,7 +147,7 @@ export function runRepositoryPortContractTests(
 
         // A different idempotency key (e.g. a genuinely later Finish of the same treatment) must still
         // increment - proving the fake isn't just "always a no-op after the first call".
-        const differentKey = uniqueId("idempotency-key");
+        const differentKey = makeIdempotencyKey();
         const thirdCallWithDifferentKey = await port.incrementUseCount(row.id, differentKey);
 
         expect(thirdCallWithDifferentKey.use_count).toBe(2);

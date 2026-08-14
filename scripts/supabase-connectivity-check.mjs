@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 /**
- * Wave 6 one-off audit script — Connectivity Check + Schema Audit + Clean-state Sweep against the
- * Event Manager's real Supabase project (docker/local `supabase start` unavailable in this sandbox).
+ * Supabase remote-project connectivity + schema + clean-state check.
+ * Replaces the temporary Wave 6 one-off audit script (ticket 06).
  *
- * Deliberately prints only sanitized, non-secret information: HTTP status codes, table/column
- * presence, and row counts. Never logs SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY values.
+ * Prints only sanitized, non-secret information. Never logs API keys.
  *
- * This file is temporary tooling for Wave 6's Pre-flight, not part of any package — delete once the
- * wave closes.
+ * Usage (from repo root):
+ *   node scripts/supabase-connectivity-check.mjs
  */
 import { readFileSync } from "node:fs";
 
@@ -94,8 +93,15 @@ const EXPECTED_TABLES = [
 
 const EXPECTED_COLUMNS = {
   profiles: ["id", "email", "consent_timestamp", "role", "last_server_auth_at"],
-  symptom_groups: ["id", "user_id", "name", "joint_treatment_muscle_test", "joint_treatment_test_at"],
-  symptoms: ["polarity", "intensity"],
+  symptom_groups: [
+    "id",
+    "user_id",
+    "name",
+    "joint_treatment_muscle_test",
+    "joint_treatment_test_at",
+    "promotion_payload_fingerprint",
+  ],
+  symptoms: ["polarity", "intensity", "rated_at"],
   treatments: ["id", "title", "structured_markdown", "content_format", "user_id"],
   player_sessions: [
     "id",
@@ -117,17 +123,13 @@ const EXPECTED_COLUMNS = {
     "variant_type",
     "global_reference_id",
     "protocol_content",
+    "promoted_session_ids",
+    "used_increment_idempotency_keys",
   ],
   timeline_events: ["id", "user_id", "log_type", "treatment_id", "library_row_id", "linked_group_id", "metadata"],
 };
 
-// Ticket 13 (Wave 6): additive columns + the promotion RPC. Checked separately from ticket 11's own
-// EXPECTED_COLUMNS above so a fresh pulse-audit can report which wave's schema surface is missing.
-const TICKET_13_EXPECTED_COLUMNS = {
-  symptom_groups: ["promotion_payload_fingerprint"],
-  personal_treatment_library: ["promoted_session_ids"],
-};
-const TICKET_13_RPC_FUNCTION = "promote_guest_to_account";
+const EXPECTED_RPC_FUNCTIONS = ["promote_guest_to_account"];
 
 async function main() {
   console.log("=== 1. Connectivity Check ===");
@@ -141,7 +143,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("\n=== 2. Schema Audit (Ticket 11) ===");
+  console.log("\n=== 2. Schema Audit ===");
   for (const table of EXPECTED_TABLES) {
     const def = schema.definitions[table];
     if (!def) {
@@ -158,25 +160,17 @@ async function main() {
     }
   }
 
-  console.log("\n=== 2b. Schema Audit (Ticket 13) ===");
-  for (const [table, cols] of Object.entries(TICKET_13_EXPECTED_COLUMNS)) {
-    const def = schema.definitions[table];
-    const actualColumns = Object.keys(def?.properties ?? {});
-    const missingCols = cols.filter((c) => !actualColumns.includes(c));
-    if (missingCols.length > 0) {
-      console.log(`[MISSING COLUMN(S)] ${table}: missing [${missingCols.join(", ")}]`);
+  console.log("\n=== 3. RPC Functions ===");
+  for (const fn of EXPECTED_RPC_FUNCTIONS) {
+    const rpcPath = `/rpc/${fn}`;
+    if (schema.paths[rpcPath]) {
+      console.log(`[OK] RPC function present: ${fn}`);
     } else {
-      console.log(`[OK] ${table}: ${cols.join(", ")} present`);
+      console.log(`[MISSING RPC] ${fn} not found in schema cache`);
     }
   }
-  const rpcPath = `/rpc/${TICKET_13_RPC_FUNCTION}`;
-  if (schema.paths[rpcPath]) {
-    console.log(`[OK] RPC function present: ${TICKET_13_RPC_FUNCTION}`);
-  } else {
-    console.log(`[MISSING RPC] ${TICKET_13_RPC_FUNCTION} not found in schema cache`);
-  }
 
-  console.log("\n=== 3. Clean-state Sweep (row counts, service-role bypasses RLS) ===");
+  console.log("\n=== 4. Clean-state Sweep (row counts, service-role bypasses RLS) ===");
   for (const table of EXPECTED_TABLES) {
     const result = await fetchRowCount(table);
     if (!result.exists) {
@@ -188,6 +182,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Audit script failed:", err.message);
+  console.error("Connectivity check failed:", err.message);
   process.exit(1);
 });

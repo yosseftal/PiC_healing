@@ -2,7 +2,7 @@
  * Ticket 01 — direct Supabase-client round-trip tests for `public.symptoms.rated_at`.
  * Intentionally **not** routed through `SupabaseRepository` (adapter mapping is Ticket 02).
  *
- * `.env.local` loading mirrors `supabase-repository.test.ts` / `scripts/wave6-supabase-audit.mjs`.
+ * `.env.local` loading mirrors `supabase-repository.test.ts` / `docs/testing/supabase-remote-testing.md`.
  */
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
