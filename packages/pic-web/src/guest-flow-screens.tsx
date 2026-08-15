@@ -1,5 +1,5 @@
 /**
- * Guest flow screens (Ticket 08-04 stubs; Ticket 08-05+ real implementations).
+ * Guest flow screen switcher (Ticket 08-04 router; Tickets 08-05–08 real screen implementations).
  */
 import type { GuestFlowScreen } from "./guest-flow-facts";
 import { GroupSummaryFlow } from "./group-summary-flow";
@@ -8,7 +8,7 @@ import { SymptomGroupCreateScreen } from "./SymptomGroupCreateScreen";
 import { TreatmentPickerScreen } from "./TreatmentPickerScreen";
 import { UnifiedPlayerScreen } from "./UnifiedPlayerScreen";
 
-export function GuestFlowScreenStub({ screen }: { screen: GuestFlowScreen }) {
+export function GuestFlowScreenView({ screen }: { screen: GuestFlowScreen }) {
   if (screen === "create-group") {
     return <SymptomGroupCreateScreen />;
   }

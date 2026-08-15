@@ -1,5 +1,15 @@
 node_modules/
 dist/
 coverage/
+.scratch/
 *.log
 .DS_Store
+# Local environment variables
+.env
+.env.local
+.env.*.local
+*.env
+.env.*
+!.env.example
+שלד_טיפול_או_קורס.txt
+stam.md

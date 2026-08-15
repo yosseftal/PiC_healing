@@ -270,6 +270,17 @@ tries to **anchor** the work: clicking **Finish** (סיום), syncing a Reflecti
 this Group." Framed as a "Safe Container" for wisdom already discovered, not a barrier to starting.
 _Avoid_: Gating NEMAR inquiry or Terminal NEMAR itself; framing account creation as blocking access to the method
 
+**Atomic Promotion** (DEC-017, DEC-018):
+The single Supabase RPC (`promote_guest_to_account`) that replays a Guest snapshot into the authenticated account inside one
+Postgres transaction — Symptom Group, symptoms, Player session, Personal Treatment Library row, and Chronological Timeline
+event land together or not at all. **Idempotency** is keyed on the Guest Group's client UUID (`group.id`); retries with the
+same key and payload are no-ops. **`promoted_session_ids`** (`uuid[]` on `personal_treatment_library`) and
+**`used_increment_idempotency_keys`** prevent double `use_count` increments on promotion retry or post-promotion Finish replay.
+Payload fingerprinting uses core Postgres **`md5()`** (not `digest()`) for hosted-environment compatibility. After promotion,
+`SessionEngine.promote` skips replaying `PlayerEngine.finish*` when the RPC already applied Finish side effects.
+_Avoid_: Client-side multi-insert promotion; assuming a dropped RPC response means partial data landed; replaying Finish after
+an RPC that already incremented `use_count`
+
 **Verified Sovereign Choice** (DEC-017):
 The account deletion flow: a mandatory re-authentication ("Identity Lock") confirms the request is genuinely the account
 owner's, then the EM chooses between **Immediate Delete** (irreversible, single-transaction) and **Safe Deletion** (14-day

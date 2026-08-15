@@ -5,9 +5,11 @@ import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
 import { GuestFlowRouter } from "./guest-flow-router";
 import {
-  advanceGuestFlowForTest,
   deriveGuestFlowScreen,
   resetGuestFlowFactsForTest,
+  setGuestFlowGroupFinalized,
+  setGuestFlowSummaryAcknowledged,
+  setGuestFlowSymptomAdditionComplete,
   type GuestFlowFacts,
 } from "./guest-flow-facts";
 
@@ -117,25 +119,25 @@ describe("GuestFlowRouter", () => {
 
     expect(screen.getByTestId("guest-flow-create-group")).toBeTruthy();
 
-    await advanceGuestFlowForTest("joint-treatment");
+    const groupId = await compositionRoot.groupEngineActions.createDraftGroup("test-group");
+    setGuestFlowSymptomAdditionComplete(true);
     await waitFor(() => {
       expect(screen.getByTestId("guest-flow-joint-treatment")).toBeTruthy();
     });
 
-    await advanceGuestFlowForTest("group-summary");
+    setGuestFlowGroupFinalized(true);
     await waitFor(() => {
       expect(screen.getByTestId("guest-flow-group-summary")).toBeTruthy();
     });
 
-    await advanceGuestFlowForTest("pick-treatment");
+    setGuestFlowSummaryAcknowledged(true);
     await waitFor(() => {
       expect(screen.getByTestId("guest-flow-pick-treatment")).toBeTruthy();
     });
 
-    await advanceGuestFlowForTest("pick-treatment");
     await compositionRoot.playerEngineActions.startSession(
       "2c6e77bd-61db-4898-8612-84e976587ff7",
-      null,
+      groupId,
       ["intro", "practice"],
     );
     await waitFor(() => {

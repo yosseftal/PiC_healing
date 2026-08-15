@@ -3,7 +3,7 @@
  * components. `deriveGuestFlowScreen` is pure; `guestFlowStore` notifies subscribers when facts change.
  */
 import type { SessionState } from "pic-engine";
-import { compositionRoot, resetGroupFlowFactsForTest } from "./composition-root";
+import { resetGroupFlowFactsForTest } from "./composition-root";
 
 export type GuestFlowScreen =
   | "create-group"
@@ -138,42 +138,4 @@ export function resetGuestFlowFactsForTest(): void {
   summaryAcknowledged = false;
   resetGroupFlowFactsForTest();
   notifyGuestFlowStores();
-}
-
-/**
- * Test-only flow transitions until Tickets 08-05–08 wire real screens to engine actions.
- * TODO(08-05+): remove once each step updates facts via wrapped engine actions only.
- */
-export async function advanceGuestFlowForTest(screen: GuestFlowScreen): Promise<void> {
-  switch (screen) {
-    case "create-group":
-      resetGuestFlowFactsForTest();
-      break;
-    case "joint-treatment":
-      resetGuestFlowFactsForTest();
-      await compositionRoot.groupEngineActions.createDraftGroup("test-group");
-      setGuestFlowSymptomAdditionComplete(true);
-      break;
-    case "group-summary":
-      resetGuestFlowFactsForTest();
-      await compositionRoot.groupEngineActions.createDraftGroup("test-group");
-      setGuestFlowSymptomAdditionComplete(true);
-      setGuestFlowGroupFinalized(true);
-      break;
-    case "pick-treatment":
-      resetGuestFlowFactsForTest();
-      await compositionRoot.groupEngineActions.createDraftGroup("test-group");
-      setGuestFlowSymptomAdditionComplete(true);
-      setGuestFlowGroupFinalized(true);
-      setGuestFlowSummaryAcknowledged(true);
-      break;
-    case "player":
-      resetGuestFlowFactsForTest();
-      await compositionRoot.groupEngineActions.createDraftGroup("test-group");
-      setGuestFlowSymptomAdditionComplete(true);
-      setGuestFlowGroupFinalized(true);
-      setGuestFlowSummaryAcknowledged(true);
-      setGuestFlowPlayerSession("test-player-session");
-      break;
-  }
 }

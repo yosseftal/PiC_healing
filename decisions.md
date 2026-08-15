@@ -1560,6 +1560,48 @@ GQ-014 (Freemium/entitlement schema), exact re-authentication UX copy and Safe D
 
 ---
 
+## DEC-018 — Atomic Promotion Idempotency & Finish Replay Guard (Tracer Bullet, 2026-08-15)
+
+**Status:** Resolved (2026-08-15) — implements tracer-bullet spec §E idempotency guarantees landed in Waves 6–8.
+
+**Context:** Guest→account promotion is a single Postgres RPC (`promote_guest_to_account`) that writes the Symptom
+Group, symptoms, Player session, Personal Treatment Library row, and Chronological Timeline event in one
+transaction. Client retries after a dropped response, and the post-promotion `SessionEngine` replay of a gated
+Finish, must never double-increment `use_count` or append duplicate timeline rows.
+
+**Decision:**
+
+1. **Promotion idempotency key:** `PromoteGuestToAccountInput.idempotencyKey` is always the Guest Group's client
+   UUID (`group.id`), reused as the eventual `symptom_groups.id`. A second RPC call with the same key and
+   matching payload is a no-op; a mismatched payload rejects outright (see migration header on
+   `promote_guest_to_account`).
+2. **Payload fingerprint (`md5` hotfix):** The RPC fingerprints the incoming guest payload with core Postgres
+   `md5()` (not `pgcrypto`'s `digest()`), because hosted Supabase environments may not expose `digest()` without
+   an extension the function otherwise does not need. Fingerprinting detects same-key/different-payload abuse; it
+   is not a cryptographic security boundary (`supabase/migrations/20260813173036_promote_guest_to_account_rpc_fix_digest.sql`).
+3. **`promoted_session_ids` guard:** `personal_treatment_library.promoted_session_ids uuid[]` records which
+   `player_sessions.id` values already received their Finish-side-effect `use_count` increment inside the RPC.
+   `SupabaseRepository.incrementUseCount` no-ops when the idempotency key (the completing session's own `id`) is
+   already listed — preventing a post-promotion `PlayerEngine.finish*` replay from double-counting.
+4. **`used_increment_idempotency_keys` guard:** A dedicated `uuid[]` column on `personal_treatment_library`
+   (matching the `promoted_session_ids` pattern) tracks per-session `incrementUseCount` keys for ordinary Finish
+   retries (`supabase/migrations/20260814131500_used_increment_idempotency_keys.sql`, DEC-006).
+5. **Session replay guard:** After a successful RPC, `SessionEngine.promote` detects when Finish side effects
+   were already applied atomically (`promotionResult.timelineEvent.id === promotionResult.playerSession.id`) and
+   marks `success_declared` on the persisted session **without** calling `PlayerEngine.finish` / `finishAnyway`
+   again (`packages/pic-engine/src/session-engine/index.ts`).
+
+**Consequences:**
+
+- Adversarial promotion matrix (ticket 13): mid-transaction failure leaves zero rows; retry with the same key
+  produces exactly one row-set and `use_count === 1`.
+- Wave 8 happy-path E2E depends on this seam: gate → promote → authenticated mode with exactly one library
+  increment and one timeline event.
+
+**Resolved:** Tracer-bullet spec §E (Atomic Promotion) — operational idempotency layer for Waves 6–8.
+
+---
+
 ## GQ-018 — Completion Semantics Canonicalization (2026-07-02)
 
 **Status:** Resolved (2026-07-02, Yossef-Tal & Sigal) — amends **DEC-006**, **DEC-007**, **DEC-015**, **DEC-016**
