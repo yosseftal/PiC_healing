@@ -5,7 +5,12 @@
 import type { SessionState } from "pic-engine";
 import { compositionRoot, resetGroupFlowFactsForTest } from "./composition-root";
 
-export type GuestFlowScreen = "create-group" | "joint-treatment" | "pick-treatment" | "player";
+export type GuestFlowScreen =
+  | "create-group"
+  | "joint-treatment"
+  | "group-summary"
+  | "pick-treatment"
+  | "player";
 
 export interface GuestFlowFacts {
   activeGroupId: string | null;
@@ -14,6 +19,8 @@ export interface GuestFlowFacts {
   /** True once the EM finishes the symptom-addition phase (Ticket 08-05). */
   symptomAdditionComplete: boolean;
   groupFinalized: boolean;
+  /** True once the EM confirms the read-only group summary (Ticket 08-06). */
+  summaryAcknowledged: boolean;
 }
 
 export function deriveGuestFlowScreen(facts: GuestFlowFacts): GuestFlowScreen {
@@ -25,6 +32,9 @@ export function deriveGuestFlowScreen(facts: GuestFlowFacts): GuestFlowScreen {
   }
   if (!facts.groupFinalized) {
     return "joint-treatment";
+  }
+  if (!facts.summaryAcknowledged) {
+    return "group-summary";
   }
   return "pick-treatment";
 }
@@ -60,6 +70,7 @@ let getSessionState: () => SessionState = () => ({
 let activePlayerSessionId: string | null = null;
 let symptomAdditionComplete = false;
 let groupFinalized = false;
+let summaryAcknowledged = false;
 
 function collectGuestFlowFacts(): GuestFlowFacts {
   return {
@@ -68,8 +79,16 @@ function collectGuestFlowFacts(): GuestFlowFacts {
     sessionState: getSessionState(),
     symptomAdditionComplete,
     groupFinalized,
+    summaryAcknowledged,
   };
 }
+
+function notifyGuestFlowStores(): void {
+  guestFlowFactsStore.notify();
+  guestFlowStore.notify();
+}
+
+export const guestFlowFactsStore = createExternalStore(collectGuestFlowFacts);
 
 export const guestFlowStore = createExternalStore(() => deriveGuestFlowScreen(collectGuestFlowFacts()));
 
@@ -82,37 +101,43 @@ export function initGuestFlowFacts(deps: {
 }): void {
   getActiveGroupId = deps.getActiveGroupId;
   getSessionState = deps.getSessionState;
-  deps.subscribeToGroup(() => guestFlowStore.notify());
-  deps.subscribeToSession(() => guestFlowStore.notify());
-  guestFlowStore.notify();
+  deps.subscribeToGroup(() => notifyGuestFlowStores());
+  deps.subscribeToSession(() => notifyGuestFlowStores());
+  notifyGuestFlowStores();
 }
 
 /** Stable seam for wrapped engine actions (Ticket 08-03+) to refresh derived screens after mutations. */
 export function notifyGuestFlowFacts(): void {
-  guestFlowStore.notify();
+  notifyGuestFlowStores();
 }
 
 export function setGuestFlowPlayerSession(sessionId: string | null): void {
   activePlayerSessionId = sessionId;
-  guestFlowStore.notify();
+  notifyGuestFlowStores();
 }
 
 export function setGuestFlowGroupFinalized(finalized: boolean): void {
   groupFinalized = finalized;
-  guestFlowStore.notify();
+  notifyGuestFlowStores();
 }
 
 export function setGuestFlowSymptomAdditionComplete(complete: boolean): void {
   symptomAdditionComplete = complete;
-  guestFlowStore.notify();
+  notifyGuestFlowStores();
+}
+
+export function setGuestFlowSummaryAcknowledged(acknowledged: boolean): void {
+  summaryAcknowledged = acknowledged;
+  notifyGuestFlowStores();
 }
 
 export function resetGuestFlowFactsForTest(): void {
   activePlayerSessionId = null;
   symptomAdditionComplete = false;
   groupFinalized = false;
+  summaryAcknowledged = false;
   resetGroupFlowFactsForTest();
-  guestFlowStore.notify();
+  notifyGuestFlowStores();
 }
 
 /**
@@ -129,17 +154,25 @@ export async function advanceGuestFlowForTest(screen: GuestFlowScreen): Promise<
       await compositionRoot.groupEngineActions.createDraftGroup("test-group");
       setGuestFlowSymptomAdditionComplete(true);
       break;
+    case "group-summary":
+      resetGuestFlowFactsForTest();
+      await compositionRoot.groupEngineActions.createDraftGroup("test-group");
+      setGuestFlowSymptomAdditionComplete(true);
+      setGuestFlowGroupFinalized(true);
+      break;
     case "pick-treatment":
       resetGuestFlowFactsForTest();
       await compositionRoot.groupEngineActions.createDraftGroup("test-group");
       setGuestFlowSymptomAdditionComplete(true);
       setGuestFlowGroupFinalized(true);
+      setGuestFlowSummaryAcknowledged(true);
       break;
     case "player":
       resetGuestFlowFactsForTest();
       await compositionRoot.groupEngineActions.createDraftGroup("test-group");
       setGuestFlowSymptomAdditionComplete(true);
       setGuestFlowGroupFinalized(true);
+      setGuestFlowSummaryAcknowledged(true);
       setGuestFlowPlayerSession("test-player-session");
       break;
   }
