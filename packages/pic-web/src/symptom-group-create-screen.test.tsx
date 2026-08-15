@@ -46,6 +46,28 @@ describe("SymptomGroupCreateScreen", () => {
       expect(rate).toHaveBeenCalledWith("symptom-1", { polarity: "negative", intensity: 5 });
     });
   });
+
+  it("shows Done adding symptoms when the engine group has symptoms, including after remount", async () => {
+    const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
+    await compositionRoot.groupEngineActions.addSymptom(groupId, "Neck Pain");
+    await compositionRoot.groupEngineActions.rate(
+      (await compositionRoot.groupEngineActions.getGroup(groupId))!.symptoms[0]!.id,
+      { polarity: "negative", intensity: 6 },
+    );
+
+    const { unmount } = renderCreateScreen();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("finish-symptom-addition")).toBeTruthy();
+    });
+
+    unmount();
+    renderCreateScreen();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("finish-symptom-addition")).toBeTruthy();
+    });
+  });
 });
 
 describe("RatingControl", () => {

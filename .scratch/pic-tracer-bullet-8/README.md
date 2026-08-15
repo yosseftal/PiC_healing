@@ -1,34 +1,24 @@
 # Wave 8 — UI Landing (Tracer Bullet)
 
-**Baseline:** Cloud-First + Tickets 08-01–08-07 landed (except 08-06, 08-08, 08-09).
+**Status:** **CLOSED** — 186 tests green, 0 depcruise violations.
 
 ## Ticket tracker
 
-| ID | Title | Status | Blocked by |
-|----|-------|--------|------------|
-| 08-01 | Promote path wiring | **done** | — |
-| 08-02 | PersistenceGateModal | **done** | 08-01 |
-| 08-03 | Engine context expansion | **done** | — |
-| 08-04 | Guest flow router | **done** | — |
-| 08-05 | SymptomGroupCreateScreen | **done** | 08-03, 08-04 |
-| 08-06 | Joint treatment + summary | ready-for-agent | 08-05 |
-| 08-07 | listTreatments + picker | **done** | 08-03, 08-04 |
-| 08-08 | UnifiedPlayerScreen | ready-for-agent | 08-03, 08-07 |
-| 08-09 | Happy-path E2E | ready-for-agent | 08-02, 08-06, 08-07, 08-08 |
+| ID | Title | Status | Brief |
+|----|-------|--------|-------|
+| 08-01 | Promote path wiring | **done** | `briefs/01-promote-path-wiring-brief.md` |
+| 08-02 | PersistenceGateModal | **done** | — |
+| 08-03 | Engine context expansion | **done** | `briefs/03-engine-context-expansion-brief.md` |
+| 08-04 | Guest flow router | **done** | `briefs/04-guest-flow-router-brief.md` |
+| 08-05 | SymptomGroupCreateScreen | **done** | — |
+| 08-06 | Joint treatment + summary | **done** | `briefs/06-joint-treatment-summary-brief.md` |
+| 08-07 | listTreatments + picker | **done** | — |
+| 08-08 | UnifiedPlayerScreen | **done** | `briefs/08-unified-player-screen-brief.md` |
+| 08-09 | Happy-path E2E | **done** | `briefs/09-happy-path-e2e-brief.md` |
 
-## Recent commits
+## Gates (all passed)
 
-- `a57dbf2` — [08-03] Engine context boundaries
-- `760e8f1` — [08-04] Guest flow router
-- `9473e15` — [08-05] SymptomGroupCreateScreen
-- `[08-07]` — listTreatments + TreatmentPickerScreen (pending commit)
-
-## Next frontier
-
-**08-06** (joint treatment + summary) and **08-08** (UnifiedPlayerScreen) — can parallel after 08-07 commit.
-
-## Gates
-
-- [x] `depcruise` pic-web — 0 violations
-- [ ] Wave 8 E2E (08-09)
-- [ ] `docs/audits/wave-8-handoff.md`
+- [x] `depcruise` pic-web + pic-engine — 0 violations
+- [x] FK alignment — `TRACER_BULLET_SEED_TREATMENTS` matches remote Supabase IDs
+- [x] Wave 8 E2E (08-09)
+- [x] `docs/audits/wave-8-handoff.md`

@@ -33,7 +33,7 @@
  * to honor, not this ticket's.
  */
 import { normalizeInViewUnit } from "../normalize-in-view-unit";
-import type { GuestSessionGateState, RepositoryPort } from "../repository-port";
+import type { GuestSessionGateState, PromoteGuestToAccountResult, RepositoryPort } from "../repository-port";
 import type { FinalizedSymptomGroup, PlayerSession } from "../types";
 import type { PlayerEngine } from "../player-engine/index";
 
@@ -162,8 +162,9 @@ export class SessionEngine {
     this.promotionStatus = "pending";
     this.notify();
 
+    let promotionResult: PromoteGuestToAccountResult;
     try {
-      await this.repositoryPort.promoteGuestToAccount({
+      promotionResult = await this.repositoryPort.promoteGuestToAccount({
         idempotencyKey: guestState.group.id,
         group: guestState.group,
         playerSession: normalizeForPermanentStore(guestState.playerSession),
@@ -186,7 +187,20 @@ export class SessionEngine {
     this.notify();
 
     if (pending !== null) {
-      await this.runFinish(pending.sessionId, pending.kind);
+      const finishAppliedByPromotion =
+        promotionResult.timelineEvent.id === promotionResult.playerSession.id;
+      if (finishAppliedByPromotion) {
+        const session = await this.repositoryPort.getPlayerSession(pending.sessionId);
+        if (session !== null && !session.success_declared) {
+          await this.repositoryPort.savePlayerSession({
+            ...session,
+            success_declared: true,
+            finished_at: new Date().toISOString(),
+          });
+        }
+      } else {
+        await this.runFinish(pending.sessionId, pending.kind);
+      }
     }
   }
 

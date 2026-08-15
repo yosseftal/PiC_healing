@@ -105,6 +105,7 @@ interface PersonalTreatmentLibraryRow {
   use_count: number;
   provenance: LibraryRowProvenance | null;
   used_increment_idempotency_keys: string[];
+  promoted_session_ids?: string[];
   variant_type: "original";
   global_reference_id: string | null;
   protocol_content: string | null;
@@ -358,10 +359,12 @@ export class SupabaseRepository implements RepositoryPort {
   }
 
   async getOrCreateLibraryRow(treatmentId: string, provenance: LibraryRowProvenance): Promise<LibraryRow> {
+    const userId = await this.currentUserId();
     const { data: existingRow, error: selectError } = await this.client
       .from("personal_treatment_library")
       .select("*")
       .eq("treatment_id", treatmentId)
+      .eq("user_id", userId)
       .maybeSingle();
     if (selectError) {
       throw wrapError("getOrCreateLibraryRow", selectError);
@@ -370,7 +373,6 @@ export class SupabaseRepository implements RepositoryPort {
       return rowToLibraryRow(existingRow as PersonalTreatmentLibraryRow);
     }
 
-    const userId = await this.currentUserId();
     const { data: insertedRow, error: insertError } = await this.client
       .from("personal_treatment_library")
       .insert({
@@ -393,6 +395,7 @@ export class SupabaseRepository implements RepositoryPort {
           .from("personal_treatment_library")
           .select("*")
           .eq("treatment_id", treatmentId)
+          .eq("user_id", userId)
           .maybeSingle();
         if (raceError) {
           throw wrapError("getOrCreateLibraryRow", raceError);
@@ -430,7 +433,8 @@ export class SupabaseRepository implements RepositoryPort {
 
     const currentRow = row as PersonalTreatmentLibraryRow;
     const usedKeys = currentRow.used_increment_idempotency_keys ?? [];
-    if (usedKeys.includes(idempotencyKey)) {
+    const promotedSessionIds = currentRow.promoted_session_ids ?? [];
+    if (usedKeys.includes(idempotencyKey) || promotedSessionIds.includes(idempotencyKey)) {
       return rowToLibraryRow(currentRow);
     }
 
