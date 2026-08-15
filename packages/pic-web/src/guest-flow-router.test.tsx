@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
+import { compositionRoot } from "./composition-root";
 import { GuestFlowRouter } from "./guest-flow-router";
 import {
   advanceGuestFlowForTest,
@@ -25,6 +26,7 @@ describe("deriveGuestFlowScreen", () => {
       sessionState: emptySessionState,
       symptomAdditionComplete: false,
       groupFinalized: false,
+      summaryAcknowledged: false,
     };
     expect(deriveGuestFlowScreen(facts)).toBe("create-group");
   });
@@ -37,6 +39,7 @@ describe("deriveGuestFlowScreen", () => {
         sessionState: emptySessionState,
         symptomAdditionComplete: false,
         groupFinalized: false,
+        summaryAcknowledged: false,
       }),
     ).toBe("create-group");
   });
@@ -49,11 +52,12 @@ describe("deriveGuestFlowScreen", () => {
         sessionState: emptySessionState,
         symptomAdditionComplete: true,
         groupFinalized: false,
+        summaryAcknowledged: false,
       }),
     ).toBe("joint-treatment");
   });
 
-  it("derives pick-treatment when the group is finalized", () => {
+  it("derives group-summary when the group is finalized but summary is not acknowledged", () => {
     expect(
       deriveGuestFlowScreen({
         activeGroupId: "group-1",
@@ -61,6 +65,20 @@ describe("deriveGuestFlowScreen", () => {
         sessionState: emptySessionState,
         symptomAdditionComplete: true,
         groupFinalized: true,
+        summaryAcknowledged: false,
+      }),
+    ).toBe("group-summary");
+  });
+
+  it("derives pick-treatment when the group is finalized and summary is acknowledged", () => {
+    expect(
+      deriveGuestFlowScreen({
+        activeGroupId: "group-1",
+        activePlayerSessionId: null,
+        sessionState: emptySessionState,
+        symptomAdditionComplete: true,
+        groupFinalized: true,
+        summaryAcknowledged: true,
       }),
     ).toBe("pick-treatment");
   });
@@ -73,6 +91,7 @@ describe("deriveGuestFlowScreen", () => {
         sessionState: emptySessionState,
         symptomAdditionComplete: true,
         groupFinalized: true,
+        summaryAcknowledged: true,
       }),
     ).toBe("player");
   });
@@ -103,12 +122,22 @@ describe("GuestFlowRouter", () => {
       expect(screen.getByTestId("guest-flow-joint-treatment")).toBeTruthy();
     });
 
+    await advanceGuestFlowForTest("group-summary");
+    await waitFor(() => {
+      expect(screen.getByTestId("guest-flow-group-summary")).toBeTruthy();
+    });
+
     await advanceGuestFlowForTest("pick-treatment");
     await waitFor(() => {
       expect(screen.getByTestId("guest-flow-pick-treatment")).toBeTruthy();
     });
 
-    await advanceGuestFlowForTest("player");
+    await advanceGuestFlowForTest("pick-treatment");
+    await compositionRoot.playerEngineActions.startSession(
+      "2c6e77bd-61db-4898-8612-84e976587ff7",
+      null,
+      ["intro", "practice"],
+    );
     await waitFor(() => {
       expect(screen.getByTestId("guest-flow-player")).toBeTruthy();
     });

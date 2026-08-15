@@ -90,13 +90,13 @@ const sessionEngineStore = createExternalStore(() => sessionEngine.getState());
 
 sessionEngine.subscribe(() => sessionEngineStore.notify());
 
-/** Composition-layer flow fact: last group created via wrapped `createDraftGroup` (Ticket 08-03). */
+/** Composition-layer flow fact: last group created via wrapped `createDraftGroup`. */
 let activeGroupId: string | null = null;
 
 const groupEngineStore = createExternalStore(() => ({ activeGroupId }));
 
 /**
- * `useSyncExternalStore`-compatible cache for `RepositoryPort.getPlayerSession` reads (Ticket 08-03).
+ * `useSyncExternalStore`-compatible cache for `RepositoryPort.getPlayerSession` reads.
  * `getSnapshot` is synchronous; `refresh` repopulates from the shared `repositoryPort` after mutations.
  */
 function createPlayerSessionStore(port: DelegatingRepositoryPort) {
@@ -162,10 +162,14 @@ const groupEngineActions = {
   setJointTreatmentMuscleTest(groupId: string, answer: JointTreatmentMuscleTestResult): Promise<void> {
     return groupEngine.setJointTreatmentMuscleTest(groupId, answer);
   },
+  getGroup(groupId: string) {
+    return repositoryPort.getGroup(groupId);
+  },
   async finalizeGroup(groupId: string) {
-    await groupEngine.finalizeGroup(groupId);
+    const result = await groupEngine.finalizeGroup(groupId);
     const { setGuestFlowGroupFinalized } = await import("./guest-flow-facts");
     setGuestFlowGroupFinalized(true);
+    return result;
   },
 };
 
@@ -208,7 +212,6 @@ export function swapToSupabaseAdapter(port: RepositoryPort): void {
   authenticatedPort = port;
 }
 
-/** Wave 8 ticket 08-01: promote-path actions for Persistence Gate wiring (Ticket 08-02 consumes these). */
 const promotePathActions = {
   assembleGuestSnapshotForPendingGate(): Promise<GuestSnapshot | null> {
     return assembleGuestSnapshotForPendingGate(guestRepository);
@@ -234,7 +237,6 @@ const promotePathActions = {
       registerAuthenticatedPort: swapToSupabaseAdapter,
     });
   },
-  /** Dev tracer stub: assemble pending gate snapshot, sign in from env, and run promotion (Ticket 08-02). */
   async promoteGuestSessionFromEnv(env: Record<string, string | undefined>): Promise<void> {
     const guestSnapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
     if (guestSnapshot === null) {
@@ -253,7 +255,7 @@ const promotePathActions = {
   },
 };
 
-/** Resets composition-layer group flow pointer between tests (Ticket 08-04). */
+/** Resets composition-layer group flow pointer between tests. */
 export function resetGroupFlowFactsForTest(): void {
   activeGroupId = null;
   groupEngineStore.notify();

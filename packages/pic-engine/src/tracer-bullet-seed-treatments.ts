@@ -7,7 +7,7 @@ import type { TreatmentListItem } from "./repository-port";
  * exists in the EM's Supabase `treatments` table (see Ticket 08-07 Resolution).
  */
 export const TRACER_BULLET_SEED_TREATMENTS: readonly TreatmentListItem[] = [
-  { id: "00000000-0000-4000-8000-000000000001", title: "Settling the Nervous System" },
-  { id: "00000000-0000-4000-8000-000000000002", title: "Grounding Through the Feet" },
-  { id: "00000000-0000-4000-8000-000000000003", title: "Loosening the Shoulders and Neck" },
+  { id: "2c6e77bd-61db-4898-8612-84e976587ff7", title: "Settling the Nervous System" },
+  { id: "c818490b-10ed-46c2-9890-1f35d34f4e25", title: "Grounding Through the Feet" },
+  { id: "92be9fb3-7092-4a78-9fa2-4aee9ba34bc6", title: "Loosening the Shoulders and Neck" },
 ] as const;

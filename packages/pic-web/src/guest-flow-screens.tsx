@@ -2,26 +2,28 @@
  * Guest flow screens (Ticket 08-04 stubs; Ticket 08-05+ real implementations).
  */
 import type { GuestFlowScreen } from "./guest-flow-facts";
+import { GroupSummaryFlow } from "./group-summary-flow";
+import { JointTreatmentFlow } from "./joint-treatment-flow";
 import { SymptomGroupCreateScreen } from "./SymptomGroupCreateScreen";
 import { TreatmentPickerScreen } from "./TreatmentPickerScreen";
-
-const SCREEN_HEADINGS: Record<Exclude<GuestFlowScreen, "create-group" | "pick-treatment">, string> = {
-  "joint-treatment": "Joint Treatment Muscle Test",
-  player: "Unified Player",
-};
+import { UnifiedPlayerScreen } from "./UnifiedPlayerScreen";
 
 export function GuestFlowScreenStub({ screen }: { screen: GuestFlowScreen }) {
   if (screen === "create-group") {
     return <SymptomGroupCreateScreen />;
   }
 
+  if (screen === "joint-treatment") {
+    return <JointTreatmentFlow />;
+  }
+
+  if (screen === "group-summary") {
+    return <GroupSummaryFlow />;
+  }
+
   if (screen === "pick-treatment") {
     return <TreatmentPickerScreen />;
   }
 
-  return (
-    <section data-testid={`guest-flow-${screen}`}>
-      <h1>{SCREEN_HEADINGS[screen]}</h1>
-    </section>
-  );
+  return <UnifiedPlayerScreen />;
 }
