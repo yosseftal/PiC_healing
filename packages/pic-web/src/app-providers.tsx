@@ -7,14 +7,17 @@ import { CatalogProvider } from "./catalog-context";
 import { GroupEngineProvider } from "./group-engine-context";
 import { PlayerEngineProvider } from "./player-engine-context";
 import { SessionEngineProvider } from "./session-engine-context";
+import { TreatmentContentProvider } from "./treatment-content-context";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <SessionEngineProvider>
       <CatalogProvider>
-        <GroupEngineProvider>
-          <PlayerEngineProvider>{children}</PlayerEngineProvider>
-        </GroupEngineProvider>
+        <TreatmentContentProvider>
+          <GroupEngineProvider>
+            <PlayerEngineProvider>{children}</PlayerEngineProvider>
+          </GroupEngineProvider>
+        </TreatmentContentProvider>
       </CatalogProvider>
     </SessionEngineProvider>
   );

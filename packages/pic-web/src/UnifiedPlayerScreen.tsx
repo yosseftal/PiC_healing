@@ -28,7 +28,7 @@ export function UnifiedPlayerScreen() {
       {isTerminalNemar ? (
         <TerminalNemarUnit sessionId={activePlayerSessionId} />
       ) : activeUnit !== undefined ? (
-        <AtomicUnitView sessionId={activePlayerSessionId} unit={activeUnit} />
+        <AtomicUnitView sessionId={activePlayerSessionId} treatmentId={session.treatment_id} unit={activeUnit} />
       ) : null}
       <NavigationTreePanel sessionId={activePlayerSessionId} session={session} />
       <FinishBar sessionId={activePlayerSessionId} session={session} />

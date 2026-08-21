@@ -19,11 +19,12 @@ import {
   DelegatingRepositoryPort,
   GroupEngine,
   LibraryEngine,
+  parseStructuredMarkdown,
   PlayerEngine,
   SessionEngine,
   TimelineEngine,
 } from "pic-engine";
-import type { Intensity, JointTreatmentMuscleTestResult, Polarity } from "pic-engine";
+import type { AtomicUnitContent, Intensity, JointTreatmentMuscleTestResult, Polarity } from "pic-engine";
 import type { GuestSnapshot, RepositoryPort } from "pic-engine";
 import type { PlayerSession } from "pic-engine";
 import {
@@ -276,6 +277,30 @@ const catalogActions = {
   },
 };
 
+/** Module-scoped parsed-content cache — fresh on tab reload, per Wave 9 Content Cache Lifetime decision. */
+const parsedTreatmentContentById = new Map<string, AtomicUnitContent[]>();
+
+const treatmentContentActions = {
+  async getParsedTreatmentContent(treatmentId: string): Promise<AtomicUnitContent[]> {
+    const cached = parsedTreatmentContentById.get(treatmentId);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const treatment = await repositoryPort.getTreatment(treatmentId);
+    if (treatment === null) {
+      return [];
+    }
+    const parsed = parseStructuredMarkdown(treatment.structured_markdown);
+    parsedTreatmentContentById.set(treatmentId, parsed);
+    return parsed;
+  },
+};
+
+/** Clears the tab-scoped treatment content cache between tests. */
+export function resetTreatmentContentCacheForTest(): void {
+  parsedTreatmentContentById.clear();
+}
+
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
   repositoryPort,
@@ -289,4 +314,5 @@ export const compositionRoot = {
   playerEngineActions,
   promotePathActions,
   catalogActions,
+  treatmentContentActions,
 };

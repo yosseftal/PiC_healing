@@ -1,20 +1,23 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TERMINAL_NEMAR_UNIT_ID, type PlayerSession } from "pic-engine";
+import { TERMINAL_NEMAR_UNIT_ID, TRACER_BULLET_SEED_TREATMENT_ROWS, type PlayerSession } from "pic-engine";
 import { AppProviders } from "./app-providers";
-import { compositionRoot } from "./composition-root";
+import { compositionRoot, resetTreatmentContentCacheForTest } from "./composition-root";
 import { setGuestFlowPlayerSession, resetGuestFlowFactsForTest } from "./guest-flow-facts";
 import { UnifiedPlayerScreen } from "./UnifiedPlayerScreen";
+
+const seedTreatment = TRACER_BULLET_SEED_TREATMENT_ROWS[0]!;
 
 function buildSession(overrides: Partial<PlayerSession> = {}): PlayerSession {
   return {
     id: "session-1",
-    treatment_id: "2c6e77bd-61db-4898-8612-84e976587ff7",
+    treatment_id: seedTreatment.id,
     linked_group_id: null,
     units: [
-      { unit_id: "intro", state: "in_view" },
-      { unit_id: "practice", state: "unseen" },
+      { unit_id: "unit-1", state: "in_view" },
+      { unit_id: "unit-2", state: "unseen" },
+      { unit_id: "unit-3", state: "unseen" },
       { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "unseen" },
     ],
     terminal_nemar_response: null,
@@ -35,11 +38,13 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   resetGuestFlowFactsForTest();
+  resetTreatmentContentCacheForTest();
 });
 
 describe("UnifiedPlayerScreen", () => {
   beforeEach(() => {
     resetGuestFlowFactsForTest();
+    resetTreatmentContentCacheForTest();
   });
 
   it("renders the current unit without throwing given a fresh player session state", async () => {
@@ -54,8 +59,10 @@ describe("UnifiedPlayerScreen", () => {
     );
 
     expect(screen.getByTestId("guest-flow-player")).toBeTruthy();
-    expect(screen.getByTestId("atomic-unit-intro")).toBeTruthy();
-    expect(screen.getByText("intro")).toBeTruthy();
+    expect(screen.getByTestId("atomic-unit-unit-1")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByTestId("atomic-unit-title").textContent).toBe("Settle Into Stillness");
+    });
   });
 
   it("rendering the current unit triggers advance()/in_view exactly once, not on every re-render", async () => {
@@ -99,8 +106,8 @@ describe("UnifiedPlayerScreen", () => {
     expect(screen.queryByRole("button", { name: /back/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /done/i })).toBeNull();
 
-    fireEvent.click(screen.getByTestId("navigation-tree-jump-practice"));
-    expect(jumpTo).toHaveBeenCalledWith("session-1", "practice");
+    fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-2"));
+    expect(jumpTo).toHaveBeenCalledWith("session-1", "unit-2");
   });
 
   it("FinishBar shows [Finish] only when terminal NEMAR is yes, and [Finish Anyway] always", async () => {
@@ -108,8 +115,9 @@ describe("UnifiedPlayerScreen", () => {
 
     const beforeNemar = buildSession({
       units: [
-        { unit_id: "intro", state: "completed" },
-        { unit_id: "practice", state: "completed" },
+        { unit_id: "unit-1", state: "completed" },
+        { unit_id: "unit-2", state: "completed" },
+        { unit_id: "unit-3", state: "completed" },
         { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" },
       ],
       terminal_nemar_response: null,
@@ -127,8 +135,9 @@ describe("UnifiedPlayerScreen", () => {
 
     const afterYes = buildSession({
       units: [
-        { unit_id: "intro", state: "completed" },
-        { unit_id: "practice", state: "completed" },
+        { unit_id: "unit-1", state: "completed" },
+        { unit_id: "unit-2", state: "completed" },
+        { unit_id: "unit-3", state: "completed" },
         { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" },
       ],
       terminal_nemar_response: "yes",
@@ -163,8 +172,9 @@ describe("UnifiedPlayerScreen", () => {
   it("Finish and Finish Anyway call sessionEngine.onFinishRequested, not raw playerEngine.finish", async () => {
     const session = buildSession({
       units: [
-        { unit_id: "intro", state: "completed" },
-        { unit_id: "practice", state: "completed" },
+        { unit_id: "unit-1", state: "completed" },
+        { unit_id: "unit-2", state: "completed" },
+        { unit_id: "unit-3", state: "completed" },
         { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" },
       ],
       terminal_nemar_response: "yes",
