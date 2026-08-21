@@ -138,7 +138,7 @@ describe("GuestFlowRouter", () => {
     await compositionRoot.playerEngineActions.startSession(
       "2c6e77bd-61db-4898-8612-84e976587ff7",
       groupId,
-      ["intro", "practice"],
+      ["unit-1", "unit-2", "unit-3"],
     );
     await waitFor(() => {
       expect(screen.getByTestId("guest-flow-player")).toBeTruthy();

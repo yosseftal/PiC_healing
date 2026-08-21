@@ -188,14 +188,14 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
       fireEvent.click(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`));
 
       await waitFor(() => {
-        const practiceButton = screen.getByTestId("navigation-tree-jump-practice");
-        expect(practiceButton.textContent).toContain("skipped");
+        const unitTwoButton = screen.getByTestId("navigation-tree-jump-unit-2");
+        expect(unitTwoButton.textContent).toContain("skipped");
       });
 
-      fireEvent.click(screen.getByTestId("navigation-tree-jump-practice"));
+      fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-2"));
 
       await waitFor(() => {
-        expect(screen.getByTestId("atomic-unit-practice")).toBeTruthy();
+        expect(screen.getByTestId("atomic-unit-unit-2")).toBeTruthy();
       });
 
       fireEvent.click(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`));
