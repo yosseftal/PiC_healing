@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FinalizedSymptomGroup, LibraryRowProvenance, PlayerSession, SymptomGroupDraft } from "pic-engine";
+import { parseStructuredMarkdown, TRACER_BULLET_SEED_TREATMENT_ROWS } from "pic-engine";
 import { runRepositoryPortContractTests } from "pic-engine/test/contract/repository-port.contract";
 import type { GuestKeyValueStorage } from "./index";
 import { DEFAULT_GUEST_STORAGE_KEY, GuestRepositoryCannotPromoteError, LocalGuestRepository } from "./index";
@@ -21,6 +22,7 @@ import { DEFAULT_GUEST_STORAGE_KEY, GuestRepositoryCannotPromoteError, LocalGues
  */
 runRepositoryPortContractTests(() => new LocalGuestRepository({ storageKey: crypto.randomUUID() }), {
   skipPromoteGuestToAccount: true,
+  seedTreatment: () => TRACER_BULLET_SEED_TREATMENT_ROWS[0]!,
 });
 
 let nextFixtureSuffix = 0;
@@ -324,6 +326,34 @@ describe("LocalGuestRepository", () => {
 
       expect(fetchSpy).not.toHaveBeenCalled();
       expect(xhrSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Guest Mode bundled treatment content (Wave 9)", () => {
+    it("TRACER_BULLET_SEED_TREATMENT_ROWS ids match the FK-aligned tracer bullet UUIDs", () => {
+      expect(TRACER_BULLET_SEED_TREATMENT_ROWS.map((row) => row.id)).toEqual([
+        "2c6e77bd-61db-4898-8612-84e976587ff7",
+        "c818490b-10ed-46c2-9890-1f35d34f4e25",
+        "92be9fb3-7092-4a78-9fa2-4aee9ba34bc6",
+      ]);
+    });
+
+    it("getTreatment returns bundled markdown without network or storage I/O beyond the in-memory constant", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      const repository = new LocalGuestRepository({ storageKey: crypto.randomUUID() });
+      const seed = TRACER_BULLET_SEED_TREATMENT_ROWS[0]!;
+
+      const treatment = await repository.getTreatment(seed.id);
+
+      expect(treatment).toEqual(seed);
+      expect(parseStructuredMarkdown(treatment!.structured_markdown)).toHaveLength(3);
+      expect(fetchSpy).not.toHaveBeenCalled();
+      fetchSpy.mockRestore();
+    });
+
+    it("getTreatment returns null for an unknown id", async () => {
+      const repository = new LocalGuestRepository({ storageKey: crypto.randomUUID() });
+      await expect(repository.getTreatment("unknown-treatment-id")).resolves.toBeNull();
     });
   });
 });

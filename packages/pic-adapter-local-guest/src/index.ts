@@ -25,7 +25,12 @@ import type {
   SymptomGroup,
   TimelineEvent,
 } from "pic-engine";
-import { DEFAULT_GUEST_SESSION_GATE_STATE, normalizeInViewUnit, TRACER_BULLET_SEED_TREATMENTS } from "pic-engine";
+import {
+  DEFAULT_GUEST_SESSION_GATE_STATE,
+  normalizeInViewUnit,
+  TRACER_BULLET_SEED_TREATMENT_ROWS,
+  TRACER_BULLET_SEED_TREATMENTS,
+} from "pic-engine";
 
 /** The minimal Web Storage shape this adapter needs - satisfied by real `localStorage` or a test double. */
 export interface GuestKeyValueStorage {
@@ -282,5 +287,9 @@ export class LocalGuestRepository implements RepositoryPort {
 
   async listTreatments() {
     return [...TRACER_BULLET_SEED_TREATMENTS];
+  }
+
+  async getTreatment(treatmentId: string) {
+    return TRACER_BULLET_SEED_TREATMENT_ROWS.find((row) => row.id === treatmentId) ?? null;
   }
 }

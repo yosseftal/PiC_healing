@@ -30,7 +30,10 @@ export type {
   Treatment,
   TreatmentListItem,
 } from "./repository-port";
-export { TRACER_BULLET_SEED_TREATMENTS } from "./tracer-bullet-seed-treatments";
+export {
+  TRACER_BULLET_SEED_TREATMENT_ROWS,
+  TRACER_BULLET_SEED_TREATMENTS,
+} from "./tracer-bullet-seed-treatments";
 export {
   DEFAULT_GUEST_SESSION_GATE_STATE,
   PromoteGuestToAccountIdentityMismatchError,
