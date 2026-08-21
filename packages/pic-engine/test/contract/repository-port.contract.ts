@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { FinalizedSymptomGroup, LibraryRowProvenance, PlayerSession, Symptom } from "../../src/types";
-import type { RepositoryPort } from "../../src/repository-port";
+import type { RepositoryPort, Treatment } from "../../src/repository-port";
 
 /**
  * Fixture builders. These construct valid domain objects (per `../../src/types`) so each `it()` block
@@ -109,6 +109,43 @@ export interface RepositoryPortContractOptions {
    * already source keys from `player_session.id` (a real uuid).
    */
   makeIdempotencyKey?: () => string;
+  /**
+   * Seeds (or points at) one full `Treatment` row the `getTreatment` block can fetch back through the port.
+   * Defaults to calling `seedFullTreatments` on test doubles that expose it (see `FakeRepositoryPort`).
+   * Real adapters should supply a factory that returns an already-persisted global seed row instead.
+   */
+  seedTreatment?: (port: RepositoryPort) => Treatment | Promise<Treatment>;
+  /**
+   * Factory for an id guaranteed absent from the catalog in `getTreatment`'s "unknown id → null" case.
+   * Defaults to a synthetic opaque string (fine for fake / local-guest). Real Postgres adapters should
+   * pass `randomUUID` so the id is syntactically valid but still absent.
+   */
+  makeUnknownTreatmentId?: () => string;
+}
+
+function buildTreatment(overrides: Partial<Treatment> = {}): Treatment {
+  return {
+    id: uniqueId("treatment"),
+    title: "RepositoryPort contract fixture",
+    structured_markdown: "### Fixture Step\n\nContract-suite content.",
+    content_format: "structured_markdown",
+    ...overrides,
+  };
+}
+
+function defaultSeedTreatment(port: RepositoryPort): Treatment {
+  const treatment = buildTreatment();
+  const seedable = port as RepositoryPort & {
+    seedFullTreatments?: (treatments: Treatment[]) => void;
+  };
+  if (seedable.seedFullTreatments === undefined) {
+    throw new Error(
+      "getTreatment contract: supply options.seedTreatment or implement seedFullTreatments on the port " +
+        "(FakeRepositoryPort does; real adapters should pass seedTreatment in their test call site).",
+    );
+  }
+  seedable.seedFullTreatments([treatment]);
+  return treatment;
 }
 
 export function runRepositoryPortContractTests(
@@ -117,6 +154,8 @@ export function runRepositoryPortContractTests(
 ): void {
   const makeTreatmentId = options.makeTreatmentId ?? (() => uniqueId("treatment"));
   const makeIdempotencyKey = options.makeIdempotencyKey ?? (() => uniqueId("idempotency-key"));
+  const makeUnknownTreatmentId = options.makeUnknownTreatmentId ?? (() => uniqueId("unknown-treatment"));
+  const seedTreatment = options.seedTreatment ?? defaultSeedTreatment;
 
   describe("RepositoryPort contract", () => {
     let port: RepositoryPort;
@@ -151,6 +190,17 @@ export function runRepositoryPortContractTests(
         const thirdCallWithDifferentKey = await port.incrementUseCount(row.id, differentKey);
 
         expect(thirdCallWithDifferentKey.use_count).toBe(2);
+      });
+    });
+
+    describe("getTreatment", () => {
+      it("returns the full treatment row for an existing id", async () => {
+        const seeded = await seedTreatment(port);
+        await expect(port.getTreatment(seeded.id)).resolves.toEqual(seeded);
+      });
+
+      it("returns null for an unknown id", async () => {
+        await expect(port.getTreatment(makeUnknownTreatmentId())).resolves.toBeNull();
       });
     });
 

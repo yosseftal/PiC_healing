@@ -105,6 +105,14 @@ export interface TreatmentListItem {
   title: string;
 }
 
+/** Full treatment row for lazy content loading (Wave 9 — mirrors `treatments` table). */
+export interface Treatment {
+  id: string;
+  title: string;
+  structured_markdown: string;
+  content_format: string;
+}
+
 /** The five entities `promoteGuestToAccount` lands atomically, now owned by the new account. */
 export interface PromoteGuestToAccountResult {
   group: FinalizedSymptomGroup;
@@ -163,4 +171,7 @@ export interface RepositoryPort {
    * Global seed rows (`user_id is null`) and the caller's own rows per ADR-0001 / RLS on Supabase.
    */
   listTreatments(): Promise<TreatmentListItem[]>;
+
+  /** Fetches one treatment's full row (including `structured_markdown`) by id, or null if missing. */
+  getTreatment(treatmentId: string): Promise<Treatment | null>;
 }

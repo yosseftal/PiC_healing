@@ -7,6 +7,7 @@ import {
   type PromoteGuestToAccountResult,
   type RepositoryPort,
   type SymptomGroup,
+  type Treatment,
   type TreatmentListItem,
 } from "../../src/repository-port";
 
@@ -53,6 +54,8 @@ export class FakeRepositoryPort implements RepositoryPort {
   private guestSessionGate: GuestSessionGateState = { ...DEFAULT_GUEST_SESSION_GATE_STATE };
 
   private treatmentCatalog: TreatmentListItem[] = [];
+
+  private treatmentsById = new Map<string, Treatment>();
 
   private nextGeneratedIdSuffix = 0;
 
@@ -175,6 +178,17 @@ export class FakeRepositoryPort implements RepositoryPort {
   /** Test helper: seed the flat treatment catalog returned by `listTreatments`. */
   seedTreatments(treatments: TreatmentListItem[]): void {
     this.treatmentCatalog = [...treatments];
+  }
+
+  /** Test helper: seed full treatment rows returned by `getTreatment`. */
+  seedFullTreatments(treatments: Treatment[]): void {
+    for (const treatment of treatments) {
+      this.treatmentsById.set(treatment.id, treatment);
+    }
+  }
+
+  async getTreatment(treatmentId: string): Promise<Treatment | null> {
+    return this.treatmentsById.get(treatmentId) ?? null;
   }
 
   async listTreatments(): Promise<TreatmentListItem[]> {

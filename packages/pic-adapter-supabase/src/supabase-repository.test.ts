@@ -251,7 +251,30 @@ runRepositoryPortContractTests(
     }
     return new SupabaseRepository(sharedContractTestUser.client);
   },
-  { skipPromoteGuestToAccount: true, makeTreatmentId: makeContractTreatmentId, makeIdempotencyKey: randomUUID },
+  {
+    skipPromoteGuestToAccount: true,
+    makeTreatmentId: makeContractTreatmentId,
+    makeIdempotencyKey: randomUUID,
+    makeUnknownTreatmentId: randomUUID,
+    seedTreatment: async () => {
+      const { data, error } = await serviceClient
+        .from("treatments")
+        .select("id, title, structured_markdown, content_format")
+        .eq("id", seedTreatmentId)
+        .single();
+      if (error || !data) {
+        throw new Error(
+          `getTreatment contract seed: failed to load global seed treatment: ${error?.message ?? "none found"}`,
+        );
+      }
+      return {
+        id: data.id as string,
+        title: data.title as string,
+        structured_markdown: data.structured_markdown as string,
+        content_format: data.content_format as string,
+      };
+    },
+  },
 );
 
 describe("SupabaseRepository", () => {

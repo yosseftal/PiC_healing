@@ -66,4 +66,8 @@ export class DelegatingRepositoryPort implements RepositoryPort {
   listTreatments() {
     return this.provider.listTreatments();
   }
+
+  getTreatment(treatmentId: string) {
+    return this.provider.getTreatment(treatmentId);
+  }
 }
