@@ -9,12 +9,12 @@
 |----|--------|---------|
 | 01 | `099b861` | Content Parser (`parseStructuredMarkdown`, H3 split, blockquote rationale) |
 | 02 | `4509304` | `RepositoryPort.getTreatment` + `Treatment` type (fake + Supabase) |
-| 03 | (this wave) | Guest bundled `structured_markdown`; `LocalGuestRepository.getTreatment` |
-| 04 | (this wave) | `treatmentContentActions` cache; `react-markdown` + `remark-gfm`; `AtomicUnitView` |
-| 05 | (this wave) | Picker uses parsed unit ids; Zero-H3 guard copy |
+| 03 | `3eca3c3` | Guest bundled `structured_markdown`; `LocalGuestRepository.getTreatment` |
+| 04 | `125e90a` | `treatmentContentActions` cache; `react-markdown` + `remark-gfm`; `AtomicUnitView` |
+| 05 | `6aedac8` | Picker uses parsed unit ids; Zero-H3 guard copy |
 | 06 | `03ca2a7` | Persistence Gate pre-RPC failure surfaced in retry UI |
-| 07 | (this wave) | Regression guards (no-snapshot, Terminal NEMAR, sovereign `finishAnyway`) |
-| 08 | (this wave) | E2E off stubs; screen tests updated; this handoff |
+| 07 | `2651d63` | Regression guards (no-snapshot, Terminal NEMAR, sovereign `finishAnyway`) |
+| 08 | `fab5faa` | E2E off stubs; screen tests updated; this handoff |
 
 ## E2E spine
 
