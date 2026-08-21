@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   usePromotePathActions,
   useSessionEngineActions,
@@ -7,19 +8,26 @@ import {
 /**
  * Dumb-reflection Persistence Gate (Wave 8 ticket 08-02). Renders only when `SessionEngine` signals
  * `gateTriggered`; auth and retry delegate to composition-root `promotePathActions` — never direct adapter
- * imports. Holds zero local state for engine-derivable fields (DEC-017).
+ * imports. Ephemeral `preRpcPromotionFailed` covers sign-in/env failures before `SessionEngine.promote()`.
  */
 export function PersistenceGateModal() {
   const { gateTriggered, promotionStatus } = useSessionEngineState();
   const { discardGuestState } = useSessionEngineActions();
   const { promoteGuestSessionFromEnv } = usePromotePathActions();
+  const [preRpcPromotionFailed, setPreRpcPromotionFailed] = useState(false);
 
   if (!gateTriggered) {
     return null;
   }
 
+  const showFailedUi = promotionStatus === "failed" || preRpcPromotionFailed;
+  const showIdleUi = promotionStatus === "idle" && !preRpcPromotionFailed;
+
   function anchorSession(): void {
-    void promoteGuestSessionFromEnv(import.meta.env as Record<string, string | undefined>);
+    setPreRpcPromotionFailed(false);
+    void promoteGuestSessionFromEnv(import.meta.env as Record<string, string | undefined>).catch(() => {
+      setPreRpcPromotionFailed(true);
+    });
   }
 
   return (
@@ -30,7 +38,7 @@ export function PersistenceGateModal() {
         <p>Anchoring your session…</p>
       ) : null}
 
-      {promotionStatus === "idle" ? (
+      {showIdleUi ? (
         <>
           <p>Sign in to keep this session — your work stays on this device until you choose to anchor it.</p>
           <button type="button" onClick={anchorSession}>
@@ -45,7 +53,7 @@ export function PersistenceGateModal() {
         </>
       ) : null}
 
-      {promotionStatus === "failed" ? (
+      {showFailedUi ? (
         <>
           <p>We could not anchor your session yet. You can try again whenever you are ready.</p>
           <button type="button" onClick={anchorSession}>
@@ -54,7 +62,7 @@ export function PersistenceGateModal() {
         </>
       ) : null}
 
-      {promotionStatus === "idle" || promotionStatus === "failed" ? (
+      {showIdleUi || showFailedUi ? (
         <button type="button" onClick={() => void discardGuestState()}>
           Continue without saving
         </button>

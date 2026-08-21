@@ -128,6 +128,25 @@ describe("PersistenceGateModal", () => {
     expect(screen.queryByText(/lost/i)).toBeNull();
   });
 
+  it("surfaces pre-RPC sign-in failure into retry UI when env credentials are missing", async () => {
+    const { compositionRoot, PersistenceGateModal, SessionEngineProvider } = await loadFreshModules();
+    await openGateWithGuestSession(compositionRoot);
+
+    const signInError = new Error(
+      "signInAsTestUserFromEnv (dev stub): missing Supabase URL/anon key or tracer test-user credentials in env",
+    );
+    vi.spyOn(compositionRoot.promotePathActions, "promoteGuestSessionFromEnv").mockRejectedValue(signInError);
+
+    renderModal(PersistenceGateModal, SessionEngineProvider);
+    fireEvent.click(screen.getByRole("button", { name: "Sign in (dev tracer stub)" }));
+
+    await vi.waitFor(() => {
+      expect(screen.getByText(/We could not anchor your session yet/)).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+    });
+    expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("idle");
+  });
+
   it("decline calls discardGuestState and clears guest storage", async () => {
     const { compositionRoot, PersistenceGateModal, SessionEngineProvider } = await loadFreshModules();
     await openGateWithGuestSession(compositionRoot);
