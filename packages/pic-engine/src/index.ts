@@ -27,6 +27,7 @@ export type {
   RepositoryPort,
   SymptomGroup,
   GuestSessionGateState,
+  Treatment,
   TreatmentListItem,
 } from "./repository-port";
 export { TRACER_BULLET_SEED_TREATMENTS } from "./tracer-bullet-seed-treatments";
@@ -63,3 +64,6 @@ export type { GuestSnapshot, PromotionStatus, SessionEngineOptions, SessionMode,
 export { SessionEngine } from "./session-engine/index";
 
 export { normalizeInViewUnit } from "./normalize-in-view-unit";
+
+export type { AtomicUnitContent } from "./content-parser/index";
+export { parseStructuredMarkdown } from "./content-parser/index";

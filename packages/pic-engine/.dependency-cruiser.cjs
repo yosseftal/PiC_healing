@@ -12,6 +12,12 @@ module.exports = {
       from: { path: '^src/group-engine' },
       to: { path: '^src/player-engine' },
     },
+    {
+      name: 'no-player-into-content-parser',
+      severity: 'error',
+      from: { path: '^src/player-engine' },
+      to: { path: '^src/content-parser' },
+    },
   ],
   options: {
     // Without this, dependency-cruiser only tracks *post-compilation* dependencies: an import whose
