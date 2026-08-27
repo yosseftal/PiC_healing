@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { findForbiddenModuleReference, getModuleSpecifiersFromFile } from "../test-helpers/isolation-scanner";
+// Test-only cross-module read (Wave 9.1 amendment glossary): production code in content-parser must
+// never import player-engine; this constant is read here only to assert the fallback unit_id never
+// collides with it.
+import { TERMINAL_NEMAR_UNIT_ID } from "../player-engine/index";
 import { parseStructuredMarkdown } from "./index";
 
 /**
@@ -11,8 +15,53 @@ describe("parseStructuredMarkdown", () => {
     expect(parseStructuredMarkdown("")).toEqual([]);
   });
 
-  it("returns an empty array when the input has zero H3 headers", () => {
-    expect(parseStructuredMarkdown("Just some prose without any headers.")).toEqual([]);
+  it("returns an empty array for whitespace-only input, distinct from non-empty zero-H3 prose", () => {
+    expect(parseStructuredMarkdown("   \n\t ")).toEqual([]);
+  });
+
+  it("wraps non-empty zero-H3 prose into a single Continuous Guidance fallback unit", () => {
+    expect(parseStructuredMarkdown("Just some prose without any headers.")).toEqual([
+      {
+        unit_id: "unit-0",
+        unit_order: 0,
+        unit_title: "Continuous Guidance",
+        unit_content: "Just some prose without any headers.",
+        unit_rationale: null,
+      },
+    ]);
+  });
+
+  it("trims surrounding whitespace from the fallback unit's unit_content", () => {
+    const [unit] = parseStructuredMarkdown("\n\n  Prose with padding around it.  \n\n");
+
+    expect(unit.unit_content).toBe("Prose with padding around it.");
+  });
+
+  it("never lets the zero-H3 fallback unit_id 'unit-0' collide with H3-based ids or the Terminal NEMAR id", () => {
+    const [fallbackUnit] = parseStructuredMarkdown("Prose with no headers at all.");
+    const [h3Unit] = parseStructuredMarkdown("### A Real Header\n\nSome content.");
+
+    expect(fallbackUnit.unit_id).toBe("unit-0");
+    expect(h3Unit.unit_id).not.toBe("unit-0");
+    expect(fallbackUnit.unit_id).not.toBe(TERMINAL_NEMAR_UNIT_ID);
+  });
+
+  it("leaves a leading preamble before a document's first H3 unaffected (only all-prose input gets the fallback)", () => {
+    const markdown = `Some leading preamble text before any header.
+
+### First Step
+
+Body for step one.`;
+
+    expect(parseStructuredMarkdown(markdown)).toEqual([
+      {
+        unit_id: "unit-1",
+        unit_order: 1,
+        unit_title: "First Step",
+        unit_content: "Body for step one.",
+        unit_rationale: null,
+      },
+    ]);
   });
 
   it("starts a new unit at every H3 header with title and content up to the next H3", () => {

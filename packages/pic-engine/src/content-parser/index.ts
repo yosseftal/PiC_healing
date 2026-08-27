@@ -13,6 +13,12 @@ export type AtomicUnitContent = {
 
 const H3_HEADER_PATTERN = /^###\s+(.*)$/;
 
+/**
+ * Bilingual canonical title (הנחיה רציפה) for the Zero-H3 Heuristic Fallback unit (DEC-015 §9's
+ * "graceful degradation... falls back to a single unit_content container" clause).
+ */
+const CONTINUOUS_GUIDANCE_TITLE = "Continuous Guidance";
+
 /** Converts raw Structured Markdown into ordered Atomic Unit content records. Never throws. */
 export function parseStructuredMarkdown(markdown: string): AtomicUnitContent[] {
   const lines = markdown.split("\n");
@@ -53,6 +59,23 @@ export function parseStructuredMarkdown(markdown: string): AtomicUnitContent[] {
       unit_content: contentLines.join("\n").trim(),
       unit_rationale: unitRationale,
     });
+  }
+
+  if (units.length === 0) {
+    const trimmedInput = markdown.trim();
+    if (trimmedInput === "") {
+      return [];
+    }
+
+    return [
+      {
+        unit_id: "unit-0",
+        unit_order: 0,
+        unit_title: CONTINUOUS_GUIDANCE_TITLE,
+        unit_content: trimmedInput,
+        unit_rationale: null,
+      },
+    ];
   }
 
   return units;
