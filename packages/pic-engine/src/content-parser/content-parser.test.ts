@@ -4,6 +4,10 @@ import { findForbiddenModuleReference, getModuleSpecifiersFromFile } from "../te
 // never import player-engine; this constant is read here only to assert the fallback unit_id never
 // collides with it.
 import { TERMINAL_NEMAR_UNIT_ID } from "../player-engine/index";
+// Test-only read of the Guest bundle (Wave 9.1 GFM Lockstep amendment): used solely by the
+// byte-identical parity test inside the "tracer bullet seed treatments" describe block below, to
+// prove the Guest (TS) and Supabase (SQL-mirrored fixture) copies of the widened row never drift.
+import { TRACER_BULLET_SEED_TREATMENT_ROWS } from "../tracer-bullet-seed-treatments";
 import { parseStructuredMarkdown } from "./index";
 
 /**
@@ -148,6 +152,12 @@ any subtle pulsing, without trying to change anything yet.
 With each exhale, imagine the tension softening by ten percent. Continue for about a minute,
 then gently let your attention return to the room around you.`;
 
+    // Widened by the Wave 9.1 GFM Lockstep amendment (Decision D): the "Return to the Room" body
+    // below now carries a real GFM table, a strikethrough span, and a task list, mirrored
+    // byte-identical into the Supabase UPDATE migration and the Guest TS constant. This constant
+    // stands in for the SQL migrations' row content — verified against the Guest TS constant by
+    // the byte-identical parity test at the end of this describe block, same convention as the
+    // other two (unwidened) rows above.
     const GROUNDING_THROUGH_THE_FEET = `### Feel the Ground
 
 Stand or sit with both feet flat on the floor. Notice the points of contact between your feet
@@ -161,7 +171,15 @@ through your spine on the exhale. Repeat for five full breaths.
 ### Return to the Room
 
 Open your eyes if they were closed, and take a moment to notice how your body feels now compared
-to when you started.`;
+to when you started.
+
+| Before | After |
+| --- | --- |
+| ~~Unsteady~~ | Grounded |
+| Tense | Settled |
+
+- [x] Felt both feet on the floor
+- [ ] Noticed the shift in my breath`;
 
     const LOOSENING_THE_SHOULDERS_AND_NECK = `### Notice the Holding Pattern
 
@@ -240,9 +258,28 @@ side. Let your neck feel a little longer with each breath.`;
         unit_rationale: null,
         unit_content:
           "Open your eyes if they were closed, and take a moment to notice how your body feels now compared\n" +
-          "to when you started.",
+          "to when you started.\n\n" +
+          "| Before | After |\n" +
+          "| --- | --- |\n" +
+          "| ~~Unsteady~~ | Grounded |\n" +
+          "| Tense | Settled |\n\n" +
+          "- [x] Felt both feet on the floor\n" +
+          "- [ ] Noticed the shift in my breath",
       });
     });
+
+    it(
+      "keeps the widened Grounding Through the Feet row byte-identical between the Guest (TS) bundle and " +
+        "this SQL-mirrored fixture (Wave 9.1 GFM Lockstep — closes the audit's title/id-only parity gap)",
+      () => {
+        const guestRow = TRACER_BULLET_SEED_TREATMENT_ROWS.find(
+          (row) => row.id === "c818490b-10ed-46c2-9890-1f35d34f4e25",
+        );
+
+        expect(guestRow?.title).toBe("Grounding Through the Feet");
+        expect(guestRow?.structured_markdown).toBe(GROUNDING_THROUGH_THE_FEET);
+      },
+    );
 
     it("parses Loosening the Shoulders and Neck into three ordered units with exact titles and content", () => {
       const units = parseStructuredMarkdown(LOOSENING_THE_SHOULDERS_AND_NECK);

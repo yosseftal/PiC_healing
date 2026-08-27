@@ -16,7 +16,13 @@ any subtle pulsing, without trying to change anything yet.
 With each exhale, imagine the tension softening by ten percent. Continue for about a minute,
 then gently let your attention return to the room around you.`;
 
-/** Verbatim from `supabase/migrations/20260730194911_tracer_bullet_schema.sql` — Grounding Through the Feet. */
+/**
+ * Verbatim from `supabase/migrations/20260730194911_tracer_bullet_schema.sql` (original three
+ * sections) plus `supabase/migrations/20260827220000_widen_treatment_gfm_table.sql` (the "Return
+ * to the Room" body scan table, strikethrough span, and task list) — Grounding Through the Feet.
+ * Wave 9.1 GFM Lockstep amendment: kept byte-identical with both migrations by
+ * `content-parser.test.ts`'s parity test.
+ */
 const GROUNDING_THROUGH_THE_FEET_MARKDOWN = `### Feel the Ground
 
 Stand or sit with both feet flat on the floor. Notice the points of contact between your feet
@@ -30,7 +36,15 @@ through your spine on the exhale. Repeat for five full breaths.
 ### Return to the Room
 
 Open your eyes if they were closed, and take a moment to notice how your body feels now compared
-to when you started.`;
+to when you started.
+
+| Before | After |
+| --- | --- |
+| ~~Unsteady~~ | Grounded |
+| Tense | Settled |
+
+- [x] Felt both feet on the floor
+- [ ] Noticed the shift in my breath`;
 
 /** Verbatim from `supabase/migrations/20260730194911_tracer_bullet_schema.sql` — Loosening the Shoulders and Neck. */
 const LOOSENING_THE_SHOULDERS_AND_NECK_MARKDOWN = `### Notice the Holding Pattern
