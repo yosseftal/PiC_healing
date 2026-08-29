@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
@@ -74,6 +76,36 @@ describe("TreatmentPickerScreen", () => {
     });
   });
 
+  it("calls startSession with unit-0 when non-empty zero-H3 prose resolves to Continuous Guidance", async () => {
+    vi.spyOn(compositionRoot.catalogActions, "listTreatments").mockResolvedValue([
+      { id: "prose-treatment", title: "Prose Treatment" },
+    ]);
+    vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockResolvedValue([
+      {
+        unit_id: "unit-0",
+        unit_order: 0,
+        unit_title: "Continuous Guidance",
+        unit_content: "Some plain prose treatment with no headers.",
+        unit_rationale: null,
+      },
+    ]);
+    const startSession = vi.spyOn(compositionRoot.playerEngineActions, "startSession").mockResolvedValue("session-1");
+
+    render(
+      <AppProviders>
+        <TreatmentPickerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => screen.getByTestId("pick-treatment-prose-treatment"));
+    fireEvent.click(screen.getByTestId("pick-treatment-prose-treatment"));
+
+    await waitFor(() => {
+      expect(startSession).toHaveBeenCalledWith("prose-treatment", null, ["unit-0"]);
+    });
+    expect(screen.queryByTestId("zero-h3-guard-prose-treatment")).toBeNull();
+  });
+
   it("calls playerEngine.startSession with the selected treatment id and the group id when the link toggle is on", async () => {
     vi.spyOn(compositionRoot.catalogActions, "listTreatments").mockResolvedValue([
       { id: "treatment-a", title: "Alpha Treatment" },
@@ -109,7 +141,7 @@ describe("TreatmentPickerScreen", () => {
     });
   });
 
-  it("shows the Zero-H3 guard and never calls startSession when parsed content is empty", async () => {
+  it("shows the Zero-H3 guard and never calls startSession when parsed content is genuinely empty", async () => {
     vi.spyOn(compositionRoot.catalogActions, "listTreatments").mockResolvedValue([
       { id: "empty-treatment", title: "Empty Treatment" },
     ]);
@@ -129,5 +161,32 @@ describe("TreatmentPickerScreen", () => {
       expect(screen.getByTestId("zero-h3-guard-empty-treatment").textContent).toBe(ZERO_H3_GUARD_MESSAGE);
     });
     expect(startSession).not.toHaveBeenCalled();
+  });
+
+  it("renders the shared ZERO_H3_GUARD_MESSAGE constant rather than a forked string literal", async () => {
+    vi.spyOn(compositionRoot.catalogActions, "listTreatments").mockResolvedValue([
+      { id: "empty-treatment", title: "Empty Treatment" },
+    ]);
+    vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockResolvedValue([]);
+
+    render(
+      <AppProviders>
+        <TreatmentPickerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => screen.getByTestId("pick-treatment-empty-treatment"));
+    fireEvent.click(screen.getByTestId("pick-treatment-empty-treatment"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("zero-h3-guard-empty-treatment").textContent).toBe(ZERO_H3_GUARD_MESSAGE);
+    });
+
+    const pickerSource = readFileSync(
+      join(process.cwd(), "packages/pic-web/src/TreatmentPickerScreen.tsx"),
+      "utf8",
+    );
+    expect(pickerSource).toMatch(/import \{ ZERO_H3_GUARD_MESSAGE \} from "\.\/zero-h3-guard-message";/);
+    expect(pickerSource).not.toContain(ZERO_H3_GUARD_MESSAGE);
   });
 });
