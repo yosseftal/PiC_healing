@@ -70,6 +70,29 @@ describe("AtomicUnitView", () => {
     expect(screen.getByText("new")).toBeTruthy();
   });
 
+  it("renders GFM table, checked task, and strikethrough-adjacent text from bundled Guest seed", async () => {
+    const grounding = TRACER_BULLET_SEED_TREATMENT_ROWS[1]!;
+    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
+
+    render(
+      <AppProviders>
+        <AtomicUnitView
+          sessionId="session-1"
+          treatmentId={grounding.id}
+          unit={{ unit_id: "unit-3", state: "in_view" }}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("table")).toBeTruthy();
+    });
+    const taskBoxes = screen.getAllByRole("checkbox") as HTMLInputElement[];
+    expect(taskBoxes.some((box) => box.checked)).toBe(true);
+    expect(screen.getByText("Felt both feet on the floor")).toBeTruthy();
+    expect(screen.getByText("Grounded")).toBeTruthy();
+  });
+
   it("does not render unit_rationale anywhere in the tree", async () => {
     vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockResolvedValue([
       {
