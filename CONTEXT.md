@@ -167,6 +167,13 @@ enabling fast retrieval and consistent unit sequencing (**DEC-015**).
 _Avoid_: Ad-hoc step definitions; mixing formats; dense paragraph-based protocols without clear unit boundaries; "Player step" or
 "lesson block" as separate vocabularies
 
+**Continuous Guidance** (הנחיה רציפה):
+The Content Parser Heuristic Fallback Atomic Unit (`unit-0`) when authored treatment prose is non-empty but has
+zero H3 headers. It is a first-class Atomic Unit: same visibility-based states, Navigation Tree entry, and
+Terminal NEMAR as any H3-split unit — never a degraded path (**DEC-015** §9 graceful degradation).
+_Avoid_: Treating non-empty zero-H3 prose as empty content; a second-class Player experience; colliding
+`unit-0` with order-based `unit-1`…`unit-N` or with Terminal NEMAR
+
 **Symptom** (סימפטום):
 One named concern inside a Symptom Group (e.g. lower back and neck as two symptoms in one group).
 _Avoid_: Treating “symptom” as synonymous with the group itself
