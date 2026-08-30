@@ -130,7 +130,7 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
       fetchSpy = vi.spyOn(globalThis, "fetch");
       const guestPhaseFetchBaseline = fetchSpy.mock.calls.length;
 
-      const seedTreatment = TRACER_BULLET_SEED_TREATMENTS[0]!;
+      const seedTreatment = TRACER_BULLET_SEED_TREATMENTS[1]!;
 
       renderHappyPathApp();
 
@@ -180,7 +180,7 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
 
       expect(fetchSpy.mock.calls.length).toBe(guestPhaseFetchBaseline);
 
-      // Step 3: Player — forward jump (skipped), revisit, Terminal NEMAR, Finish Anyway
+      // Step 3: Player — forward jump, revisit unit-2, GFM table on unit-3, Terminal NEMAR, Finish Anyway
       await waitFor(() => {
         expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy();
       });
@@ -196,6 +196,13 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("atomic-unit-unit-2")).toBeTruthy();
+      });
+
+      fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-3"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("atomic-unit-unit-3")).toBeTruthy();
+        expect(screen.getByRole("table")).toBeTruthy();
       });
 
       fireEvent.click(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`));
