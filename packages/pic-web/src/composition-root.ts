@@ -40,6 +40,7 @@ import {
 
 const guestRepository = new LocalGuestRepository();
 const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(guestRepository);
+const persistedGuestFlowFacts = guestRepository.getGuestFlowFactsSync();
 const libraryEngine = new LibraryEngine(repositoryPort);
 const timelineEngine = new TimelineEngine(repositoryPort);
 const playerEngine = new PlayerEngine(repositoryPort, libraryEngine, timelineEngine);
@@ -92,7 +93,7 @@ const sessionEngineStore = createExternalStore(() => sessionEngine.getState());
 sessionEngine.subscribe(() => sessionEngineStore.notify());
 
 /** Composition-layer flow fact: last group created via wrapped `createDraftGroup`. */
-let activeGroupId: string | null = null;
+let activeGroupId: string | null = persistedGuestFlowFacts.activeGroupId;
 
 const groupEngineStore = createExternalStore(() => ({ activeGroupId }));
 
@@ -146,6 +147,8 @@ const groupEngineActions = {
     const groupId = await groupEngine.createDraftGroup(name);
     activeGroupId = groupId;
     groupEngineStore.notify();
+    const { persistGuestFlowFactsNow } = await import("./guest-flow-facts");
+    persistGuestFlowFactsNow();
     return groupId;
   },
   addSymptom(groupId: string, name: string): Promise<string> {
@@ -262,13 +265,27 @@ export function resetGroupFlowFactsForTest(): void {
   groupEngineStore.notify();
 }
 
-void import("./guest-flow-facts").then(({ initGuestFlowFacts }) => {
+void import("./guest-flow-facts").then(async ({ initGuestFlowFacts, setGuestFlowPlayerSession }) => {
   initGuestFlowFacts({
     getActiveGroupId: () => activeGroupId,
     getSessionState: () => sessionEngine.getState(),
     subscribeToGroup: groupEngineStore.subscribe,
     subscribeToSession: sessionEngineStore.subscribe,
+    initialFacts: persistedGuestFlowFacts,
+    persistGuestFlowFacts: (facts) => {
+      void guestRepository.saveGuestFlowFacts(facts);
+    },
   });
+
+  const sessionId = persistedGuestFlowFacts.activePlayerSessionId;
+  if (sessionId !== null) {
+    const session = await repositoryPort.getPlayerSession(sessionId);
+    if (session?.success_declared === true) {
+      setGuestFlowPlayerSession(null);
+    } else {
+      await playerSessionStore.refresh(sessionId);
+    }
+  }
 });
 
 const catalogActions = {

@@ -208,4 +208,34 @@ describe("composition root guest storage lifecycle", () => {
       expect(promoteSpy).toHaveBeenCalled();
     },
   );
+
+  it("clears a persisted pointer to an already-finished player session at boot", async () => {
+    const repo = new LocalGuestRepository();
+    const finishedSession: PlayerSession = {
+      id: "finished-session-boot",
+      treatment_id: "treatment-boot",
+      linked_group_id: "group-boot",
+      units: [{ unit_id: "unit-a", state: "completed" }],
+      terminal_nemar_response: "yes",
+      success_declared: true,
+      finished_at: new Date().toISOString(),
+      integrating_reason: null,
+    };
+    await repo.savePlayerSession(finishedSession);
+    await repo.saveGuestFlowFacts({
+      activeGroupId: "group-boot",
+      activePlayerSessionId: finishedSession.id,
+      symptomAdditionComplete: true,
+      groupFinalized: true,
+      summaryAcknowledged: true,
+    });
+
+    vi.resetModules();
+    const { guestFlowFactsStore } = await import("./guest-flow-facts");
+    await import("./composition-root");
+
+    await vi.waitFor(() => {
+      expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBeNull();
+    });
+  });
 });

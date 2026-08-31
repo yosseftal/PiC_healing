@@ -23,6 +23,23 @@ export interface GuestFlowFacts {
   summaryAcknowledged: boolean;
 }
 
+export type PersistedGuestFlowFacts = Pick<
+  GuestFlowFacts,
+  | "activeGroupId"
+  | "activePlayerSessionId"
+  | "symptomAdditionComplete"
+  | "groupFinalized"
+  | "summaryAcknowledged"
+>;
+
+export const DEFAULT_PERSISTED_GUEST_FLOW_FACTS: PersistedGuestFlowFacts = {
+  activeGroupId: null,
+  activePlayerSessionId: null,
+  symptomAdditionComplete: false,
+  groupFinalized: false,
+  summaryAcknowledged: false,
+};
+
 export function deriveGuestFlowScreen(facts: GuestFlowFacts): GuestFlowScreen {
   if (facts.activePlayerSessionId !== null) {
     return "player";
@@ -71,6 +88,26 @@ let activePlayerSessionId: string | null = null;
 let symptomAdditionComplete = false;
 let groupFinalized = false;
 let summaryAcknowledged = false;
+let persistGuestFlowFacts: ((facts: PersistedGuestFlowFacts) => void) | null = null;
+
+function collectPersistedGuestFlowFacts(): PersistedGuestFlowFacts {
+  return {
+    activeGroupId: getActiveGroupId(),
+    activePlayerSessionId,
+    symptomAdditionComplete,
+    groupFinalized,
+    summaryAcknowledged,
+  };
+}
+
+function saveGuestFlowFactsToStorage(): void {
+  persistGuestFlowFacts?.(collectPersistedGuestFlowFacts());
+}
+
+/** Called by composition-root after mutating `activeGroupId` outside this module. */
+export function persistGuestFlowFactsNow(): void {
+  saveGuestFlowFactsToStorage();
+}
 
 function collectGuestFlowFacts(): GuestFlowFacts {
   return {
@@ -98,9 +135,18 @@ export function initGuestFlowFacts(deps: {
   getSessionState: () => SessionState;
   subscribeToGroup: (listener: () => void) => () => void;
   subscribeToSession: (listener: () => void) => () => void;
+  initialFacts?: PersistedGuestFlowFacts;
+  persistGuestFlowFacts?: (facts: PersistedGuestFlowFacts) => void;
 }): void {
   getActiveGroupId = deps.getActiveGroupId;
   getSessionState = deps.getSessionState;
+  if (deps.initialFacts !== undefined) {
+    activePlayerSessionId = deps.initialFacts.activePlayerSessionId;
+    symptomAdditionComplete = deps.initialFacts.symptomAdditionComplete;
+    groupFinalized = deps.initialFacts.groupFinalized;
+    summaryAcknowledged = deps.initialFacts.summaryAcknowledged;
+  }
+  persistGuestFlowFacts = deps.persistGuestFlowFacts ?? null;
   deps.subscribeToGroup(() => notifyGuestFlowStores());
   deps.subscribeToSession(() => notifyGuestFlowStores());
   notifyGuestFlowStores();
@@ -114,21 +160,25 @@ export function notifyGuestFlowFacts(): void {
 export function setGuestFlowPlayerSession(sessionId: string | null): void {
   activePlayerSessionId = sessionId;
   notifyGuestFlowStores();
+  saveGuestFlowFactsToStorage();
 }
 
 export function setGuestFlowGroupFinalized(finalized: boolean): void {
   groupFinalized = finalized;
   notifyGuestFlowStores();
+  saveGuestFlowFactsToStorage();
 }
 
 export function setGuestFlowSymptomAdditionComplete(complete: boolean): void {
   symptomAdditionComplete = complete;
   notifyGuestFlowStores();
+  saveGuestFlowFactsToStorage();
 }
 
 export function setGuestFlowSummaryAcknowledged(acknowledged: boolean): void {
   summaryAcknowledged = acknowledged;
   notifyGuestFlowStores();
+  saveGuestFlowFactsToStorage();
 }
 
 export function resetGuestFlowFactsForTest(): void {
@@ -136,6 +186,7 @@ export function resetGuestFlowFactsForTest(): void {
   symptomAdditionComplete = false;
   groupFinalized = false;
   summaryAcknowledged = false;
+  persistGuestFlowFacts = null;
   resetGroupFlowFactsForTest();
   notifyGuestFlowStores();
 }
