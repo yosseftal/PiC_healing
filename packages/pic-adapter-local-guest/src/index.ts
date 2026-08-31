@@ -48,6 +48,23 @@ export interface GuestKeyValueStorage {
  */
 export const DEFAULT_GUEST_STORAGE_KEY = "pic:guest-repository:v1";
 
+/** Screen pointers persisted for Guest Mode boot rehydration (LocalGuestRepository-only; not on RepositoryPort). */
+export interface PersistedGuestFlowFacts {
+  activeGroupId: string | null;
+  activePlayerSessionId: string | null;
+  symptomAdditionComplete: boolean;
+  groupFinalized: boolean;
+  summaryAcknowledged: boolean;
+}
+
+export const DEFAULT_PERSISTED_GUEST_FLOW_FACTS: PersistedGuestFlowFacts = {
+  activeGroupId: null,
+  activePlayerSessionId: null,
+  symptomAdditionComplete: false,
+  groupFinalized: false,
+  summaryAcknowledged: false,
+};
+
 export interface LocalGuestRepositoryOptions {
   storage?: GuestKeyValueStorage;
   storageKey?: string;
@@ -103,6 +120,7 @@ interface GuestRepositorySnapshot {
   usedIncrementIdempotencyKeysByRowId: Record<string, string[]>;
   timelineEvents: TimelineEvent[];
   sessionGate?: GuestSessionGateState;
+  guestFlowFacts?: PersistedGuestFlowFacts;
 }
 
 function emptySnapshot(): GuestRepositorySnapshot {
@@ -153,10 +171,15 @@ export class LocalGuestRepository implements RepositoryPort {
     if (raw === null) {
       return emptySnapshot();
     }
-    // Spread over `emptySnapshot()` so a snapshot written before a schema addition (or edited out-of-band)
-    // never crashes a reader on a missing key - it just behaves as if that slice were always empty.
-    const parsed = JSON.parse(raw) as Partial<GuestRepositorySnapshot>;
-    return { ...emptySnapshot(), ...parsed };
+    try {
+      // Spread over `emptySnapshot()` so a snapshot written before a schema addition (or edited out-of-band)
+      // never crashes a reader on a missing key - it just behaves as if that slice were always empty.
+      const parsed = JSON.parse(raw) as Partial<GuestRepositorySnapshot>;
+      return { ...emptySnapshot(), ...parsed };
+    } catch {
+      console.warn(`LocalGuestRepository: ignoring corrupted guest snapshot at "${this.storageKey}".`);
+      return emptySnapshot();
+    }
   }
 
   private writeSnapshot(snapshot: GuestRepositorySnapshot): void {
@@ -264,6 +287,24 @@ export class LocalGuestRepository implements RepositoryPort {
    */
   getGuestSessionGateSync(): GuestSessionGateState {
     return this.readGuestSessionGateSync();
+  }
+
+  /**
+   * Synchronous read of persisted Guest flow screen pointers for composition-root boot rehydration.
+   * Mirrors `getGuestSessionGateSync` — not on `RepositoryPort`.
+   */
+  getGuestFlowFactsSync(): PersistedGuestFlowFacts {
+    const facts = this.readSnapshot().guestFlowFacts;
+    if (facts === undefined) {
+      return { ...DEFAULT_PERSISTED_GUEST_FLOW_FACTS };
+    }
+    return { ...DEFAULT_PERSISTED_GUEST_FLOW_FACTS, ...facts };
+  }
+
+  async saveGuestFlowFacts(facts: PersistedGuestFlowFacts): Promise<void> {
+    const snapshot = this.readSnapshot();
+    snapshot.guestFlowFacts = { ...facts };
+    this.writeSnapshot(snapshot);
   }
 
   private readGuestSessionGateSync(): GuestSessionGateState {

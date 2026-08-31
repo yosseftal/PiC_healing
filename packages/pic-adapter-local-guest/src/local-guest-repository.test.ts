@@ -400,4 +400,64 @@ describe("LocalGuestRepository", () => {
       await expect(repository.getTreatment("unknown-treatment-id")).resolves.toBeNull();
     });
   });
+
+  describe("readSnapshot corruption guard", () => {
+    it("falls back to an empty snapshot when stored JSON is syntactically invalid", async () => {
+      const storage = createSharedInMemoryStorage();
+      const storageKey = uniqueId("storage-key");
+      storage.setItem(storageKey, "{not-valid-json");
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const repository = new LocalGuestRepository({ storage, storageKey });
+
+      await expect(repository.getGroup("any-group")).resolves.toBeNull();
+      await expect(repository.getPlayerSession("any-session")).resolves.toBeNull();
+      await expect(repository.listTreatments()).resolves.toHaveLength(3);
+      expect(repository.getGuestSessionGateSync()).toEqual({
+        gateTriggered: false,
+        pendingFinishRequest: null,
+      });
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it("getGuestSessionGateSync never throws against corrupted storage", () => {
+      const storage = createSharedInMemoryStorage();
+      const storageKey = uniqueId("storage-key");
+      storage.setItem(storageKey, "[][]");
+      vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      const repository = new LocalGuestRepository({ storage, storageKey });
+
+      expect(() => repository.getGuestSessionGateSync()).not.toThrow();
+      expect(repository.getGuestSessionGateSync().gateTriggered).toBe(false);
+    });
+  });
+
+  describe("guest flow facts persistence", () => {
+    it("returns sensible defaults when flow facts were never saved", () => {
+      const repository = new LocalGuestRepository({ storageKey: uniqueId("storage-key") });
+
+      expect(repository.getGuestFlowFactsSync()).toEqual({
+        activeGroupId: null,
+        activePlayerSessionId: null,
+        symptomAdditionComplete: false,
+        groupFinalized: false,
+        summaryAcknowledged: false,
+      });
+    });
+
+    it("round-trips flow facts through saveGuestFlowFacts and getGuestFlowFactsSync", async () => {
+      const repository = new LocalGuestRepository({ storageKey: uniqueId("storage-key") });
+      const facts = {
+        activeGroupId: "group-1",
+        activePlayerSessionId: "session-1",
+        symptomAdditionComplete: true,
+        groupFinalized: true,
+        summaryAcknowledged: true,
+      };
+
+      await repository.saveGuestFlowFacts(facts);
+
+      expect(repository.getGuestFlowFactsSync()).toEqual(facts);
+    });
+  });
 });
