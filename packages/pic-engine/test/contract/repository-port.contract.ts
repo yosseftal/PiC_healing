@@ -164,6 +164,32 @@ export function runRepositoryPortContractTests(
       port = makePort();
     });
 
+    describe("getPlayerSession dynamic rehydration", () => {
+      it("restores exactly one in_view unit after persistence", async () => {
+        const session = buildPlayerSession({
+          treatment_id: makeTreatmentId(),
+          units: [
+            { unit_id: uniqueId("completed-unit"), state: "completed" },
+            { unit_id: uniqueId("active-unit"), state: "in_view" },
+            { unit_id: uniqueId("unseen-unit"), state: "unseen" },
+          ],
+          terminal_nemar_response: null,
+          success_declared: false,
+          finished_at: null,
+        });
+
+        await port.savePlayerSession(session);
+
+        const restored = await port.getPlayerSession(session.id);
+        expect(restored?.units.map((unit) => unit.state)).toEqual([
+          "completed",
+          "in_view",
+          "unseen",
+        ]);
+        expect(restored?.units.filter((unit) => unit.state === "in_view")).toHaveLength(1);
+      });
+    });
+
     describe("incrementUseCount", () => {
       it("increments use_count by exactly 1", async () => {
         const row = await port.getOrCreateLibraryRow(makeTreatmentId(), buildProvenance());

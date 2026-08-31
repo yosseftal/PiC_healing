@@ -123,6 +123,20 @@ describe("PlayerEngine", () => {
       expect((await getUnit(port, sessionId, "a"))?.state).toBe("completed");
     });
 
+    it("jumping to Terminal NEMAR after leaving it re-renders it in_view for the mandatory closing muscle test", async () => {
+      const { port, engine } = buildEngine();
+      const sessionId = await engine.startSession("treatment-1", null, ["a"]);
+
+      await engine.jumpTo(sessionId, TERMINAL_NEMAR_UNIT_ID);
+      expect((await getUnit(port, sessionId, TERMINAL_NEMAR_UNIT_ID))?.state).toBe("in_view");
+
+      await engine.jumpTo(sessionId, "a");
+      expect((await getUnit(port, sessionId, TERMINAL_NEMAR_UNIT_ID))?.state).toBe("completed");
+
+      await engine.jumpTo(sessionId, TERMINAL_NEMAR_UNIT_ID);
+      expect((await getUnit(port, sessionId, TERMINAL_NEMAR_UNIT_ID))?.state).toBe("in_view");
+    });
+
     const skippedUpgradeTitle =
       "jumping backward to a skipped unit, then advancing forward again, upgrades it to completed with " +
       "no duplicate side effect";

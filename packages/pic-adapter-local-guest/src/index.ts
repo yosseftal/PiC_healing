@@ -28,6 +28,7 @@ import type {
 import {
   DEFAULT_GUEST_SESSION_GATE_STATE,
   normalizeInViewUnit,
+  rehydrateInViewUnit,
   TRACER_BULLET_SEED_TREATMENT_ROWS,
   TRACER_BULLET_SEED_TREATMENTS,
 } from "pic-engine";
@@ -177,7 +178,8 @@ export class LocalGuestRepository implements RepositoryPort {
     if (session === undefined) {
       return null;
     }
-    return { ...session, units: session.units.map(normalizeInViewUnit) };
+    const normalizedUnits = session.units.map(normalizeInViewUnit);
+    return { ...session, units: rehydrateInViewUnit(normalizedUnits) };
   }
 
   async savePlayerSession(session: PlayerSession): Promise<void> {

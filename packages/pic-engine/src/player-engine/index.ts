@@ -168,6 +168,9 @@ export class PlayerEngine {
         return { ...unit, state: "completed" as const };
       }
       if (index === targetIndex) {
+        if (unit.unit_id === TERMINAL_NEMAR_UNIT_ID) {
+          return { ...unit, state: "in_view" as const };
+        }
         return unit.state === "completed" ? unit : { ...unit, state: "in_view" as const };
       }
       if (index < targetIndex && unit.state === "unseen") {

@@ -99,31 +99,6 @@ describe("UnifiedPlayerScreen", () => {
     });
   });
 
-  it("rendering the current unit triggers advance()/in_view exactly once, not on every re-render", async () => {
-    const session = buildSession();
-    await seedPlayerSession(session);
-    const advance = vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
-
-    const { rerender } = render(
-      <AppProviders>
-        <UnifiedPlayerScreen />
-      </AppProviders>,
-    );
-
-    await waitFor(() => {
-      expect(advance).toHaveBeenCalledTimes(1);
-    });
-    expect(advance).toHaveBeenCalledWith("session-1");
-
-    rerender(
-      <AppProviders>
-        <UnifiedPlayerScreen />
-      </AppProviders>,
-    );
-
-    expect(advance).toHaveBeenCalledTimes(1);
-  });
-
   it("NavigationTreePanel jumpTo is the only manual jump affordance", async () => {
     const session = buildSession();
     await seedPlayerSession(session);

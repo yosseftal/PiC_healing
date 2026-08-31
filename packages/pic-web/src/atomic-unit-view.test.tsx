@@ -23,8 +23,6 @@ describe("AtomicUnitView", () => {
   });
 
   it("renders real unit title and markdown content from the Guest bundled catalog", async () => {
-    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
-
     render(
       <AppProviders>
         <AtomicUnitView
@@ -51,8 +49,6 @@ describe("AtomicUnitView", () => {
         unit_rationale: null,
       },
     ]);
-    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
-
     render(
       <AppProviders>
         <AtomicUnitView
@@ -72,8 +68,6 @@ describe("AtomicUnitView", () => {
 
   it("renders GFM table, checked task, and strikethrough-adjacent text from bundled Guest seed", async () => {
     const grounding = TRACER_BULLET_SEED_TREATMENT_ROWS[1]!;
-    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
-
     render(
       <AppProviders>
         <AtomicUnitView
@@ -103,8 +97,6 @@ describe("AtomicUnitView", () => {
         unit_rationale: "Hidden deepening note.",
       },
     ]);
-    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
-
     const { container } = render(
       <AppProviders>
         <AtomicUnitView
@@ -121,7 +113,7 @@ describe("AtomicUnitView", () => {
     expect(container.textContent).not.toContain("Hidden deepening note.");
   });
 
-  it("calls advance exactly once per unit even when content fetch resolves after render", async () => {
+  it("renders content when the fetch resolves after the initial mount", async () => {
     let resolveContent: ((units: import("pic-engine").AtomicUnitContent[]) => void) | undefined;
     vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockImplementation(
       () =>
@@ -129,7 +121,6 @@ describe("AtomicUnitView", () => {
           resolveContent = resolve;
         }),
     );
-    const advance = vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
 
     render(
       <AppProviders>
@@ -141,7 +132,6 @@ describe("AtomicUnitView", () => {
       </AppProviders>,
     );
 
-    expect(advance).toHaveBeenCalledTimes(1);
     resolveContent?.([
       {
         unit_id: "unit-1",
@@ -155,6 +145,5 @@ describe("AtomicUnitView", () => {
     await waitFor(() => {
       expect(screen.getByText("Arrives later.")).toBeTruthy();
     });
-    expect(advance).toHaveBeenCalledTimes(1);
   });
 });

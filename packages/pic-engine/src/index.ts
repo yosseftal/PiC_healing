@@ -66,7 +66,7 @@ export {
 export type { GuestSnapshot, PromotionStatus, SessionEngineOptions, SessionMode, SessionState } from "./session-engine/index";
 export { SessionEngine } from "./session-engine/index";
 
-export { normalizeInViewUnit } from "./normalize-in-view-unit";
+export { normalizeInViewUnit, rehydrateInViewUnit } from "./normalize-in-view-unit";
 
 export type { AtomicUnitContent } from "./content-parser/index";
 export { parseStructuredMarkdown } from "./content-parser/index";

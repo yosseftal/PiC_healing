@@ -12,3 +12,14 @@ import type { PlayerUnit } from "./types";
 export function normalizeInViewUnit(unit: PlayerUnit): PlayerUnit {
   return unit.state === "in_view" ? { ...unit, state: "unseen" } : unit;
 }
+
+/**
+ * Reconstructs the ephemeral active unit after a persistence-boundary read. Adapters apply this only
+ * after normalizing any out-of-band `in_view` values, ensuring at most one unit is active.
+ */
+export function rehydrateInViewUnit(units: PlayerUnit[]): PlayerUnit[] {
+  const firstUnseenIndex = units.findIndex((unit) => unit.state === "unseen");
+  return units.map((unit, index) =>
+    index === firstUnseenIndex ? { ...unit, state: "in_view" } : unit,
+  );
+}

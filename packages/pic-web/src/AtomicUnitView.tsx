@@ -1,12 +1,11 @@
 /**
  * Renders one Atomic Unit at a time (Ticket 08-08 / Wave 9). Resolves Structured Markdown through the
- * composition-root content seam. Visibility triggers `advance()` once per `in_view` unit (DEC-015 §2).
+ * composition-root content seam. Unit state transitions are owned by `PlayerEngine.jumpTo` (DEC-015 §7a).
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { AtomicUnitContent, PlayerUnit } from "pic-engine";
-import { usePlayerEngineActions } from "./player-engine-context";
 import { useTreatmentContentActions } from "./treatment-content-context";
 
 export function AtomicUnitView({
@@ -18,18 +17,8 @@ export function AtomicUnitView({
   treatmentId: string;
   unit: PlayerUnit;
 }) {
-  const { advance } = usePlayerEngineActions();
   const { getParsedTreatmentContent } = useTreatmentContentActions();
-  const advancedUnitId = useRef<string | null>(null);
   const [unitContent, setUnitContent] = useState<AtomicUnitContent | null>(null);
-
-  useEffect(() => {
-    if (advancedUnitId.current === unit.unit_id) {
-      return;
-    }
-    advancedUnitId.current = unit.unit_id;
-    void advance(sessionId);
-  }, [advance, sessionId, unit.unit_id]);
 
   useEffect(() => {
     let cancelled = false;

@@ -2,7 +2,13 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FinalizedSymptomGroup, LibraryRowProvenance, PlayerSession, SymptomGroupDraft } from "pic-engine";
-import { parseStructuredMarkdown, TRACER_BULLET_SEED_TREATMENT_ROWS } from "pic-engine";
+import {
+  LibraryEngine,
+  parseStructuredMarkdown,
+  PlayerEngine,
+  TimelineEngine,
+  TRACER_BULLET_SEED_TREATMENT_ROWS,
+} from "pic-engine";
 import { runRepositoryPortContractTests } from "pic-engine/test/contract/repository-port.contract";
 import type { GuestKeyValueStorage } from "./index";
 import { DEFAULT_GUEST_STORAGE_KEY, GuestRepositoryCannotPromoteError, LocalGuestRepository } from "./index";
@@ -146,9 +152,11 @@ describe("LocalGuestRepository", () => {
     });
   });
 
-  describe("Persistence Boundary Normalization (DEC-015): in_view is never durably observable", () => {
+  describe("Persistence Boundary Normalization and read rehydration (DEC-015)", () => {
     it("downgrades an in_view unit to unseen on write, via savePlayerSession", async () => {
-      const repository = new LocalGuestRepository({ storageKey: uniqueId("storage-key") });
+      const storage = createSharedInMemoryStorage();
+      const storageKey = uniqueId("storage-key");
+      const repository = new LocalGuestRepository({ storage, storageKey });
       const session = buildPlayerSession({
         units: [
           { unit_id: "u1", state: "completed" },
@@ -158,11 +166,16 @@ describe("LocalGuestRepository", () => {
 
       await repository.savePlayerSession(session);
 
+      const snapshot = JSON.parse(storage.getItem(storageKey) ?? "{}");
+      expect(snapshot.playerSessions[session.id].units).toEqual([
+        { unit_id: "u1", state: "completed" },
+        { unit_id: "u2", state: "unseen" },
+      ]);
       await expect(repository.getPlayerSession(session.id)).resolves.toEqual({
         ...session,
         units: [
           { unit_id: "u1", state: "completed" },
-          { unit_id: "u2", state: "unseen" },
+          { unit_id: "u2", state: "in_view" },
         ],
       });
     });
@@ -187,7 +200,38 @@ describe("LocalGuestRepository", () => {
         ...session,
         units: [
           { unit_id: "u1", state: "completed" },
-          { unit_id: "u2", state: "unseen" },
+          { unit_id: "u2", state: "in_view" },
+        ],
+      });
+    });
+
+    it("lets PlayerEngine.advance transition a freshly reloaded session", async () => {
+      const storage = createSharedInMemoryStorage();
+      const storageKey = uniqueId("storage-key");
+      const writer = new LocalGuestRepository({ storage, storageKey });
+      const session = buildPlayerSession({
+        units: [
+          { unit_id: "u1", state: "completed" },
+          { unit_id: "u2", state: "in_view" },
+          { unit_id: "u3", state: "unseen" },
+        ],
+      });
+      await writer.savePlayerSession(session);
+
+      const reader = new LocalGuestRepository({ storage, storageKey });
+      const playerEngine = new PlayerEngine(
+        reader,
+        new LibraryEngine(reader),
+        new TimelineEngine(reader),
+      );
+      await playerEngine.advance(session.id);
+
+      await expect(reader.getPlayerSession(session.id)).resolves.toEqual({
+        ...session,
+        units: [
+          { unit_id: "u1", state: "completed" },
+          { unit_id: "u2", state: "completed" },
+          { unit_id: "u3", state: "in_view" },
         ],
       });
     });

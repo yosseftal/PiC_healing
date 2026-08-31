@@ -18,7 +18,13 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { FinalizedSymptomGroup, LibraryRowProvenance, PlayerSession, Symptom } from "pic-engine";
+import type {
+  FinalizedSymptomGroup,
+  LibraryRowProvenance,
+  PlayerSession,
+  PlayerUnit,
+  Symptom,
+} from "pic-engine";
 import { GroupEngine, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 import { runRepositoryPortContractTests } from "pic-engine/test/contract/repository-port.contract";
 import { SupabaseRepository } from "./index";
@@ -626,11 +632,53 @@ describe("SupabaseRepository", () => {
 
       await repository.savePlayerSession(session);
 
+      const { data: rawRow, error: rawRowError } = await serviceClient
+        .from("player_sessions")
+        .select("units")
+        .eq("id", session.id)
+        .single();
+      expect(rawRowError).toBeNull();
+      expect((rawRow?.units as PlayerUnit[] | undefined) ?? []).toEqual([
+        { unit_id: "u1", state: "completed" },
+        { unit_id: "u2", state: "unseen" },
+      ]);
       await expect(repository.getPlayerSession(session.id)).resolves.toEqual({
         ...session,
         units: [
           { unit_id: "u1", state: "completed" },
-          { unit_id: "u2", state: "unseen" },
+          { unit_id: "u2", state: "in_view" },
+        ],
+      });
+    });
+
+    it("defensively downgrades an in_view unit found on read, for storage edited out-of-band", async () => {
+      const session: PlayerSession = {
+        id: randomUUID(),
+        treatment_id: seedTreatmentId,
+        linked_group_id: null,
+        units: [{ unit_id: "u1", state: "completed" }],
+        terminal_nemar_response: null,
+        success_declared: false,
+        finished_at: null,
+        integrating_reason: null,
+      };
+      await repository.savePlayerSession(session);
+
+      const editedUnits: PlayerUnit[] = [
+        ...session.units,
+        { unit_id: "u2", state: "in_view" },
+      ];
+      const { error } = await serviceClient
+        .from("player_sessions")
+        .update({ units: editedUnits })
+        .eq("id", session.id);
+      expect(error).toBeNull();
+
+      await expect(repository.getPlayerSession(session.id)).resolves.toEqual({
+        ...session,
+        units: [
+          { unit_id: "u1", state: "completed" },
+          { unit_id: "u2", state: "in_view" },
         ],
       });
     });

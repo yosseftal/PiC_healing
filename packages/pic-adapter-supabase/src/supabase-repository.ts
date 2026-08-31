@@ -30,7 +30,12 @@ import type {
   Treatment,
   TreatmentListItem,
 } from "pic-engine";
-import { DEFAULT_GUEST_SESSION_GATE_STATE, normalizeInViewUnit, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
+import {
+  DEFAULT_GUEST_SESSION_GATE_STATE,
+  normalizeInViewUnit,
+  PromoteGuestToAccountIdentityMismatchError,
+  rehydrateInViewUnit,
+} from "pic-engine";
 
 /** Thrown when an operation needs the current Event Manager's identity but no session is present. */
 export class SupabaseRepositoryNotAuthenticatedError extends Error {
@@ -179,7 +184,7 @@ function rowToPlayerSession(row: PlayerSessionRow): PlayerSession {
     id: row.id,
     treatment_id: row.treatment_id,
     linked_group_id: row.linked_group_id,
-    units: row.units.map(normalizeInViewUnit),
+    units: rehydrateInViewUnit(row.units.map(normalizeInViewUnit)),
     terminal_nemar_response: row.terminal_nemar_response,
     success_declared: row.success_declared,
     finished_at: toNullableTimestamp(row.finished_at),
