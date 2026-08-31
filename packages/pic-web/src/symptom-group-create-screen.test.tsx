@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
 import { RatingControl } from "./RatingControl";
@@ -161,5 +161,106 @@ describe("RatingControl", () => {
     await waitFor(() => {
       expect(screen.getByTestId("reveal-prior-rating")).toBeTruthy();
     });
+  });
+
+  it("immediately clears the revealed prior rating and affordance when the symptom changes", async () => {
+    const hasPriorRating = vi
+      .spyOn(compositionRoot.groupEngineActions, "hasPriorRating")
+      .mockResolvedValueOnce(true);
+    vi.spyOn(compositionRoot.groupEngineActions, "revealPriorRating").mockResolvedValue({
+      polarity: "positive",
+      intensity: 8,
+    });
+
+    const { rerender } = render(
+      <AppProviders>
+        <RatingControl
+          symptomId="symptom-a"
+          polarity="negative"
+          intensity={2}
+          onPolarityChange={() => {}}
+          onIntensityChange={() => {}}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("reveal-prior-rating")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("reveal-prior-rating"));
+    await waitFor(() => {
+      expect(screen.getByTestId("revealed-prior-rating")).toBeTruthy();
+    });
+
+    hasPriorRating.mockImplementationOnce(() => new Promise<boolean>(() => {}));
+    rerender(
+      <AppProviders>
+        <RatingControl
+          symptomId="symptom-b"
+          polarity="negative"
+          intensity={2}
+          onPolarityChange={() => {}}
+          onIntensityChange={() => {}}
+        />
+      </AppProviders>,
+    );
+
+    expect(screen.queryByTestId("reveal-prior-rating")).toBeNull();
+    expect(screen.queryByTestId("revealed-prior-rating")).toBeNull();
+  });
+
+  it("ignores a delayed prior rating after switching to a different symptom", async () => {
+    const hasPriorRating = vi
+      .spyOn(compositionRoot.groupEngineActions, "hasPriorRating")
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    let resolveReveal!: (prior: { polarity: "positive"; intensity: 8 }) => void;
+    const delayedReveal = new Promise<{ polarity: "positive"; intensity: 8 }>((resolve) => {
+      resolveReveal = resolve;
+    });
+    const revealPriorRating = vi
+      .spyOn(compositionRoot.groupEngineActions, "revealPriorRating")
+      .mockReturnValueOnce(delayedReveal);
+
+    const { rerender } = render(
+      <AppProviders>
+        <RatingControl
+          symptomId="symptom-a"
+          polarity="negative"
+          intensity={2}
+          onPolarityChange={() => {}}
+          onIntensityChange={() => {}}
+        />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("reveal-prior-rating")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("reveal-prior-rating"));
+    expect(revealPriorRating).toHaveBeenCalledWith("symptom-a");
+
+    rerender(
+      <AppProviders>
+        <RatingControl
+          symptomId="symptom-b"
+          polarity="negative"
+          intensity={2}
+          onPolarityChange={() => {}}
+          onIntensityChange={() => {}}
+        />
+      </AppProviders>,
+    );
+    await waitFor(() => {
+      expect(hasPriorRating).toHaveBeenCalledWith("symptom-b");
+      expect(screen.queryByTestId("reveal-prior-rating")).toBeNull();
+    });
+
+    await act(async () => {
+      resolveReveal({ polarity: "positive", intensity: 8 });
+      await delayedReveal;
+    });
+
+    expect(screen.queryByTestId("revealed-prior-rating")).toBeNull();
   });
 });

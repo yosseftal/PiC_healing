@@ -2,7 +2,7 @@
  * Blind-by-default rating widget (Ticket 08-05, DEC-011). Renders polarity + intensity inputs and a Reveal
  * affordance when `hasPriorRating` resolves true — never pre-fills prior values into the inputs.
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Intensity, Polarity } from "pic-engine";
 import { useGroupEngineActions } from "./group-engine-context";
 
@@ -26,11 +26,14 @@ export function RatingControl({
   const [revealedPrior, setRevealedPrior] = useState<{ polarity: Polarity; intensity: Intensity } | null>(
     null,
   );
+  const activeSymptomId = useRef(symptomId);
+  activeSymptomId.current = symptomId;
 
   useEffect(() => {
+    setShowRevealAffordance(false);
+    setRevealedPrior(null);
+
     if (symptomId === null) {
-      setShowRevealAffordance(false);
-      setRevealedPrior(null);
       return;
     }
 
@@ -50,8 +53,11 @@ export function RatingControl({
     if (symptomId === null) {
       return;
     }
-    void revealPriorRating(symptomId).then((prior) => {
-      setRevealedPrior(prior);
+    const requestedSymptomId = symptomId;
+    void revealPriorRating(requestedSymptomId).then((prior) => {
+      if (activeSymptomId.current === requestedSymptomId) {
+        setRevealedPrior(prior);
+      }
     });
   }
 
