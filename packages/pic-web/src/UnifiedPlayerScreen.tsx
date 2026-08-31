@@ -14,9 +14,10 @@ import { findActiveUnit } from "./player-active-unit";
 import { usePlayerSession } from "./player-engine-context";
 import { TerminalNemarUnit } from "./TerminalNemarUnit";
 import { useTreatmentContentActions } from "./treatment-content-context";
+import { useAsyncAction } from "./use-async-action";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
 
-type PlayerContentPhase = "resolving" | "ready" | "recovery";
+type PlayerContentPhase = "resolving" | "ready" | "empty";
 
 export function UnifiedPlayerScreen() {
   const { activePlayerSessionId } = useGuestFlowFacts();
@@ -24,41 +25,49 @@ export function UnifiedPlayerScreen() {
   const { getParsedTreatmentContent } = useTreatmentContentActions();
   const [loadingPhase, setLoadingPhase] = useState<PlayerContentPhase>("resolving");
   const treatmentId = session?.treatment_id;
+  const {
+    status: contentStatus,
+    run: resolveContent,
+    retry: retryContent,
+  } = useAsyncAction(async (requestedTreatmentId: string, isCancelled: () => boolean) => {
+    setLoadingPhase("resolving");
+    const units = await getParsedTreatmentContent(requestedTreatmentId);
+    if (!isCancelled()) {
+      setLoadingPhase(units.length === 0 ? "empty" : "ready");
+    }
+  });
 
   useEffect(() => {
     if (activePlayerSessionId === null || treatmentId === undefined) {
       return;
     }
     let cancelled = false;
-    setLoadingPhase("resolving");
-    void getParsedTreatmentContent(treatmentId)
-      .then((units) => {
-        if (cancelled) {
-          return;
-        }
-        setLoadingPhase(units.length === 0 ? "recovery" : "ready");
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoadingPhase("recovery");
-        }
-      });
+    void resolveContent(treatmentId, () => cancelled);
     return () => {
       cancelled = true;
     };
-  }, [activePlayerSessionId, treatmentId, getParsedTreatmentContent]);
+  }, [activePlayerSessionId, treatmentId, getParsedTreatmentContent, resolveContent]);
 
   if (activePlayerSessionId === null || session === null) {
     return null;
   }
 
   if (loadingPhase !== "ready") {
+    const showRecovery = loadingPhase === "empty" || contentStatus === "recovery";
     return (
       <section data-testid="guest-flow-player">
         <h1>Unified Player</h1>
-        {loadingPhase === "recovery" ? (
+        {showRecovery ? (
           <>
             <p data-testid="zero-h3-guard-player">{ZERO_H3_GUARD_MESSAGE}</p>
+            {contentStatus === "recovery" ? (
+              <>
+                <p>Your guidance can reconnect whenever you choose.</p>
+                <button type="button" onClick={() => void retryContent()}>
+                  Try guidance again
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               data-testid="player-content-recovery"

@@ -68,6 +68,57 @@ describe("SymptomGroupCreateScreen", () => {
       expect(screen.getByTestId("finish-symptom-addition")).toBeTruthy();
     });
   });
+
+  it("offers a visible retry when creating the Symptom Group needs another moment", async () => {
+    const createDraftGroup = vi
+      .spyOn(compositionRoot.groupEngineActions, "createDraftGroup")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce("group-1");
+
+    renderCreateScreen();
+    fireEvent.change(screen.getByLabelText("Group name"), { target: { value: "Lower Back" } });
+    fireEvent.click(screen.getByTestId("confirm-group-name"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try creating this group again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("guest-flow-create-group").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try creating this group again" }));
+
+    await waitFor(() => {
+      expect(createDraftGroup).toHaveBeenCalledTimes(2);
+      expect(createDraftGroup).toHaveBeenNthCalledWith(2, "Lower Back");
+    });
+  });
+
+  it("offers a visible retry for rating without adding the symptom twice", async () => {
+    await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
+    const addSymptom = vi
+      .spyOn(compositionRoot.groupEngineActions, "addSymptom")
+      .mockResolvedValue("symptom-1");
+    const rate = vi
+      .spyOn(compositionRoot.groupEngineActions, "rate")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce();
+
+    renderCreateScreen();
+    fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Neck Pain" } });
+    fireEvent.click(screen.getByTestId("add-symptom-action"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try saving this symptom again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("symptom-add-step").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try saving this symptom again" }));
+
+    await waitFor(() => {
+      expect(addSymptom).toHaveBeenCalledTimes(1);
+      expect(rate).toHaveBeenCalledTimes(2);
+      expect(rate).toHaveBeenNthCalledWith(2, "symptom-1", { polarity: "negative", intensity: 5 });
+    });
+  });
 });
 
 describe("RatingControl", () => {

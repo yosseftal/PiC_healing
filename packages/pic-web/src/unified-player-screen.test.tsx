@@ -372,4 +372,139 @@ describe("UnifiedPlayerScreen", () => {
     expect(screen.getByTestId("finish-bar")).toBeTruthy();
     expect(screen.queryByText(ZERO_H3_GUARD_MESSAGE)).toBeNull();
   });
+
+  it("offers a visible retry when player guidance needs to reconnect", async () => {
+    const getParsedTreatmentContent = vi
+      .spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValue([
+        {
+          unit_id: "unit-1",
+          unit_order: 1,
+          unit_title: "Settle Into Stillness",
+          unit_content: "Begin.",
+          unit_rationale: null,
+        },
+      ]);
+    await seedPlayerSession(buildSession());
+    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
+
+    render(
+      <AppProviders>
+        <UnifiedPlayerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try guidance again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("guest-flow-player").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try guidance again" }));
+
+    await waitFor(() => {
+      expect(getParsedTreatmentContent.mock.calls.length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy();
+    });
+  });
+
+  it("offers a visible retry when the Terminal NEMAR response needs another moment", async () => {
+    const session = buildSession({
+      units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
+    });
+    await seedPlayerSession(session);
+    const respondTerminalNemar = vi
+      .spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce();
+
+    render(
+      <AppProviders>
+        <UnifiedPlayerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("terminal-nemar-yes")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("terminal-nemar-yes"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try this Terminal NEMAR response again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("terminal-nemar-unit").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try this Terminal NEMAR response again" }));
+
+    await waitFor(() => {
+      expect(respondTerminalNemar).toHaveBeenCalledTimes(2);
+      expect(respondTerminalNemar).toHaveBeenNthCalledWith(2, session.id, "yes");
+    });
+  });
+
+  it("offers a visible retry when Navigation Tree movement needs another moment", async () => {
+    const session = buildSession();
+    await seedPlayerSession(session);
+    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
+    const jumpTo = vi
+      .spyOn(compositionRoot.playerEngineActions, "jumpTo")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce();
+
+    render(
+      <AppProviders>
+        <UnifiedPlayerScreen />
+      </AppProviders>,
+    );
+
+    await waitForActivePlayer();
+    fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-2"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try this navigation again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("navigation-tree-panel").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try this navigation again" }));
+
+    await waitFor(() => {
+      expect(jumpTo).toHaveBeenCalledTimes(2);
+      expect(jumpTo).toHaveBeenNthCalledWith(2, session.id, "unit-2");
+    });
+  });
+
+  it("offers a visible retry when Finish needs another moment", async () => {
+    const session = buildSession({
+      units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
+      terminal_nemar_response: "yes",
+    });
+    await seedPlayerSession(session);
+    const onFinishRequested = vi
+      .spyOn(compositionRoot.sessionEngineActions, "onFinishRequested")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce();
+
+    render(
+      <AppProviders>
+        <UnifiedPlayerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("finish-button")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByTestId("finish-button"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try finishing again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("finish-bar").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try finishing again" }));
+
+    await waitFor(() => {
+      expect(onFinishRequested).toHaveBeenCalledTimes(2);
+      expect(onFinishRequested).toHaveBeenNthCalledWith(2, session.id, "finish");
+    });
+  });
 });

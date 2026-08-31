@@ -2,10 +2,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
 import { compositionRoot, resetTreatmentContentCacheForTest } from "./composition-root";
 import { TreatmentPickerScreen } from "./TreatmentPickerScreen";
+import { useAsyncAction } from "./use-async-action";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
 import { resetGuestFlowFactsForTest } from "./guest-flow-facts";
 
@@ -188,5 +189,57 @@ describe("TreatmentPickerScreen", () => {
     );
     expect(pickerSource).toMatch(/import \{ ZERO_H3_GUARD_MESSAGE \} from "\.\/zero-h3-guard-message";/);
     expect(pickerSource).not.toContain(ZERO_H3_GUARD_MESSAGE);
+  });
+
+  it("offers a visible retry when the treatment list needs to reconnect", async () => {
+    const listTreatments = vi
+      .spyOn(compositionRoot.catalogActions, "listTreatments")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce([{ id: "treatment-a", title: "Alpha Treatment" }]);
+
+    render(
+      <AppProviders>
+        <TreatmentPickerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try loading treatments again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("guest-flow-pick-treatment").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try loading treatments again" }));
+
+    await waitFor(() => {
+      expect(listTreatments).toHaveBeenCalledTimes(2);
+      expect(screen.getByText("Alpha Treatment")).toBeTruthy();
+    });
+  });
+});
+
+describe("useAsyncAction", () => {
+  it("catches a rejection and retries the same action", async () => {
+    let attempts = 0;
+    const action = vi.fn(async (_value: string) => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw new Error("temporarily unavailable");
+      }
+    });
+    const { result } = renderHook(() => useAsyncAction(action));
+
+    await act(async () => {
+      await result.current.run("healing");
+    });
+
+    expect(result.current.status).toBe("recovery");
+
+    await act(async () => {
+      await result.current.retry();
+    });
+
+    expect(action).toHaveBeenCalledTimes(2);
+    expect(action).toHaveBeenNthCalledWith(2, "healing");
+    expect(result.current.status).toBe("idle");
   });
 });

@@ -105,6 +105,32 @@ describe("JointTreatmentMuscleTestStep", () => {
       expect(finalizeGroup).toHaveBeenCalledWith(groupId);
     });
   });
+
+  it("offers a visible retry when a muscle-test response needs another moment", async () => {
+    const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
+    await compositionRoot.groupEngineActions.addSymptom(groupId, "Neck Pain");
+    setGuestFlowSymptomAdditionComplete(true);
+    const setJointTreatmentMuscleTest = vi
+      .spyOn(compositionRoot.groupEngineActions, "setJointTreatmentMuscleTest")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce();
+    const finalizeGroup = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup").mockResolvedValue();
+
+    renderMuscleTestStep(groupId);
+    fireEvent.click(screen.getByTestId("muscle-test-yes"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Try this muscle test response again" })).toBeTruthy();
+    });
+    expect(screen.getByTestId("joint-treatment-muscle-test").textContent).not.toMatch(/error|failed|invalid/i);
+
+    fireEvent.click(screen.getByRole("button", { name: "Try this muscle test response again" }));
+
+    await waitFor(() => {
+      expect(setJointTreatmentMuscleTest).toHaveBeenCalledTimes(2);
+      expect(finalizeGroup).toHaveBeenCalledWith(groupId);
+    });
+  });
 });
 
 describe("SymptomGroupSummaryScreen", () => {

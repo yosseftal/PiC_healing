@@ -6,6 +6,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import type { Intensity, Polarity } from "pic-engine";
 import { useGroupEngineActions } from "./group-engine-context";
 import { RatingControl } from "./RatingControl";
+import { useAsyncAction } from "./use-async-action";
 
 export interface SymptomAddStepProps {
   groupId: string;
@@ -18,25 +19,47 @@ export function SymptomAddStep({ groupId, onSymptomAdded }: SymptomAddStepProps)
   const [polarity, setPolarity] = useState<Polarity>("negative");
   const [intensity, setIntensity] = useState<Intensity>(5);
   const [stepKey, setStepKey] = useState(0);
+  const {
+    status: ratingStatus,
+    run: saveRating,
+    retry: retryRating,
+  } = useAsyncAction(
+    async (symptomId: string, rating: { polarity: Polarity; intensity: Intensity }) => {
+      await rate(symptomId, rating);
+      setSymptomName("");
+      setPolarity("negative");
+      setIntensity(5);
+      setStepKey((current) => current + 1);
+      onSymptomAdded?.();
+    },
+  );
+  const {
+    status: additionStatus,
+    run: addAndRateSymptom,
+    retry: retryAddition,
+  } = useAsyncAction(
+    async (
+      requestedGroupId: string,
+      name: string,
+      rating: { polarity: Polarity; intensity: Intensity },
+    ) => {
+      const symptomId = await addSymptom(requestedGroupId, name);
+      await saveRating(symptomId, rating);
+    },
+  );
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const trimmedName = symptomName.trim();
     if (trimmedName.length === 0) {
       return;
     }
 
-    const symptomId = await addSymptom(groupId, trimmedName);
-    await rate(symptomId, { polarity, intensity });
-    setSymptomName("");
-    setPolarity("negative");
-    setIntensity(5);
-    setStepKey((current) => current + 1);
-    onSymptomAdded?.();
+    void addAndRateSymptom(groupId, trimmedName, { polarity, intensity });
   }
 
   return (
-    <form data-testid="symptom-add-step" onSubmit={(event) => void handleSubmit(event)}>
+    <form data-testid="symptom-add-step" onSubmit={handleSubmit}>
       <label>
         Symptom name
         <input
@@ -58,6 +81,17 @@ export function SymptomAddStep({ groupId, onSymptomAdded }: SymptomAddStepProps)
       <button type="submit" data-testid="add-symptom-action">
         Add symptom
       </button>
+      {additionStatus === "recovery" || ratingStatus === "recovery" ? (
+        <div role="status">
+          <p>Your symptom is ready for another try.</p>
+          <button
+            type="button"
+            onClick={() => void (ratingStatus === "recovery" ? retryRating() : retryAddition())}
+          >
+            Try saving this symptom again
+          </button>
+        </div>
+      ) : null}
     </form>
   );
 }

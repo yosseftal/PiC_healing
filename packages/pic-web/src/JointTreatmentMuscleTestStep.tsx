@@ -4,6 +4,7 @@
 import { useState, type ReactNode } from "react";
 import { useGuestFlowFacts } from "./guest-flow-context";
 import { useGroupEngineActions } from "./group-engine-context";
+import { useAsyncAction } from "./use-async-action";
 
 export interface JointTreatmentMuscleTestStepProps {
   groupId: string;
@@ -14,23 +15,26 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
   const { setJointTreatmentMuscleTest, finalizeGroup } = useGroupEngineActions();
   const [awaitingFinalize, setAwaitingFinalize] = useState(false);
   const [advisoryDismissed, setAdvisoryDismissed] = useState(false);
+  const {
+    status: responseStatus,
+    run: applyResponse,
+    retry: retryResponse,
+  } = useAsyncAction(async (response: "yes" | "no" | "finalize") => {
+    if (response === "yes") {
+      await setJointTreatmentMuscleTest(groupId, "together");
+      await finalizeGroup(groupId);
+      return;
+    }
+    if (response === "no") {
+      await setJointTreatmentMuscleTest(groupId, "split_suggested");
+      setAwaitingFinalize(true);
+      return;
+    }
+    await finalizeGroup(groupId);
+  });
 
   if (!symptomAdditionComplete) {
     return null;
-  }
-
-  async function handleYes(): Promise<void> {
-    await setJointTreatmentMuscleTest(groupId, "together");
-    await finalizeGroup(groupId);
-  }
-
-  async function handleNo(): Promise<void> {
-    await setJointTreatmentMuscleTest(groupId, "split_suggested");
-    setAwaitingFinalize(true);
-  }
-
-  async function handleFinalizeAnyway(): Promise<void> {
-    await finalizeGroup(groupId);
   }
 
   return (
@@ -40,10 +44,10 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
         <p>Is it NEMAR to treat these symptoms together?</p>
         {!awaitingFinalize ? (
           <>
-            <button type="button" data-testid="muscle-test-yes" onClick={() => void handleYes()}>
+            <button type="button" data-testid="muscle-test-yes" onClick={() => void applyResponse("yes")}>
               Yes
             </button>
-            <button type="button" data-testid="muscle-test-no" onClick={() => void handleNo()}>
+            <button type="button" data-testid="muscle-test-no" onClick={() => void applyResponse("no")}>
               No
             </button>
           </>
@@ -61,11 +65,19 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
                 </button>
               </div>
             ) : null}
-            <button type="button" data-testid="finalize-anyway" onClick={() => void handleFinalizeAnyway()}>
+            <button type="button" data-testid="finalize-anyway" onClick={() => void applyResponse("finalize")}>
               Finalize anyway
             </button>
           </>
         )}
+        {responseStatus === "recovery" ? (
+          <div role="status">
+            <p>Your response is ready for another try.</p>
+            <button type="button" onClick={() => void retryResponse()}>
+              Try this muscle test response again
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );
