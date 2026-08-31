@@ -482,6 +482,70 @@ export function runRepositoryPortContractTests(
         await expect(port.getGroup(groupA.id)).resolves.toEqual(promotionA.group);
         await expect(port.getGroup(groupB.id)).resolves.toEqual(promotionB.group);
       });
+
+      const unlinkedPromotionTitle =
+        "with group null promotes player session, library row, and timeline event only, keyed by " +
+        "playerSession.id";
+
+      it(unlinkedPromotionTitle, async () => {
+        const playerSession = buildPlayerSession();
+        const newUserId = uniqueId("user");
+
+        const result = await port.promoteGuestToAccount({
+          idempotencyKey: playerSession.id,
+          group: null,
+          playerSession,
+          newUserId,
+        });
+
+        expect(result.group).toBeNull();
+        expect(result.playerSession.id).toBe(playerSession.id);
+        expect(result.libraryRow.treatment_id).toBe(playerSession.treatment_id);
+        expect(result.timelineEvent.linked_group_id).toBeNull();
+
+        await expect(port.getPlayerSession(playerSession.id)).resolves.toEqual(result.playerSession);
+      });
+
+      it("null-group promotion retries with the same playerSession.id are idempotent no-ops", async () => {
+        const playerSession = buildPlayerSession();
+        const newUserId = uniqueId("user");
+
+        const firstPromotion = await port.promoteGuestToAccount({
+          idempotencyKey: playerSession.id,
+          group: null,
+          playerSession,
+          newUserId,
+        });
+        const secondPromotion = await port.promoteGuestToAccount({
+          idempotencyKey: playerSession.id,
+          group: null,
+          playerSession,
+          newUserId,
+        });
+
+        expect(secondPromotion).toEqual(firstPromotion);
+      });
+
+      it("two independent null-group promotions stay fully independent", async () => {
+        const playerSessionA = buildPlayerSession();
+        const playerSessionB = buildPlayerSession();
+
+        const promotionA = await port.promoteGuestToAccount({
+          idempotencyKey: playerSessionA.id,
+          group: null,
+          playerSession: playerSessionA,
+          newUserId: uniqueId("user"),
+        });
+        const promotionB = await port.promoteGuestToAccount({
+          idempotencyKey: playerSessionB.id,
+          group: null,
+          playerSession: playerSessionB,
+          newUserId: uniqueId("user"),
+        });
+
+        expect(promotionB.playerSession.id).not.toBe(promotionA.playerSession.id);
+        expect(promotionB.timelineEvent.id).not.toBe(promotionA.timelineEvent.id);
+      });
     });
   });
 }

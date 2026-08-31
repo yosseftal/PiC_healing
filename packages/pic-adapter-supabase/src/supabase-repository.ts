@@ -526,29 +526,35 @@ export class SupabaseRepository implements RepositoryPort {
    * duplicating their row-to-domain-object mapping here.
    */
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
-    if (input.idempotencyKey !== input.group.id) {
+    const expectedIdempotencyKey = input.group?.id ?? input.playerSession.id;
+    if (input.idempotencyKey !== expectedIdempotencyKey) {
       throw new Error(
-        "SupabaseRepository.promoteGuestToAccount: idempotencyKey must equal group.id (see " +
-          "PromoteGuestToAccountInput.idempotencyKey's doc comment) - this adapter's RPC tracks " +
-          "idempotency/cross-identity-mismatch state on symptom_groups.id itself, not a separate column, " +
-          "so a mismatched idempotencyKey/group.id pair cannot be honored.",
+        "SupabaseRepository.promoteGuestToAccount: idempotencyKey must equal group.id when group is " +
+          "present, otherwise playerSession.id (see PromoteGuestToAccountInput.idempotencyKey's doc " +
+          "comment) - this adapter's RPC tracks idempotency on symptom_groups.id or player_sessions.id.",
       );
     }
 
     const { data, error } = await this.client.rpc("promote_guest_to_account", {
-      p_guest_group: {
-        id: input.group.id,
-        name: input.group.name,
-        joint_treatment_muscle_test: input.group.joint_treatment_muscle_test,
-        joint_treatment_test_at: input.group.joint_treatment_test_at,
-        created_at: input.group.created_at,
-      },
-      p_symptoms: input.group.symptoms.map((symptom) => ({
-        id: symptom.id,
-        name: symptom.name,
-        polarity: symptom.polarity,
-        intensity: symptom.intensity,
-      })),
+      p_guest_group:
+        input.group === null
+          ? null
+          : {
+              id: input.group.id,
+              name: input.group.name,
+              joint_treatment_muscle_test: input.group.joint_treatment_muscle_test,
+              joint_treatment_test_at: input.group.joint_treatment_test_at,
+              created_at: input.group.created_at,
+            },
+      p_symptoms:
+        input.group === null
+          ? []
+          : input.group.symptoms.map((symptom) => ({
+              id: symptom.id,
+              name: symptom.name,
+              polarity: symptom.polarity,
+              intensity: symptom.intensity,
+            })),
       p_player_session: {
         id: input.playerSession.id,
         treatment_id: input.playerSession.treatment_id,
@@ -569,19 +575,23 @@ export class SupabaseRepository implements RepositoryPort {
     }
 
     const rpcResult = data as {
-      group_id: string;
+      group_id: string | null;
       session_id: string;
       library_row_id: string;
       timeline_event_id: string;
     };
 
+    const groupPromise =
+      rpcResult.group_id === null
+        ? Promise.resolve(null)
+        : this.getGroup(rpcResult.group_id);
     const [group, playerSession, libraryRow, timelineEvent] = await Promise.all([
-      this.getGroup(rpcResult.group_id),
+      groupPromise,
       this.getPlayerSession(rpcResult.session_id),
       this.getLibraryRowById(rpcResult.library_row_id),
       this.getTimelineEventById(rpcResult.timeline_event_id),
     ]);
-    if (!group || !playerSession || !libraryRow || !timelineEvent) {
+    if (!playerSession || !libraryRow || !timelineEvent) {
       throw new Error(
         "SupabaseRepository.promoteGuestToAccount: the RPC reported success but at least one promoted " +
           "row could not be re-fetched immediately afterward - this should be structurally impossible " +
@@ -589,8 +599,14 @@ export class SupabaseRepository implements RepositoryPort {
           "partial result.",
       );
     }
+    if (input.group !== null && group === null) {
+      throw new Error(
+        "SupabaseRepository.promoteGuestToAccount: the RPC reported success but the promoted group row " +
+          "could not be re-fetched immediately afterward.",
+      );
+    }
 
-    return { group: group as FinalizedSymptomGroup, playerSession, libraryRow, timelineEvent };
+    return { group: group as FinalizedSymptomGroup | null, playerSession, libraryRow, timelineEvent };
   }
 
   async listTreatments(): Promise<TreatmentListItem[]> {

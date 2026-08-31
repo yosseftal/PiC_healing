@@ -842,6 +842,42 @@ describe("SupabaseRepository", () => {
       // act on.
     });
 
+    it("null group promotion writes session, library row, and timeline event only", async () => {
+      const user = await createAuthenticatedTestUser();
+      const repository = new SupabaseRepository(user.client);
+      const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+
+      const result = await repository.promoteGuestToAccount({
+        idempotencyKey: playerSession.id,
+        group: null,
+        playerSession,
+        newUserId: user.userId,
+      });
+
+      expect(result.group).toBeNull();
+      expect(result.playerSession).toEqual(playerSession);
+      expect(result.libraryRow.treatment_id).toBe(seedTreatmentId);
+      expect(result.timelineEvent.linked_group_id).toBeNull();
+      await expect(repository.getPlayerSession(playerSession.id)).resolves.toEqual(playerSession);
+    });
+
+    it("null group promotion retries with the same playerSession.id are idempotent no-ops", async () => {
+      const user = await createAuthenticatedTestUser();
+      const repository = new SupabaseRepository(user.client);
+      const playerSession = buildGuestPlayerSession({ linked_group_id: null });
+      const input = {
+        idempotencyKey: playerSession.id,
+        group: null,
+        playerSession,
+        newUserId: user.userId,
+      };
+
+      const first = await repository.promoteGuestToAccount(input);
+      const second = await repository.promoteGuestToAccount(input);
+
+      expect(second).toEqual(first);
+    });
+
     it("happy path with a group link carries the link onto the player session and timeline event", async () => {
       const user = await createAuthenticatedTestUser();
       const repository = new SupabaseRepository(user.client);

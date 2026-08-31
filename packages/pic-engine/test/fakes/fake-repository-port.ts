@@ -140,7 +140,9 @@ export class FakeRepositoryPort implements RepositoryPort {
       return existingRecord.result;
     }
 
-    await this.saveGroup(input.group);
+    if (input.group !== null) {
+      await this.saveGroup(input.group);
+    }
     await this.savePlayerSession(input.playerSession);
 
     const libraryRow = await this.getOrCreateLibraryRow(input.playerSession.treatment_id, {

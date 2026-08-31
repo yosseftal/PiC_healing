@@ -46,9 +46,10 @@ export class PromoteGuestToAccountIdentityMismatchError extends Error {
 /** Input to `promoteGuestToAccount`: the full Guest state to move to the newly authenticated account. */
 export interface PromoteGuestToAccountInput {
   /**
-   * Client-generated idempotency key (the Guest Group's client-side UUID, reused as the eventual
-   * `symptom_groups.id` - spec §E). Calling `promoteGuestToAccount` twice with the same key and payload
-   * must be a no-op the second time.
+   * Client-generated idempotency key. For a linked Symptom Group promotion this is the Guest Group's
+   * client-side UUID (reused as the eventual `symptom_groups.id`). For an unlinked session (`group:
+   * null`) this is `playerSession.id` — the only client-generated identifier available in that case.
+   * Calling `promoteGuestToAccount` twice with the same key and payload must be a no-op the second time.
    *
    * Calling it twice with the same key but a **different** payload (a different `newUserId`, `group`, or
    * `playerSession`) must instead **reject** with `PromoteGuestToAccountIdentityMismatchError` (or an
@@ -65,11 +66,11 @@ export interface PromoteGuestToAccountInput {
    */
   idempotencyKey: string;
   /**
-   * Promotion only ever fires on an already-finalized group: ticket 13's RPC skeleton inserts
-   * `joint_treatment_muscle_test` directly into a Postgres `not null` column, so a Guest Group can only
-   * reach `promoteGuestToAccount` once `GroupEngine.finalizeGroup` has already accepted it.
+   * The finalized Symptom Group to promote, or `null` when the Guest Player session has no linked group
+   * at all (unlinked timeline-first execution). When `null`, only the player session, library row, and
+   * timeline event are written.
    */
-  group: FinalizedSymptomGroup;
+  group: FinalizedSymptomGroup | null;
   playerSession: PlayerSession;
   /**
    * The newly authenticated account's identity, per spec §E:
@@ -113,9 +114,9 @@ export interface Treatment {
   content_format: string;
 }
 
-/** The five entities `promoteGuestToAccount` lands atomically, now owned by the new account. */
+/** The entities `promoteGuestToAccount` lands atomically, now owned by the new account. */
 export interface PromoteGuestToAccountResult {
-  group: FinalizedSymptomGroup;
+  group: FinalizedSymptomGroup | null;
   playerSession: PlayerSession;
   libraryRow: LibraryRow;
   timelineEvent: TimelineEvent;

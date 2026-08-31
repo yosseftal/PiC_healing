@@ -49,10 +49,10 @@ export interface SessionState {
 /**
  * The full Guest state `promote()` hands off to `RepositoryPort.promoteGuestToAccount` - deliberately just
  * the two entities that method's own `PromoteGuestToAccountInput` needs beyond `idempotencyKey` (derived
- * here from `group.id`, see `promote()`) and `newUserId` (supplied by the caller alongside `guestState`).
+ * here from `group.id` when present, otherwise `playerSession.id` — see `promote()`) and `newUserId`.
  */
 export interface GuestSnapshot {
-  group: FinalizedSymptomGroup;
+  group: FinalizedSymptomGroup | null;
   playerSession: PlayerSession;
 }
 
@@ -165,7 +165,7 @@ export class SessionEngine {
     let promotionResult: PromoteGuestToAccountResult;
     try {
       promotionResult = await this.repositoryPort.promoteGuestToAccount({
-        idempotencyKey: guestState.group.id,
+        idempotencyKey: guestState.group?.id ?? guestState.playerSession.id,
         group: guestState.group,
         playerSession: normalizeForPermanentStore(guestState.playerSession),
         newUserId,

@@ -157,6 +157,25 @@ describe("SessionEngine", () => {
       });
     });
 
+    it("with guestState.group null sources idempotencyKey from playerSession.id and promotes successfully", async () => {
+      const { port, sessionEngine } = buildEngine();
+      const playerSession = {
+        id: "guest-session-unlinked",
+        treatment_id: "treatment-unlinked",
+        linked_group_id: null,
+        units: [{ unit_id: "a", state: "completed" as const }],
+        terminal_nemar_response: "yes" as const,
+        success_declared: false,
+        finished_at: null,
+        integrating_reason: null,
+      };
+
+      await sessionEngine.promote({ group: null, playerSession }, "user-unlinked");
+
+      expect(sessionEngine.getState().mode).toBe("authenticated");
+      await expect(port.getPlayerSession(playerSession.id)).resolves.toEqual(playerSession);
+    });
+
     const completesGatedFinishTitle =
       "on success completes the originally-requested finish()/finishAnyway() call that triggered the gate";
     it(completesGatedFinishTitle, async () => {
