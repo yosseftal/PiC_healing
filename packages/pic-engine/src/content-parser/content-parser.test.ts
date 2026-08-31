@@ -41,16 +41,20 @@ describe("parseStructuredMarkdown", () => {
     expect(unit.unit_content).toBe("Prose with padding around it.");
   });
 
-  it("never lets the zero-H3 fallback unit_id 'unit-0' collide with H3-based ids or the Terminal NEMAR id", () => {
+  it("never lets a unit-0 sentinel collide with H3-based ids or the Terminal NEMAR id", () => {
     const [fallbackUnit] = parseStructuredMarkdown("Prose with no headers at all.");
     const [h3Unit] = parseStructuredMarkdown("### A Real Header\n\nSome content.");
+    const mixedUnits = parseStructuredMarkdown("Leading guidance.\n\n### A Real Header\n\nSome content.");
 
     expect(fallbackUnit.unit_id).toBe("unit-0");
     expect(h3Unit.unit_id).not.toBe("unit-0");
     expect(fallbackUnit.unit_id).not.toBe(TERMINAL_NEMAR_UNIT_ID);
+    expect(mixedUnits.map((unit) => unit.unit_id)).toEqual(["unit-0", "unit-1"]);
+    expect(new Set(mixedUnits.map((unit) => unit.unit_id)).size).toBe(mixedUnits.length);
+    expect(mixedUnits.map((unit) => unit.unit_id)).not.toContain(TERMINAL_NEMAR_UNIT_ID);
   });
 
-  it("leaves a leading preamble before a document's first H3 unaffected (only all-prose input gets the fallback)", () => {
+  it("captures a leading preamble before a document's first H3 as a unit-0 Continuous Guidance unit", () => {
     const markdown = `Some leading preamble text before any header.
 
 ### First Step
@@ -59,6 +63,13 @@ Body for step one.`;
 
     expect(parseStructuredMarkdown(markdown)).toEqual([
       {
+        unit_id: "unit-0",
+        unit_order: 0,
+        unit_title: "Continuous Guidance",
+        unit_content: "Some leading preamble text before any header.",
+        unit_rationale: null,
+      },
+      {
         unit_id: "unit-1",
         unit_order: 1,
         unit_title: "First Step",
@@ -66,6 +77,12 @@ Body for step one.`;
         unit_rationale: null,
       },
     ]);
+  });
+
+  it("does not add a unit-0 when only whitespace precedes the first H3", () => {
+    const markdown = "  \n\t\n### First Step\n\nBody for step one.";
+
+    expect(parseStructuredMarkdown(markdown).map((unit) => unit.unit_id)).toEqual(["unit-1"]);
   });
 
   it("starts a new unit at every H3 header with title and content up to the next H3", () => {

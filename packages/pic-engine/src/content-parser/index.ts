@@ -14,14 +14,17 @@ export type AtomicUnitContent = {
 const H3_HEADER_PATTERN = /^###\s+(.*)$/;
 
 /**
- * Bilingual canonical title (הנחיה רציפה) for the Zero-H3 Heuristic Fallback unit (DEC-015 §9's
- * "graceful degradation... falls back to a single unit_content container" clause).
+ * Bilingual canonical title (הנחיה רציפה) for Continuous Guidance units, including DEC-015 §9's
+ * Zero-H3 Heuristic Fallback.
  */
 const CONTINUOUS_GUIDANCE_TITLE = "Continuous Guidance";
 
 /** Converts raw Structured Markdown into ordered Atomic Unit content records. Never throws. */
 export function parseStructuredMarkdown(markdown: string): AtomicUnitContent[] {
   const lines = markdown.split("\n");
+  const firstHeaderIndex = lines.findIndex((line) => H3_HEADER_PATTERN.test(line));
+  const preambleContent =
+    firstHeaderIndex > 0 ? lines.slice(0, firstHeaderIndex).join("\n").trim() : "";
   const units: AtomicUnitContent[] = [];
   let lineIndex = 0;
 
@@ -76,6 +79,16 @@ export function parseStructuredMarkdown(markdown: string): AtomicUnitContent[] {
         unit_rationale: null,
       },
     ];
+  }
+
+  if (preambleContent !== "") {
+    units.unshift({
+      unit_id: "unit-0",
+      unit_order: 0,
+      unit_title: CONTINUOUS_GUIDANCE_TITLE,
+      unit_content: preambleContent,
+      unit_rationale: null,
+    });
   }
 
   return units;

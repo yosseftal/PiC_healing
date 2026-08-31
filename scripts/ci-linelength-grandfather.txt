@@ -16,4 +16,6 @@ docs/docs/inquiry-session-flow-diagram.md
 docs/audits/wave-4-audit.md
 docs/audits/wave-5-wave-7-audit.md
 docs/grill-backlog.md
+docs/specs/structured-markdown-content-integration.md
+docs/visuals/architecture_blueprint.md
 stam.md
