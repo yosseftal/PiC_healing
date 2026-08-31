@@ -7,6 +7,21 @@ import {
   readSupabasePublicConfigFromEnv,
 } from "./promote-path";
 
+const CANONICAL_SEED_TREATMENTS = [
+  {
+    id: "2c6e77bd-61db-4898-8612-84e976587ff7",
+    title: "Settling the Nervous System",
+  },
+  {
+    id: "c818490b-10ed-46c2-9890-1f35d34f4e25",
+    title: "Grounding Through the Feet",
+  },
+  {
+    id: "92be9fb3-7092-4a78-9fa2-4aee9ba34bc6",
+    title: "Loosening the Shoulders and Neck",
+  },
+] as const;
+
 function loadEnvLocal(path: string): Record<string, string> {
   const content = readFileSync(path, "utf8");
   const env: Record<string, string> = {};
@@ -41,7 +56,7 @@ describe.skipIf(!hasRemoteCredentials)("tracer bullet seed treatments remote par
   });
 
   it(
-    "TRACER_BULLET_SEED_TREATMENTS ids match Supabase global treatment rows by title",
+    "the three canonical ids resolve to their Supabase global treatment rows",
     async () => {
       const config = readSupabasePublicConfigFromEnv(remoteEnv!)!;
       const { createSupabaseBrowserClient } = await import("./promote-path");
@@ -49,10 +64,12 @@ describe.skipIf(!hasRemoteCredentials)("tracer bullet seed treatments remote par
       const repository = createSupabaseRepositoryFromClient(client);
       const remoteTreatments = await repository.listTreatments();
 
-      for (const seed of TRACER_BULLET_SEED_TREATMENTS) {
-        const remote = remoteTreatments.find((row) => row.title === seed.title);
-        expect(remote, `missing remote treatment titled "${seed.title}"`).toBeDefined();
-        expect(remote!.id).toBe(seed.id);
+      expect(TRACER_BULLET_SEED_TREATMENTS).toEqual(CANONICAL_SEED_TREATMENTS);
+
+      for (const canonical of CANONICAL_SEED_TREATMENTS) {
+        const remote = remoteTreatments.find((row) => row.title === canonical.title);
+        expect(remote, `missing remote treatment titled "${canonical.title}"`).toBeDefined();
+        expect(remote!.id).toBe(canonical.id);
       }
     },
     15_000,
