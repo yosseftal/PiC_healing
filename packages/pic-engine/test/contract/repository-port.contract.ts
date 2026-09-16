@@ -121,6 +121,15 @@ export interface RepositoryPortContractOptions {
    * pass `randomUUID` so the id is syntactically valid but still absent.
    */
   makeUnknownTreatmentId?: () => string;
+  /**
+   * Factory for a `PlayerSession.id` to use in fixtures that need one (ticket 01's "getPlayerSession
+   * dynamic rehydration" block). Defaults to a synthetic, non-UUID string (`uniqueId("player-session")`) -
+   * safe for the fake and `pic-adapter-local-guest`, neither of which enforces any format constraint.
+   * `pic-adapter-supabase` stores `player_sessions.id` as a real Postgres `uuid` primary key - pass
+   * `randomUUID` here so this block's own `savePlayerSession`/`getPlayerSession` round-trip satisfies that
+   * constraint, mirroring `makeTreatmentId`'s identical rationale above.
+   */
+  makeSessionId?: () => string;
 }
 
 function buildTreatment(overrides: Partial<Treatment> = {}): Treatment {
@@ -155,6 +164,7 @@ export function runRepositoryPortContractTests(
   const makeTreatmentId = options.makeTreatmentId ?? (() => uniqueId("treatment"));
   const makeIdempotencyKey = options.makeIdempotencyKey ?? (() => uniqueId("idempotency-key"));
   const makeUnknownTreatmentId = options.makeUnknownTreatmentId ?? (() => uniqueId("unknown-treatment"));
+  const makeSessionId = options.makeSessionId ?? (() => uniqueId("player-session"));
   const seedTreatment = options.seedTreatment ?? defaultSeedTreatment;
 
   describe("RepositoryPort contract", () => {
@@ -167,6 +177,7 @@ export function runRepositoryPortContractTests(
     describe("getPlayerSession dynamic rehydration", () => {
       it("restores exactly one in_view unit after persistence", async () => {
         const session = buildPlayerSession({
+          id: makeSessionId(),
           treatment_id: makeTreatmentId(),
           units: [
             { unit_id: uniqueId("completed-unit"), state: "completed" },

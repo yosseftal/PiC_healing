@@ -199,6 +199,16 @@ afterAll(async () => {
   if (timelineError) {
     throw new Error(`Failed to clean up dependent timeline_events rows: ${timelineError.message}`);
   }
+  // Ticket 01's "getPlayerSession dynamic rehydration" contract block (makeSessionId: randomUUID) now
+  // also writes real player_sessions rows against these ephemeral treatment ids - clean those up too,
+  // before treatments, or the treatments delete below hits player_sessions_treatment_id_fkey.
+  const { error: playerSessionsError } = await serviceClient
+    .from("player_sessions")
+    .delete()
+    .in("treatment_id", ephemeralContractTreatmentIds);
+  if (playerSessionsError) {
+    throw new Error(`Failed to clean up dependent player_sessions rows: ${playerSessionsError.message}`);
+  }
   const { error: treatmentsError } = await serviceClient
     .from("treatments")
     .delete()
@@ -262,6 +272,7 @@ runRepositoryPortContractTests(
     makeTreatmentId: makeContractTreatmentId,
     makeIdempotencyKey: randomUUID,
     makeUnknownTreatmentId: randomUUID,
+    makeSessionId: randomUUID,
     seedTreatment: async () => {
       const { data, error } = await serviceClient
         .from("treatments")
@@ -432,9 +443,14 @@ describe("SupabaseRepository", () => {
       expect(strangerLibraryRow.use_count).toBe(0);
 
       // The owner's own data must remain fully intact throughout - proving the stranger's calls above
-      // never mutated it, not merely that they couldn't see it.
+      // never mutated it, not merely that they couldn't see it. The lone "unseen" unit reads back
+      // "in_view" (ticket 01's getPlayerSession rehydration, DEC-015) - a documented read-time
+      // reconstruction, not a mutation of what was actually persisted.
       await expect(repository.getGroup(group.id)).resolves.toEqual(group);
-      await expect(repository.getPlayerSession(session.id)).resolves.toEqual(session);
+      await expect(repository.getPlayerSession(session.id)).resolves.toEqual({
+        ...session,
+        units: [{ ...session.units[0], state: "in_view" }],
+      });
     });
   });
 
@@ -1065,15 +1081,14 @@ describe("SupabaseRepository", () => {
       // Asserted against the RPC's own specific validation message, not merely "error is not null" (nor
       // merely "mentions p_symptoms" - PostgREST's own "could not find the function" error already lists
       // every parameter name it was looking for, p_symptoms included, so that weaker check would still
-      // trivially pass for the wrong reason pre-migration). A null p_symptoms hits the RPC's generic
-      // required-arguments check (it runs before the more specific jsonb_typeof array check, since a null
-      // argument can't be typeof-checked in the first place) - so "are all required" is the actual, correct
-      // validation message for this exact payload, not "must be a jsonb array" (that message is reserved
-      // for a non-null p_symptoms of the wrong jsonb type, e.g. an object instead of an array). Requiring
-      // this verbatim means the test properly fails red right now (the real pre-migration error is "Could
-      // not find the function...", which contains neither phrase) and will only pass once the migration is
-      // applied *and* this exact validation path behaves as designed.
-      expect(error?.message).toMatch(/p_guest_group, p_symptoms, p_player_session, and p_new_user_id are all required/i);
+      // trivially pass for the wrong reason pre-migration). Ticket 07's nullable-group migration
+      // (`20260831233000_promote_guest_to_account_nullable_group.sql`) splits validation so a present,
+      // non-null `p_guest_group` with a null `p_symptoms` now raises this specific, more precise message
+      // instead of the old blanket "are all required" (that message is now reserved for the
+      // p_player_session/p_new_user_id-missing case, which this payload does not hit). Requiring this
+      // verbatim means the test properly fails red against the pre-ticket-07 migration and will only pass
+      // once the nullable-group migration is applied *and* this exact validation path behaves as designed.
+      expect(error?.message).toMatch(/p_symptoms is required when p_guest_group is present/i);
 
       await expectNoPromotionRowsLanded({
         groupId: group.id,
