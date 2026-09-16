@@ -95,6 +95,27 @@ describe("assembleGuestSnapshotForPendingGate", () => {
     const snapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
     expect(snapshot).toEqual({ group, playerSession: session });
   });
+
+  it("returns group: null for a gated guest session with no linked Symptom Group (ticket 08)", async () => {
+    const session = buildPlayerSession("unused-group-id", { linked_group_id: null });
+    await guestRepository.savePlayerSession(session);
+    await guestRepository.saveGuestSessionGate({
+      gateTriggered: true,
+      pendingFinishRequest: { sessionId: session.id, kind: "finish" },
+    });
+
+    const snapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
+    expect(snapshot).toEqual({ group: null, playerSession: session });
+  });
+
+  it("returns null when the pending session's own row cannot be found, even if unlinked", async () => {
+    await guestRepository.saveGuestSessionGate({
+      gateTriggered: true,
+      pendingFinishRequest: { sessionId: "missing-session", kind: "finish" },
+    });
+
+    await expect(assembleGuestSnapshotForPendingGate(guestRepository)).resolves.toBeNull();
+  });
 });
 
 describe("promoteWithAuthenticatedRepository", () => {
@@ -158,6 +179,41 @@ describe("promoteWithAuthenticatedRepository", () => {
     expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
     expect(repositoryPort.getProvider()).toBe(authenticatedPort);
     expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
+  });
+
+  it("promotes an unlinked session (group: null) successfully via assembleGuestSnapshotForPendingGate (ticket 08)", async () => {
+    vi.resetModules();
+    localStorage.clear();
+    const { compositionRoot: root } = await import("./composition-root");
+    const { repositoryPort, sessionEngineActions, promotePathActions, sessionEngineStore } = root;
+    const session = buildPlayerSession("unused-group-id", { linked_group_id: null });
+    await repositoryPort.savePlayerSession(session);
+
+    const guestRepository = repositoryPort.getProvider() as LocalGuestRepository;
+    await sessionEngineActions.onFinishRequested(session.id, "finish");
+    await guestRepository.saveGuestSessionGate({
+      gateTriggered: true,
+      pendingFinishRequest: { sessionId: session.id, kind: "finish" },
+    });
+
+    const guestSnapshot = await promotePathActions.assembleGuestSnapshotForPendingGate();
+    expect(guestSnapshot).toEqual({ group: null, playerSession: session });
+
+    const authenticatedPort = createInMemoryAuthenticatedPort();
+    await promotePathActions.promoteWithAuthenticatedRepository(
+      authenticatedPort,
+      guestSnapshot!,
+      "user-unlinked-success",
+    );
+
+    expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
+    expect(repositoryPort.getProvider()).toBe(authenticatedPort);
+    // The gated Finish request completes as part of promote() (SessionEngine's own replay), so the
+    // promoted row is success_declared afterward - not a byte-for-byte echo of the pre-promotion fixture.
+    const promoted = await authenticatedPort.getPlayerSession(session.id);
+    expect(promoted?.success_declared).toBe(true);
+    expect(promoted?.finished_at).not.toBeNull();
+    expect(promoted?.linked_group_id).toBeNull();
   });
 });
 
@@ -241,7 +297,9 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
       };
     },
     async promoteGuestToAccount(input) {
-      await this.saveGroup(input.group);
+      if (input.group !== null) {
+        await this.saveGroup(input.group);
+      }
       await this.savePlayerSession(input.playerSession);
       const libraryRow = await this.getOrCreateLibraryRow(input.playerSession.treatment_id, {
         source: "guest_promotion",

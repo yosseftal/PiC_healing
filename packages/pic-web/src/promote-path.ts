@@ -108,6 +108,11 @@ function isFinalizedSymptomGroup(group: SymptomGroup): group is FinalizedSymptom
 /**
  * Reads the gated guest session from local storage and assembles the `GuestSnapshot` `SessionEngine.promote`
  * expects. Returns `null` when the gate has no pending finish request or the stored entities are incomplete.
+ *
+ * A session with no linked Symptom Group (`linked_group_id === null`, ticket 08 / DEC-017 unlinked
+ * timeline-first execution) assembles with `group: null` — `RepositoryPort.promoteGuestToAccount` (ticket
+ * 07) and `SessionEngine.promote` both already accept a null group, sourcing the idempotency key from
+ * `playerSession.id` instead of `group.id` in that case.
  */
 export async function assembleGuestSnapshotForPendingGate(
   guestRepository: LocalGuestRepository,
@@ -119,8 +124,12 @@ export async function assembleGuestSnapshotForPendingGate(
   }
 
   const playerSession = await guestRepository.getPlayerSession(sessionId);
-  if (playerSession === null || playerSession.linked_group_id === null) {
+  if (playerSession === null) {
     return null;
+  }
+
+  if (playerSession.linked_group_id === null) {
+    return { group: null, playerSession };
   }
 
   const group = await guestRepository.getGroup(playerSession.linked_group_id);
