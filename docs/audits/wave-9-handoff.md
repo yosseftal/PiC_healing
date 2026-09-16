@@ -281,3 +281,64 @@ Summaries of each ticket's `### Resolution (Wave 9.1 Amendment)` already on disk
 - **Boot-time rehydrate of `activePlayerSessionId`:** still out of Wave 9.1 scope; Decision B's gate
   covers it whenever that feature ships.
 - Glossary addition from the spec's Further Notes is **done** in this ticket (`CONTEXT.md`).
+
+## Wave 9.1+ Production Hardening Closure
+
+**Date:** 2026-09-16
+**Status:** CLOSED — all 9 tickets (7 critical defects from the Wave 9 audit) landed. Distinct from, and
+sequenced after, the "Wave 9.1 — Resilience Hardening Amendment" closed above; tickets are numbered 01–09
+independently (see `.scratch/wave-9-1-hardening/issues/`, gitignored).
+
+### Closed tickets
+
+| ID | Commit(s) | Summary |
+|----|-----------|---------|
+| 01 | `c69a27b` | `rehydrateInViewUnit` on adapter read; `AtomicUnitView`/`jumpTo` visibility fix |
+| 02 | `dcaae22` | Mixed-prose preamble → `unit-0` Continuous Guidance; spec Decision A superseded |
+| 03 | `76dd698` | `LocalGuestRepository.readSnapshot()` `JSON.parse` guard against storage corruption |
+| 04 | `34f9914` | Guest flow boot rehydration (`guestFlowFacts` persistence + composition-root seeding) |
+| 05 | `263e6e3` | `RatingControl` immediate Blind-by-Default reset on symptom switch |
+| 06 | `e3daa54` | Canonical seed treatment UUID alignment (forward migration, applied) |
+| 07 | `09a985e`, `a2e4a0d` | Nullable-group promotion contract (engine, adapter, RPC migration, applied) |
+| 08 | `ec42730` | `promote-path.ts` wired for unlinked (no-group) Guest sessions |
+| 09 | `aa95557` | Shared `use-async-action` recovery pattern across 8 Guest Mode screens |
+
+### Manual-apply checkpoints (both confirmed by the Event Manager)
+
+- **06** — `supabase/migrations/20260831193914_align_seed_treatment_ids.sql`: realigns the 3 seed
+  `treatments` rows to their canonical UUIDs (matching the Guest bundle) and re-applies the GFM widening
+  content that had been a silent no-op against the misaligned ids.
+- **07** — `supabase/migrations/20260831233000_promote_guest_to_account_nullable_group.sql`: widens
+  `promote_guest_to_account` to accept `p_guest_group: null` for unlinked sessions, fingerprinting
+  idempotency on a new `player_sessions.promotion_payload_fingerprint` column instead of
+  `symptom_groups` when there is no group row.
+
+### Real-RPC verification findings (ticket 07 closing pass)
+
+Re-running the full remote suite against the newly-migrated live project (the first time this environment
+could reach it) surfaced 3 issues invisible to local-only fake/local-guest testing, all fixed in `a2e4a0d`:
+a non-UUID default session id in the shared contract suite's own new rehydration block (ticket 01), an
+RLS cross-user test not updated for ticket 01's read-time `in_view` rehydration, and this migration's own
+necessarily-split validation message text. See ticket 07's `## Resolution` for the full detail. None of
+these were regressions in shipped production code paths — all were test-fixture/assertion gaps in
+suites that had never previously run against a real, reachable Supabase project during this wave.
+
+### Gates
+
+| Gate | Result |
+|------|--------|
+| `npm test` (local only) | 279 passed, 16 skipped (network-optional), 0 failed |
+| Full suite incl. remote (`NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run`) | 279 passed, 0 failed, 16 skipped |
+| `depcruise --workspaces` | 0 violations (`pic-engine` 72 modules / 199 deps; `pic-web` 630 modules / 1177 deps) |
+| Line length | Touched files clean at 130 chars |
+
+### DEC / glossary additions
+
+None — this wave implements already-ratified `decisions.md` entries (DEC-006, DEC-007, DEC-015, DEC-017)
+more robustly; no new domain terms or decisions were introduced.
+
+### Should-fix carry-forward
+
+- None currently outstanding from this wave. The pre-existing Wave 9.1 amendment's carry-forward items
+  above (rationale info affordance, Lazy Copy-on-Write, remote E2E credentials) remain future-wave scope,
+  unaffected by this hardening pass.
