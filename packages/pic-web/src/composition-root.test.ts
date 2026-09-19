@@ -239,3 +239,138 @@ describe("composition root guest storage lifecycle", () => {
     });
   });
 });
+
+/**
+ * Ticket 21: composition-root actions must clear the stale `activePlayerSessionId` pointer on completion,
+ * promotion, and discard — the same-tab, no-reload gap boot-time rehydration (above) does not cover. Every
+ * test here loads a fresh module instance (`vi.resetModules()`) so each test's `SessionEngine.mode`/
+ * `gateTriggered`/`promotionStatus` starts from a known, un-polluted "guest" baseline.
+ */
+describe("clear stale session pointers on completion / discard / promotion (ticket 21)", () => {
+  async function loadFreshCompositionRoot() {
+    vi.resetModules();
+    localStorage.clear();
+    const composition = await import("./composition-root");
+    const guestFlowFacts = await import("./guest-flow-facts");
+    return { ...composition, ...guestFlowFacts };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("AC1: authenticated Finish clears activePlayerSessionId and refreshes playerSessionStore", async () => {
+    const { compositionRoot: fresh, swapToSupabaseAdapter: freshSwap, guestFlowFactsStore } =
+      await loadFreshCompositionRoot();
+    const { repositoryPort, sessionEngineActions, sessionEngineStore, playerEngineActions, playerSessionStore } =
+      fresh;
+
+    const authenticatedPort = createInMemoryAuthenticatedPort();
+    freshSwap(authenticatedPort);
+    const guestRepository = repositoryPort.getProvider() as LocalGuestRepository;
+    vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation(async (input) => {
+      return authenticatedPort.promoteGuestToAccount(input);
+    });
+
+    // Promote with no pending Finish request: this flips mode -> "authenticated" without any replay.
+    await sessionEngineActions.promote(buildGuestSnapshot(), "user-ac1");
+    expect(sessionEngineStore.getSnapshot().mode).toBe("authenticated");
+
+    const sessionId = await playerEngineActions.startSession("treatment-ac1", null, ["unit-a"]);
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
+
+    const started = await repositoryPort.getPlayerSession(sessionId);
+    await repositoryPort.savePlayerSession({ ...started!, terminal_nemar_response: "yes" });
+
+    // Authenticated mode: SessionEngine.runFinish calls playerEngine.finish directly, bypassing the
+    // composition-root's playerEngineActions.finish wrapper entirely (the bug this ticket fixes).
+    await sessionEngineActions.onFinishRequested(sessionId, "finish");
+
+    expect(playerSessionStore.getSnapshot(sessionId)?.success_declared).toBe(true);
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBeNull();
+  });
+
+  it("AC2: promote() clears activePlayerSessionId on a successful promotion", async () => {
+    const {
+      compositionRoot: fresh,
+      swapToSupabaseAdapter: freshSwap,
+      guestFlowFactsStore,
+      setGuestFlowPlayerSession,
+    } = await loadFreshCompositionRoot();
+    const { repositoryPort, sessionEngineActions, sessionEngineStore } = fresh;
+
+    const authenticatedPort = createInMemoryAuthenticatedPort();
+    freshSwap(authenticatedPort);
+    const guestRepository = repositoryPort.getProvider() as LocalGuestRepository;
+    vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation(async (input) => {
+      return authenticatedPort.promoteGuestToAccount(input);
+    });
+
+    const guestSnapshot = buildGuestSnapshot();
+    setGuestFlowPlayerSession(guestSnapshot.playerSession.id);
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(guestSnapshot.playerSession.id);
+
+    await sessionEngineActions.promote(guestSnapshot, "user-ac2");
+
+    expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBeNull();
+  });
+
+  it("AC2 (failed promotion): promote() does NOT clear activePlayerSessionId when the RPC rejects", async () => {
+    const {
+      compositionRoot: fresh,
+      swapToSupabaseAdapter: freshSwap,
+      guestFlowFactsStore,
+      setGuestFlowPlayerSession,
+    } = await loadFreshCompositionRoot();
+    const { repositoryPort, sessionEngineActions, sessionEngineStore } = fresh;
+
+    const authenticatedPort = createInMemoryAuthenticatedPort();
+    freshSwap(authenticatedPort);
+    const guestRepository = repositoryPort.getProvider() as LocalGuestRepository;
+    vi.spyOn(guestRepository, "promoteGuestToAccount").mockRejectedValue(new Error("network drop"));
+
+    const guestSnapshot = buildGuestSnapshot();
+    setGuestFlowPlayerSession(guestSnapshot.playerSession.id);
+
+    await sessionEngineActions.promote(guestSnapshot, "user-ac2-fail");
+
+    expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("failed");
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(guestSnapshot.playerSession.id);
+  });
+
+  it("AC3: discardGuestState() clears activePlayerSessionId", async () => {
+    const { compositionRoot: fresh, guestFlowFactsStore, setGuestFlowPlayerSession } =
+      await loadFreshCompositionRoot();
+    const { sessionEngineActions } = fresh;
+
+    setGuestFlowPlayerSession("ac3-guest-session");
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe("ac3-guest-session");
+
+    await sessionEngineActions.discardGuestState();
+
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBeNull();
+  });
+
+  it("AC4: guest-mode gate-triggered Finish does NOT clear activePlayerSessionId (negative case)", async () => {
+    const { compositionRoot: fresh, guestFlowFactsStore } = await loadFreshCompositionRoot();
+    const { repositoryPort, sessionEngineActions, sessionEngineStore, playerEngineActions } = fresh;
+
+    expect(sessionEngineStore.getSnapshot().mode).toBe("guest");
+
+    const sessionId = await playerEngineActions.startSession("treatment-ac4", null, ["unit-a"]);
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
+
+    const started = await repositoryPort.getPlayerSession(sessionId);
+    await repositoryPort.savePlayerSession({ ...started!, terminal_nemar_response: "yes" });
+
+    // Guest mode: onFinishRequested only opens the Persistence Gate — no actual Finish happens yet, so the
+    // session must remain visible behind the gate modal, not stranded-but-invisible.
+    await sessionEngineActions.onFinishRequested(sessionId, "finish");
+
+    expect(sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+    const session = await repositoryPort.getPlayerSession(sessionId);
+    expect(session?.success_declared).toBe(false);
+    expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
+  });
+});

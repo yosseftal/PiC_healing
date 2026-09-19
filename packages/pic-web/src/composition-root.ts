@@ -132,12 +132,31 @@ const playerSessionStore = createPlayerSessionStore(repositoryPort);
 const sessionEngineActions = {
   async onFinishRequested(sessionId: string, kind: "finish" | "finishAnyway"): Promise<void> {
     await sessionEngine.onFinishRequested(sessionId, kind);
+    await playerSessionStore.refresh(sessionId);
+    if (playerSessionStore.getSnapshot(sessionId)?.success_declared === true) {
+      const { setGuestFlowPlayerSession } = await import("./guest-flow-facts");
+      setGuestFlowPlayerSession(null);
+    }
   },
   async promote(guestState: GuestSnapshot, newUserId: string): Promise<void> {
     await sessionEngine.promote(guestState, newUserId);
+    if (sessionEngineStore.getSnapshot().promotionStatus === "succeeded") {
+      const { setGuestFlowPlayerSession } = await import("./guest-flow-facts");
+      setGuestFlowPlayerSession(null);
+      // `setGuestFlowPlayerSession` persists via a direct `guestRepository.saveGuestFlowFacts` binding
+      // (bypassing the just-swapped delegating port), which would otherwise resurrect the guest storage
+      // blob that `onPromotionSucceeded` already cleared moments ago (DEC-017 "evaporate" - no guest
+      // residue survives a successful promotion). Re-clearing here, last, keeps that guarantee intact.
+      await guestRepository.clear();
+    }
   },
   async discardGuestState(): Promise<void> {
     await sessionEngine.discardGuestState();
+    const { setGuestFlowPlayerSession } = await import("./guest-flow-facts");
+    setGuestFlowPlayerSession(null);
+    // Clearing the pointer persists guest flow facts (see comment in `promote` above); `guestRepository
+    // .clear()` must run last so that write never resurrects the storage blob this discard is meant to
+    // erase entirely.
     await guestRepository.clear();
   },
 };
