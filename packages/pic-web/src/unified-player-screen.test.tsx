@@ -1,12 +1,121 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TERMINAL_NEMAR_UNIT_ID, TRACER_BULLET_SEED_TREATMENT_ROWS, type PlayerSession } from "pic-engine";
+import {
+  TERMINAL_NEMAR_UNIT_ID,
+  TRACER_BULLET_SEED_TREATMENT_ROWS,
+  type FinalizedSymptomGroup,
+  type LibraryRow,
+  type LibraryRowProvenance,
+  type PlayerSession,
+  type PromoteGuestToAccountInput,
+  type PromoteGuestToAccountResult,
+  type RepositoryPort,
+  type TimelineEvent,
+} from "pic-engine";
+import { LocalGuestRepository } from "pic-adapter-local-guest";
 import { AppProviders } from "./app-providers";
-import { compositionRoot, resetTreatmentContentCacheForTest } from "./composition-root";
+import { compositionRoot, resetTreatmentContentCacheForTest, swapToSupabaseAdapter } from "./composition-root";
 import { setGuestFlowPlayerSession, resetGuestFlowFactsForTest } from "./guest-flow-facts";
 import { UnifiedPlayerScreen } from "./UnifiedPlayerScreen";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
+
+/**
+ * Minimal in-memory `RepositoryPort` fake for ticket 21's promotion-replay test (AC6) — only the surface
+ * `SessionEngine.promote` and its replayed `runFinish` actually touch: `promoteGuestToAccount`,
+ * `getPlayerSession`/`savePlayerSession` (the replayed `finish()` reads/writes through these),
+ * `getOrCreateLibraryRow`/`incrementUseCount` (`LibraryEngine.recordUse`), and `appendTimelineEvent`
+ * (`TimelineEngine.recordExecution`). Mirrors `createInMemoryAuthenticatedPort` in composition-root.test.ts.
+ */
+function createFakeAuthenticatedPort(): RepositoryPort {
+  const sessions = new Map<string, PlayerSession>();
+  const libraryRows = new Map<string, LibraryRow>();
+  const libraryRowIdByTreatmentId = new Map<string, string>();
+  const usedKeysByRowId = new Map<string, Set<string>>();
+  let nextId = 0;
+  const nextIdPrefix = (prefix: string) => `${prefix}-${++nextId}`;
+
+  return {
+    async getGroup() {
+      return null;
+    },
+    async saveGroup() {},
+    async getPlayerSession(sessionId: string) {
+      return sessions.get(sessionId) ?? null;
+    },
+    async savePlayerSession(session: PlayerSession) {
+      sessions.set(session.id, session);
+    },
+    async getOrCreateLibraryRow(treatmentId: string, provenance: LibraryRowProvenance) {
+      const existingId = libraryRowIdByTreatmentId.get(treatmentId);
+      const existing = existingId === undefined ? undefined : libraryRows.get(existingId);
+      if (existing !== undefined) {
+        return existing;
+      }
+      const row: LibraryRow = {
+        id: nextIdPrefix("library-row"),
+        treatment_id: treatmentId,
+        use_count: 0,
+        provenance,
+        variant_type: "original",
+        global_reference_id: treatmentId,
+        protocol_content: null,
+        created_at: new Date().toISOString(),
+      };
+      libraryRows.set(row.id, row);
+      libraryRowIdByTreatmentId.set(treatmentId, row.id);
+      return row;
+    },
+    async incrementUseCount(libraryRowId: string, idempotencyKey: string) {
+      const row = libraryRows.get(libraryRowId);
+      if (row === undefined) {
+        throw new Error(`no library row "${libraryRowId}"`);
+      }
+      let used = usedKeysByRowId.get(libraryRowId);
+      if (used === undefined) {
+        used = new Set();
+        usedKeysByRowId.set(libraryRowId, used);
+      }
+      if (!used.has(idempotencyKey)) {
+        used.add(idempotencyKey);
+        row.use_count += 1;
+      }
+      return row;
+    },
+    async appendTimelineEvent(event: Omit<TimelineEvent, "id" | "created_at">) {
+      const full: TimelineEvent = { ...event, id: nextIdPrefix("timeline-event"), created_at: new Date().toISOString() };
+      return full;
+    },
+    async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
+      if (input.group !== null) {
+        await this.saveGroup(input.group as FinalizedSymptomGroup);
+      }
+      await this.savePlayerSession(input.playerSession);
+      const libraryRow = await this.getOrCreateLibraryRow(input.playerSession.treatment_id, {
+        source: "guest_promotion",
+        first_seen_at: new Date().toISOString(),
+      });
+      const timelineEvent = await this.appendTimelineEvent({
+        log_type: "treatment_execution",
+        treatment_id: input.playerSession.treatment_id,
+        library_row_id: libraryRow.id,
+        linked_group_id: input.playerSession.linked_group_id,
+        metadata: null,
+      });
+      return { group: input.group, playerSession: input.playerSession, libraryRow, timelineEvent };
+    },
+    async getGuestSessionGate() {
+      return { gateTriggered: false, pendingFinishRequest: null };
+    },
+    async saveGuestSessionGate() {},
+    async listTreatments() {
+      return [];
+    },
+    async getTreatment() {
+      return null;
+    },
+  };
+}
 
 const seedTreatment = TRACER_BULLET_SEED_TREATMENT_ROWS[0]!;
 
@@ -480,6 +589,87 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => {
       expect(onFinishRequested).toHaveBeenCalledTimes(2);
       expect(onFinishRequested).toHaveBeenNthCalledWith(2, session.id, "finish");
+    });
+  });
+
+  it("unmounts the player subtree after discardGuestState() clears an active gated session (AC5)", async () => {
+    const session = buildSession({
+      units: [
+        { unit_id: "unit-1", state: "completed" },
+        { unit_id: "unit-2", state: "completed" },
+        { unit_id: "unit-3", state: "completed" },
+        { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" },
+      ],
+      terminal_nemar_response: "yes",
+    });
+    await seedPlayerSession(session);
+    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
+
+    render(
+      <AppProviders>
+        <UnifiedPlayerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("finish-button")).toBeTruthy();
+    });
+
+    // Real onFinishRequested (guest mode, not mocked): opens the Persistence Gate without finishing.
+    fireEvent.click(screen.getByTestId("finish-button"));
+    await waitFor(() => {
+      expect(compositionRoot.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+    });
+    expect(screen.getByTestId("guest-flow-player")).toBeTruthy();
+
+    await compositionRoot.sessionEngineActions.discardGuestState();
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("guest-flow-player")).toBeNull();
+    });
+  });
+
+  it("unmounts the player subtree after a promotion replays the gated Finish (AC6)", async () => {
+    const session = buildSession({
+      units: [
+        { unit_id: "unit-1", state: "completed" },
+        { unit_id: "unit-2", state: "completed" },
+        { unit_id: "unit-3", state: "completed" },
+        { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" },
+      ],
+      terminal_nemar_response: "yes",
+    });
+    await seedPlayerSession(session);
+    vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
+
+    render(
+      <AppProviders>
+        <UnifiedPlayerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("finish-button")).toBeTruthy();
+    });
+
+    // Real onFinishRequested (guest mode, not mocked): opens the Persistence Gate without finishing yet.
+    fireEvent.click(screen.getByTestId("finish-button"));
+    await waitFor(() => {
+      expect(compositionRoot.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+    });
+
+    const authenticatedPort = createFakeAuthenticatedPort();
+    swapToSupabaseAdapter(authenticatedPort);
+    const guestRepository = compositionRoot.repositoryPort.getProvider() as LocalGuestRepository;
+    vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation(async (input) => {
+      return authenticatedPort.promoteGuestToAccount(input);
+    });
+
+    // promote() replays the gated Finish via SessionEngine.runFinish -> playerEngine.finish directly.
+    await compositionRoot.sessionEngineActions.promote({ group: null, playerSession: session }, "user-ac6");
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("guest-flow-player")).toBeNull();
     });
   });
 });
