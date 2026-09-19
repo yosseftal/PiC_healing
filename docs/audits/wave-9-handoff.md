@@ -342,3 +342,84 @@ more robustly; no new domain terms or decisions were introduced.
 - None currently outstanding from this wave. The pre-existing Wave 9.1 amendment's carry-forward items
   above (rationale info affordance, Lazy Copy-on-Write, remote E2E credentials) remain future-wave scope,
   unaffected by this hardening pass.
+
+## Wave 9.2 — P0 Audit Remediation: Terminal Completion & Rehydration Synchronization
+
+**Date:** 2026-09-19
+**Status:** CLOSED — both P0 tickets landed. Triggered by an Event Manager remediation request quoting a
+`Verdict: REFACTOR` audit finding: stale session pointers on completion/promotion and no visual transition
+on Terminal NEMAR response submission. Tickets and briefs staged under `.scratch/pic-wave-9-2/`
+(force-committed alongside their code, not left to `.gitignore` evaporation — see `docs/audits/
+wave-9-detailed-audit.md` §C for why that matters).
+
+### Closed tickets
+
+| ID | Commits | Summary |
+|----|---------|---------|
+| 21 | `49b7c17`, `a9fc13e`, `c6a15c5` | Clear `activePlayerSessionId` on Finish/promote/discard — see #1–2 below |
+| 22 | `32295a8`, `bd4089d`, `959a72c`, `e05172b`, `91d5b76` | Terminal NEMAR response confirmation — see #3 below |
+
+### Root causes fixed
+
+1. **Authenticated Finish bypass.** `SessionEngine.onFinishRequested`'s authenticated branch calls
+   `this.playerEngine.finish(sessionId)` directly (`session-engine/index.ts:140`), bypassing
+   `composition-root.ts`'s own `playerEngineActions.finish` wrapper — so `playerSessionStore` was never
+   refreshed and `activePlayerSessionId` was never cleared after a real Finish. `FinishBar` hid itself
+   (`session.success_declared`) but `UnifiedPlayerScreen` kept rendering the now-contentless player
+   subtree forever; the EM could not navigate away without a full reload.
+2. **Promotion and discard never cleared the pointer.** `sessionEngineActions.promote` and
+   `.discardGuestState` both wiped/migrated the underlying guest data but left the composition-layer
+   `activePlayerSessionId` fact untouched, stranding the EM on a player screen pointing at data that no
+   longer existed under the current identity/storage.
+3. **Terminal NEMAR gave no in-the-moment feedback.** Clicking Yes/No silently updated engine state;
+   nothing in `TerminalNemarUnit` told the EM their answer was recorded or that `[Finish]` had just become
+   reachable in the sibling `FinishBar` — `FinishBar`'s own gating logic was already correct and untouched.
+
+### Fix and a resulting invariant
+
+`sessionEngineActions.onFinishRequested` / `.promote` / `.discardGuestState` (`composition-root.ts`) now
+call the existing `setGuestFlowPlayerSession(null)` primitive (dynamic-imported per the file's established
+convention) once the corresponding engine call resolves successfully — never on the guest-mode
+gate-triggered (not-yet-finished) path, and never on a failed promotion. A wrinkle surfaced under TDD:
+`setGuestFlowPlayerSession` persists guest-flow-facts via a binding that writes straight through the raw
+`guestRepository`, bypassing the delegating port's provider swap — calling it before `guestRepository
+.clear()` would resurrect the just-erased guest storage blob. Both `promote` and `discardGuestState`
+therefore call `guestRepository.clear()` **last**, preserving the pre-existing "no guest data left behind"
+invariant.
+
+`TerminalNemarUnit` now takes `response: "yes" | "no" | null` as a prop (dumb reflection of
+`PlayerSession.terminal_nemar_response`, no new local state) and renders a non-judgmental confirmation —
+"Yes" points at the now-visible Finish button; "No" is explicitly framed as Integrating, never a failure.
+
+### Gates
+
+| Gate | Result |
+|------|--------|
+| `npm run test` (root, before Wave 9.2) | 243 passed (baseline, excluding 3 pre-existing sandbox-network-only failing suites) |
+| `npm run test` (root, after ticket 21) | 250 passed |
+| `npm run test` (root, after ticket 22 / final) | 255 passed, 52 skipped; same 3 network-only failures\* |
+| `npx depcruise --validate .dependency-cruiser.cjs src` (`packages/pic-web`) | 0 violations (631 mods) |
+| Line length (`scripts/check-max-line-length.py` on all touched files) | 0 violations |
+
+\*`supabase-repository.test.ts`, `symptoms-rated-at-schema.test.ts`, `promote-path.test.ts` remote block —
+pre-existing, unrelated to this wave; every gate above was re-run and verified independently by the
+orchestrator, not taken solely on either sub-agent's self-report.
+
+### DEC / glossary additions
+
+None — this wave applies already-ratified `decisions.md` entries (DEC-015 §4/§7b Terminal NEMAR/Finish/
+Finish Anyway sovereignty, DEC-017 Safe Container "evaporate" guarantee) more robustly; no new domain terms.
+
+### Should-fix carry-forward
+
+- **`activeGroupId` staleness on discard/promotion.** Same class of "stranded composition-layer pointer"
+  bug ticket 21 fixed for `activePlayerSessionId`, but for the Symptom Group flow — explicitly out of
+  ticket 21's locked scope (which named `activePlayerSessionId` only), not yet fixed anywhere.
+- **`persistGuestFlowFacts` bypasses the delegating port.** The callback wired in `composition-root.ts`'s
+  `initGuestFlowFacts` call writes straight to `guestRepository`, blind to `swapProvider`. Ticket 21 worked
+  around this via call ordering (`guestRepository.clear()` last) at its three call sites; the underlying
+  mismatch remains and could resurface at a future call site that clears the pointer without also being the
+  one to call `guestRepository.clear()` afterward.
+- Pre-existing Wave 9 / 9.1 carry-forward items (rationale info affordance, Lazy Copy-on-Write, remote E2E
+  credentials, boot-time rehydrate — the last of which is actually already implemented per ticket 04 above,
+  just not yet crossed off that older list) remain unaffected by this pass.
