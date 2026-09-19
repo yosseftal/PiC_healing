@@ -526,6 +526,48 @@ describe("UnifiedPlayerScreen", () => {
     });
   });
 
+  it(
+    "clicking terminal-nemar-yes shows the confirmation and finish-button together, " +
+      "without a manual re-render (AC4)",
+    async () => {
+      const session = buildSession({
+        units: [
+          { unit_id: "unit-1", state: "completed" },
+          { unit_id: "unit-2", state: "completed" },
+          { unit_id: "unit-3", state: "completed" },
+          { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" },
+        ],
+        terminal_nemar_response: null,
+      });
+      await seedPlayerSession(session);
+      vi.spyOn(compositionRoot.playerEngineActions, "advance").mockResolvedValue();
+
+      render(
+        <AppProviders>
+          <UnifiedPlayerScreen />
+        </AppProviders>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("terminal-nemar-yes")).toBeTruthy();
+      });
+      expect(screen.queryByTestId("terminal-nemar-response-recorded")).toBeNull();
+      expect(screen.queryByTestId("finish-button")).toBeNull();
+
+      fireEvent.click(screen.getByTestId("terminal-nemar-yes"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("terminal-nemar-response-recorded")).toBeTruthy();
+        expect(screen.getByTestId("finish-button")).toBeTruthy();
+      });
+      expect(screen.getByTestId("terminal-nemar-response-recorded").textContent).not.toMatch(
+        /error|failed|invalid/i,
+      );
+      expect(screen.getByTestId("terminal-nemar-yes").getAttribute("aria-pressed")).toBe("true");
+      expect(screen.getByTestId("finish-anyway-button")).toBeTruthy();
+    },
+  );
+
   it("offers a visible retry when Navigation Tree movement needs another moment", async () => {
     const session = buildSession();
     await seedPlayerSession(session);

@@ -88,7 +88,7 @@ export function UnifiedPlayerScreen() {
     <section data-testid="guest-flow-player">
       <h1>Unified Player</h1>
       {isTerminalNemar ? (
-        <TerminalNemarUnit sessionId={activePlayerSessionId} />
+        <TerminalNemarUnit sessionId={activePlayerSessionId} response={session.terminal_nemar_response} />
       ) : activeUnit !== undefined ? (
         <AtomicUnitView
           sessionId={activePlayerSessionId}
