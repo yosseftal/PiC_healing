@@ -568,6 +568,29 @@ describe("UnifiedPlayerScreen", () => {
     },
   );
 
+  it("finish-anyway-button remains present and enabled when the response is No (AC5)", async () => {
+    const session = buildSession({
+      units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
+      terminal_nemar_response: "no",
+    });
+    await seedPlayerSession(session);
+
+    render(
+      <AppProviders>
+        <UnifiedPlayerScreen />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("terminal-nemar-response-recorded")).toBeTruthy();
+    });
+    const finishAnyway = screen.getByTestId("finish-anyway-button") as HTMLButtonElement;
+    expect(finishAnyway).toBeTruthy();
+    expect(finishAnyway.disabled).toBe(false);
+    expect(screen.queryByTestId("finish-button")).toBeNull();
+    expect(screen.getByTestId("terminal-nemar-no").getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("offers a visible retry when Navigation Tree movement needs another moment", async () => {
     const session = buildSession();
     await seedPlayerSession(session);
