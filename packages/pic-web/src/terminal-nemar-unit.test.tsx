@@ -39,4 +39,21 @@ describe("TerminalNemarUnit", () => {
     expect(screen.getByTestId("terminal-nemar-yes").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("terminal-nemar-no").getAttribute("aria-pressed")).not.toBe("true");
   });
+
+  it("confirms the No response was recorded as Integrating, never failure framing (AC2)", () => {
+    render(
+      <AppProviders>
+        <TerminalNemarUnit sessionId="session-1" response="no" />
+      </AppProviders>,
+    );
+
+    const recorded = screen.getByTestId("terminal-nemar-response-recorded");
+    expect(recorded.getAttribute("role")).toBe("status");
+    expect(recorded.textContent).not.toMatch(/error|failed|invalid/i);
+    expect(recorded.textContent).toMatch(/no/i);
+    expect(recorded.textContent).toMatch(/integrating/i);
+    expect(recorded.textContent).toMatch(/finish anyway/i);
+    expect(screen.getByTestId("terminal-nemar-no").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("terminal-nemar-yes").getAttribute("aria-pressed")).not.toBe("true");
+  });
 });

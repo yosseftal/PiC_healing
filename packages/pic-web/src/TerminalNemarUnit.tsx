@@ -43,6 +43,12 @@ export function TerminalNemarUnit({ sessionId, response }: TerminalNemarUnitProp
           Your Yes response was recorded — Finish is now available below.
         </p>
       ) : null}
+      {response === "no" ? (
+        <p role="status" data-testid="terminal-nemar-response-recorded">
+          Your No response was recorded. This session is Integrating — Finish Anyway remains available
+          whenever you're ready.
+        </p>
+      ) : null}
       {responseStatus === "recovery" ? (
         <div role="status">
           <p>Your Terminal NEMAR response is ready for another try.</p>
