@@ -113,8 +113,19 @@ describe("JointTreatmentMuscleTestStep", () => {
     const setJointTreatmentMuscleTest = vi
       .spyOn(compositionRoot.groupEngineActions, "setJointTreatmentMuscleTest")
       .mockRejectedValueOnce(new Error("temporarily unavailable"))
-      .mockResolvedValueOnce();
-    const finalizeGroup = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup").mockResolvedValue();
+      .mockResolvedValueOnce(undefined);
+    const draftGroup = await compositionRoot.repositoryPort.getGroup(groupId);
+    if (draftGroup === null) {
+      throw new Error("Expected the retry test's draft group to exist");
+    }
+    const finalizeGroup = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup").mockResolvedValue({
+      group: {
+        ...draftGroup,
+        joint_treatment_muscle_test: "together",
+        joint_treatment_test_at: new Date().toISOString(),
+      },
+      splitAdvisory: false,
+    });
 
     renderMuscleTestStep(groupId);
     fireEvent.click(screen.getByTestId("muscle-test-yes"));

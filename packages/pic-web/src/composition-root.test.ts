@@ -73,7 +73,9 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
       return full;
     },
     async promoteGuestToAccount(input) {
-      await this.saveGroup(input.group);
+      if (input.group !== null) {
+        await this.saveGroup(input.group);
+      }
       await this.savePlayerSession(input.playerSession);
       const libraryRow = await this.getOrCreateLibraryRow(input.playerSession.treatment_id, {
         source: "guest_promotion",
@@ -100,6 +102,9 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
     async listTreatments() {
       return [];
     },
+    async getTreatment() {
+      return null;
+    },
   };
 }
 
@@ -121,7 +126,9 @@ function storageHasGuestEntityData(raw: string | null): boolean {
   );
 }
 
-function buildGuestSnapshot(overrides: Partial<GuestSnapshot> = {}): GuestSnapshot {
+type GroupBoundGuestSnapshot = GuestSnapshot & { group: FinalizedSymptomGroup };
+
+function buildGuestSnapshot(overrides: Partial<GroupBoundGuestSnapshot> = {}): GroupBoundGuestSnapshot {
   const group: FinalizedSymptomGroup = {
     id: "guest-group-composition",
     name: "Lower Back",

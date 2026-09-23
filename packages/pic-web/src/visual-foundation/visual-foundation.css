@@ -1,0 +1,113 @@
+@import "tailwindcss" source(none);
+@source "../";
+
+@theme static {
+  --color-pic-sterile: #F7F9F5;
+  --color-pic-surface: #FFFFFF;
+  --color-pic-sage-50: #F2F7F1;
+  --color-pic-sage-100: #E3EFE4;
+  --color-pic-sage-200: #CFE1D1;
+  --color-pic-sage-500: #7FA687;
+  --color-pic-sage-700: #3E6749;
+  --color-pic-lavender-50: #F7F4FB;
+  --color-pic-lavender-100: #EFEAF7;
+  --color-pic-lavender-200: #DDD2EE;
+  --color-pic-lavender-500: #9B85BE;
+  --color-pic-lavender-700: #5D477D;
+  --color-pic-ink: #25312B;
+  --color-pic-quiet: #56635D;
+  --color-pic-line: #DCE4DD;
+  --color-pic-focus: #6F568F;
+  --color-pic-focus-offset: #F7F9F5;
+
+  --font-pic-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --text-pic-display: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+  --text-pic-heading: clamp(1.25rem, 1.125rem + 0.5vw, 1.5rem);
+  --text-pic-body: 1rem;
+  --text-pic-guidance: 1.0625rem;
+  --text-pic-quiet: 0.875rem;
+  --leading-pic-display: 1.2;
+  --leading-pic-heading: 1.3;
+  --leading-pic-body: 1.65;
+  --leading-pic-quiet: 1.5;
+  --font-weight-pic-display: 600;
+  --font-weight-pic-heading: 600;
+  --measure-pic-reading: 62ch;
+  --measure-pic-reading-max: 70ch;
+
+  --spacing-pic-calm-1: 8px;
+  --spacing-pic-calm-2: 12px;
+  --spacing-pic-calm-3: 16px;
+  --spacing-pic-calm-4: 24px;
+  --spacing-pic-calm-5: 32px;
+  --spacing-pic-calm-6: 48px;
+  --size-pic-touch: 44px;
+
+  --radius-pic-card: 24px;
+  --radius-pic-card-compact: 18px;
+  --radius-pic-button: 14px;
+  --radius-pic-pill: 9999px;
+  --shadow-pic-card: 0 18px 48px rgb(37 49 43 / 0.08);
+  --shadow-pic-sheet: 0 0 48px rgb(37 49 43 / 0.16);
+
+  --focus-ring-pic-width: 3px;
+  --focus-ring-pic-offset: 2px;
+
+  --gradient-pic-healing:
+    linear-gradient(135deg, var(--color-pic-sage-100), var(--color-pic-lavender-100));
+  --gradient-pic-confirmation:
+    linear-gradient(135deg, var(--color-pic-surface), var(--color-pic-sage-50));
+  --gradient-pic-reflection:
+    linear-gradient(135deg, var(--color-pic-surface), var(--color-pic-lavender-50));
+
+  --motion-pic-fast: 140ms;
+  --motion-pic-standard: 240ms;
+  --motion-pic-deliberate: 360ms;
+  --motion-pic-drawer: 280ms;
+  --ease-pic-organic: cubic-bezier(0.22, 1, 0.36, 1);
+  --distance-pic-step: clamp(24px, 8vw, 96px);
+  --distance-pic-drawer: 100%;
+}
+
+:root {
+  --motion-pic-spatial-active: var(--motion-pic-standard);
+  --distance-pic-step-active: var(--distance-pic-step);
+  --distance-pic-drawer-active: var(--distance-pic-drawer);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-pic-sterile);
+  color: var(--color-pic-ink);
+  font-family: var(--font-pic-sans);
+  font-size: var(--text-pic-body);
+  line-height: var(--leading-pic-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-pic-spatial-active: 0ms;
+    --distance-pic-step-active: 0px;
+    --distance-pic-drawer-active: 0%;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

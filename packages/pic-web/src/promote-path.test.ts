@@ -326,6 +326,9 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
     async listTreatments() {
       return [];
     },
+    async getTreatment() {
+      return null;
+    },
   };
 }
 
