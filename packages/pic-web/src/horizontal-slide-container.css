@@ -1,0 +1,33 @@
+.pic-horizontal-slide-container {
+  --pic-slide-inline-sign: 1;
+  --pic-slide-inline-distance:
+    calc(var(--pic-slide-inline-sign) * var(--distance-pic-step-active, var(--pic-slide-distance-fallback)));
+
+  isolation: isolate;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.pic-horizontal-slide-container:dir(rtl) {
+  --pic-slide-inline-sign: -1;
+}
+
+.pic-horizontal-slide-panel {
+  min-width: 0;
+  width: 100%;
+  will-change: opacity, transform;
+}
+
+.pic-horizontal-slide-announcement {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
