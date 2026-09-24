@@ -1,8 +1,8 @@
 # Merge Request — Wave 6 + Wave 6.5: Cloud-First Baseline
 
-**Status:** Ready to merge (local `main` at `773fa43`; push to `origin/main` at Event Manager discretion)
-**Base:** `origin/main` pre-Wave-6 (`cc98b3d` area)
-**Head:** `main` @ `773fa43`
+**Status:** Merged — `origin/main` @ `bb209a5` (pushed 2026-08-14)
+**Base:** pre-Wave-6 (`c378dba` area on `origin/main`)
+**Head:** `bb209a5` — `docs: finalize Wave 6/6.5 merge request as cloud-first baseline`
 **Waves:** 6 (Tickets 12–13) + 6.5 Hardening (Tickets 01–06)
 
 ---
@@ -54,12 +54,24 @@ handoff so Wave 8 UI work lands on a trustworthy foundation.
 - [x] RPC `promote_guest_to_account` present
 - [x] Clean-state: Wave 6 data tables at **0 rows**; `treatments` at **3** seed rows; `profiles` at **1** (EM account)
 
-### Test suite (post-6.5)
+### Test suite (post-6.5 baseline — memorialized)
 
 | Package | Result |
 |---------|--------|
 | `pic-adapter-supabase` | **31 passed, 5 skipped** |
 | `pic-engine` / `pic-web` / `pic-adapter-local-guest` | **113 passed, 5 skipped** |
+
+### Ticket 13 adversarial matrix (memorialized)
+
+| Row | Scenario | Result |
+|-----|----------|--------|
+| 1 | Happy path — all five entities land | Green |
+| 2 | Idempotent retry — identical payload | Green |
+| 3 | Identity mismatch — `newUserId` ≠ session user | Rejects cleanly |
+| 4 | Connection drop mid-RPC — retry succeeds | Green (308ms abort) |
+| 5 | Retry after success — `use_count` stays 1 | Green |
+| 6 | Alternate retry framing — `use_count` stays 1 | Green |
+| 7 | Cross-account idempotency key collision | Rejects cleanly |
 
 ### Integrity gates
 
@@ -72,7 +84,7 @@ handoff so Wave 8 UI work lands on a trustworthy foundation.
 
 ---
 
-## Test plan checklist (reviewer)
+## Test plan checklist (reviewer — all complete)
 
 - [x] `NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run packages/pic-adapter-supabase` — 31 passed, 5 skipped
 - [x] `npx vitest run packages/pic-engine packages/pic-web packages/pic-adapter-local-guest` — 113 passed, 5 skipped
@@ -81,6 +93,7 @@ handoff so Wave 8 UI work lands on a trustworthy foundation.
 - [x] `symptoms.rated_at` persistence trustworthy (Ticket 02)
 - [x] Guest `clear()` on discard and promotion (Ticket 03)
 - [x] Idempotency unified on `uuid[]` column (Ticket 05)
+- [x] Ticket 13 seven-row adversarial matrix green on remote Supabase
 
 ---
 
