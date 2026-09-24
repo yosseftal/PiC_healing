@@ -1,3 +1,15 @@
 {
-  "editor.rulers": [130]
+  "editor.rulers": [130],
+  "files.watcherExclude": {
+    "**/.env*": true
+  },
+  "search.exclude": {
+    "**/.env*": true
+  },
+  "cursor.terminal.allowedCommands": [
+    "npx vitest run",
+    "npm test",
+    "NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run",
+    "NODE_TLS_REJECT_UNAUTHORIZED=0 npm test"
+  ]
 }
