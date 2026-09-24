@@ -242,3 +242,8 @@ Canonical triage roles use default label names (`needs-triage`, `needs-info`,
 ### Domain docs
 
 Single-context: `CONTEXT.md`, `decisions.md`, and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Sovereign Domain Auditor
+
+Read-only hard-gate audit against the Seam, Dumb Reflection, Blind-by-Default, EM Sovereignty, glossary,
+and FK-alignment invariants. See `docs/agents/pic-sovereign-domain-audit.md`.
