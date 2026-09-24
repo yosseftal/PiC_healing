@@ -1,0 +1,189 @@
+.pic-therapeutic-frame,
+.pic-therapeutic-frame *,
+.pic-therapeutic-frame *::before,
+.pic-therapeutic-frame *::after {
+  box-sizing: border-box;
+}
+
+.pic-therapeutic-frame {
+  block-size: 100vh;
+  inline-size: 100vw;
+  max-block-size: 100vh;
+  max-inline-size: 100vw;
+  min-block-size: 0;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--spacing-pic-calm-3);
+  padding-block-start: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-top, 0px));
+  padding-block-end: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-bottom, 0px));
+  padding-inline-start: calc(var(--spacing-pic-calm-3) + env(safe-area-inset-left, 0px));
+  padding-inline-end: calc(var(--spacing-pic-calm-3) + env(safe-area-inset-right, 0px));
+  overflow: hidden;
+  overscroll-behavior: none;
+  isolation: isolate;
+  background: var(--gradient-pic-healing);
+  color: var(--color-pic-ink);
+}
+
+@supports (height: 100dvh) {
+  .pic-therapeutic-frame {
+    block-size: 100dvh;
+    max-block-size: 100dvh;
+  }
+}
+
+.pic-therapeutic-frame[data-tone="confirmation"] {
+  background: var(--gradient-pic-confirmation);
+}
+
+.pic-therapeutic-frame[data-tone="reflection"] {
+  background: var(--gradient-pic-reflection);
+}
+
+.pic-therapeutic-frame__header,
+.pic-therapeutic-frame__stage {
+  inline-size: min(100%, var(--measure-pic-reading-max));
+  min-block-size: 0;
+  min-inline-size: 0;
+  margin-inline: auto;
+}
+
+.pic-therapeutic-frame[data-width="wide"] .pic-therapeutic-frame__header,
+.pic-therapeutic-frame[data-width="wide"] .pic-therapeutic-frame__stage {
+  inline-size: min(100%, 90rem);
+}
+
+.pic-therapeutic-frame__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--spacing-pic-calm-3);
+}
+
+.pic-therapeutic-frame__heading {
+  min-block-size: 0;
+  min-inline-size: 0;
+}
+
+.pic-therapeutic-frame__heading h1 {
+  margin: 0;
+  font-size: var(--text-pic-display);
+  font-weight: var(--font-weight-pic-display);
+  line-height: var(--leading-pic-display);
+  overflow-wrap: anywhere;
+}
+
+.pic-therapeutic-frame__eyebrow,
+.pic-therapeutic-frame__progress,
+.pic-therapeutic-frame__status {
+  color: var(--color-pic-quiet);
+  font-size: var(--text-pic-quiet);
+  line-height: var(--leading-pic-quiet);
+}
+
+.pic-therapeutic-frame__eyebrow {
+  margin-block-end: var(--spacing-pic-calm-1);
+}
+
+.pic-therapeutic-frame__progress,
+.pic-therapeutic-frame__status {
+  margin-block-start: var(--spacing-pic-calm-1);
+}
+
+.pic-therapeutic-frame__utility {
+  min-block-size: var(--size-pic-touch);
+  min-inline-size: var(--size-pic-touch);
+}
+
+.pic-therapeutic-frame__utility > :first-child {
+  min-block-size: var(--size-pic-touch);
+  min-inline-size: var(--size-pic-touch);
+}
+
+.pic-therapeutic-frame__stage {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.pic-therapeutic-content-card {
+  block-size: 100%;
+  inline-size: 100%;
+  max-block-size: 100%;
+  max-inline-size: 100%;
+  min-block-size: 0;
+  min-inline-size: 0;
+  padding: var(--spacing-pic-calm-4);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overscroll-behavior-block: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--color-pic-line);
+  border-radius: var(--radius-pic-card);
+  outline: none;
+  background: var(--color-pic-surface);
+  box-shadow: var(--shadow-pic-card);
+  color: var(--color-pic-ink);
+  font-size: var(--text-pic-guidance);
+  line-height: var(--leading-pic-body);
+}
+
+.pic-therapeutic-content-card:focus-visible,
+.pic-therapeutic-table-scroller:focus-visible {
+  outline: var(--focus-ring-pic-width) solid var(--color-pic-focus);
+  outline-offset: var(--focus-ring-pic-offset);
+}
+
+.pic-therapeutic-content-card__body {
+  inline-size: 100%;
+  max-inline-size: var(--measure-pic-reading);
+  min-inline-size: 0;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+
+.pic-therapeutic-content-card__body > :first-child {
+  margin-block-start: 0;
+}
+
+.pic-therapeutic-content-card__body > :last-child {
+  margin-block-end: 0;
+}
+
+.pic-therapeutic-table-scroller,
+.pic-therapeutic-content-card__body > table {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pic-therapeutic-table-scroller {
+  outline: none;
+}
+
+.pic-therapeutic-table-scroller > table,
+.pic-therapeutic-content-card__body > table {
+  min-inline-size: max-content;
+}
+
+@media (max-width: 30rem) {
+  .pic-therapeutic-frame {
+    gap: var(--spacing-pic-calm-2);
+    padding-inline-start: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-left, 0px));
+    padding-inline-end: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-right, 0px));
+  }
+
+  .pic-therapeutic-content-card {
+    padding: var(--spacing-pic-calm-3);
+    border-radius: var(--radius-pic-card-compact);
+  }
+}
