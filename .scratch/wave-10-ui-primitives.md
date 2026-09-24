@@ -1,9 +1,9 @@
 # Wave 10 Technical Specification: Therapeutic UX and Visual Primitives
 
-**Status:** Ready for implementation  
-**Scope:** Therapeutic visual design, layout infrastructure, motion, and one Unified Player proof of concept  
-**Primary package:** `packages/pic-web`  
-**Boundary exception:** Root `package-lock.json` changes caused by `pic-web` package installation only  
+**Status:** Ready for implementation
+**Scope:** Therapeutic visual design, layout infrastructure, motion, and one Unified Player proof of concept
+**Primary package:** `packages/pic-web`
+**Boundary exception:** Root `package-lock.json` changes caused by `pic-web` package installation only
 **Domain authority:** DEC-001, DEC-011, DEC-015, DEC-016, DEC-017, `CONTEXT.md`, and `CLAUDE.md`
 
 ## Problem Statement

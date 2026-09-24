@@ -1,9 +1,9 @@
 # Wave 10 In-Progress Handoff
 
-**Paused:** 2026-09-24  
-**Branch:** `main`  
-**Last Wave 10 implementation commit:** `4d9ee50`  
-**Approved specification:** `.scratch/wave-10-ui-primitives.md`  
+**Paused:** 2026-09-24
+**Branch:** `main`
+**Last Wave 10 implementation commit:** `4d9ee50`
+**Approved specification:** `.scratch/wave-10-ui-primitives.md`
 **Canonical tickets:** `.scratch/wave-10-ui-primitives/issues/`
 
 ## Pause State
