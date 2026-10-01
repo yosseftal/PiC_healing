@@ -208,6 +208,64 @@ describe("UnifiedPlayerScreen", () => {
     });
   });
 
+  it("keeps resolving, active, and Terminal NEMAR inside the same therapeutic frame", async () => {
+    const release = holdParsedContent();
+    await seedPlayerSession(buildSession());
+    const { container } = render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+
+    expect(screen.getByRole("region", { name: "Unified Player" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Player guidance" })).toBeTruthy();
+    expect(container.querySelectorAll(".pic-therapeutic-frame")).toHaveLength(1);
+    release();
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-unit-1")).toBeTruthy());
+    expect(screen.getByRole("region", { name: "Atomic Unit guidance" })).toBeTruthy();
+
+    const terminal = buildSession({
+      units: buildSession().units.map((unit) => ({
+        ...unit,
+        state: unit.unit_id === TERMINAL_NEMAR_UNIT_ID ? "in_view" : "completed",
+      })),
+    });
+    await compositionRoot.repositoryPort.savePlayerSession(terminal);
+    await compositionRoot.playerSessionStore.refresh(terminal.id);
+    await waitFor(() => expect(screen.getByTestId("terminal-nemar-unit")).toBeTruthy());
+    expect(container.querySelectorAll(".pic-therapeutic-frame")).toHaveLength(1);
+  });
+
+  it("keeps Structured Markdown and wide GFM tables inside the active card", async () => {
+    vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockResolvedValue([
+      {
+        unit_id: "unit-1", unit_order: 1, unit_title: "A guided step",
+        unit_content: "A long reading.\n\n| First | Second |\n| --- | --- |\n| One | Two |",
+        unit_rationale: null,
+      },
+    ]);
+    await seedPlayerSession(buildSession());
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+
+    const card = await screen.findByRole("region", { name: "Atomic Unit guidance" });
+    await waitFor(() => expect(screen.getByText("A long reading.")).toBeTruthy());
+    expect(card.contains(screen.getByTestId("atomic-unit-title"))).toBe(true);
+    expect(card.contains(screen.getByRole("region", { name: "Guidance table" }))).toBe(true);
+    expect(card.querySelector("table")?.textContent).toContain("Second");
+  });
+
+  it("takes forward and backward movement from reflected session units", async () => {
+    await seedPlayerSession(buildSession());
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-unit-1")).toBeTruthy());
+    const slide = screen.getByTestId("horizontal-slide-container");
+    expect(slide.getAttribute("data-transition-direction")).toBe("neutral");
+
+    fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-3"));
+    await waitFor(() => expect(slide.getAttribute("data-transition-direction")).toBe("forward"));
+    await waitFor(() => expect(slide.querySelector('[data-active-key="unit-3"]')).toBeTruthy());
+
+    fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-2"));
+    await waitFor(() => expect(slide.getAttribute("data-transition-direction")).toBe("backward"));
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-title")).toBe(document.activeElement));
+  });
+
   it("NavigationTreePanel jumpTo is the only manual jump affordance", async () => {
     const session = buildSession();
     await seedPlayerSession(session);

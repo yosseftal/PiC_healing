@@ -1,0 +1,44 @@
+.pic-player-screen,
+.pic-player-layout,
+.pic-player-layout > .pic-horizontal-slide-container,
+.pic-player-layout .pic-horizontal-slide-panel,
+.pic-player-unit {
+  min-block-size: 0;
+  min-inline-size: 0;
+}
+
+.pic-player-screen {
+  block-size: 100dvh;
+  inline-size: 100vw;
+  overflow: hidden;
+}
+
+.pic-player-layout {
+  block-size: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: var(--spacing-pic-calm-2);
+  overflow: hidden;
+}
+
+.pic-player-layout > .pic-horizontal-slide-container,
+.pic-player-layout .pic-horizontal-slide-panel,
+.pic-player-unit {
+  block-size: 100%;
+}
+
+.pic-player-layout nav {
+  max-block-size: 20dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pic-player-layout nav ul {
+  margin-block: 0;
+}
+
+.pic-player-layout footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-pic-calm-2);
+}

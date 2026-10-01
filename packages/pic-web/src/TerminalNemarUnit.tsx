@@ -2,6 +2,7 @@
  * Mandatory closing muscle test (DEC-015 §7b). Yes enables standard Finish; No records Integrating — never
  * "failed" framing.
  */
+import type { RefObject } from "react";
 import { usePlayerEngineActions } from "./player-engine-context";
 import { useAsyncAction } from "./use-async-action";
 
@@ -9,9 +10,10 @@ interface TerminalNemarUnitProps {
   sessionId: string;
   /** Dumb reflection of `PlayerSession.terminal_nemar_response` — never local state (DEC-015). */
   response: "yes" | "no" | null;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
 }
 
-export function TerminalNemarUnit({ sessionId, response }: TerminalNemarUnitProps) {
+export function TerminalNemarUnit({ sessionId, response, headingRef }: TerminalNemarUnitProps) {
   const { respondTerminalNemar } = usePlayerEngineActions();
   const {
     status: responseStatus,
@@ -21,6 +23,7 @@ export function TerminalNemarUnit({ sessionId, response }: TerminalNemarUnitProp
 
   return (
     <section data-testid="terminal-nemar-unit">
+      <h2 ref={headingRef} tabIndex={-1}>Terminal NEMAR</h2>
       <p>Is it NEMAR that this treatment ended successfully?</p>
       <button
         type="button"
