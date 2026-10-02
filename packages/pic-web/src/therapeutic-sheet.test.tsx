@@ -78,6 +78,34 @@ describe("TherapeuticSheet", () => {
     });
   });
 
+  it("allows a reflected navigation close to restore focus to incoming guidance", async () => {
+    const restoreGuidanceFocus = vi.fn(() => {
+      screen.getByTestId("incoming-guidance").focus();
+      return true;
+    });
+    render(
+      <main>
+        <button type="button" data-testid="incoming-guidance">Incoming guidance</button>
+        <TherapeuticSheet
+          onCloseAutoFocus={restoreGuidanceFocus}
+          title="Utilities"
+          trigger="Open"
+          triggerLabel="Open utilities"
+        >
+          <button type="button">Navigate</button>
+        </TherapeuticSheet>
+      </main>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close utilities" }));
+    await vi.waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(restoreGuidanceFocus).toHaveBeenCalledOnce();
+      expect(document.activeElement).toBe(screen.getByTestId("incoming-guidance"));
+    });
+  });
+
   it("supports controlled open state and omits description semantics when absent", () => {
     const onOpenChange = vi.fn();
     const { rerender } = render(

@@ -31,7 +31,7 @@ export function PersistenceGateModal() {
   }
 
   return (
-    <dialog open aria-labelledby="persistence-gate-title">
+    <dialog open aria-labelledby="persistence-gate-title" tabIndex={-1}>
       <h2 id="persistence-gate-title">Keep your session</h2>
 
       {promotionStatus === "pending" ? (

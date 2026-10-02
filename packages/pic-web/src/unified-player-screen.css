@@ -16,7 +16,7 @@
 .pic-player-layout {
   block-size: 100%;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--spacing-pic-calm-2);
   overflow: hidden;
 }
@@ -27,17 +27,16 @@
   block-size: 100%;
 }
 
-.pic-player-layout nav {
-  max-block-size: 20dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+.pic-player-utilities {
+  display: grid;
+  gap: var(--spacing-pic-calm-3);
 }
 
-.pic-player-layout nav ul {
+.pic-player-utilities nav ul {
   margin-block: 0;
 }
 
-.pic-player-layout footer {
+.pic-player-utilities footer {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-pic-calm-2);

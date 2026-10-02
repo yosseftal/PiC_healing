@@ -65,6 +65,7 @@ describe("Wave 9.1 Continuous Guidance playability", () => {
       expect(screen.getByTestId("atomic-unit-title").textContent).toBe("Continuous Guidance");
     });
     expect(screen.getByTestId("atomic-unit-unit-0")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Open Player utilities" }));
     expect(screen.getByTestId("navigation-tree-jump-unit-0")).toBeTruthy();
 
     fireEvent.click(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`));
@@ -72,9 +73,11 @@ describe("Wave 9.1 Continuous Guidance playability", () => {
     await waitFor(() => {
       expect(screen.getByTestId("terminal-nemar-unit")).toBeTruthy();
     });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
 
     fireEvent.click(screen.getByTestId("terminal-nemar-yes"));
 
+    fireEvent.click(screen.getByRole("button", { name: "Open Player utilities" }));
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });

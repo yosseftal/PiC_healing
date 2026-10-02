@@ -17,6 +17,7 @@ import { LocalGuestRepository } from "pic-adapter-local-guest";
 import { AppProviders } from "./app-providers";
 import { compositionRoot, resetTreatmentContentCacheForTest, swapToSupabaseAdapter } from "./composition-root";
 import { setGuestFlowPlayerSession, resetGuestFlowFactsForTest } from "./guest-flow-facts";
+import { GuestModeShell } from "./GuestModeShell";
 import { UnifiedPlayerScreen } from "./UnifiedPlayerScreen";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
 
@@ -162,9 +163,13 @@ function holdParsedContent(): () => void {
 }
 
 async function waitForActivePlayer(): Promise<void> {
-  await waitFor(() => {
-    expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy();
-  });
+  await openPlayerUtilities();
+}
+
+async function openPlayerUtilities(): Promise<void> {
+  const trigger = await screen.findByRole("button", { name: "Open Player utilities" });
+  fireEvent.click(trigger);
+  await waitFor(() => expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy());
 }
 
 function expectActivePlayerAbsent(): void {
@@ -206,6 +211,21 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => {
       expect(screen.getByTestId("atomic-unit-title").textContent).toBe("Settle Into Stillness");
     });
+  });
+
+  it("keeps Player navigation and Finish Anyway inside the header utility Sheet", async () => {
+    await seedPlayerSession(buildSession());
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-unit-1")).toBeTruthy());
+    expect(screen.queryByTestId("navigation-tree-panel")).toBeNull();
+    expect(screen.queryByTestId("finish-anyway-button")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Player utilities" }));
+    const sheet = screen.getByRole("dialog", { name: "Player utilities" });
+    expect(sheet.contains(screen.getByTestId("navigation-tree-panel"))).toBe(true);
+    expect(sheet.contains(screen.getByTestId("finish-anyway-button"))).toBe(true);
+    expect(screen.getByTestId("finish-anyway-button").hasAttribute("disabled")).toBe(false);
   });
 
   it("keeps resolving, active, and Terminal NEMAR inside the same therapeutic frame", async () => {
@@ -257,12 +277,60 @@ describe("UnifiedPlayerScreen", () => {
     const slide = screen.getByTestId("horizontal-slide-container");
     expect(slide.getAttribute("data-transition-direction")).toBe("neutral");
 
+    await openPlayerUtilities();
     fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-3"));
     await waitFor(() => expect(slide.getAttribute("data-transition-direction")).toBe("forward"));
     await waitFor(() => expect(slide.querySelector('[data-active-key="unit-3"]')).toBeTruthy());
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
 
+    await openPlayerUtilities();
     fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-2"));
     await waitFor(() => expect(slide.getAttribute("data-transition-direction")).toBe("backward"));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-title")).toBe(document.activeElement));
+  });
+
+  it("preserves the active unit and card scroll position across utility Sheet open and close", async () => {
+    const session = buildSession();
+    await seedPlayerSession(session);
+    const jumpTo = vi.spyOn(compositionRoot.playerEngineActions, "jumpTo");
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+
+    const card = await screen.findByRole("region", { name: "Atomic Unit guidance" });
+    card.scrollTop = 120;
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByRole("button", { name: "Close player utilities" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+    expect(screen.getByRole("region", { name: "Atomic Unit guidance" })).toBe(card);
+    expect(card.scrollTop).toBe(120);
+    expect(screen.getByTestId("atomic-unit-unit-1")).toBeTruthy();
+    expect(compositionRoot.playerSessionStore.getSnapshot(session.id)?.units).toEqual(session.units);
+    expect(jumpTo).not.toHaveBeenCalled();
+  });
+
+  it("restores focus to the trigger when reflected guidance has not yet resolved its heading", async () => {
+    const parsed = await compositionRoot.treatmentContentActions.getParsedTreatmentContent(seedTreatment.id);
+    let releaseIncoming = () => {};
+    const incomingContent = new Promise<typeof parsed>((resolve) => {
+      releaseIncoming = () => resolve(parsed);
+    });
+    let contentCalls = 0;
+    vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockImplementation(async () => {
+      contentCalls += 1;
+      return contentCalls <= 2 ? parsed : incomingContent;
+    });
+    await seedPlayerSession(buildSession());
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-title")).toBeTruthy());
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-3"));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+    expect(document.querySelector('[data-active-key="unit-3"] [data-testid="atomic-unit-title"]')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Open Player utilities" }));
+    releaseIncoming();
     await waitFor(() => expect(screen.getByTestId("atomic-unit-title")).toBe(document.activeElement));
   });
 
@@ -307,6 +375,7 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
+    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-anyway-button")).toBeTruthy();
     });
@@ -375,6 +444,7 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
+    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
@@ -510,6 +580,7 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => {
       expect(screen.getByTestId("atomic-unit-title").textContent).toBe("Settle Into Stillness");
     });
+    await openPlayerUtilities();
     expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy();
     expect(screen.getByTestId("finish-bar")).toBeTruthy();
     expect(screen.queryByText(ZERO_H3_GUARD_MESSAGE)).toBeNull();
@@ -546,8 +617,9 @@ describe("UnifiedPlayerScreen", () => {
 
     await waitFor(() => {
       expect(getParsedTreatmentContent.mock.calls.length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Open Player utilities" })).toBeTruthy();
     });
+    await openPlayerUtilities();
   });
 
   it("offers a visible retry when the Terminal NEMAR response needs another moment", async () => {
@@ -616,8 +688,9 @@ describe("UnifiedPlayerScreen", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("terminal-nemar-response-recorded")).toBeTruthy();
-        expect(screen.getByTestId("finish-button")).toBeTruthy();
       });
+      await openPlayerUtilities();
+      expect(screen.getByTestId("finish-button")).toBeTruthy();
       expect(screen.getByTestId("terminal-nemar-response-recorded").textContent).not.toMatch(
         /error|failed|invalid/i,
       );
@@ -642,6 +715,7 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => {
       expect(screen.getByTestId("terminal-nemar-response-recorded")).toBeTruthy();
     });
+    await openPlayerUtilities();
     const finishAnyway = screen.getByTestId("finish-anyway-button") as HTMLButtonElement;
     expect(finishAnyway).toBeTruthy();
     expect(finishAnyway.disabled).toBe(false);
@@ -670,6 +744,7 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Try this navigation again" })).toBeTruthy();
     });
+    expect(screen.getByRole("dialog", { name: "Player utilities" })).toBeTruthy();
     expect(screen.getByTestId("navigation-tree-panel").textContent).not.toMatch(/error|failed|invalid/i);
 
     fireEvent.click(screen.getByRole("button", { name: "Try this navigation again" }));
@@ -697,6 +772,7 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
+    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
@@ -705,6 +781,7 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Try finishing again" })).toBeTruthy();
     });
+    expect(screen.getByRole("dialog", { name: "Player utilities" })).toBeTruthy();
     expect(screen.getByTestId("finish-bar").textContent).not.toMatch(/error|failed|invalid/i);
 
     fireEvent.click(screen.getByRole("button", { name: "Try finishing again" }));
@@ -713,6 +790,51 @@ describe("UnifiedPlayerScreen", () => {
       expect(onFinishRequested).toHaveBeenCalledTimes(2);
       expect(onFinishRequested).toHaveBeenNthCalledWith(2, session.id, "finish");
     });
+  });
+
+  it("keeps sovereign Finish Anyway recovery in the Sheet without a confirmation gate", async () => {
+    const session = buildSession({
+      units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
+      terminal_nemar_response: null,
+    });
+    await seedPlayerSession(session);
+    const onFinishRequested = vi
+      .spyOn(compositionRoot.sessionEngineActions, "onFinishRequested")
+      .mockRejectedValueOnce(new Error("temporarily unavailable"))
+      .mockResolvedValueOnce();
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByTestId("finish-anyway-button"));
+    expect(onFinishRequested).toHaveBeenCalledWith(session.id, "finishAnyway");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Try finishing again" })).toBeTruthy());
+    expect(screen.getByRole("dialog", { name: "Player utilities" })).toBeTruthy();
+    expect(screen.queryByText(/confirm/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Try finishing again" }));
+    await waitFor(() => expect(onFinishRequested).toHaveBeenCalledTimes(2));
+    expect(onFinishRequested).toHaveBeenNthCalledWith(2, session.id, "finishAnyway");
+  });
+
+  it.each([
+    { kind: "finishAnyway", response: null, buttonId: "finish-anyway-button" },
+    { kind: "finish", response: "yes", buttonId: "finish-button" },
+  ] as const)("closes utilities after $kind and focuses the Persistence Gate", async ({ kind, response, buttonId }) => {
+    const session = buildSession({
+      units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
+      terminal_nemar_response: response,
+    });
+    await seedPlayerSession(session);
+    const onFinishRequested = vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested");
+    render(<AppProviders><GuestModeShell><UnifiedPlayerScreen /></GuestModeShell></AppProviders>);
+
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByTestId(buttonId));
+
+    await waitFor(() => expect(screen.getByRole("dialog", { name: "Keep your session", hidden: true })).toBeTruthy());
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+    expect(onFinishRequested).toHaveBeenCalledWith(session.id, kind);
+    expect(document.activeElement).toBe(screen.getByRole("dialog", { name: "Keep your session" }));
   });
 
   it("unmounts the player subtree after discardGuestState() clears an active gated session (AC5)", async () => {
@@ -734,6 +856,7 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
+    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
@@ -771,6 +894,7 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
+    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });

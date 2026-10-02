@@ -4,6 +4,7 @@
  * content until getTreatment + parse + cache have settled (Decision B).
  */
 import { useEffect, useRef, useState } from "react";
+import { Menu } from "lucide-react";
 import { TERMINAL_NEMAR_UNIT_ID } from "pic-engine";
 import { AtomicUnitView } from "./AtomicUnitView";
 import { FinishBar } from "./FinishBar";
@@ -14,6 +15,7 @@ import { NavigationTreePanel } from "./NavigationTreePanel";
 import { findActiveUnit } from "./player-active-unit";
 import { usePlayerSession } from "./player-engine-context";
 import { TerminalNemarUnit } from "./TerminalNemarUnit";
+import { TherapeuticSheet } from "./therapeutic-sheet";
 import { TherapeuticContentCard, TherapeuticFrame } from "./therapeutic-frame/TherapeuticFrame";
 import { useTreatmentContentActions } from "./treatment-content-context";
 import { useAsyncAction } from "./use-async-action";
@@ -27,8 +29,14 @@ export function UnifiedPlayerScreen() {
   const session = usePlayerSession(activePlayerSessionId ?? "");
   const { getParsedTreatmentContent } = useTreatmentContentActions();
   const [loadingPhase, setLoadingPhase] = useState<PlayerContentPhase>("resolving");
+  const [utilitiesOpen, setUtilitiesOpen] = useState(false);
+  const playerRootRef = useRef<HTMLElement>(null);
   const incomingHeadingRef = useRef<HTMLHeadingElement>(null);
   const requestedUnitRef = useRef<string | null>(null);
+  const navigationClosingRef = useRef(false);
+  const finishClosingRef = useRef(false);
+  const closedNavigationRef = useRef<string | null>(null);
+  const headingObserverRef = useRef<MutationObserver | null>(null);
   const treatmentId = session?.treatment_id;
   const activeUnit = session === null ? undefined : findActiveUnit(session.units);
   const activeKey = activeUnit?.unit_id;
@@ -56,10 +64,18 @@ export function UnifiedPlayerScreen() {
   }, [activePlayerSessionId, treatmentId, getParsedTreatmentContent, resolveContent]);
 
   useEffect(() => {
-    if (requestedUnitRef.current !== null && requestedUnitRef.current !== activeKey) {
-      requestedUnitRef.current = null;
+    if (
+      requestedUnitRef.current !== null &&
+      requestedUnitRef.current === activeKey &&
+      closedNavigationRef.current !== activeKey
+    ) {
+      closedNavigationRef.current = activeKey;
+      navigationClosingRef.current = true;
+      setUtilitiesOpen(false);
     }
   }, [session, activeKey]);
+
+  useEffect(() => () => headingObserverRef.current?.disconnect(), []);
 
   if (activePlayerSessionId === null || session === null) {
     return null;
@@ -69,8 +85,89 @@ export function UnifiedPlayerScreen() {
   const showRecovery = loadingPhase === "empty" || contentStatus === "recovery";
 
   return (
-    <section data-testid="guest-flow-player" className="pic-player-screen">
-      <TherapeuticFrame title="Unified Player" stageLabel="Player guidance">
+    <section ref={playerRootRef} data-testid="guest-flow-player" className="pic-player-screen">
+      <TherapeuticFrame
+        title="Unified Player"
+        stageLabel="Player guidance"
+        utilityTrigger={loadingPhase === "ready" ? (
+          <TherapeuticSheet
+            title="Player utilities"
+            description="Choose a step or finish when you are ready."
+            triggerLabel="Open Player utilities"
+            trigger={<Menu aria-hidden="true" size={20} />}
+            open={utilitiesOpen}
+            onOpenChange={setUtilitiesOpen}
+            onCloseAutoFocus={() => {
+              if (finishClosingRef.current) {
+                finishClosingRef.current = false;
+                const gate = document.querySelector<HTMLDialogElement>(
+                  'dialog[open][aria-labelledby="persistence-gate-title"]',
+                );
+                if (gate !== null) {
+                  gate.focus();
+                  return true;
+                }
+                return false;
+              }
+              if (!navigationClosingRef.current) {
+                return false;
+              }
+              navigationClosingRef.current = false;
+              const heading = incomingHeadingRef.current;
+              if (
+                heading === null ||
+                heading.closest("[data-active-key]")?.getAttribute("data-active-key") !== activeKey
+              ) {
+                headingObserverRef.current?.disconnect();
+                const observer = new MutationObserver(() => {
+                  const incoming = incomingHeadingRef.current;
+                  if (
+                    incoming !== null &&
+                    incoming.closest("[data-active-key]")?.getAttribute("data-active-key") === activeKey
+                  ) {
+                    observer.disconnect();
+                    headingObserverRef.current = null;
+                    incoming.focus();
+                  }
+                });
+                if (playerRootRef.current !== null) {
+                  observer.observe(playerRootRef.current, { childList: true, subtree: true });
+                  headingObserverRef.current = observer;
+                }
+                return false;
+              }
+              heading.focus();
+              return true;
+            }}
+          >
+            <div className="pic-player-utilities">
+              <NavigationTreePanel
+                sessionId={activePlayerSessionId}
+                session={session}
+                onNavigationRequested={(unitId) => {
+                  closedNavigationRef.current = null;
+                  headingObserverRef.current?.disconnect();
+                  headingObserverRef.current = null;
+                  requestedUnitRef.current = unitId === activeKey ? null : unitId;
+                }}
+                onNavigationFailed={(unitId) => {
+                  if (requestedUnitRef.current === unitId) {
+                    requestedUnitRef.current = null;
+                  }
+                }}
+              />
+              <FinishBar
+                sessionId={activePlayerSessionId}
+                session={session}
+                onFinishResolved={() => {
+                  finishClosingRef.current = true;
+                  setUtilitiesOpen(false);
+                }}
+              />
+            </div>
+          </TherapeuticSheet>
+        ) : undefined}
+      >
         <div className="pic-player-layout">
           {loadingPhase !== "ready" ? (
             <TherapeuticContentCard aria-label="Player content status">
@@ -126,23 +223,6 @@ export function UnifiedPlayerScreen() {
               )}
             </HorizontalSlideContainer>
           )}
-          {loadingPhase === "ready" ? (
-            <>
-              <NavigationTreePanel
-                sessionId={activePlayerSessionId}
-                session={session}
-                onNavigationRequested={(unitId) => {
-                  requestedUnitRef.current = unitId === activeKey ? null : unitId;
-                }}
-                onNavigationFailed={(unitId) => {
-                  if (requestedUnitRef.current === unitId) {
-                    requestedUnitRef.current = null;
-                  }
-                }}
-              />
-              <FinishBar sessionId={activePlayerSessionId} session={session} />
-            </>
-          ) : null}
         </div>
       </TherapeuticFrame>
     </section>

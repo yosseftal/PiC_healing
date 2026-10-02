@@ -13,6 +13,7 @@ export interface TherapeuticSheetProps {
   children: ReactNode;
   defaultOpen?: boolean;
   description?: string;
+  onCloseAutoFocus?: () => boolean;
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
   title: string;
@@ -49,22 +50,11 @@ function useInertBackground(open: boolean, triggerRef: RefObject<HTMLButtonEleme
   }, [open, triggerRef]);
 }
 
-function useRestoreTriggerFocus(open: boolean, triggerRef: RefObject<HTMLButtonElement | null>): void {
-  const wasOpenRef = useRef(open);
-
-  useLayoutEffect(() => {
-    const wasOpen = wasOpenRef.current;
-    wasOpenRef.current = open;
-    if (wasOpen && !open) {
-      triggerRef.current?.focus();
-    }
-  }, [open, triggerRef]);
-}
-
 export function TherapeuticSheet({
   children,
   defaultOpen = false,
   description,
+  onCloseAutoFocus,
   onOpenChange,
   open,
   title,
@@ -77,7 +67,6 @@ export function TherapeuticSheet({
   const descriptionId = useId();
   const resolvedOpen = open ?? uncontrolledOpen;
   useInertBackground(resolvedOpen, triggerRef);
-  useRestoreTriggerFocus(resolvedOpen, triggerRef);
 
   function handleOpenChange(nextOpen: boolean): void {
     if (open === undefined) {
@@ -128,7 +117,9 @@ export function TherapeuticSheet({
             event.preventDefault();
             const background = triggerRef.current?.closest("body > *");
             background?.removeAttribute("inert");
-            triggerRef.current?.focus();
+            if (!onCloseAutoFocus?.()) {
+              triggerRef.current?.focus();
+            }
           }}
         >
           <header className="flex items-start gap-4 border-b border-pic-line p-6">

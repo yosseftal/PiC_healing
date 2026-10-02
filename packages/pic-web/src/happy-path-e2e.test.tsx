@@ -181,11 +181,18 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
       expect(fetchSpy.mock.calls.length).toBe(guestPhaseFetchBaseline);
 
       // Step 3: Player — forward jump, revisit unit-2, GFM table on unit-3, Terminal NEMAR, Finish Anyway
-      await waitFor(() => {
-        expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy();
-      });
+      async function openPlayerUtilities(): Promise<void> {
+        fireEvent.click(await screen.findByRole("button", { name: "Open Player utilities" }));
+        await waitFor(() => expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy());
+      }
+
+      await openPlayerUtilities();
 
       fireEvent.click(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`));
+
+      await waitFor(() => expect(screen.getByTestId("terminal-nemar-unit")).toBeTruthy());
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+      await openPlayerUtilities();
 
       await waitFor(() => {
         const unitTwoButton = screen.getByTestId("navigation-tree-jump-unit-2");
@@ -197,6 +204,8 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
       await waitFor(() => {
         expect(screen.getByTestId("atomic-unit-unit-2")).toBeTruthy();
       });
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+      await openPlayerUtilities();
 
       fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-3"));
 
@@ -204,19 +213,24 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
         expect(screen.getByTestId("atomic-unit-unit-3")).toBeTruthy();
         expect(screen.getByRole("table")).toBeTruthy();
       });
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+      await openPlayerUtilities();
 
       fireEvent.click(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`));
 
       await waitFor(() => {
         expect(screen.getByTestId("terminal-nemar-unit")).toBeTruthy();
       });
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
 
       fireEvent.click(screen.getByTestId("terminal-nemar-no"));
+      await openPlayerUtilities();
       fireEvent.click(screen.getByTestId("finish-anyway-button"));
 
       // Step 4: Persistence Gate + promotion
       await waitFor(() => {
-        expect(screen.getByRole("dialog")).toBeTruthy();
+        expect(screen.getByRole("dialog", { name: "Keep your session" })).toBeTruthy();
+        expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull();
       });
 
       const fetchBeforePromotion = fetchSpy.mock.calls.length;

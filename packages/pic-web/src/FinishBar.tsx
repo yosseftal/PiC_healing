@@ -6,7 +6,15 @@ import type { PlayerSession } from "pic-engine";
 import { useSessionEngineActions } from "./session-engine-context";
 import { useAsyncAction } from "./use-async-action";
 
-export function FinishBar({ sessionId, session }: { sessionId: string; session: PlayerSession }) {
+export function FinishBar({
+  sessionId,
+  session,
+  onFinishResolved,
+}: {
+  sessionId: string;
+  session: PlayerSession;
+  onFinishResolved?: () => void;
+}) {
   const { onFinishRequested } = useSessionEngineActions();
   const {
     status: finishStatus,
@@ -20,24 +28,38 @@ export function FinishBar({ sessionId, session }: { sessionId: string; session: 
 
   const canFinish = session.terminal_nemar_response === "yes";
 
+  async function finish(kind: "finish" | "finishAnyway"): Promise<void> {
+    const result = await requestFinish(sessionId, kind);
+    if (result.ok) {
+      onFinishResolved?.();
+    }
+  }
+
+  async function retry(): Promise<void> {
+    const result = await retryFinish();
+    if (result?.ok) {
+      onFinishResolved?.();
+    }
+  }
+
   return (
     <footer data-testid="finish-bar">
       {canFinish ? (
-        <button type="button" data-testid="finish-button" onClick={() => void requestFinish(sessionId, "finish")}>
+        <button type="button" data-testid="finish-button" onClick={() => void finish("finish")}>
           Finish
         </button>
       ) : null}
       <button
         type="button"
         data-testid="finish-anyway-button"
-        onClick={() => void requestFinish(sessionId, "finishAnyway")}
+        onClick={() => void finish("finishAnyway")}
       >
         Finish Anyway
       </button>
       {finishStatus === "recovery" ? (
         <div role="status">
           <p>Your session is ready when you are.</p>
-          <button type="button" onClick={() => void retryFinish()}>
+          <button type="button" onClick={() => void retry()}>
             Try finishing again
           </button>
         </div>
