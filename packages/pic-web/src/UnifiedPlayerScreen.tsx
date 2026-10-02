@@ -210,7 +210,13 @@ export function UnifiedPlayerScreen() {
                   <TerminalNemarUnit
                     sessionId={activePlayerSessionId}
                     response={session.terminal_nemar_response}
+                    successDeclared={session.success_declared}
                     headingRef={incomingHeadingRef}
+                    onFinishResolved={() => {
+                      document.querySelector<HTMLDialogElement>(
+                        'dialog[open][aria-labelledby="persistence-gate-title"]',
+                      )?.focus();
+                    }}
                   />
                 </TherapeuticContentCard>
               ) : (

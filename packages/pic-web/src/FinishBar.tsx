@@ -26,10 +26,8 @@ export function FinishBar({
     return null;
   }
 
-  const canFinish = session.terminal_nemar_response === "yes";
-
-  async function finish(kind: "finish" | "finishAnyway"): Promise<void> {
-    const result = await requestFinish(sessionId, kind);
+  async function finish(): Promise<void> {
+    const result = await requestFinish(sessionId, "finishAnyway");
     if (result.ok) {
       onFinishResolved?.();
     }
@@ -44,15 +42,10 @@ export function FinishBar({
 
   return (
     <footer data-testid="finish-bar">
-      {canFinish ? (
-        <button type="button" data-testid="finish-button" onClick={() => void finish("finish")}>
-          Finish
-        </button>
-      ) : null}
       <button
         type="button"
         data-testid="finish-anyway-button"
-        onClick={() => void finish("finishAnyway")}
+        onClick={() => void finish()}
       >
         Finish Anyway
       </button>

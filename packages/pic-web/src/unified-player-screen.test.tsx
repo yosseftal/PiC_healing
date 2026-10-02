@@ -444,7 +444,6 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
-    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
@@ -453,6 +452,7 @@ describe("UnifiedPlayerScreen", () => {
     expect(onFinishRequested).toHaveBeenCalledWith("session-1", "finish");
     expect(finish).not.toHaveBeenCalled();
 
+    await openPlayerUtilities();
     fireEvent.click(screen.getByTestId("finish-anyway-button"));
     expect(onFinishRequested).toHaveBeenCalledWith("session-1", "finishAnyway");
     expect(finishAnyway).not.toHaveBeenCalled();
@@ -689,12 +689,13 @@ describe("UnifiedPlayerScreen", () => {
       await waitFor(() => {
         expect(screen.getByTestId("terminal-nemar-response-recorded")).toBeTruthy();
       });
-      await openPlayerUtilities();
       expect(screen.getByTestId("finish-button")).toBeTruthy();
       expect(screen.getByTestId("terminal-nemar-response-recorded").textContent).not.toMatch(
         /error|failed|invalid/i,
       );
-      expect(screen.getByTestId("terminal-nemar-yes").getAttribute("aria-pressed")).toBe("true");
+      expect(screen.queryByTestId("terminal-nemar-yes")).toBeNull();
+      expect(screen.getByRole("button", { name: "Change response" })).toBeTruthy();
+      await openPlayerUtilities();
       expect(screen.getByTestId("finish-anyway-button")).toBeTruthy();
     },
   );
@@ -720,7 +721,33 @@ describe("UnifiedPlayerScreen", () => {
     expect(finishAnyway).toBeTruthy();
     expect(finishAnyway.disabled).toBe(false);
     expect(screen.queryByTestId("finish-button")).toBeNull();
-    expect(screen.getByTestId("terminal-nemar-no").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByTestId("terminal-nemar-no")).toBeNull();
+    expect(screen.getByRole("button", { name: "Change response", hidden: true })).toBeTruthy();
+  });
+
+  it("changes presentation before calling the existing response action for a new answer", async () => {
+    const session = buildSession({
+      units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
+      terminal_nemar_response: "yes",
+    });
+    await seedPlayerSession(session);
+    const respond = vi.spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar");
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+
+    await waitFor(() => expect(screen.getByTestId("finish-button")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Change response" }));
+    expect(respond).not.toHaveBeenCalled();
+    expect(compositionRoot.playerSessionStore.getSnapshot(session.id)?.terminal_nemar_response)
+      .toBe("yes");
+    expect(screen.queryByTestId("finish-button")).toBeNull();
+    expect(screen.getByTestId("terminal-nemar-yes").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByTestId("terminal-nemar-no").getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(screen.getByTestId("terminal-nemar-no"));
+    await waitFor(() => expect(respond).toHaveBeenCalledWith(session.id, "no"));
+    await waitFor(() => expect(screen.getByTestId("terminal-nemar-response-recorded").textContent)
+      .toMatch(/integrating/i));
+    expect(screen.queryByTestId("finish-button")).toBeNull();
   });
 
   it("offers a visible retry when Navigation Tree movement needs another moment", async () => {
@@ -772,7 +799,6 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
-    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
@@ -781,8 +807,8 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Try finishing again" })).toBeTruthy();
     });
-    expect(screen.getByRole("dialog", { name: "Player utilities" })).toBeTruthy();
-    expect(screen.getByTestId("finish-bar").textContent).not.toMatch(/error|failed|invalid/i);
+    expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull();
+    expect(screen.getByTestId("terminal-nemar-unit").textContent).not.toMatch(/error|failed|invalid/i);
 
     fireEvent.click(screen.getByRole("button", { name: "Try finishing again" }));
 
@@ -828,7 +854,10 @@ describe("UnifiedPlayerScreen", () => {
     const onFinishRequested = vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested");
     render(<AppProviders><GuestModeShell><UnifiedPlayerScreen /></GuestModeShell></AppProviders>);
 
-    await openPlayerUtilities();
+    if (kind === "finishAnyway") {
+      await openPlayerUtilities();
+    }
+    await waitFor(() => expect(screen.getByTestId(buttonId)).toBeTruthy());
     fireEvent.click(screen.getByTestId(buttonId));
 
     await waitFor(() => expect(screen.getByRole("dialog", { name: "Keep your session", hidden: true })).toBeTruthy());

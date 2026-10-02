@@ -17,6 +17,7 @@ interface ActionDescriptorBase {
 
 export interface ButtonActionDescriptor extends ActionDescriptorBase {
   kind: "button";
+  testId?: string;
   onAction: () => void;
   pressed?: boolean;
 }
@@ -165,6 +166,7 @@ function ActionControl({ action }: { action: ActionDescriptor }) {
   return (
     <button
       type="button"
+      data-testid={action.testId}
       aria-label={action.accessibleLabel ?? action.label}
       aria-pressed={action.pressed}
       disabled={action.disabled}
