@@ -20,6 +20,7 @@ import { TherapeuticContentCard, TherapeuticFrame } from "./therapeutic-frame/Th
 import { useTreatmentContentActions } from "./treatment-content-context";
 import { useAsyncAction } from "./use-async-action";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
+import { UTILITY_CONTROL } from "./control-affordance";
 import "./unified-player-screen.css";
 
 type PlayerContentPhase = "resolving" | "ready" | "empty";
@@ -83,18 +84,24 @@ export function UnifiedPlayerScreen() {
 
   const isTerminalNemar = activeKey === TERMINAL_NEMAR_UNIT_ID;
   const showRecovery = loadingPhase === "empty" || contentStatus === "recovery";
+  // A valid reflected session retains sovereign utilities while its guidance reconnects.
+  // Confirmed empty content retains the Zero-H3 guard and exposes no Finish path.
+  const showUtilities = loadingPhase === "ready" || (
+    loadingPhase !== "empty" && contentStatus === "recovery" &&
+    session.units.some((unit) => unit.unit_id !== TERMINAL_NEMAR_UNIT_ID)
+  );
 
   return (
     <section ref={playerRootRef} data-testid="guest-flow-player" className="pic-player-screen">
       <TherapeuticFrame
         title="Unified Player"
         stageLabel="Player guidance"
-        utilityTrigger={loadingPhase === "ready" ? (
+        utilityTrigger={showUtilities ? (
           <TherapeuticSheet
             title="Player utilities"
             description="Choose a step or finish when you are ready."
             triggerLabel="Open Player utilities"
-            trigger={<Menu aria-hidden="true" size={20} />}
+            trigger={<><Menu aria-hidden="true" size={20} /><span>Utilities</span></>}
             open={utilitiesOpen}
             onOpenChange={setUtilitiesOpen}
             onCloseAutoFocus={() => {
@@ -177,12 +184,13 @@ export function UnifiedPlayerScreen() {
                   {contentStatus === "recovery" ? (
                     <>
                       <p>Your guidance can reconnect whenever you choose.</p>
-                      <button type="button" onClick={() => void retryContent()}>
+                      <button className={UTILITY_CONTROL} type="button" onClick={() => void retryContent()}>
                         Try guidance again
                       </button>
                     </>
                   ) : null}
                   <button
+                    className={UTILITY_CONTROL}
                     type="button"
                     data-testid="player-content-recovery"
                     onClick={() => setGuestFlowPlayerSession(null)}

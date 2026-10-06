@@ -16,6 +16,7 @@ async function openUtilities(page: Page) {
   await page.getByRole("button", { name: "Open Player utilities" }).click();
   const dialog = page.getByRole("dialog", { name: "Player utilities" });
   await expect(dialog).toBeVisible();
+  await expect.poll(() => dialog.evaluate((element) => element.getAnimations().length)).toBe(0);
   return dialog;
 }
 
@@ -25,6 +26,80 @@ async function jumpTo(page: Page, index: number) {
   await (index < 0 ? buttons.last() : buttons.nth(index)).click();
   await expect(dialog).toBeHidden();
 }
+
+test("Player makes utilities discoverable and gives every navigation control a full touch target", async ({ page }) => {
+  await page.setViewportSize(viewports[0]!);
+  await openPlayer(page);
+  await expect(page.getByRole("button", { name: "Open Player utilities" })).toHaveText("Utilities");
+  const dialog = await openUtilities(page);
+  const controls = await dialog.getByRole("button").evaluateAll((elements) => elements.map((element) => {
+    const box = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return { width: box.width, height: box.height, border: Number.parseFloat(style.borderTopWidth) };
+  }));
+  for (const control of controls) {
+    expect(control.width).toBeGreaterThanOrEqual(44);
+    expect(control.height).toBeGreaterThanOrEqual(44);
+    expect(control.border).toBeGreaterThanOrEqual(1);
+  }
+});
+
+test("guidance headings and card focus remain readable inside clipping boundaries", async ({ page }) => {
+  await page.setViewportSize(viewports[0]!);
+  await openPlayer(page);
+  const headingStyle = await page.getByRole("heading", { name: "Long guidance" }).evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { size: Number.parseFloat(style.fontSize), weight: style.fontWeight };
+  });
+  expect(headingStyle.size).toBeGreaterThanOrEqual(20);
+  expect(headingStyle.weight).toBe("600");
+  await page.keyboard.press("Tab");
+  const card = page.getByRole("region", { name: "Atomic Unit guidance" });
+  await card.focus();
+  const indicator = await card.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { width: Number.parseFloat(style.outlineWidth), offset: Number.parseFloat(style.outlineOffset) };
+  });
+  expect(indicator.width).toBeGreaterThanOrEqual(3);
+  expect(indicator.offset).toBeLessThanOrEqual(-indicator.width);
+});
+
+test("sovereign Finish opens a Persistence Gate with visible full-size controls and keyboard focus", async ({ page }) => {
+  await page.setViewportSize(viewports[0]!);
+  await openPlayer(page);
+  const dialog = await openUtilities(page);
+  await dialog.getByRole("button", { name: "Finish Anyway" }).click();
+  await expect(dialog).toBeHidden();
+  const gate = page.getByRole("dialog", { name: "Keep your session" });
+  await expect(gate).toBeVisible();
+  for (const control of await gate.getByRole("button").all()) {
+    const style = await control.evaluate((element) => ({
+      height: element.getBoundingClientRect().height,
+      width: element.getBoundingClientRect().width,
+      borderWidth: Number.parseFloat(getComputedStyle(element).borderTopWidth),
+    }));
+    expect(style.height).toBeGreaterThanOrEqual(44);
+    expect(style.width).toBeGreaterThanOrEqual(44);
+    expect(style.borderWidth).toBeGreaterThanOrEqual(1);
+  }
+  await expect(gate.getByRole("button", { name: "Sign in with Apple (stub)" })).toBeDisabled();
+  await expect(gate.getByRole("button", { name: "Sign in with Google (stub)" })).toBeDisabled();
+  const enabledOpacity = await gate.getByRole("button", { name: "Sign in (dev tracer stub)", exact: true })
+    .evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity));
+  for (const name of ["Sign in with Apple (stub)", "Sign in with Google (stub)"]) {
+    const opacity = await gate.getByRole("button", { name }).evaluate(
+      (element) => Number.parseFloat(getComputedStyle(element).opacity),
+    );
+    expect(opacity).toBeLessThan(enabledOpacity);
+  }
+  await page.keyboard.press("Tab");
+  const signIn = gate.getByRole("button", { name: "Sign in (dev tracer stub)", exact: true });
+  await signIn.focus();
+  await expect(signIn).toHaveCSS("outline-color", "rgb(111, 86, 143)");
+  await expect(signIn).toHaveCSS("outline-width", "3px");
+  await gate.getByRole("button", { name: "Continue without saving" }).click();
+  await expect(gate).toBeHidden();
+});
 
 test("composed Player locks four viewport classes and scrolls long guidance inside its card", async ({ page }) => {
   for (const viewport of viewports) {

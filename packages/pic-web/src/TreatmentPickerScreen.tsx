@@ -10,6 +10,7 @@ import { usePlayerEngineActions } from "./player-engine-context";
 import { useTreatmentContentActions } from "./treatment-content-context";
 import { useAsyncAction } from "./use-async-action";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
+import { CONTROL_FOCUS, UTILITY_CONTROL } from "./control-affordance";
 
 export function TreatmentPickerScreen() {
   const { listTreatments } = useCatalogActions();
@@ -62,13 +63,14 @@ export function TreatmentPickerScreen() {
       {listStatus === "recovery" ? (
         <div role="status">
           <p>The treatment list is ready to reconnect.</p>
-          <button type="button" onClick={() => void retryLoadTreatments()}>
+          <button className={UTILITY_CONTROL} type="button" onClick={() => void retryLoadTreatments()}>
             Try loading treatments again
           </button>
         </div>
       ) : null}
-      <label>
+      <label className="inline-flex min-h-11 min-w-11 items-center gap-3 rounded-pic-button px-3 py-2">
         <input
+          className={`size-5 shrink-0 accent-pic-sage-700 ${CONTROL_FOCUS}`}
           type="checkbox"
           checked={linkToGroup}
           onChange={(event) => setLinkToGroup(event.target.checked)}
@@ -80,6 +82,7 @@ export function TreatmentPickerScreen() {
         {treatments.map((treatment) => (
           <li key={treatment.id}>
             <button
+              className={UTILITY_CONTROL}
               type="button"
               data-testid={`pick-treatment-${treatment.id}`}
               onClick={() => void selectTreatment(treatment.id)}
@@ -95,7 +98,7 @@ export function TreatmentPickerScreen() {
       {selectStatus === "recovery" ? (
         <div role="status">
           <p>This treatment is ready when you are.</p>
-          <button type="button" onClick={() => void retrySelectTreatment()}>
+          <button className={UTILITY_CONTROL} type="button" onClick={() => void retrySelectTreatment()}>
             Try opening treatment again
           </button>
         </div>

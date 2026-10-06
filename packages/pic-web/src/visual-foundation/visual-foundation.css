@@ -71,6 +71,7 @@
 
 :root {
   --motion-pic-spatial-active: var(--motion-pic-standard);
+  --motion-pic-drawer-active: var(--motion-pic-drawer);
   --distance-pic-step-active: var(--distance-pic-step);
   --distance-pic-drawer-active: var(--distance-pic-drawer);
 }
@@ -94,6 +95,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-pic-spatial-active: 0ms;
+    --motion-pic-drawer-active: 0ms;
     --distance-pic-step-active: 0px;
     --distance-pic-drawer-active: 0%;
   }

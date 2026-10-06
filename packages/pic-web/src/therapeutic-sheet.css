@@ -1,0 +1,59 @@
+.pic-therapeutic-sheet {
+  --pic-drawer-sign: 1;
+  --pic-drawer-translation: calc(var(--pic-drawer-sign) * var(--distance-pic-drawer-active));
+  animation-duration: var(--motion-pic-drawer-active);
+  animation-timing-function: var(--ease-pic-organic);
+  padding-block-start: env(safe-area-inset-top, 0px);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+  padding-inline-start: env(safe-area-inset-left, 0px);
+  padding-inline-end: env(safe-area-inset-right, 0px);
+}
+
+.pic-therapeutic-sheet:dir(rtl) {
+  --pic-drawer-sign: -1;
+  padding-inline-start: env(safe-area-inset-right, 0px);
+  padding-inline-end: env(safe-area-inset-left, 0px);
+}
+
+.pic-therapeutic-sheet[data-state="open"] {
+  animation-name: pic-drawer-enter;
+}
+
+.pic-therapeutic-sheet[data-state="closed"] {
+  animation-name: pic-drawer-exit;
+  pointer-events: none;
+}
+
+.pic-therapeutic-sheet-overlay {
+  animation-duration: var(--motion-pic-drawer-active);
+  animation-timing-function: var(--ease-pic-organic);
+}
+
+.pic-therapeutic-sheet-overlay[data-state="open"] {
+  animation-name: pic-overlay-enter;
+}
+
+.pic-therapeutic-sheet-overlay[data-state="closed"] {
+  animation-name: pic-overlay-exit;
+  pointer-events: none;
+}
+
+@keyframes pic-drawer-enter {
+  from { transform: translateX(var(--pic-drawer-translation)); }
+  to { transform: translateX(0); }
+}
+
+@keyframes pic-drawer-exit {
+  from { transform: translateX(0); }
+  to { transform: translateX(var(--pic-drawer-translation)); }
+}
+
+@keyframes pic-overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pic-overlay-exit {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

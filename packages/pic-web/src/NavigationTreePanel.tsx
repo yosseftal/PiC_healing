@@ -6,6 +6,7 @@ import { useRef } from "react";
 import type { PlayerSession } from "pic-engine";
 import { usePlayerEngineActions } from "./player-engine-context";
 import { useAsyncAction } from "./use-async-action";
+import { UTILITY_CONTROL } from "./control-affordance";
 
 export function NavigationTreePanel({
   sessionId,
@@ -41,6 +42,7 @@ export function NavigationTreePanel({
         {session.units.map((unit) => (
           <li key={unit.unit_id}>
             <button
+              className={`${UTILITY_CONTROL} w-full justify-start text-start`}
               type="button"
               data-testid={`navigation-tree-jump-${unit.unit_id}`}
               onClick={() => void requestNavigation(unit.unit_id)}
@@ -54,6 +56,7 @@ export function NavigationTreePanel({
         <div role="status">
           <p>Your chosen step is ready for another try.</p>
           <button
+            className={UTILITY_CONTROL}
             type="button"
             onClick={() => {
               if (requestedUnitRef.current !== null) {

@@ -77,12 +77,12 @@ describe("Wave 9.1 Continuous Guidance playability", () => {
 
     fireEvent.click(screen.getByTestId("terminal-nemar-yes"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Open Player utilities" }));
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
-
-    fireEvent.click(screen.getByTestId("finish-button"));
+    const finishButton = screen.getByRole("button", { name: /^Finish$/ });
+    expect(finishButton.closest("[inert]")).toBeNull();
+    fireEvent.click(finishButton);
 
     await waitFor(async () => {
       const finished = await compositionRoot.repositoryPort.getPlayerSession(sessionId);

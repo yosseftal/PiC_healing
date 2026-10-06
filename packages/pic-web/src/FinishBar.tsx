@@ -5,6 +5,7 @@
 import type { PlayerSession } from "pic-engine";
 import { useSessionEngineActions } from "./session-engine-context";
 import { useAsyncAction } from "./use-async-action";
+import { UTILITY_CONTROL } from "./control-affordance";
 
 export function FinishBar({
   sessionId,
@@ -43,6 +44,7 @@ export function FinishBar({
   return (
     <footer data-testid="finish-bar">
       <button
+        className={UTILITY_CONTROL}
         type="button"
         data-testid="finish-anyway-button"
         onClick={() => void finish()}
@@ -52,7 +54,7 @@ export function FinishBar({
       {finishStatus === "recovery" ? (
         <div role="status">
           <p>Your session is ready when you are.</p>
-          <button type="button" onClick={() => void retry()}>
+          <button className={UTILITY_CONTROL} type="button" onClick={() => void retry()}>
             Try finishing again
           </button>
         </div>

@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { useGuestFlowFacts } from "./guest-flow-context";
 import { useGroupEngineActions } from "./group-engine-context";
 import { useAsyncAction } from "./use-async-action";
+import { UTILITY_CONTROL } from "./control-affordance";
 
 export interface JointTreatmentMuscleTestStepProps {
   groupId: string;
@@ -44,10 +45,12 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
         <p>Is it NEMAR to treat these symptoms together?</p>
         {!awaitingFinalize ? (
           <>
-            <button type="button" data-testid="muscle-test-yes" onClick={() => void applyResponse("yes")}>
+            <button className={UTILITY_CONTROL} type="button"
+              data-testid="muscle-test-yes" onClick={() => void applyResponse("yes")}>
               Yes
             </button>
-            <button type="button" data-testid="muscle-test-no" onClick={() => void applyResponse("no")}>
+            <button className={UTILITY_CONTROL} type="button"
+              data-testid="muscle-test-no" onClick={() => void applyResponse("no")}>
               No
             </button>
           </>
@@ -57,6 +60,7 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
               <div data-testid="split-advisory" role="status">
                 <p>These symptoms may heal better as separate groups.</p>
                 <button
+                  className={UTILITY_CONTROL}
                   type="button"
                   data-testid="dismiss-split-advisory"
                   onClick={() => setAdvisoryDismissed(true)}
@@ -65,7 +69,8 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
                 </button>
               </div>
             ) : null}
-            <button type="button" data-testid="finalize-anyway" onClick={() => void applyResponse("finalize")}>
+            <button className={UTILITY_CONTROL} type="button"
+              data-testid="finalize-anyway" onClick={() => void applyResponse("finalize")}>
               Finalize anyway
             </button>
           </>
@@ -73,7 +78,7 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
         {responseStatus === "recovery" ? (
           <div role="status">
             <p>Your response is ready for another try.</p>
-            <button type="button" onClick={() => void retryResponse()}>
+            <button className={UTILITY_CONTROL} type="button" onClick={() => void retryResponse()}>
               Try this muscle test response again
             </button>
           </div>

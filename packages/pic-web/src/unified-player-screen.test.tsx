@@ -622,6 +622,23 @@ describe("UnifiedPlayerScreen", () => {
     await openPlayerUtilities();
   });
 
+  it("keeps labelled utilities and sovereign Finish accessible during valid-session guidance recovery", async () => {
+    vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent")
+      .mockRejectedValue(new Error("temporarily unavailable"));
+    await seedPlayerSession(buildSession());
+    render(<AppProviders><GuestModeShell><UnifiedPlayerScreen /></GuestModeShell></AppProviders>);
+
+    await screen.findByRole("button", { name: "Try guidance again" });
+    const trigger = screen.getByRole("button", { name: "Open Player utilities" });
+    expect(trigger.textContent).toBe("Utilities");
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog", { name: "Player utilities" })).toBeTruthy();
+    expect(screen.getByTestId("finish-anyway-button").hasAttribute("disabled")).toBe(false);
+    fireEvent.click(screen.getByTestId("finish-anyway-button"));
+    await screen.findByRole("dialog", { name: "Keep your session" });
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Player utilities" })).toBeNull());
+  });
+
   it("offers a visible retry when the Terminal NEMAR response needs another moment", async () => {
     const session = buildSession({
       units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
@@ -885,12 +902,12 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
-    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
 
     // Real onFinishRequested (guest mode, not mocked): opens the Persistence Gate without finishing.
+    expect(screen.getByRole("button", { name: /^Finish$/ }).closest("[inert]")).toBeNull();
     fireEvent.click(screen.getByTestId("finish-button"));
     await waitFor(() => {
       expect(compositionRoot.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
@@ -923,12 +940,12 @@ describe("UnifiedPlayerScreen", () => {
       </AppProviders>,
     );
 
-    await openPlayerUtilities();
     await waitFor(() => {
       expect(screen.getByTestId("finish-button")).toBeTruthy();
     });
 
     // Real onFinishRequested (guest mode, not mocked): opens the Persistence Gate without finishing yet.
+    expect(screen.getByRole("button", { name: /^Finish$/ }).closest("[inert]")).toBeNull();
     fireEvent.click(screen.getByTestId("finish-button"));
     await waitFor(() => {
       expect(compositionRoot.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);

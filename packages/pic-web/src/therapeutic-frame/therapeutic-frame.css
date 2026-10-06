@@ -135,7 +135,15 @@
 .pic-therapeutic-content-card:focus-visible,
 .pic-therapeutic-table-scroller:focus-visible {
   outline: var(--focus-ring-pic-width) solid var(--color-pic-focus);
-  outline-offset: var(--focus-ring-pic-offset);
+  /* Keep the complete indicator inside the viewport and slide overflow boundaries. */
+  outline-offset: calc(-1 * (var(--focus-ring-pic-width) + var(--focus-ring-pic-offset)));
+}
+
+.pic-therapeutic-content-card__body h2 {
+  font-size: var(--text-pic-heading);
+  font-weight: var(--font-weight-pic-heading);
+  line-height: var(--leading-pic-heading);
+  margin-block-end: var(--spacing-pic-calm-3);
 }
 
 .pic-therapeutic-content-card__body {

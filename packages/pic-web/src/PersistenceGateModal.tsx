@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UTILITY_CONTROL } from "./control-affordance";
 import {
   usePromotePathActions,
   useSessionEngineActions,
@@ -31,8 +32,15 @@ export function PersistenceGateModal() {
   }
 
   return (
-    <dialog open aria-labelledby="persistence-gate-title" tabIndex={-1}>
-      <h2 id="persistence-gate-title">Keep your session</h2>
+    <dialog open aria-labelledby="persistence-gate-title" tabIndex={-1}
+      className={[
+        "fixed inset-0 z-50 m-auto grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[28rem]",
+        "gap-3 overflow-y-auto rounded-pic-card border border-pic-quiet bg-pic-surface p-6 shadow-pic-sheet",
+      ].join(" ")}
+    >
+      <h2 className="text-pic-heading font-pic-heading leading-pic-heading" id="persistence-gate-title">
+        Keep your session
+      </h2>
 
       {promotionStatus === "pending" ? (
         <p>Anchoring your session…</p>
@@ -41,13 +49,13 @@ export function PersistenceGateModal() {
       {showIdleUi ? (
         <>
           <p>Sign in to keep this session — your work stays on this device until you choose to anchor it.</p>
-          <button type="button" onClick={anchorSession}>
+          <button className={UTILITY_CONTROL} type="button" onClick={anchorSession}>
             Sign in (dev tracer stub)
           </button>
-          <button type="button" disabled aria-disabled="true">
+          <button className={UTILITY_CONTROL} type="button" disabled aria-disabled="true">
             Sign in with Apple (stub)
           </button>
-          <button type="button" disabled aria-disabled="true">
+          <button className={UTILITY_CONTROL} type="button" disabled aria-disabled="true">
             Sign in with Google (stub)
           </button>
         </>
@@ -56,14 +64,14 @@ export function PersistenceGateModal() {
       {showFailedUi ? (
         <>
           <p>We could not anchor your session yet. You can try again whenever you are ready.</p>
-          <button type="button" onClick={anchorSession}>
+          <button className={UTILITY_CONTROL} type="button" onClick={anchorSession}>
             Try again
           </button>
         </>
       ) : null}
 
       {showIdleUi || showFailedUi ? (
-        <button type="button" onClick={() => void discardGuestState()}>
+        <button className={UTILITY_CONTROL} type="button" onClick={() => void discardGuestState()}>
           Continue without saving
         </button>
       ) : null}

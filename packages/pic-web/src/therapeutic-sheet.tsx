@@ -8,6 +8,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { UTILITY_CONTROL } from "./control-affordance";
+import "./therapeutic-sheet.css";
 
 export interface TherapeuticSheetProps {
   children: ReactNode;
@@ -79,12 +81,7 @@ export function TherapeuticSheet({
     <Dialog.Root onOpenChange={handleOpenChange} open={resolvedOpen}>
       <Dialog.Trigger
         aria-label={triggerLabel}
-        className={[
-          "inline-flex min-h-11 min-w-11 items-center justify-center rounded-pic-button",
-          "border border-pic-line bg-pic-surface px-3 text-pic-ink",
-          "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2",
-          "focus-visible:outline-pic-focus",
-        ].join(" ")}
+        className={UTILITY_CONTROL}
         ref={triggerRef}
         type="button"
       >
@@ -93,24 +90,19 @@ export function TherapeuticSheet({
 
       <Dialog.Portal>
         <Dialog.Overlay
-          className={[
-            "fixed inset-0 z-50 bg-pic-ink/30",
-            "transition-opacity duration-[var(--motion-pic-drawer-active)]",
-            "data-[state=closed]:opacity-0 data-[state=open]:opacity-100",
-          ].join(" ")}
+          className="pic-therapeutic-sheet-overlay fixed inset-0 z-50 bg-pic-ink/30"
           data-testid="therapeutic-sheet-overlay"
         />
         <Dialog.Content
           aria-describedby={description === undefined ? undefined : descriptionId}
           aria-labelledby={titleId}
           aria-modal="true"
+          aria-hidden={resolvedOpen ? undefined : true}
+          inert={!resolvedOpen}
           className={[
-            "fixed inset-y-0 end-0 z-50 grid h-[100dvh] max-h-[100dvh]",
+            "pic-therapeutic-sheet fixed inset-y-0 end-0 z-50 grid h-[100dvh] max-h-[100dvh]",
             "w-[calc(100%-1rem)] max-w-[28rem] grid-rows-[auto_minmax(0,1fr)]",
             "overflow-hidden border-s border-pic-line bg-pic-surface shadow-pic-sheet",
-            "transition-[transform,opacity] duration-[var(--motion-pic-drawer-active)]",
-            "ease-[var(--ease-pic-organic)] data-[state=closed]:translate-x-full",
-            "data-[state=open]:translate-x-0 rtl:data-[state=closed]:-translate-x-full",
           ].join(" ")}
           data-testid="therapeutic-sheet-content"
           onCloseAutoFocus={(event) => {
@@ -139,12 +131,7 @@ export function TherapeuticSheet({
             </div>
             <Dialog.Close
               aria-label={`Close ${title.toLocaleLowerCase()}`}
-              className={[
-                "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center",
-                "rounded-pic-button border border-pic-line bg-pic-surface text-pic-ink",
-                "focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2",
-                "focus-visible:outline-pic-focus",
-              ].join(" ")}
+              className={`${UTILITY_CONTROL} shrink-0`}
               type="button"
             >
               <X aria-hidden="true" size={20} strokeWidth={2} />

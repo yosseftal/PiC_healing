@@ -8,6 +8,7 @@ import { setGuestFlowSymptomAdditionComplete } from "./guest-flow-facts";
 import { useGroupEngineActions, useGroupEngineState } from "./group-engine-context";
 import { SymptomAddStep } from "./SymptomAddStep";
 import { useAsyncAction } from "./use-async-action";
+import { INPUT_CONTROL, UTILITY_CONTROL } from "./control-affordance";
 
 export function SymptomGroupCreateScreen(): ReactNode {
   const { activeGroupId } = useGroupEngineState();
@@ -62,18 +63,19 @@ export function SymptomGroupCreateScreen(): ReactNode {
           <label>
             Group name
             <input
+              className={INPUT_CONTROL}
               aria-label="Group name"
               value={groupName}
               onChange={(event) => setGroupName(event.target.value)}
             />
           </label>
-          <button type="submit" data-testid="confirm-group-name">
+          <button className={UTILITY_CONTROL} type="submit" data-testid="confirm-group-name">
             Confirm group name
           </button>
           {createStatus === "recovery" ? (
             <div role="status">
               <p>Your Symptom Group is ready for another try.</p>
-              <button type="button" onClick={() => void retryCreateGroup()}>
+              <button className={UTILITY_CONTROL} type="button" onClick={() => void retryCreateGroup()}>
                 Try creating this group again
               </button>
             </div>
@@ -89,14 +91,14 @@ export function SymptomGroupCreateScreen(): ReactNode {
       {loadStatus === "recovery" ? (
         <div role="status">
           <p>Your Symptom Group can reconnect whenever you choose.</p>
-          <button type="button" onClick={() => void retryLoadGroup()}>
+          <button className={UTILITY_CONTROL} type="button" onClick={() => void retryLoadGroup()}>
             Try loading this group again
           </button>
         </div>
       ) : null}
       <SymptomAddStep groupId={activeGroupId} onSymptomAdded={reloadGroup} />
       {symptomCount > 0 ? (
-        <button type="button" data-testid="finish-symptom-addition" onClick={finishSymptomAddition}>
+        <button className={UTILITY_CONTROL} type="button" data-testid="finish-symptom-addition" onClick={finishSymptomAddition}>
           Done adding symptoms
         </button>
       ) : null}

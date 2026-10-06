@@ -8,6 +8,7 @@ async function openSheet(page: import("@playwright/test").Page, direction: "ltr"
   await trigger.click();
   const sheet = page.getByRole("dialog", { name: "Session utilities" });
   await expect(sheet).toBeVisible();
+  await expect.poll(() => sheet.evaluate((element) => element.getAnimations().length)).toBe(0);
   return { sheet, trigger };
 }
 
@@ -88,6 +89,62 @@ test("places the Sheet at logical inline-end in LTR and RTL", async ({ page }) =
   expect(rtlBox!.x).toBeCloseTo(0, 0);
 });
 
+async function observeDrawerMotion(page: import("@playwright/test").Page, buttonLabel: string) {
+  // Register before the action and sample in the browser event turn. Protocol latency cannot miss a short animation.
+  return page.evaluate((label) => new Promise<{
+    duration: number; start: number; middle: number; hidden: string | null; inert: boolean;
+  }>((resolve, reject) => {
+    const button = document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+    if (button === null) {
+      reject(new Error(`Missing Sheet control: ${label}`));
+      return;
+    }
+    function observe(event: AnimationEvent) {
+      const element = event.target;
+      if (!(element instanceof HTMLElement) || element.dataset.testid !== "therapeutic-sheet-content") return;
+      document.removeEventListener("animationstart", observe);
+      const animation = element.getAnimations()[0];
+      if (animation === undefined) {
+        reject(new Error("Sheet animation started without an observable CSS animation"));
+        return;
+      }
+      animation.pause();
+      animation.currentTime = 0;
+      const start = new DOMMatrixReadOnly(getComputedStyle(element).transform).m41;
+      animation.currentTime = 140;
+      const middle = new DOMMatrixReadOnly(getComputedStyle(element).transform).m41;
+      animation.play();
+      resolve({
+        duration: Number(animation.effect?.getTiming().duration), start, middle,
+        hidden: element.getAttribute("aria-hidden"), inert: element.hasAttribute("inert"),
+      });
+    }
+    document.addEventListener("animationstart", observe);
+    button.click();
+  }), buttonLabel);
+}
+
+test("slides into view and retains its exit visual for 280ms in each logical direction", async ({ page }) => {
+  for (const direction of ["ltr", "rtl"] as const) {
+    await page.goto(`${fixturePath}?direction=${direction}`);
+    const entrance = await observeDrawerMotion(page, "Open session utilities");
+    const sheet = page.getByRole("dialog", { name: "Session utilities" });
+    expect(entrance.duration).toBe(280);
+    expect(Math.abs(entrance.start)).toBeGreaterThan(Math.abs(entrance.middle));
+    expect(Math.abs(entrance.middle)).toBeGreaterThan(0);
+    expect(Math.sign(entrance.start)).toBe(direction === "ltr" ? 1 : -1);
+    await expect.poll(() => sheet.evaluate((element) => element.getAnimations().length)).toBe(0);
+
+    const exit = await observeDrawerMotion(page, "Close session utilities");
+    expect(exit.duration).toBe(280);
+    expect(exit.start).toBe(0);
+    expect(exit.hidden).toBe("true");
+    expect(exit.inert).toBe(true);
+    expect(Math.sign(exit.middle)).toBe(direction === "ltr" ? 1 : -1);
+    await expect(page.getByTestId("therapeutic-sheet-content")).toHaveCount(0);
+  }
+});
+
 test("removes drawer translation when reduced motion is preferred", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
@@ -103,5 +160,7 @@ test("removes drawer translation when reduced motion is preferred", async ({ bro
 
   expect(motion.transform).toBe("none");
   expect(Number.parseFloat(motion.duration)).toBeLessThanOrEqual(0.00001);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("therapeutic-sheet-content")).toHaveCount(0);
   await context.close();
 });

@@ -7,6 +7,7 @@ import type { Intensity, Polarity } from "pic-engine";
 import { useGroupEngineActions } from "./group-engine-context";
 import { RatingControl } from "./RatingControl";
 import { useAsyncAction } from "./use-async-action";
+import { INPUT_CONTROL, UTILITY_CONTROL } from "./control-affordance";
 
 export interface SymptomAddStepProps {
   groupId: string;
@@ -63,6 +64,7 @@ export function SymptomAddStep({ groupId, onSymptomAdded }: SymptomAddStepProps)
       <label>
         Symptom name
         <input
+          className={INPUT_CONTROL}
           aria-label="Symptom name"
           value={symptomName}
           onChange={(event) => setSymptomName(event.target.value)}
@@ -78,13 +80,14 @@ export function SymptomAddStep({ groupId, onSymptomAdded }: SymptomAddStepProps)
         onIntensityChange={setIntensity}
       />
 
-      <button type="submit" data-testid="add-symptom-action">
+      <button className={UTILITY_CONTROL} type="submit" data-testid="add-symptom-action">
         Add symptom
       </button>
       {additionStatus === "recovery" || ratingStatus === "recovery" ? (
         <div role="status">
           <p>Your symptom is ready for another try.</p>
           <button
+            className={UTILITY_CONTROL}
             type="button"
             onClick={() => void (ratingStatus === "recovery" ? retryRating() : retryAddition())}
           >

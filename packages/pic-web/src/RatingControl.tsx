@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Intensity, Polarity } from "pic-engine";
 import { useGroupEngineActions } from "./group-engine-context";
+import { CONTROL_FOCUS, INPUT_CONTROL, UTILITY_CONTROL } from "./control-affordance";
 
 export interface RatingControlProps {
   symptomId: string | null;
@@ -68,6 +69,7 @@ export function RatingControl({
       <label>
         Polarity
         <select
+          className={INPUT_CONTROL}
           aria-label="Polarity"
           value={polarity}
           onChange={(event) => onPolarityChange(event.target.value as Polarity)}
@@ -80,6 +82,7 @@ export function RatingControl({
       <label>
         Intensity
         <input
+          className={`min-h-11 min-w-11 accent-pic-sage-700 ${CONTROL_FOCUS}`}
           aria-label="Intensity"
           type="range"
           min={0}
@@ -92,7 +95,7 @@ export function RatingControl({
       </label>
 
       {showRevealAffordance ? (
-        <button type="button" data-testid="reveal-prior-rating" onClick={revealPrior}>
+        <button className={UTILITY_CONTROL} type="button" data-testid="reveal-prior-rating" onClick={revealPrior}>
           Reveal prior rating
         </button>
       ) : null}

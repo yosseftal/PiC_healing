@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { FinalizedSymptomGroup } from "pic-engine";
 import { setGuestFlowSummaryAcknowledged } from "./guest-flow-facts";
 import { useGroupEngineActions } from "./group-engine-context";
+import { UTILITY_CONTROL } from "./control-affordance";
 
 export interface SymptomGroupSummaryScreenProps {
   groupId: string;
@@ -54,7 +55,7 @@ export function SymptomGroupSummaryScreen({ groupId }: SymptomGroupSummaryScreen
         ))}
       </ul>
       <p data-testid="summary-muscle-test">{formatMuscleTestResult(group.joint_treatment_muscle_test)}</p>
-      <button type="button" data-testid="confirm-group-summary" onClick={handleConfirm}>
+      <button className={UTILITY_CONTROL} type="button" data-testid="confirm-group-summary" onClick={handleConfirm}>
         Continue to treatment
       </button>
     </section>
