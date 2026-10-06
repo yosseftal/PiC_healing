@@ -8,6 +8,17 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        fetch: "readonly",
+        URL: "readonly",
+      },
+    },
+  },
+  {
     // `.cjs` files (e.g. tool configs like `.dependency-cruiser.cjs`) are CommonJS by their own file
     // extension, even though the rest of this workspace is `"type": "module"` - without these globals
     // ESLint's `no-undef` rule flags `module`/`require` as undefined.

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { TRACER_BULLET_SEED_TREATMENT_ROWS } from "pic-engine";
 import { AppProviders } from "./app-providers";
 import { AtomicUnitView } from "./AtomicUnitView";

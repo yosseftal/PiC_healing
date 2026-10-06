@@ -252,6 +252,10 @@ describe("SessionEngine", () => {
       const promoteSpy = vi.spyOn(port, "promoteGuestToAccount");
       const snapshot = buildGuestSnapshot();
 
+      if (snapshot.group === null) {
+        throw new Error("The grouped promotion fixture must include a Symptom Group");
+      }
+
       await sessionEngine.promote(snapshot, "user-1");
 
       expect(promoteSpy).toHaveBeenCalledWith(
@@ -299,6 +303,9 @@ describe("SessionEngine", () => {
       const promoteGuest = guestPort.promoteGuestToAccount.bind(guestPort);
       vi.spyOn(guestPort, "promoteGuestToAccount").mockImplementation(async (input) => {
         const result = await promoteGuest(input);
+        if (input.group === null) {
+          throw new Error("The grouped promotion must include a Symptom Group");
+        }
         await authenticatedPort.saveGroup(input.group);
         await authenticatedPort.savePlayerSession(input.playerSession);
         await authenticatedPort.getOrCreateLibraryRow(input.playerSession.treatment_id, {

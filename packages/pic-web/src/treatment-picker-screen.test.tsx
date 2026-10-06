@@ -220,7 +220,7 @@ describe("TreatmentPickerScreen", () => {
 describe("useAsyncAction", () => {
   it("catches a rejection and retries the same action", async () => {
     let attempts = 0;
-    const action = vi.fn(async (_value: string) => {
+    const action = vi.fn<(value: string) => Promise<void>>(async () => {
       attempts += 1;
       if (attempts === 1) {
         throw new Error("temporarily unavailable");

@@ -10,7 +10,6 @@ import { SupabaseRepository } from "pic-adapter-supabase";
 import type {
   FinalizedSymptomGroup,
   GuestSnapshot,
-  PlayerSession,
   PromotionStatus,
   RepositoryPort,
   SymptomGroup,
