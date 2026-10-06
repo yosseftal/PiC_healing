@@ -14,20 +14,12 @@ import type { GuestKeyValueStorage } from "./index";
 import { DEFAULT_GUEST_STORAGE_KEY, GuestRepositoryCannotPromoteError, LocalGuestRepository } from "./index";
 
 /**
- * promoteGuestToAccount assertions are skipped here because this adapter's `promoteGuestToAccount` is a
- * deliberate no-op-or-error (see `index.ts`'s doc comment on `GuestRepositoryCannotPromoteError`) -
- * promotion always targets `pic-adapter-supabase`, never this adapter.
- *
- * This call is what satisfies ticket 10's Testing Requirement bullet "runs the full RepositoryPort
- * contract suite from ticket 03 against LocalGuestRepository, all green except promotion-specific cases":
- * every non-promotion `describe` block in the shared suite (`incrementUseCount`, `getOrCreateLibraryRow`,
- * `appendTimelineEvent`) runs unmodified against this adapter, and `skipPromoteGuestToAccount: true` makes
- * the exemption visible in the test run's own output (via the suite's internal `describe.skipIf`) rather
- * than silently omitted. A fresh random `storageKey` per port keeps every contract test's own
- * `beforeEach(() => port = makePort())` fully isolated from every other test.
+ * Local Guest storage runs the full common contract plus its linked/unlinked promotion rejection
+ * capability. Promotion targets an authenticated repository (DEC-017); no contract cases are skipped.
+ * A fresh storage key isolates each test.
  */
 runRepositoryPortContractTests(() => new LocalGuestRepository({ storageKey: crypto.randomUUID() }), {
-  skipPromoteGuestToAccount: true,
+  promotion: "local-guest",
   seedTreatment: () => TRACER_BULLET_SEED_TREATMENT_ROWS[0]!,
 });
 

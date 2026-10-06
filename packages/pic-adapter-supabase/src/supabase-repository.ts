@@ -554,6 +554,9 @@ export class SupabaseRepository implements RepositoryPort {
               name: symptom.name,
               polarity: symptom.polarity,
               intensity: symptom.intensity,
+              // Preserve the legacy wire shape for unrated snapshots and its existing fingerprint.
+              // Every actual rating timestamp remains in the strict payload comparison.
+              ...(symptom.rated_at === null ? {} : { rated_at: symptom.rated_at }),
             })),
       p_player_session: {
         id: input.playerSession.id,

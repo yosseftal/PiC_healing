@@ -2,6 +2,9 @@
 
 **Date:** 2026-10-02
 
+The approved 2026-10-06 remediation supersedes this historical gate baseline and carry-forward items
+where explicitly resolved. See [Wave 10 remediation handoff](wave-10-remediation-handoff.md).
+
 **Approved specification:** `.scratch/wave-10-ui-primitives.md`
 
 **Canonical tickets:** `.scratch/wave-10-ui-primitives/issues/`

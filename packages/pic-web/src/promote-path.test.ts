@@ -340,13 +340,7 @@ try {
   remoteEnv = null;
 }
 
-const hasRemoteCredentials =
-  remoteEnv !== null &&
-  remoteEnv.SUPABASE_URL !== undefined &&
-  remoteEnv.SUPABASE_ANON_KEY !== undefined &&
-  remoteEnv.SUPABASE_SERVICE_ROLE_KEY !== undefined;
-
-describe.skipIf(!hasRemoteCredentials)("promote path remote integration", () => {
+describe("promote path remote integration", () => {
   const TEST_USER_PASSWORD = `pic-healing-promote-path-${randomUUID()}`;
   let serviceClient: SupabaseClient;
   let seedTreatmentId: string;
@@ -354,7 +348,13 @@ describe.skipIf(!hasRemoteCredentials)("promote path remote integration", () => 
   const createdUserIds: string[] = [];
 
   beforeAll(async () => {
-    const env = remoteEnv!;
+    if (!remoteEnv?.SUPABASE_URL || !remoteEnv.SUPABASE_ANON_KEY || !remoteEnv.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error(
+        "promote-path.test.ts requires SUPABASE_URL, SUPABASE_ANON_KEY and " +
+        "SUPABASE_SERVICE_ROLE_KEY in root .env.local; see docs/testing/supabase-remote-testing.md.",
+      );
+    }
+    const env = remoteEnv;
     serviceClient = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -401,7 +401,15 @@ describe.skipIf(!hasRemoteCredentials)("promote path remote integration", () => 
   });
 
   afterAll(async () => {
-    await Promise.all(createdUserIds.map((userId) => serviceClient.auth.admin.deleteUser(userId)));
+    if (createdUserIds.length === 0) return;
+    for (const table of ["timeline_events", "personal_treatment_library", "player_sessions", "symptom_groups"]) {
+      const { error } = await serviceClient.from(table).delete().in("user_id", createdUserIds);
+      if (error) throw new Error(`Failed to clean up ephemeral ${table}: ${error.message}`);
+    }
+    for (const userId of createdUserIds) {
+      const { error } = await serviceClient.auth.admin.deleteUser(userId);
+      if (error) throw new Error(`Failed to delete ephemeral Auth user: ${error.message}`);
+    }
   });
 
   it("atomic promotion via SupabaseRepository after provider swap", async () => {

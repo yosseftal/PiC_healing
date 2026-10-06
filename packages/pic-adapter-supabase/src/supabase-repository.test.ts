@@ -113,10 +113,6 @@ async function createAuthenticatedTestUser(): Promise<TestUser> {
   return { userId, client: anonClient };
 }
 
-afterAll(async () => {
-  await Promise.all(createdTestUserIds.map((userId) => serviceClient.auth.admin.deleteUser(userId)));
-});
-
 /**
  * A real, pre-seeded, globally-readable `treatments` row (ADR-0001 hybrid ownership: `user_id is null`).
  * Required because `personal_treatment_library.treatment_id` and `player_sessions.treatment_id` are
@@ -153,7 +149,7 @@ const ephemeralContractTreatmentIds: string[] = [];
 let contractTreatmentIdPool: string[] = [];
 
 beforeAll(async () => {
-  const poolSize = 10;
+  const poolSize = 32;
   const { data, error } = await serviceClient
     .from("treatments")
     .insert(
@@ -182,15 +178,20 @@ beforeAll(async () => {
  * own verification, not a hypothetical.
  */
 afterAll(async () => {
+  // Timeline rows reference library rows. Delete each run's dependents in FK order before deleting
+  // its Auth owners, and check every response: admin.deleteUser returns errors instead of throwing.
+  if (createdTestUserIds.length > 0) {
+    for (const table of ["timeline_events", "personal_treatment_library", "player_sessions", "symptom_groups"]) {
+      const { error } = await serviceClient.from(table).delete().in("user_id", createdTestUserIds);
+      if (error) throw new Error(`Failed to clean up ephemeral ${table}: ${error.message}`);
+    }
+    for (const userId of createdTestUserIds) {
+      const { error } = await serviceClient.auth.admin.deleteUser(userId);
+      if (error) throw new Error(`Failed to delete ephemeral Auth user: ${error.message}`);
+    }
+  }
   if (ephemeralContractTreatmentIds.length === 0) {
     return;
-  }
-  const { error: libraryError } = await serviceClient
-    .from("personal_treatment_library")
-    .delete()
-    .in("treatment_id", ephemeralContractTreatmentIds);
-  if (libraryError) {
-    throw new Error(`Failed to clean up dependent personal_treatment_library rows: ${libraryError.message}`);
   }
   const { error: timelineError } = await serviceClient
     .from("timeline_events")
@@ -198,6 +199,13 @@ afterAll(async () => {
     .in("treatment_id", ephemeralContractTreatmentIds);
   if (timelineError) {
     throw new Error(`Failed to clean up dependent timeline_events rows: ${timelineError.message}`);
+  }
+  const { error: libraryError } = await serviceClient
+    .from("personal_treatment_library")
+    .delete()
+    .in("treatment_id", ephemeralContractTreatmentIds);
+  if (libraryError) {
+    throw new Error(`Failed to clean up dependent personal_treatment_library rows: ${libraryError.message}`);
   }
   // Ticket 01's "getPlayerSession dynamic rehydration" contract block (makeSessionId: randomUUID) now
   // also writes real player_sessions rows against these ephemeral treatment ids - clean those up too,
@@ -236,11 +244,11 @@ function buildProvenance(overrides: Partial<LibraryRowProvenance> = {}): Library
 /**
  * Ticket 03's shared `RepositoryPort` contract suite, imported unmodified (per ticket 12's own Seam Map:
  * "import it exactly like `pic-adapter-local-guest`'s test does"). One shared, freshly-provisioned test
- * user backs every non-skipped `it()` in this suite (a small, bounded number of calls to `makePort()`),
+ * user backs the common CRUD tests; each promotion test provisions its own RLS-scoped owner,
  * cleaned up in the top-level `afterAll` above alongside every other test user this file creates.
  *
- * `skipPromoteGuestToAccount: true` - ticket 13 owns that RPC exclusively; see
- * `SupabaseRepositoryPromotionNotImplementedError`'s own doc comment.
+ * The real RPC runs the same promotion contract as the fake, with valid UUID fixtures and
+ * idempotency keys correlated to the promoted group/session. Dedicated adversarial RPC tests follow.
  *
  * **`makeTreatmentId` override (Wave 6 fix, orchestrator-approved):** this suite's own default fixture
  * builder (`uniqueId("treatment")` in `repository-port.contract.ts`) generates opaque, non-UUID strings
@@ -268,7 +276,13 @@ runRepositoryPortContractTests(
     return new SupabaseRepository(sharedContractTestUser.client);
   },
   {
-    skipPromoteGuestToAccount: true,
+    promotion: "authenticated-target",
+    makePromotionIdentity: async () => {
+      const user = await createAuthenticatedTestUser();
+      return { port: new SupabaseRepository(user.client), userId: user.userId };
+    },
+    makeGroupId: randomUUID,
+    makeSymptomId: randomUUID,
     makeTreatmentId: makeContractTreatmentId,
     makeIdempotencyKey: randomUUID,
     makeUnknownTreatmentId: randomUUID,
@@ -708,12 +722,8 @@ describe("SupabaseRepository", () => {
    * collide with another's on `symptom_groups.id`/`player_sessions.id` (both real random UUIDs) or on
    * `personal_treatment_library`'s `(user_id, treatment_id)` unique constraint (fresh `user_id` per test).
    *
-   * `rated_at: null` on every fixture symptom (rather than the contract suite's default non-null value)
-   * deliberately sidesteps ticket 12's already-escalated, already-tested schema gap (`symptoms` has no
-   * `rated_at` column - see `SymptomRow`'s doc comment and this file's own
-   * "rated_at always reads back as null" test above) rather than re-proving it here; a real Guest symptom
-   * promoted through this same adapter would lose that field for the identical, already-documented
-   * reason, regardless of anything ticket 13 itself does.
+   * These older adversarial fixtures exercise nullable ratings. The shared success contract above
+   * separately asserts preservation of fully rated snapshots, including rated_at, through the real RPC.
    */
   describe("promoteGuestToAccount", () => {
     function buildGuestSymptom(overrides: Partial<Symptom> = {}): Symptom {
@@ -781,6 +791,7 @@ describe("SupabaseRepository", () => {
                 name: symptom.name,
                 polarity: symptom.polarity,
                 intensity: symptom.intensity,
+                ...(symptom.rated_at === null ? {} : { rated_at: symptom.rated_at }),
               })),
         p_player_session: {
           id: playerSession.id,
@@ -856,6 +867,38 @@ describe("SupabaseRepository", () => {
       // `promote()`). This adapter-level test proves the half of that guarantee that is actually this
       // ticket's to prove: the call resolves with a fully, durably promoted state for SessionEngine to
       // act on.
+    });
+
+    it("replays a legacy unrated promotion receipt through the current adapter without duplication", async () => {
+      const user = await createAuthenticatedTestUser();
+      const repository = new SupabaseRepository(user.client);
+      const group = buildGuestGroup();
+      const playerSession = buildGuestPlayerSession({ linked_group_id: group.id });
+
+      // Pre-rated_at clients sent this exact symptom shape. Create a genuine receipt using that wire
+      // version, then retry the same domain snapshot through today's public adapter interface.
+      const legacySymptoms = group.symptoms.map(({ id, name, polarity, intensity }) => ({
+        id, name, polarity, intensity,
+      }));
+      const { data: legacy, error } = await user.client.rpc("promote_guest_to_account",
+        toRpcPayload(group, playerSession, user.userId, { symptoms: legacySymptoms }));
+      expect(error).toBeNull();
+      expect(legacy).not.toBeNull();
+
+      const replay = await repository.promoteGuestToAccount({
+        idempotencyKey: group.id, group, playerSession, newUserId: user.userId,
+      });
+      expect(replay.group).toEqual(group);
+      expect(replay.playerSession).toEqual(playerSession);
+      expect(replay.libraryRow.id).toBe(legacy.library_row_id);
+      expect(replay.timelineEvent.id).toBe(legacy.timeline_event_id);
+      expect(replay.libraryRow.use_count).toBe(1);
+
+      for (const table of ["symptom_groups", "symptoms", "player_sessions", "personal_treatment_library", "timeline_events"]) {
+        const { data: rows, error: readError } = await user.client.from(table).select("id").eq("user_id", user.userId);
+        expect(readError).toBeNull();
+        expect(rows).toHaveLength(1);
+      }
     });
 
     it("null group promotion writes session, library row, and timeline event only", async () => {

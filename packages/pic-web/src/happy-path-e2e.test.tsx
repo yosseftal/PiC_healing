@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Wave 8 Ticket 08-09: continuous happy-path integration — Guest bootstrap through atomic promotion.
- * Skips when `.env.local` remote credentials are unavailable.
+ * Requires `.env.local` remote credentials; absent configuration fails the suite.
  */
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -72,13 +72,7 @@ try {
   remoteEnv = null;
 }
 
-const hasRemoteCredentials =
-  remoteEnv !== null &&
-  remoteEnv.SUPABASE_URL !== undefined &&
-  remoteEnv.SUPABASE_ANON_KEY !== undefined &&
-  remoteEnv.SUPABASE_SERVICE_ROLE_KEY !== undefined;
-
-describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
+describe("happy path E2E (Ticket 08-09)", () => {
   const TEST_USER_PASSWORD = `pic-happy-path-${randomUUID()}`;
   let serviceClient: SupabaseClient;
   let testEmail: string;
@@ -86,8 +80,13 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(async () => {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-    const env = remoteEnv!;
+    if (!remoteEnv?.SUPABASE_URL || !remoteEnv.SUPABASE_ANON_KEY || !remoteEnv.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error(
+        "happy-path-e2e.test.tsx requires SUPABASE_URL, SUPABASE_ANON_KEY and " +
+        "SUPABASE_SERVICE_ROLE_KEY in root .env.local; see docs/testing/supabase-remote-testing.md.",
+      );
+    }
+    const env = remoteEnv;
     serviceClient = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -113,11 +112,12 @@ describe.skipIf(!hasRemoteCredentials)("happy path E2E (Ticket 08-09)", () => {
 
   afterAll(async () => {
     if (serviceClient !== undefined && testUserId !== undefined) {
-      await serviceClient.from("timeline_events").delete().eq("user_id", testUserId);
-      await serviceClient.from("personal_treatment_library").delete().eq("user_id", testUserId);
-      await serviceClient.from("player_sessions").delete().eq("user_id", testUserId);
-      await serviceClient.from("symptom_groups").delete().eq("user_id", testUserId);
-      await serviceClient.auth.admin.deleteUser(testUserId);
+      for (const table of ["timeline_events", "personal_treatment_library", "player_sessions", "symptom_groups"]) {
+        const { error } = await serviceClient.from(table).delete().eq("user_id", testUserId);
+        if (error) throw new Error(`Failed to clean up ephemeral ${table}: ${error.message}`);
+      }
+      const { error } = await serviceClient.auth.admin.deleteUser(testUserId);
+      if (error) throw new Error(`Failed to delete ephemeral Auth user: ${error.message}`);
     }
     vi.unstubAllEnvs();
   });

@@ -48,11 +48,14 @@ try {
   remoteEnv = null;
 }
 
-const hasRemoteCredentials = remoteEnv !== null && readSupabasePublicConfigFromEnv(remoteEnv) !== null;
-
-describe.skipIf(!hasRemoteCredentials)("tracer bullet seed treatments remote parity", () => {
+describe("tracer bullet seed treatments remote parity", () => {
   beforeAll(() => {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    if (remoteEnv === null || readSupabasePublicConfigFromEnv(remoteEnv) === null) {
+      throw new Error(
+        "tracer-bullet-seed-treatments.remote.test.ts requires Supabase URL and anon key in " +
+        "root .env.local; see docs/testing/supabase-remote-testing.md.",
+      );
+    }
   });
 
   it(

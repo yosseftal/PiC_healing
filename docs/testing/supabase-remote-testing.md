@@ -25,11 +25,13 @@ Test files load these via the same parsing pattern as `scripts/supabase-connecti
 ## Running adapter tests
 
 ```bash
-NODE_TLS_REJECT_UNAUTHORIZED=0 npx vitest run packages/pic-adapter-supabase
+npx vitest run packages/pic-adapter-supabase
 ```
 
-`NODE_TLS_REJECT_UNAUTHORIZED=0` is set **only at the shell** for test runs when the local TLS chain
-blocks the remote project — never in shipped adapter source.
+TLS certificate verification must remain enabled. Resolve connectivity or trust configuration
+before verification; test code and command invocations must not disable certificate verification.
+Remote suites fail clearly when credentials are absent instead of registering skipped tests.
+The root `npm test` command includes remote adapter and web integration tests.
 
 ## Manual-apply migration checkpoint
 
@@ -43,6 +45,10 @@ migration manually via the **Supabase SQL Editor** before verification tests can
 
 Every migration uses `add column if not exists` / `create or replace function` patterns — safe to
 re-run. Never edit an already-applied migration file in place.
+
+Wave 10's approved exception to step 1: prepare and open the reviewable uncommitted SQL, obtain the
+Event Manager's manual application confirmation, verify every gate, then commit. The Event Manager
+confirmed application of `20261006185500_promote_guest_to_account_rated_at.sql` on 2026-10-06.
 
 ## Pre-flight connectivity check
 
@@ -60,3 +66,18 @@ per-table row counts for clean-state sweeps after test runs.
 - Contract-suite tests use isolated `treatments` pool rows and UUID idempotency keys (`makeTreatmentId` /
   `makeIdempotencyKey` on `RepositoryPortContractOptions`) to avoid cross-test contamination on shared
   remote state.
+- Promotion success contracts execute against the fake and real Supabase; Local Guest storage executes
+  linked/unlinked rejection contracts because promotion must target the authenticated adapter (DEC-017).
+- Real promotion contracts provision a fresh authenticated owner per test, correlate the idempotency key
+  with `group.id` or `playerSession.id`, and retain all success, retry, identity and no-write assertions.
+  Shared-treatment executions use the same owner; independent owners have separate RLS-scoped ports.
+- Fully rated promotion snapshots retain `rated_at` through the adapter payload and transactional RPC.
+  Apply `supabase/migrations/20261006185500_promote_guest_to_account_rated_at.sql` through the manual SQL
+  Editor checkpoint above before running the complete green gate. The regression must stay red against
+  the old RPC, which drops rating timestamps; do not replace its fixtures with null ratings.
+- The full symptom payload, including `rated_at`, participates in strict idempotency fingerprinting.
+  A replay with a changed rating timestamp must reject without changing the original group, session,
+  or library use count. Null timestamps retain the legacy omitted-field wire shape, so unrated legacy
+  receipts replay without duplication. Legacy rated receipts can reject new rated-snapshot retries
+  because their original payload never transmitted the timestamp; strict fingerprint validation is
+  preserved rather than accepting a divergent snapshot or rewriting past receipts.
