@@ -247,3 +247,8 @@ Single-context: `CONTEXT.md`, `decisions.md`, and `docs/adr/` at the repo root. 
 
 Read-only hard-gate audit against the Seam, Dumb Reflection, Blind-by-Default, EM Sovereignty, glossary,
 and FK-alignment invariants. See `docs/agents/pic-sovereign-domain-audit.md`.
+
+### Project-local skills
+
+- `$pic-wave-orchestrator`: bounded development-wave orchestration. Canonical workflow: `docs/agents/wave-orchestrator.md`.
+- `$pic-sovereign-domain-audit`: read-only domain and architecture audit. Canonical workflow: `docs/agents/pic-sovereign-domain-audit.md`.
