@@ -5,6 +5,7 @@ import { AppProviders } from "./app-providers";
 import { resetGuestFlowFactsForTest } from "./guest-flow-facts";
 import { TerminalNemarUnit } from "./TerminalNemarUnit";
 import { LanguageSelector } from "./i18n/language-selector";
+import { compositionRoot } from "./composition-root";
 
 afterEach(() => {
   cleanup();
@@ -15,19 +16,69 @@ afterEach(() => {
 describe("TerminalNemarUnit", () => {
   beforeEach(() => localStorage.setItem("pic-web.locale.v1", "en"));
 
-  it("keeps a focused response control and editing state while its language changes", () => {
+  it("replaces the focused Yes control when the reflected action becomes sovereign Finish", () => {
+    const { rerender } = render(<AppProviders>
+      <TerminalNemarUnit sessionId="session-1" response={null} />
+    </AppProviders>);
+    const yes = screen.getByTestId("terminal-nemar-yes");
+    yes.focus();
+    rerender(<AppProviders><TerminalNemarUnit sessionId="session-1" response="yes" /></AppProviders>);
+    const finish = screen.getByTestId("finish-button");
+    expect(finish).not.toBe(yes);
+    expect(document.activeElement).not.toBe(finish);
+    expect(yes.isConnected).toBe(false);
+  });
+
+  it.each(["yes", "no"] as const)("keeps a focused %s control and editing state while its language changes", (answer) => {
     render(<AppProviders>
       <LanguageSelector /><TerminalNemarUnit sessionId="session-1" response="yes" />
     </AppProviders>);
     fireEvent.click(screen.getByRole("button", { name: "Change response" }));
-    const yes = screen.getByTestId("terminal-nemar-yes");
-    yes.focus();
+    const control = screen.getByTestId(`terminal-nemar-${answer}`);
+    control.focus();
     fireEvent.click(screen.getByRole("button", { name: "עברית" }));
-    expect(screen.getByTestId("terminal-nemar-yes")).toBe(yes);
-    expect(document.activeElement).toBe(yes);
-    expect(yes.getAttribute("aria-pressed")).toBe("true");
-    expect(yes.textContent).toBe("כןנבחרה");
+    expect(screen.getByTestId(`terminal-nemar-${answer}`)).toBe(control);
+    expect(document.activeElement).toBe(control);
+    expect(control.getAttribute("aria-pressed")).toBe(answer === "yes" ? "true" : "false");
+    expect(control.textContent).toBe(answer === "yes" ? "כןנבחרה" : "לא");
     expect(screen.getByRole("group", { name: "פעולות זמינות" }).querySelectorAll("button")).toHaveLength(2);
+  });
+
+  it.each(["response", "finish"] as const)("replaces the focused %s action with its distinct recovery action", async (kind) => {
+    if (kind === "response") {
+      vi.spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar").mockRejectedValue(new Error("unavailable"));
+    } else {
+      vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested").mockRejectedValue(new Error("unavailable"));
+    }
+    render(<AppProviders>
+      <TerminalNemarUnit sessionId="session-1" response={kind === "finish" ? "yes" : null} />
+    </AppProviders>);
+    const control = screen.getByTestId(kind === "finish" ? "finish-button" : "terminal-nemar-yes");
+    control.focus();
+    fireEvent.click(control);
+    const retry = await screen.findByRole("button", {
+      name: kind === "finish" ? "Try finishing again" : "Try this Terminal NEMAR response again",
+    });
+    expect(retry).not.toBe(control);
+    expect(document.activeElement).not.toBe(retry);
+    expect(control.isConnected).toBe(false);
+  });
+
+  it("replaces the focused No action with a distinct Change response control", () => {
+    const { rerender } = render(<AppProviders>
+      <TerminalNemarUnit sessionId="session-1" response={null} />
+    </AppProviders>);
+    const no = screen.getByTestId("terminal-nemar-no");
+    no.focus();
+    rerender(<AppProviders><TerminalNemarUnit sessionId="session-1" response="no" /></AppProviders>);
+    const change = screen.getByRole("button", { name: "Change response" });
+    expect(change).not.toBe(no);
+    expect(document.activeElement).not.toBe(change);
+    expect(no.isConnected).toBe(false);
+    change.focus();
+    fireEvent.click(change);
+    expect(screen.getByTestId("terminal-nemar-no")).not.toBe(change);
+    expect(document.activeElement).not.toBe(screen.getByTestId("terminal-nemar-no"));
   });
 
   it("renders no confirmation and no aria-pressed selection when response is null (AC3)", () => {

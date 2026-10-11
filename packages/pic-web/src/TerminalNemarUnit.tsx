@@ -73,34 +73,41 @@ export function TerminalNemarUnit({
   const showChoices = response === null || editing;
   const actions: ActionTuple = responseStatus === "recovery" ? [
     {
+      id: "retry-response",
       kind: "button", label: message("player.retryResponse").text, intent: "secondary",
       onAction: () => void retryResponseRequest(),
     },
   ] : finishStatus === "recovery" ? [
     {
+      id: "retry-finish",
       kind: "button", label: message("player.retryFinish").text, intent: "secondary",
       onAction: () => void retryFinishRequest(),
     },
   ] : showChoices ? [
     {
+      id: "response-yes",
       kind: "button", label: message("player.yes").text, testId: "terminal-nemar-yes", intent: "primary",
       pressed: response === "yes", onAction: () => void choose("yes"),
     },
     {
+      id: "response-no",
       kind: "button", label: message("player.no").text, testId: "terminal-nemar-no", intent: "secondary",
       pressed: response === "no", onAction: () => void choose("no"),
     },
   ] : response === "yes" && !successDeclared ? [
     {
+      id: "finish",
       kind: "button", label: message("player.finish").text, testId: "finish-button", intent: "primary",
       onAction: () => void finish(),
     },
     {
+      id: "change-response",
       kind: "button", label: message("player.changeResponse").text, intent: "quiet",
       onAction: () => setEditing(true),
     },
   ] : [
     {
+      id: "change-response",
       kind: "button", label: message("player.changeResponse").text, intent: "quiet",
       onAction: () => setEditing(true),
     },

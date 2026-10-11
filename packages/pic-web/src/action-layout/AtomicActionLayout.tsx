@@ -9,6 +9,8 @@ import {
 export type ActionIntent = "primary" | "secondary" | "quiet";
 
 interface ActionDescriptorBase {
+  /** Locale-independent identity of the action; change it when the action's meaning changes. */
+  id?: string;
   label: string;
   accessibleLabel?: string;
   intent: ActionIntent;
@@ -240,7 +242,7 @@ export function AtomicActionLayout({
           data-alignment={alignment}
         >
           {actions.map((action, index) => (
-            <div className="min-w-0 flex-1" key={`${action.kind}-${index}`}>
+            <div className="min-w-0 flex-1" key={action.id ?? `${action.kind}-${action.label}-${index}`}>
               <ActionControl action={action} selectedLabel={selectedLabel} />
             </div>
           ))}

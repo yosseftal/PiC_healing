@@ -201,3 +201,24 @@ focus and metadata assertions. These environment/test-fixture failures are not c
   manual run was performed. Existing Chromium zoom/reduced-motion cases pass; they do not replace device QA.
 - The full configured Chromium suite and root regression/lint wave gates remain the orchestrator's closure work.
   No additional therapeutic content, Gate copy, earlier screen or downstream ticket implementation was included.
+
+### Independent review correction: semantic action identity
+
+Standards review found one P2 judgment concern: slot keys retained a focused Yes control when it became Finish.
+Spec review found zero mismatches. TB-02 and DEC-015 require distinct response and explicit Finish affordances.
+Optional locale-independent ActionDescriptor.id now identifies each Terminal action, including its retry.
+Legacy callers retain their original label-based fallback; translated callers must supply semantic IDs.
+Locale-only changes retain Yes/No DOM and edit state. Semantic action changes replace the old focused control.
+
+The focused Yes-to-Finish regression failed on the original patch, then passed after the identity correction.
+Coverage includes No/Change response, response/Finish retries, and both locales' keyboard-repeat behavior.
+Another Enter after Yes does not focus or activate Finish or open the Gate.
+
+- Terminal component tests: 10 passed; complete frontend: 26 files / 178 tests passed.
+- Affected Chromium Terminal NEMAR / sovereign Finish cases: 4 passed, 11.1s.
+- Scoped/root typechecks, owned lint, 130-character and whitespace/scope checks: passed.
+- Web depcruise: zero violations, 731 modules / 1462 dependencies; build: passed, 2689 modules.
+- Four web paths plus this ticket changed; zero engine, adapter, contract, seed or root tooling edits.
+
+The original 51-case Chromium evidence remains above; final wave closure reruns the full configured suite.
+Parent review of the committed correction remains pending.

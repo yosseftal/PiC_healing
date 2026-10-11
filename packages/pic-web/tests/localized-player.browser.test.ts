@@ -135,8 +135,16 @@ for (const locale of ["he", "en"] as const) {
     await expect(sheet.getByTestId("finish-anyway-button")).toBeEnabled();
     await page.keyboard.press("Escape");
     await actions.getByRole("button", { name: text.change }).click();
-    await actions.getByRole("button", { name: text.yes, exact: true }).click();
+    const yes = actions.getByRole("button", { name: text.yes, exact: true });
+    const yesNode = await yes.elementHandle();
+    await yes.focus();
+    await page.keyboard.press("Enter");
     await expect(actions.getByRole("button", { name: text.finish, exact: true })).toBeVisible();
+    const finish = actions.getByRole("button", { name: text.finish, exact: true });
+    expect(await finish.evaluate((element, original) => element === original, yesNode)).toBe(false);
+    await expect(finish).not.toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("dialog", { name: "Keep your session" })).toHaveCount(0);
     await expect(actions.getByRole("button")).toHaveCount(2);
     await actions.getByRole("button", { name: text.finish, exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Keep your session" })).toBeVisible();
