@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { HorizontalSlideContainer } from "./HorizontalSlideContainer";
+import { LocaleProvider } from "./i18n/locale-provider";
+import { LanguageSelector } from "./i18n/language-selector";
 
 const motionPreference = vi.hoisted(() => ({ reduced: false }));
 
@@ -41,6 +43,38 @@ function slide(activeKey: string, label: string, userInitiated = false) {
 }
 
 describe("HorizontalSlideContainer", () => {
+  it("settles pending navigation once when the selector changes locale without moving focus", async () => {
+    localStorage.setItem("pic-web.locale.v1", "he");
+    const completed = vi.fn();
+    function fixture(activeKey: string) {
+      return (
+        <LocaleProvider>
+          <div role="dialog"><LanguageSelector /></div>
+          <HorizontalSlideContainer
+            activeKey={activeKey} orderedKeys={orderedKeys} stepLabel="Current step"
+            userInitiated onTransitionComplete={completed}
+          ><p>{activeKey}</p></HorizontalSlideContainer>
+        </LocaleProvider>
+      );
+    }
+    const view = render(fixture("first"));
+    const first = screen.getByRole("region", { name: "Current step" });
+    view.rerender(fixture("second"));
+    const english = screen.getByRole("button", { name: "English" });
+    english.focus();
+    fireEvent.click(english);
+    await waitFor(() => expect(completed).toHaveBeenCalledExactlyOnceWith({
+      activeKey: "second", direction: "forward",
+    }));
+    expect(screen.getByRole("region", { name: "Current step" })).not.toBe(first);
+    expect(document.activeElement).toBe(english);
+    expect(screen.queryByText("first")).toBeNull();
+    expect(screen.queryByText("Current step")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    expect(completed).toHaveBeenCalledTimes(1);
+    localStorage.clear();
+  });
+
   it("reports forward and backward movement from a stable controlled order", async () => {
     const view = render(slide("first", "First step"));
     const container = screen.getByTestId("horizontal-slide-container");

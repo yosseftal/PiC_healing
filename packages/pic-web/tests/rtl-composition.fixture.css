@@ -1,0 +1,13 @@
+.demo-layout {
+  min-block-size: 0;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--spacing-pic-calm-2);
+}
+
+.demo-layout > .pic-horizontal-slide-container,
+.demo-layout .pic-horizontal-slide-panel {
+  min-block-size: 0;
+  block-size: 100%;
+}

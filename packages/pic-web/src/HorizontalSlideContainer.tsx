@@ -1,6 +1,7 @@
 import {
   useLayoutEffect,
   useRef,
+  useState,
   type CSSProperties,
   type Key,
   type ReactNode,
@@ -9,11 +10,14 @@ import {
 import {
   AnimatePresence,
   motion,
-  useIsPresent,
+  useAnimationControls,
+  usePresence,
+  usePresenceData,
   useReducedMotion,
   type Transition,
 } from "motion/react";
 import { PIC_MOTION, PIC_REDUCED_MOTION } from "./visual-foundation/motion-tokens";
+import { useOptionalLocale } from "./i18n/locale-provider";
 import "./horizontal-slide-container.css";
 
 export type HorizontalSlideDirection = "forward" | "backward" | "neutral";
@@ -55,6 +59,7 @@ interface SlidePanelProps {
   completion: HorizontalSlideCompletion;
   focusTargetRef?: RefObject<HTMLElement | null>;
   initial: false | "enter";
+  interrupted: boolean;
   motionContext: SlideMotionContext;
   reducedMotion: boolean;
   shouldComplete: boolean;
@@ -141,6 +146,7 @@ function SlidePanel({
   completion,
   focusTargetRef,
   initial,
+  interrupted,
   motionContext,
   reducedMotion,
   shouldComplete,
@@ -149,7 +155,11 @@ function SlidePanel({
   userInitiated,
   onTransitionComplete,
 }: SlidePanelProps) {
-  const isPresent = useIsPresent();
+  const [isPresent, safeToRemove] = usePresence();
+  const exitingMotionContext: SlideMotionContext = usePresenceData();
+  const locale = useOptionalLocale()?.locale;
+  const previousLocaleRef = useRef(locale);
+  const controls = useAnimationControls();
   const panelRef = useRef<HTMLDivElement>(null);
   const completionReportedRef = useRef(false);
 
@@ -158,11 +168,33 @@ function SlidePanel({
       return;
     }
     completionReportedRef.current = true;
-    if (userInitiated) {
+    if (userInitiated && !panelRef.current?.closest("[inert]") &&
+      !document.activeElement?.closest('[role="dialog"]')) {
       (focusTargetRef?.current ?? panelRef.current)?.focus();
     }
     onTransitionComplete?.(completion);
   }
+
+  useLayoutEffect(() => {
+    let cancelled = false;
+    function finishExit() {
+      if (!cancelled) safeToRemove?.();
+    }
+    const localeChanged = previousLocaleRef.current !== locale;
+    previousLocaleRef.current = locale;
+    if (localeChanged || interrupted) {
+      controls.stop();
+      controls.set("center");
+      if (isPresent) completeTransition();
+      // Presence records its outgoing keys in the parent's layout effect before accepting completion.
+      else queueMicrotask(finishExit);
+    } else if (isPresent) {
+      void controls.start("center");
+    } else {
+      void controls.start("exit").then(finishExit);
+    }
+    return () => { cancelled = true; controls.stop(); };
+  }, [controls, isPresent, locale, interrupted, safeToRemove]);
 
   return (
     <motion.div
@@ -176,10 +208,9 @@ function SlidePanel({
       data-translation={reducedMotion ? "none" : "logical-inline"}
       inert={isPresent ? undefined : true}
       tabIndex={-1}
-      custom={motionContext}
+      custom={isPresent ? motionContext : exitingMotionContext}
       initial={initial}
-      animate="center"
-      exit="exit"
+      animate={controls}
       transition={transition}
       variants={slideVariants}
       onAnimationComplete={(definition) => {
@@ -188,7 +219,7 @@ function SlidePanel({
         }
       }}
     >
-      {shouldComplete && stepLabel !== undefined ? (
+      {shouldComplete && !interrupted && stepLabel !== undefined ? (
         <span className="pic-horizontal-slide-announcement" role="status" aria-live="polite">
           {stepLabel}
         </span>
@@ -208,20 +239,36 @@ export function HorizontalSlideContainer({
   userInitiated = false,
   onTransitionComplete,
 }: HorizontalSlideContainerProps) {
+  const locale = useOptionalLocale()?.locale;
   const prefersReducedMotion = useReducedMotion() ?? false;
-  const previousKeyRef = useRef<Key | undefined>(undefined);
-  const previousOrderRef = useRef<readonly Key[] | undefined>(undefined);
-  const hasTransition =
-    previousKeyRef.current !== undefined && !Object.is(previousKeyRef.current, activeKey);
-  const direction = hasTransition
-    ? (explicitDirection ??
-      inferDirection(previousKeyRef.current, activeKey, previousOrderRef.current, orderedKeys ?? []))
-    : "neutral";
+  const [presentation, setPresentation] = useState({
+    activeKey, orderedKeys, locale, direction: "neutral" as HorizontalSlideDirection,
+    pending: false, interrupted: false,
+  });
+  let current = presentation;
+  if (!Object.is(presentation.activeKey, activeKey)) {
+    current = {
+      activeKey, orderedKeys, locale,
+      direction: explicitDirection ?? inferDirection(
+        presentation.activeKey, activeKey, presentation.orderedKeys, orderedKeys ?? [],
+      ),
+      pending: true, interrupted: presentation.locale !== locale,
+    };
+    setPresentation(current);
+  } else if (presentation.locale !== locale) {
+    current = { ...presentation, locale, interrupted: true };
+    setPresentation(current);
+  } else if (!sameOrder(presentation.orderedKeys, orderedKeys ?? []) && orderedKeys !== undefined) {
+    current = { ...presentation, orderedKeys };
+    setPresentation(current);
+  }
+  const direction = current.direction;
+  const hasTransition = current.pending;
   const motionContext: SlideMotionContext = {
     direction,
-    reducedMotion: prefersReducedMotion,
+    reducedMotion: prefersReducedMotion || current.interrupted,
   };
-  const transition = prefersReducedMotion
+  const transition = current.interrupted ? { duration: 0 } : prefersReducedMotion
     ? {
         opacity: { duration: PIC_REDUCED_MOTION.duration.opacity },
         x: { duration: PIC_REDUCED_MOTION.duration.spatial },
@@ -230,11 +277,6 @@ export function HorizontalSlideContainer({
         duration: PIC_MOTION.duration.standard,
         ease: PIC_MOTION.ease.organic,
       };
-
-  useLayoutEffect(() => {
-    previousKeyRef.current = activeKey;
-    previousOrderRef.current = orderedKeys === undefined ? undefined : [...orderedKeys];
-  }, [activeKey, orderedKeys]);
 
   return (
     <div
@@ -253,14 +295,19 @@ export function HorizontalSlideContainer({
           activeKey={activeKey}
           completion={{ activeKey, direction }}
           focusTargetRef={focusTargetRef}
-          initial={hasTransition ? "enter" : false}
+          initial={hasTransition && !current.interrupted ? "enter" : false}
+          interrupted={current.interrupted}
           motionContext={motionContext}
           reducedMotion={prefersReducedMotion}
           shouldComplete={hasTransition}
           stepLabel={stepLabel}
           transition={transition}
           userInitiated={userInitiated}
-          onTransitionComplete={onTransitionComplete}
+          onTransitionComplete={(completion) => {
+            setPresentation((previous) => Object.is(previous.activeKey, completion.activeKey)
+              ? { ...previous, pending: false } : previous);
+            onTransitionComplete?.(completion);
+          }}
         >
           {children}
         </SlidePanel>

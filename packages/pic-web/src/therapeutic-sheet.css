@@ -38,6 +38,13 @@
   pointer-events: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .pic-therapeutic-sheet {
+    /* The foundation's general 0.01ms animation fallback must not add spatial drawer duration. */
+    animation-duration: var(--motion-pic-drawer-active) !important;
+  }
+}
+
 @keyframes pic-drawer-enter {
   from { transform: translateX(var(--pic-drawer-translation)); }
   to { transform: translateX(0); }

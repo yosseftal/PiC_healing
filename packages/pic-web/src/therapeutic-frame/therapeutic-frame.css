@@ -6,6 +6,10 @@
 }
 
 .pic-therapeutic-frame {
+  --pic-frame-safe-left: env(safe-area-inset-left, 0px);
+  --pic-frame-safe-right: env(safe-area-inset-right, 0px);
+  --pic-frame-safe-start: var(--pic-frame-safe-left);
+  --pic-frame-safe-end: var(--pic-frame-safe-right);
   block-size: 100vh;
   inline-size: 100vw;
   max-block-size: 100vh;
@@ -17,13 +21,18 @@
   gap: var(--spacing-pic-calm-3);
   padding-block-start: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-top, 0px));
   padding-block-end: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-bottom, 0px));
-  padding-inline-start: calc(var(--spacing-pic-calm-3) + env(safe-area-inset-left, 0px));
-  padding-inline-end: calc(var(--spacing-pic-calm-3) + env(safe-area-inset-right, 0px));
+  padding-inline-start: calc(var(--spacing-pic-calm-3) + var(--pic-frame-safe-start));
+  padding-inline-end: calc(var(--spacing-pic-calm-3) + var(--pic-frame-safe-end));
   overflow: hidden;
   overscroll-behavior: none;
   isolation: isolate;
   background: var(--gradient-pic-healing);
   color: var(--color-pic-ink);
+}
+
+.pic-therapeutic-frame:dir(rtl) {
+  --pic-frame-safe-start: var(--pic-frame-safe-right);
+  --pic-frame-safe-end: var(--pic-frame-safe-left);
 }
 
 @supports (height: 100dvh) {
@@ -186,8 +195,8 @@
 @media (max-width: 30rem) {
   .pic-therapeutic-frame {
     gap: var(--spacing-pic-calm-2);
-    padding-inline-start: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-left, 0px));
-    padding-inline-end: calc(var(--spacing-pic-calm-2) + env(safe-area-inset-right, 0px));
+    padding-inline-start: calc(var(--spacing-pic-calm-2) + var(--pic-frame-safe-start));
+    padding-inline-end: calc(var(--spacing-pic-calm-2) + var(--pic-frame-safe-end));
   }
 
   .pic-therapeutic-content-card {

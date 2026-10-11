@@ -71,10 +71,24 @@ export function TherapeuticSheet({
   const locale = useOptionalLocale();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const previousLocaleRef = useRef(locale?.locale);
   const titleId = useId();
   const descriptionId = useId();
   const resolvedOpen = open ?? uncontrolledOpen;
   useInertBackground(resolvedOpen, triggerRef);
+
+  useLayoutEffect(() => {
+    const changed = previousLocaleRef.current !== locale?.locale;
+    previousLocaleRef.current = locale?.locale;
+    if (changed && resolvedOpen) {
+      // Finish the existing CSS entrance at its final pose; keep the same dialog/focus ownership.
+      for (const surface of [contentRef.current, overlayRef.current]) {
+        surface?.getAnimations?.().forEach((animation) => animation.finish());
+      }
+    }
+  }, [locale?.locale, resolvedOpen]);
 
   function handleOpenChange(nextOpen: boolean): void {
     if (open === undefined) {
@@ -96,10 +110,12 @@ export function TherapeuticSheet({
 
       <Dialog.Portal>
         <Dialog.Overlay
+          ref={overlayRef}
           className="pic-therapeutic-sheet-overlay fixed inset-0 z-50 bg-pic-ink/30"
           data-testid="therapeutic-sheet-overlay"
         />
         <Dialog.Content
+          ref={contentRef}
           aria-describedby={description === undefined ? undefined : descriptionId}
           aria-labelledby={titleId}
           aria-modal="true"

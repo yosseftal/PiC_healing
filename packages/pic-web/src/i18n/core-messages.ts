@@ -10,6 +10,10 @@ export const messageDefinitions = {
   "utilities.trigger": { params: [] },
   "utilities.closePlayer": { params: [] },
   "utilities.playerContent": { params: [] },
+  "utilities.sessionTitle": { params: [] },
+  "utilities.openSession": { params: [] },
+  "utilities.closeSession": { params: [] },
+  "utilities.sessionContent": { params: [] },
 } as const;
 
 // Newly authored UI copy is product-approved for Wave 11 (2026-10-11), not a website quotation.
@@ -24,6 +28,10 @@ export const dictionaries = {
     "utilities.trigger": "כלים",
     "utilities.closePlayer": "סגירת כלי הנגן",
     "utilities.playerContent": "תוכן כלי הנגן",
+    "utilities.sessionTitle": "כלים למרחב העבודה",
+    "utilities.openSession": "פתיחת הכלים",
+    "utilities.closeSession": "סגירת הכלים",
+    "utilities.sessionContent": "תוכן הכלים",
   },
   en: {
     "system.unavailable": "Text is currently unavailable.",
@@ -35,6 +43,10 @@ export const dictionaries = {
     "utilities.trigger": "Utilities",
     "utilities.closePlayer": "Close player utilities",
     "utilities.playerContent": "Player utilities content",
+    "utilities.sessionTitle": "Session utilities",
+    "utilities.openSession": "Open utilities",
+    "utilities.closeSession": "Close utilities",
+    "utilities.sessionContent": "Utilities content",
   },
 } satisfies Record<"he" | "en", Record<keyof typeof messageDefinitions, MessageTemplate>>;
 
