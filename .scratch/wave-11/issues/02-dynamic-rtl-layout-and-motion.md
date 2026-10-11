@@ -152,3 +152,49 @@ Chromium CSS viewport/media emulation and controlled inset values are automated 
 mobile keyboard/visual viewport changes, true desktop browser zoom, and Hebrew screen-reader pronunciation/announcements
 remain unverified manual QA. Existing page-scale/half-size viewport cases do not prove those manual behaviors.
 No Safari, Firefox, physical-device or assistive-technology coverage is claimed.
+
+### Corrective review finding — later outgoing motion (2026-10-11)
+
+The independent Spec review of `8dff295` found a TB-05 regression that incoming-only transform checks missed.
+After a locale-only change or interrupted navigation, the current panel retained interrupted props. A later canonical
+navigation reset the parent policy, but the outgoing panel's frozen interruption flag and zero duration settled its exit
+immediately. This skipped the frozen ordinary exit movement even though the incoming panel still moved correctly.
+
+Four real-selector browser cases reproduced the failure before the correction: Hebrew and English, each after a
+locale-only change and after an interrupted navigation. Every case observed zero later outgoing spatial samples and failed.
+Observers attach before the action. Each case now checks both later forward/backward outgoing transforms, logical signs,
+the frozen 390px-viewport distance range, inert/hidden exiting content, one settled canonical panel, callback counts,
+retained selector focus and background inertness.
+
+The correction keeps interruption in the presence motion context. An exiting panel consumes the current context for both
+its interruption decision and transition timing, rather than reading the retained prior panel props. Ordinary exits use
+the existing standard duration/easing; reduced exits and interrupted settlement use the existing reduced/zero policy.
+No motion tokens, CSS direction signs, domain actions, shared dictionaries, styles or downstream screens changed.
+
+Focused red/green: four browser failures became 4/4 passes; existing slide primitive tests remain 8/8 passing.
+The correction is confined to `HorizontalSlideContainer.tsx`, `dynamic-rtl.browser.test.ts` and this Resolution.
+
+Corrective gate context: the paused, uncommitted Ticket 11.3 Player copy slice is present in the integration tree, giving
+165 frontend tests rather than the original 161. Those downstream changes are not part of this corrective commit; the
+parent stages only the three correction paths. Ticket 11.3 and the final wave gates will verify that integrated state again.
+
+- `npm run typecheck --workspace=pic-web` and root `npm run typecheck`: passed, all four root workspaces included.
+- `npm run test --workspace=pic-web`: final standalone run passed 26 files / 165 tests in 9.70s.
+  The initial run alongside six independent checks passed 164/165 and timed out waiting for Terminal NEMAR while the prior
+  panel was exiting. The unchanged `happy-path-e2e.test.tsx` passed focused 1/1, then the complete standalone suite passed.
+  This is consistent with scheduling under concurrent load; no assertion, sleep or timeout was changed to obtain green.
+- `npm run depcruise --workspace=pic-web`: 731 modules / 1459 dependencies passed, no violations.
+- `npm run build --workspace=pic-web`: 2689 modules passed; existing import/chunk warnings remain.
+- Combined affected Chromium gate with `--workers=2`: final fresh run passed 41/41 in 43.5s, including 17 owned cases.
+  The same six test paths listed above were used. All four new regression cases measure outgoing motion after language
+  selection/interruption and exercise both canonical directions in both locales, including distance and selector focus.
+- The first 40/41 browser run had loaded a legacy English RTL Player expectation before Ticket 11.3 stabilized that test.
+  Its failure call log expected English while the source excerpt already showed the updated Hebrew name. A later fresh
+  40/41 run exposed an existing owned card-focus measurement racing the Sheet's asynchronous return-focus callback;
+  the trace showed the trigger active after card focus. The test now awaits actual trigger return focus after dismissal
+  and verifies card focus before measuring. Exact >=3px, inward offset, target and contrast thresholds remain unchanged.
+  The final 41/41 run followed that observation fix; no sleeps, retry masking or timeout increases were added.
+- Exact owned ESLint, 130-character, whitespace and correction-scope checks pass. No other files were edited by this agent
+  during corrective work; no staging/commit, shared i18n/style edit, feature migration or token change was performed.
+
+Correction complete; edits stopped for parent verification, atomic commit and independent review. Manual limits above remain.

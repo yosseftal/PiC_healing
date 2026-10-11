@@ -100,6 +100,45 @@ test("switching during Sheet entrance settles immediately on the new edge with f
 });
 
 for (const locale of ["he", "en"] as const) {
+  for (const interrupted of [false, true]) {
+    test(`later outgoing motion keeps both directions after ${interrupted ? "interruption" : "locale selection"} in ${locale}`,
+      async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.goto("/tests/rtl-composition.fixture.html");
+        await page.getByRole("button", { name: "פתיחת הכלים" }).click();
+        const sheet = page.getByRole("dialog");
+        await expect.poll(() => sheet.evaluate((element) => element.getAnimations().length)).toBe(0);
+        const language = locale === "he" ? "עברית" : "English";
+        const opposite = locale === "he" ? "English" : "עברית";
+        await sheet.getByRole("button", { name: opposite, exact: true }).click();
+        if (interrupted) {
+          await observeStep(page, "Forward", "second", language);
+          await expect(sheet.getByLabel("Presentation completions")).toHaveText("1");
+        } else {
+          await sheet.getByRole("button", { name: language, exact: true }).click();
+          await expect(sheet.getByLabel("Presentation completions")).toHaveText("0");
+        }
+        const actions = interrupted ? ["Backward", "Forward"] : ["Forward", "Backward"];
+        for (const [index, action] of actions.entries()) {
+          const previousKey = action === "Forward" ? "first" : "second";
+          const targetKey = action === "Forward" ? "second" : "first";
+          const samples = await observeStep(page, action, targetKey);
+          const outgoing = samples.filter((sample) => sample.key === previousKey && Math.abs(sample.x) > 0.1);
+          expect(outgoing.length, `${action} outgoing movement`).toBeGreaterThan(0);
+          const distance = Math.max(...outgoing.map((sample) => Math.abs(sample.x)));
+          expect(distance).toBeGreaterThan(24);
+          expect(distance).toBeLessThanOrEqual(31.3);
+          const expectedSign = (locale === "he" ? -1 : 1) * (action === "Forward" ? -1 : 1);
+          expect(outgoing.every((sample) => Math.sign(sample.x) === expectedSign && sample.inert && sample.hidden)).toBe(true);
+          await expect(sheet.getByLabel("Presentation completions")).toHaveText(String(index + (interrupted ? 2 : 1)));
+          await expect(page.locator("[data-active-key]")).toHaveCount(1);
+          await expect(sheet).toBeVisible();
+          await expect(sheet.getByRole("button", { name: language, exact: true })).toBeFocused();
+          await expect(page.locator("#root")).toHaveAttribute("inert", "");
+        }
+      });
+  }
+
   test(`canonical forward/backward and neutral replacement have real logical transforms in ${locale}`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/tests/rtl-composition.fixture.html");
@@ -189,6 +228,7 @@ for (const viewport of [
         await page.getByRole("button", { name: locale === "he" ? "עברית" : "English", exact: true }).click();
         await page.keyboard.press("Escape");
         await expect(page.getByRole("dialog")).toBeHidden();
+        await expect(page.getByRole("button", { name: /פתיחת הכלים|Open utilities/ })).toBeFocused();
       }
       const geometry = await frame.evaluate((element) => {
         const style = getComputedStyle(element);
@@ -218,6 +258,7 @@ for (const viewport of [
       const card = page.locator(".pic-therapeutic-content-card");
       await page.keyboard.press("Tab");
       await card.focus();
+      await expect(card).toBeFocused();
       const indicator = await card.evaluate((element) => {
         const style = getComputedStyle(element);
         return { width: parseFloat(style.outlineWidth), offset: parseFloat(style.outlineOffset),
@@ -279,6 +320,7 @@ for (const viewport of [
       expect(await page.evaluate(() => [scrollX, scrollY])).toEqual([0, 0]);
       await page.keyboard.press("Escape");
       await expect(sheet).toBeHidden();
+      await expect(page.getByRole("button", { name: /פתיחת הכלים|Open utilities/ })).toBeFocused();
     }
   });
 }

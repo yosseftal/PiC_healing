@@ -50,6 +50,7 @@ export type HorizontalSlideContainerProps = HorizontalSlideBaseProps &
 
 interface SlideMotionContext {
   direction: HorizontalSlideDirection;
+  interrupted: boolean;
   reducedMotion: boolean;
 }
 
@@ -59,12 +60,10 @@ interface SlidePanelProps {
   completion: HorizontalSlideCompletion;
   focusTargetRef?: RefObject<HTMLElement | null>;
   initial: false | "enter";
-  interrupted: boolean;
   motionContext: SlideMotionContext;
   reducedMotion: boolean;
   shouldComplete: boolean;
   stepLabel?: string;
-  transition: Transition;
   userInitiated: boolean;
   onTransitionComplete?: (completion: HorizontalSlideCompletion) => void;
 }
@@ -83,6 +82,16 @@ const slideVariants = {
     x: reducedMotion ? 0 : exitOffset(direction),
   }),
 };
+
+function motionTransition({ interrupted, reducedMotion }: SlideMotionContext): Transition {
+  if (interrupted) return { duration: 0 };
+  return reducedMotion
+    ? {
+        opacity: { duration: PIC_REDUCED_MOTION.duration.opacity },
+        x: { duration: PIC_REDUCED_MOTION.duration.spatial },
+      }
+    : { duration: PIC_MOTION.duration.standard, ease: PIC_MOTION.ease.organic };
+}
 
 function enterOffset(direction: HorizontalSlideDirection): number | string {
   if (direction === "forward") {
@@ -146,17 +155,19 @@ function SlidePanel({
   completion,
   focusTargetRef,
   initial,
-  interrupted,
   motionContext,
   reducedMotion,
   shouldComplete,
   stepLabel,
-  transition,
   userInitiated,
   onTransitionComplete,
 }: SlidePanelProps) {
   const [isPresent, safeToRemove] = usePresence();
   const exitingMotionContext: SlideMotionContext = usePresenceData();
+  // Presence retains old panel props while waiting. A later navigation owns the current exit policy.
+  const currentMotionContext = isPresent ? motionContext : exitingMotionContext;
+  const { interrupted } = currentMotionContext;
+  const transition = motionTransition(currentMotionContext);
   const locale = useOptionalLocale()?.locale;
   const previousLocaleRef = useRef(locale);
   const controls = useAnimationControls();
@@ -208,7 +219,7 @@ function SlidePanel({
       data-translation={reducedMotion ? "none" : "logical-inline"}
       inert={isPresent ? undefined : true}
       tabIndex={-1}
-      custom={isPresent ? motionContext : exitingMotionContext}
+      custom={currentMotionContext}
       initial={initial}
       animate={controls}
       transition={transition}
@@ -266,17 +277,9 @@ export function HorizontalSlideContainer({
   const hasTransition = current.pending;
   const motionContext: SlideMotionContext = {
     direction,
+    interrupted: current.interrupted,
     reducedMotion: prefersReducedMotion || current.interrupted,
   };
-  const transition = current.interrupted ? { duration: 0 } : prefersReducedMotion
-    ? {
-        opacity: { duration: PIC_REDUCED_MOTION.duration.opacity },
-        x: { duration: PIC_REDUCED_MOTION.duration.spatial },
-      }
-    : {
-        duration: PIC_MOTION.duration.standard,
-        ease: PIC_MOTION.ease.organic,
-      };
 
   return (
     <div
@@ -296,12 +299,10 @@ export function HorizontalSlideContainer({
           completion={{ activeKey, direction }}
           focusTargetRef={focusTargetRef}
           initial={hasTransition && !current.interrupted ? "enter" : false}
-          interrupted={current.interrupted}
           motionContext={motionContext}
           reducedMotion={prefersReducedMotion}
           shouldComplete={hasTransition}
           stepLabel={stepLabel}
-          transition={transition}
           userInitiated={userInitiated}
           onTransitionComplete={(completion) => {
             setPresentation((previous) => Object.is(previous.activeKey, completion.activeKey)
