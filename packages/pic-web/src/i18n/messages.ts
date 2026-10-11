@@ -1,4 +1,4 @@
-import { directionFor, type Direction, type Locale } from "./locale";
+import { directionFor, isLocale, type Direction, type Locale } from "./locale";
 
 export type MessageDefinition = { params: readonly string[]; plural?: string };
 export type MessageDefinitions = Record<string, MessageDefinition>;
@@ -107,6 +107,11 @@ export function createMessageResolver<D extends MessageDefinitions>(
       parts, locale: resolvedLocale, direction: directionFor(resolvedLocale), fallback: unavailable || resolvedLocale !== locale,
     };
   };
-  return ((locale: Locale, key: keyof D, params: Record<string, string | number> = {}) =>
-    resolve(locale, key, params)) as MessageResolver<D>;
+  return ((locale: Locale, key: keyof D, params: Record<string, string | number> = {}) => {
+    if (!isLocale(locale)) {
+      report("Unsupported message locale");
+      return { ...resolve("he", key, params), fallback: true };
+    }
+    return resolve(locale, key, params);
+  }) as MessageResolver<D>;
 }

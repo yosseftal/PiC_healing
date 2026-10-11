@@ -8,7 +8,7 @@ the current healing work. This is a working UI-to-preference tracer bullet, not 
 
 **Status:** done
 
-**Dispatch state:** Implemented and verified on 2026-10-11; copy approval is recorded in the Resolution.
+**Dispatch state:** Implemented and verified; Spec review runtime-locale correction passed its gates on 2026-10-11.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.2–3.4 and 6.2.
 
@@ -118,7 +118,7 @@ lowercasing or concatenation. Standalone presentation primitives still inherit t
 
 ### Verification
 
-- `npm run test --workspace=pic-web`: **26 files / 154 tests passed**. The new web-only script runs root Vitest with
+- `npm run test --workspace=pic-web`: **26 files / 160 tests passed** after review correction. The script runs root Vitest with
   repository-root `process.cwd`, preserving existing fixture paths and remote regression configuration.
 - `npm run typecheck --workspace=pic-web`: passed, including invalid-key/parameter compile fixtures.
 - `npm run depcruise --workspace=pic-web`: passed, 730 modules / 1443 dependencies; locale code imports no engines or adapters.
@@ -148,3 +148,22 @@ This ticket localizes shared Player utilities only. Existing Player therapeutic/
 Persistence Gate content and treatment overlays remain their owning later tickets; no broader bilingual release is claimed.
 Player resolving/empty/recovery utility eligibility is unchanged here and will be extended by 11.3. Device cutouts, mobile
 keyboard behavior, physical desktop zoom, Hebrew pronunciation and real screen-reader announcements remain manual QA limits.
+
+### Review correction after `b617a0e`
+
+Standards review found no actionable issue. Spec review identified one P2: section 6.2(1) requires unsupported-runtime-locale
+dictionary resolution, independently of stored-preference normalization. Untyped `resolve("fr", "greeting", { name: "Alex" })`
+previously accessed an absent dictionary and threw a TypeError. The ticket returned to in-progress/under-review during correction.
+
+The public runtime boundary now validates the supplied locale before dictionary access or Intl number/plural formatting.
+Unsupported input resolves through Hebrew, reports the static defect `Unsupported message locale`, and always marks the result
+as fallback while retaining the actual resolved locale/direction. The typed public contract remains exactly `he | en`.
+
+Six parameterized cases (`fr`, empty string, malformed `he_??`, unsupported `he-IL`, null and undefined) first failed with
+`Cannot read properties of undefined (reading 'greeting')`, then passed after normalization. Each case verifies Hebrew greeting,
+grouped numeric count and fractional plural resolution without an invalid-locale exception, plus defect reporting.
+
+Corrective gates passed: resolver tests **14/14**, full scoped frontend suite **26 files / 160 tests**, scoped typecheck,
+depcruise, changed-resolver ESLint, changed-file 130-character checks and `git diff --check`. Prior **12/12 Chromium** evidence
+remains valid: supported locales, selector behavior, dictionaries and browser composition are unchanged by this fix.
+The corrective diff is limited to `messages.ts`, its resolver tests and this Resolution. No staging or commit was performed.

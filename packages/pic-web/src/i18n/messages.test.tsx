@@ -118,4 +118,22 @@ describe("typed message resolution", () => {
     const resolve = createMessageResolver(definitions, { he: {}, en: {} }, "unavailable");
     expect(() => resolve("en", "greeting", { name: "Alex" })).toThrow("Approved availability message is required");
   });
+
+  it.each(["fr", "", "he_??", "he-IL", null, undefined])(
+    "normalizes unsupported runtime locale %s before message lookup and numeric/plural formatting", (locale) => {
+      const report = vi.fn();
+      const resolve = createMessageResolver(definitions, dictionaries, "unavailable", report);
+      // Simulate an untyped integration; the public Locale contract still accepts only he/en.
+      const runtimeResolve = resolve as (locale: unknown, key: string, params?: object) => ReturnType<typeof resolve>;
+      expect(runtimeResolve(locale, "greeting", { name: "Alex" })).toMatchObject({
+        text: "שלום Alex", locale: "he", direction: "rtl", fallback: true,
+      });
+      expect(runtimeResolve(locale, "visits", { count: 1200 })).toMatchObject({
+        text: "1,200 ביקורים", locale: "he", direction: "rtl", fallback: true,
+      });
+      expect(runtimeResolve(locale, "visits", { count: 0.5 }).text).toBe("0.5 ביקור");
+      expect(report).toHaveBeenCalledTimes(3);
+      expect(report).toHaveBeenCalledWith("Unsupported message locale");
+    },
+  );
 });
