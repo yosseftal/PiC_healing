@@ -1,0 +1,32 @@
+.pic-symptom-form,
+.pic-symptom-form fieldset,
+.pic-symptom-form label {
+  display: grid;
+  gap: var(--spacing-pic-calm-2);
+  min-inline-size: 0;
+}
+
+.pic-symptom-form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pic-symptom-form input,
+.pic-symptom-form select,
+.pic-symptom-form button {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.pic-symptom-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-pic-calm-2);
+}
+
+.pic-symptom-form__actions > button {
+  flex: 1 1 10rem;
+}

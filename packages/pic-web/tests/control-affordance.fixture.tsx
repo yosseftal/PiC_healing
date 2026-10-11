@@ -6,9 +6,10 @@ import "../src/visual-foundation/visual-foundation.css";
 
 const rootElement = document.getElementById("root");
 if (rootElement === null) throw new Error("Control fixture requires #root");
+localStorage.setItem("pic-web.locale.v1", "en");
+const pickerStage = new URLSearchParams(location.search).get("stage") === "picker";
 createRoot(rootElement).render(
   <AppProviders>
-    <SymptomGroupCreateScreen />
-    <TreatmentPickerScreen />
+    {pickerStage ? <TreatmentPickerScreen /> : <SymptomGroupCreateScreen />}
   </AppProviders>,
 );

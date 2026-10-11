@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
 import { RatingControl } from "./RatingControl";
 import { SymptomGroupCreateScreen } from "./SymptomGroupCreateScreen";
 import { resetGuestFlowFactsForTest } from "./guest-flow-facts";
+
+beforeEach(() => localStorage.setItem("pic-web.locale.v1", "en"));
 
 afterEach(() => {
   cleanup();
@@ -107,6 +109,10 @@ describe("SymptomGroupCreateScreen", () => {
     fireEvent.click(screen.getByTestId("add-symptom-action"));
 
     await waitFor(() => {
+      expect(screen.getByText("Open utilities to try again.")).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
+    await waitFor(() => {
       expect(screen.getByRole("button", { name: "Try saving this symptom again" })).toBeTruthy();
     });
     expect(screen.getByTestId("symptom-add-step").textContent).not.toMatch(/error|failed|invalid/i);
@@ -166,7 +172,7 @@ describe("RatingControl", () => {
 
     await waitFor(() => {
       expect(revealPriorRating).toHaveBeenCalledWith("symptom-prior");
-      expect(screen.getByTestId("revealed-prior-rating").textContent).toContain("positive");
+      expect(screen.getByTestId("revealed-prior-rating").textContent).toContain("Positive");
       expect(screen.getByTestId("revealed-prior-rating").textContent).toContain("8/10");
     });
 

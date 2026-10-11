@@ -6,9 +6,9 @@ draft values, and Blind-by-Default behavior throughout that complete flow.
 
 **Blocked by:** [11.2 — Dynamic RTL Layout and Motion](02-dynamic-rtl-layout-and-motion.md).
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Dispatch state:** Not dispatched; complete 11.2 and obtain the group/symptom/rating copy first.
+**Dispatch state:** Implemented and verified; review pending.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
 
@@ -71,3 +71,43 @@ Shared primitive changes remain owned by 11.2 and require coordination rather th
 Use existing group-engine context and guest-flow seams; test real form behavior and explicit history reveal.
 Run affected unit/integration/browser tests, root typecheck, web depcruise/build, lint, line-length and scope checks.
 Later Resolution must address TB-01–TB-10 and record approved copy and genuine checks, not pending approvals as passes.
+
+
+## Resolution — 2026-10-11
+
+Hebrew UI copy is product-approved by the user on 2026-10-11; newly drafted labels are not website quotations.
+The existing group-engine actions and rating history remain the domain authority. No engine, adapter,
+contract, schema, seed, dependency, root tooling, or shared primitive was changed.
+
+- TB-01: Done. Creation and symptom addition each compose one shared TherapeuticScreenFrame, content card,
+  internal scrolling, and shared Sheet language selector. The stages never nest frames.
+- TB-02: Done. Hebrew/English titles, names, placeholders, rating dimensions, reveal, retries, assistive
+  labels, and symptom-count plurals use typed messages; display formatting does not change domain values.
+- TB-03: Done. Integration and Chromium selection retain personal drafts, input DOM, active group identity,
+  polarity/intensity, and pending save/reveal requests, without invoking another therapeutic action.
+- TB-04: Done. Personal inputs use unknown-language/auto-direction markup; displayed group names use bdi.
+  Mixed Hebrew/English names reach existing create/add actions unchanged apart from existing submission trim.
+- TB-05: Done. A fixture with an actual rated symptom verifies both prior dimensions stay hidden until
+  explicit reveal. Revealed history and drafts survive selection. Existing symptom-ID effect guards remain.
+- TB-06: Done. Real-engine creation/addition and exact action-payload assertions retain positive/negative
+  polarity independent of intensity, derived counts, and retries that do not add a symptom twice.
+- TB-07: Done. Add and Done are the two main choices; symptom/load retries live in Sheet utilities.
+  Native Enter submission, selector keyboard focus, Escape, and Sheet trigger restoration remain verified.
+- TB-08: Done within browser evidence. Actual Hebrew labels and long personal wording fit 320/390px cards;
+  targets are at least 44px. Existing native control focus/border/color checks pass; no typography was shrunk.
+- TB-09: Done. Four focused integration cases cover complete creation, hidden/revealed real history,
+  pending reveal, and pending save/retry. Eight Hebrew/English phone cases cover drafts/history/containment.
+- TB-10: Done. Required dictionary parameter/plural parity and all scoped gates pass. This slice has its own
+  fixture independent of 11.5; personal text, persisted identifiers, timestamps, and engine data are unchanged.
+
+Verification: genuine red (missing Hebrew group label) to green complete creation test; focused component/
+message run: 3 files, 15 tests. Full web suite: 27 files, 190 tests. Owned Chromium: 8/8; affected existing
+control-affordance case: 1/1. Web typecheck, root workspace typecheck, web depcruise (733 modules/1488
+relationships), production build, owned ESLint, 130-character checks, and git diff --check all pass.
+Sandbox temporary-file EPERM and missing sandbox Chromium were rerun with approved escalation; no skips.
+Build retains existing bundle-size/dynamic-import warnings. The legacy affordance fixture now selects
+creation or picker per query stage, preserving its checkbox checks without stacking screens.
+
+A common reachable 40px card offset survives selection; a locale-dependent maximum may naturally clamp
+when translated content is shorter. Real device cutouts, mobile keyboard, desktop zoom, and Hebrew
+screen-reader pronunciation were not manually verified and remain follow-up evidence for the final wave.

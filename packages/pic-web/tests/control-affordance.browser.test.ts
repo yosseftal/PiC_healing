@@ -40,6 +40,7 @@ test("form inputs expose boundaries and focus while native rating controls remai
   await expect(slider).toHaveValue("6");
   expect(await slider.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
 
+  await page.goto("/tests/control-affordance.fixture.html?stage=picker");
   const checkbox = page.getByRole("checkbox", { name: "Link to this symptom group" });
   const label = checkbox.locator("..");
   expect(await label.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);

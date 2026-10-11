@@ -8,13 +8,26 @@ import { useGroupEngineActions } from "./group-engine-context";
 import { RatingControl } from "./RatingControl";
 import { useAsyncAction } from "./use-async-action";
 import { INPUT_CONTROL, UTILITY_CONTROL } from "./control-affordance";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
+import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
+import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
+import "./symptom-creation.css";
 
 export interface SymptomAddStepProps {
   groupId: string;
   onSymptomAdded?: () => void;
+  symptomCount?: number;
+  groupName?: string;
+  onDone?: () => void;
+  utilities?: ReactNode;
+  recoveryStatus?: string;
 }
 
-export function SymptomAddStep({ groupId, onSymptomAdded }: SymptomAddStepProps): ReactNode {
+export function SymptomAddStep({
+  groupId, onSymptomAdded, symptomCount = 0, groupName, onDone, utilities, recoveryStatus,
+}: SymptomAddStepProps): ReactNode {
+  const { message } = useLocale();
   const { addSymptom, rate } = useGroupEngineActions();
   const [symptomName, setSymptomName] = useState("");
   const [polarity, setPolarity] = useState<Polarity>("negative");
@@ -59,42 +72,61 @@ export function SymptomAddStep({ groupId, onSymptomAdded }: SymptomAddStepProps)
     void addAndRateSymptom(groupId, trimmedName, { polarity, intensity });
   }
 
+  const needsRetry = additionStatus === "recovery" || ratingStatus === "recovery";
   return (
-    <form data-testid="symptom-add-step" onSubmit={handleSubmit}>
-      <label>
-        Symptom name
-        <input
-          className={INPUT_CONTROL}
-          aria-label="Symptom name"
-          value={symptomName}
-          onChange={(event) => setSymptomName(event.target.value)}
-        />
-      </label>
-
-      <RatingControl
-        key={stepKey}
-        symptomId={null}
-        polarity={polarity}
-        intensity={intensity}
-        onPolarityChange={setPolarity}
-        onIntensityChange={setIntensity}
-      />
-
-      <button className={UTILITY_CONTROL} type="submit" data-testid="add-symptom-action">
-        Add symptom
-      </button>
-      {additionStatus === "recovery" || ratingStatus === "recovery" ? (
+    <TherapeuticScreenFrame
+      title={message("group.title").text} stageLabel={message("group.stage").text}
+      progress={<span data-testid="symptom-count"><LocalizedMessage
+        message={message("symptom.count", { count: symptomCount })} /></span>}
+      utilities={<>{utilities}{needsRetry ? (
         <div role="status">
-          <p>Your symptom is ready for another try.</p>
-          <button
-            className={UTILITY_CONTROL}
-            type="button"
-            onClick={() => void (ratingStatus === "recovery" ? retryRating() : retryAddition())}
-          >
-            Try saving this symptom again
+          <p><LocalizedMessage message={message("symptom.recovery")} /></p>
+          <button className={UTILITY_CONTROL} type="button"
+            onClick={() => void (ratingStatus === "recovery" ? retryRating() : retryAddition())}>
+            <LocalizedMessage message={message("symptom.retry")} />
           </button>
         </div>
-      ) : null}
-    </form>
+      ) : null}</>}
+    >
+      <TherapeuticContentCard aria-label={message("group.card").text}>
+        {groupName === undefined ? null : <p><bdi lang="" dir="auto">{groupName}</bdi></p>}
+        {recoveryStatus === undefined ? null : <p role="status">{recoveryStatus}</p>}
+        <form className="pic-symptom-form" data-testid="symptom-add-step" onSubmit={handleSubmit}>
+          <label>
+            <LocalizedMessage message={message("symptom.name")} />
+            <input
+              className={INPUT_CONTROL}
+              aria-label={message("symptom.name").text}
+              placeholder={message("symptom.placeholder").text}
+              lang="" dir="auto"
+              value={symptomName}
+              onChange={(event) => setSymptomName(event.target.value)}
+            />
+          </label>
+
+          <RatingControl
+            key={stepKey}
+            symptomId={null}
+            polarity={polarity}
+            intensity={intensity}
+            onPolarityChange={setPolarity}
+            onIntensityChange={setIntensity}
+          />
+
+          <div className="pic-symptom-form__actions" role="group" aria-label={message("player.availableActions").text}>
+            <button className={UTILITY_CONTROL} type="submit" data-testid="add-symptom-action">
+              <LocalizedMessage message={message("symptom.add")} />
+            </button>
+            {symptomCount > 0 && onDone !== undefined ? (
+              <button className={UTILITY_CONTROL} type="button" data-testid="finish-symptom-addition" onClick={onDone}>
+                <LocalizedMessage message={message("symptom.done")} />
+              </button>
+            ) : null}
+          </div>
+          {needsRetry ? <p role="status"><LocalizedMessage message={message("symptom.recovery")} />{" "}
+            <LocalizedMessage message={message("symptom.recoveryHint")} /></p> : null}
+        </form>
+      </TherapeuticContentCard>
+    </TherapeuticScreenFrame>
   );
 }

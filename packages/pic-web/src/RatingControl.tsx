@@ -6,6 +6,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Intensity, Polarity } from "pic-engine";
 import { useGroupEngineActions } from "./group-engine-context";
 import { CONTROL_FOCUS, INPUT_CONTROL, UTILITY_CONTROL } from "./control-affordance";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
 
 export interface RatingControlProps {
   symptomId: string | null;
@@ -22,6 +24,7 @@ export function RatingControl({
   onPolarityChange,
   onIntensityChange,
 }: RatingControlProps): ReactNode {
+  const { message, locale } = useLocale();
   const { hasPriorRating, revealPriorRating } = useGroupEngineActions();
   const [showRevealAffordance, setShowRevealAffordance] = useState(false);
   const [revealedPrior, setRevealedPrior] = useState<{ polarity: Polarity; intensity: Intensity } | null>(
@@ -64,26 +67,26 @@ export function RatingControl({
 
   return (
     <fieldset data-testid="rating-control">
-      <legend>Rate this symptom</legend>
+      <legend><LocalizedMessage message={message("rating.legend")} /></legend>
 
       <label>
-        Polarity
+        <LocalizedMessage message={message("rating.polarity")} />
         <select
           className={INPUT_CONTROL}
-          aria-label="Polarity"
+          aria-label={message("rating.polarity").text}
           value={polarity}
           onChange={(event) => onPolarityChange(event.target.value as Polarity)}
         >
-          <option value="negative">Negative</option>
-          <option value="positive">Positive</option>
+          <option value="negative">{message("rating.negative").text}</option>
+          <option value="positive">{message("rating.positive").text}</option>
         </select>
       </label>
 
       <label>
-        Intensity
+        <LocalizedMessage message={message("rating.intensity")} />
         <input
           className={`min-h-11 min-w-11 accent-pic-sage-700 ${CONTROL_FOCUS}`}
-          aria-label="Intensity"
+          aria-label={message("rating.intensity").text}
           type="range"
           min={0}
           max={10}
@@ -91,18 +94,21 @@ export function RatingControl({
           value={intensity}
           onChange={(event) => onIntensityChange(Number(event.target.value) as Intensity)}
         />
-        <span data-testid="rating-intensity-value">{intensity}</span>
+        <span data-testid="rating-intensity-value">{new Intl.NumberFormat(locale).format(intensity)}</span>
       </label>
 
       {showRevealAffordance ? (
         <button className={UTILITY_CONTROL} type="button" data-testid="reveal-prior-rating" onClick={revealPrior}>
-          Reveal prior rating
+          <LocalizedMessage message={message("rating.reveal")} />
         </button>
       ) : null}
 
       {revealedPrior !== null ? (
         <p data-testid="revealed-prior-rating">
-          Prior: {revealedPrior.polarity}, {revealedPrior.intensity}/10
+          <LocalizedMessage message={message("rating.prior", {
+            polarity: message(revealedPrior.polarity === "positive" ? "rating.positive" : "rating.negative").text,
+            intensity: revealedPrior.intensity, maximum: 10,
+          })} />
         </p>
       ) : null}
     </fieldset>
