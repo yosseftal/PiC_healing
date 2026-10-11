@@ -225,13 +225,14 @@ test("200 percent zoom, reduced motion, and RTL preserve Player access and logic
   await openPlayer(page, "rtl");
   const client = await page.context().newCDPSession(page);
   await client.send("Emulation.setPageScaleFactor", { pageScaleFactor: 2 });
-  const card = page.getByRole("region", { name: "Atomic Unit guidance" });
+  const card = page.getByRole("region", { name: "הנחיה ליחידה אטומית" });
   await card.evaluate((element) => { element.scrollTop = element.scrollHeight; });
   expect(await card.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
   expect(await page.evaluate(() => document.documentElement.scrollTop)).toBe(0);
   expect(await page.evaluate(() => window.visualViewport?.scale)).toBe(2);
   const zoomedDialog = await openUtilities(page);
-  const nextUnit = zoomedDialog.getByRole("navigation", { name: "Navigation tree" }).getByRole("button").nth(1);
+  const nextUnit = zoomedDialog.getByRole("navigation", { name: /Navigation tree|עץ הניווט/ })
+    .getByRole("button").nth(1);
   await nextUnit.focus();
   await page.keyboard.press("Enter");
   await expect(zoomedDialog).toBeHidden();

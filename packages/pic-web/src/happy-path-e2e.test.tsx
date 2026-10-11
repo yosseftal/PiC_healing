@@ -197,7 +197,7 @@ describe("happy path E2E (Ticket 08-09)", () => {
 
       await waitFor(() => {
         const unitTwoButton = screen.getByTestId("navigation-tree-jump-unit-2");
-        expect(unitTwoButton.textContent).toContain("skipped");
+        expect(unitTwoButton.textContent).toContain("Skipped");
       });
 
       fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-2"));

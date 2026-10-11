@@ -19,7 +19,6 @@ import { TherapeuticSheet } from "./therapeutic-sheet";
 import { TherapeuticContentCard, TherapeuticFrame } from "./therapeutic-frame/TherapeuticFrame";
 import { useTreatmentContentActions } from "./treatment-content-context";
 import { useAsyncAction } from "./use-async-action";
-import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
 import { UTILITY_CONTROL } from "./control-affordance";
 import { LanguageSelector } from "./i18n/language-selector";
 import { useLocale } from "./i18n/locale-provider";
@@ -98,12 +97,12 @@ export function UnifiedPlayerScreen() {
   return (
     <section ref={playerRootRef} data-testid="guest-flow-player" className="pic-player-screen">
       <TherapeuticFrame
-        title="Unified Player"
-        stageLabel="Player guidance"
-        utilityTrigger={showUtilities ? (
+        title={message("player.title").text}
+        stageLabel={message("player.guidance").text}
+        utilityTrigger={(
           <TherapeuticSheet
             title={message("utilities.playerTitle").text}
-            description={message("utilities.playerDescription").text}
+            description={message(showUtilities ? "utilities.playerDescription" : "player.languageDescription").text}
             triggerLabel={message("utilities.openPlayer").text}
             closeLabel={message("utilities.closePlayer").text}
             contentLabel={message("utilities.playerContent").text}
@@ -155,6 +154,7 @@ export function UnifiedPlayerScreen() {
           >
             <div className="pic-player-utilities">
               <LanguageSelector />
+              {showUtilities ? <>
               <NavigationTreePanel
                 sessionId={activePlayerSessionId}
                 session={session}
@@ -178,21 +178,22 @@ export function UnifiedPlayerScreen() {
                   setUtilitiesOpen(false);
                 }}
               />
+              </> : null}
             </div>
           </TherapeuticSheet>
-        ) : undefined}
+        )}
       >
         <div className="pic-player-layout">
           {loadingPhase !== "ready" ? (
-            <TherapeuticContentCard aria-label="Player content status">
+            <TherapeuticContentCard aria-label={message("player.contentStatus").text}>
               {showRecovery ? (
                 <>
-                  <p data-testid="zero-h3-guard-player">{ZERO_H3_GUARD_MESSAGE}</p>
+                  <p data-testid="zero-h3-guard-player"><LocalizedMessage message={message("player.sourceGuard")} /></p>
                   {contentStatus === "recovery" ? (
                     <>
-                      <p>Your guidance can reconnect whenever you choose.</p>
+                      <p><LocalizedMessage message={message("player.guidanceRecovery")} /></p>
                       <button className={UTILITY_CONTROL} type="button" onClick={() => void retryContent()}>
-                        Try guidance again
+                        <LocalizedMessage message={message("player.retryGuidance")} />
                       </button>
                     </>
                   ) : null}
@@ -202,7 +203,7 @@ export function UnifiedPlayerScreen() {
                     data-testid="player-content-recovery"
                     onClick={() => setGuestFlowPlayerSession(null)}
                   >
-                    Choose another guidance
+                    <LocalizedMessage message={message("player.chooseGuidance")} />
                   </button>
                 </>
               ) : null}
@@ -211,7 +212,7 @@ export function UnifiedPlayerScreen() {
             <HorizontalSlideContainer
               activeKey={activeUnit.unit_id}
               orderedKeys={session.units.map((unit) => unit.unit_id)}
-              stepLabel={isTerminalNemar ? "Terminal NEMAR step" : "Current Atomic Unit step"}
+              stepLabel={message(isTerminalNemar ? "player.terminalStep" : "player.atomicStep").text}
               userInitiated={requestedUnitRef.current === activeKey}
               focusTargetRef={incomingHeadingRef}
               onTransitionComplete={({ activeKey: completedKey }) => {
@@ -221,7 +222,7 @@ export function UnifiedPlayerScreen() {
               }}
             >
               {isTerminalNemar ? (
-                <TherapeuticContentCard aria-label="Terminal NEMAR guidance">
+                <TherapeuticContentCard aria-label={message("player.terminalGuidance").text}>
                   <TerminalNemarUnit
                     sessionId={activePlayerSessionId}
                     response={session.terminal_nemar_response}

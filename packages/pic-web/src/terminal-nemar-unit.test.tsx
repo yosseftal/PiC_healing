@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
 import { resetGuestFlowFactsForTest } from "./guest-flow-facts";
 import { TerminalNemarUnit } from "./TerminalNemarUnit";
+import { LanguageSelector } from "./i18n/language-selector";
 
 afterEach(() => {
   cleanup();
@@ -12,6 +13,23 @@ afterEach(() => {
 });
 
 describe("TerminalNemarUnit", () => {
+  beforeEach(() => localStorage.setItem("pic-web.locale.v1", "en"));
+
+  it("keeps a focused response control and editing state while its language changes", () => {
+    render(<AppProviders>
+      <LanguageSelector /><TerminalNemarUnit sessionId="session-1" response="yes" />
+    </AppProviders>);
+    fireEvent.click(screen.getByRole("button", { name: "Change response" }));
+    const yes = screen.getByTestId("terminal-nemar-yes");
+    yes.focus();
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    expect(screen.getByTestId("terminal-nemar-yes")).toBe(yes);
+    expect(document.activeElement).toBe(yes);
+    expect(yes.getAttribute("aria-pressed")).toBe("true");
+    expect(yes.textContent).toBe("כןנבחרה");
+    expect(screen.getByRole("group", { name: "פעולות זמינות" }).querySelectorAll("button")).toHaveLength(2);
+  });
+
   it("renders no confirmation and no aria-pressed selection when response is null (AC3)", () => {
     render(
       <AppProviders>

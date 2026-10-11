@@ -52,6 +52,8 @@ export interface AtomicActionLayoutProps {
   actions?: ActionTuple;
   banners?: BannerTuple;
   alignment?: "stacked" | "paired";
+  actionsLabel?: string;
+  selectedLabel?: string;
 }
 
 const EMPTY_ACTIONS: ActionTuple = [];
@@ -132,14 +134,14 @@ export function AuthoredMarkdown({ children }: { children: ReactNode }) {
   return <div data-pic-authored-markdown>{children}</div>;
 }
 
-function ActionControl({ action }: { action: ActionDescriptor }) {
+function ActionControl({ action, selectedLabel }: { action: ActionDescriptor; selectedLabel: string }) {
   const sharedClassName = [
     "inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-[var(--radius-pic-button)] border px-4 py-2",
     "font-semibold transition-colors focus-visible:outline-3 focus-visible:outline-offset-2",
     "focus-visible:outline-pic-focus disabled:cursor-not-allowed disabled:border-dashed",
     actionIntentClasses[action.intent],
   ].join(" ");
-  const stateIndicator = action.disabled ? "Unavailable" : action.kind === "button" && action.pressed ? "Selected" : null;
+  const stateIndicator = action.disabled ? "Unavailable" : action.kind === "button" && action.pressed ? selectedLabel : null;
 
   if (action.kind === "link") {
     const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
@@ -209,6 +211,8 @@ export function AtomicActionLayout({
   actions = EMPTY_ACTIONS,
   banners = EMPTY_BANNERS,
   alignment = "paired",
+  actionsLabel = "Available actions",
+  selectedLabel = "Selected",
 }: AtomicActionLayoutProps) {
   const primaryContentRef = useRef<HTMLElement>(null);
   useDevelopmentSlotValidation(primaryContentRef, "Primary content", primaryContent);
@@ -231,13 +235,13 @@ export function AtomicActionLayout({
       {actions.length === 0 ? null : (
         <div
           role="group"
-          aria-label="Available actions"
+          aria-label={actionsLabel}
           className={actionLayoutClasses}
           data-alignment={alignment}
         >
           {actions.map((action, index) => (
-            <div className="min-w-0 flex-1" key={`${action.kind}-${action.label}-${index}`}>
-              <ActionControl action={action} />
+            <div className="min-w-0 flex-1" key={`${action.kind}-${index}`}>
+              <ActionControl action={action} selectedLabel={selectedLabel} />
             </div>
           ))}
         </div>

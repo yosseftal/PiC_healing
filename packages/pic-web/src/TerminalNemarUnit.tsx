@@ -8,6 +8,8 @@ import {
 import { usePlayerEngineActions } from "./player-engine-context";
 import { useSessionEngineActions } from "./session-engine-context";
 import { useAsyncAction } from "./use-async-action";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
 
 interface TerminalNemarUnitProps {
   sessionId: string;
@@ -25,6 +27,7 @@ export function TerminalNemarUnit({
   headingRef,
   onFinishResolved,
 }: TerminalNemarUnitProps) {
+  const { message } = useLocale();
   const { respondTerminalNemar } = usePlayerEngineActions();
   const { onFinishRequested } = useSessionEngineActions();
   const [editing, setEditing] = useState(false);
@@ -70,35 +73,35 @@ export function TerminalNemarUnit({
   const showChoices = response === null || editing;
   const actions: ActionTuple = responseStatus === "recovery" ? [
     {
-      kind: "button", label: "Try this Terminal NEMAR response again", intent: "secondary",
+      kind: "button", label: message("player.retryResponse").text, intent: "secondary",
       onAction: () => void retryResponseRequest(),
     },
   ] : finishStatus === "recovery" ? [
     {
-      kind: "button", label: "Try finishing again", intent: "secondary",
+      kind: "button", label: message("player.retryFinish").text, intent: "secondary",
       onAction: () => void retryFinishRequest(),
     },
   ] : showChoices ? [
     {
-      kind: "button", label: "Yes", testId: "terminal-nemar-yes", intent: "primary",
+      kind: "button", label: message("player.yes").text, testId: "terminal-nemar-yes", intent: "primary",
       pressed: response === "yes", onAction: () => void choose("yes"),
     },
     {
-      kind: "button", label: "No", testId: "terminal-nemar-no", intent: "secondary",
+      kind: "button", label: message("player.no").text, testId: "terminal-nemar-no", intent: "secondary",
       pressed: response === "no", onAction: () => void choose("no"),
     },
   ] : response === "yes" && !successDeclared ? [
     {
-      kind: "button", label: "Finish", testId: "finish-button", intent: "primary",
+      kind: "button", label: message("player.finish").text, testId: "finish-button", intent: "primary",
       onAction: () => void finish(),
     },
     {
-      kind: "button", label: "Change response", intent: "quiet",
+      kind: "button", label: message("player.changeResponse").text, intent: "quiet",
       onAction: () => setEditing(true),
     },
   ] : [
     {
-      kind: "button", label: "Change response", intent: "quiet",
+      kind: "button", label: message("player.changeResponse").text, intent: "quiet",
       onAction: () => setEditing(true),
     },
   ];
@@ -106,26 +109,25 @@ export function TerminalNemarUnit({
   const banners: BannerTuple = responseStatus === "recovery" ? [
     {
       id: "response-recovery", intent: "recovery",
-      content: "Your Terminal NEMAR response is ready for another try.",
+      content: <LocalizedMessage message={message("player.responseRecovery")} />,
     },
   ] : finishStatus === "recovery" ? [
     {
       id: "finish-recovery", intent: "recovery",
-      content: "Your session is ready when you are.",
+      content: <LocalizedMessage message={message("player.finishRecovery")} />,
     },
   ] : !showChoices && response === "yes" ? [
     {
       id: "response-yes", intent: "confirmation",
       content: <p role="status" data-testid="terminal-nemar-response-recorded">
-        Your Yes response was recorded — Finish is available when you are ready.
+        <LocalizedMessage message={message("player.responseYes")} />
       </p>,
     },
   ] : !showChoices && response === "no" ? [
     {
       id: "response-no", intent: "reflection",
       content: <p role="status" data-testid="terminal-nemar-response-recorded">
-        Your No response was recorded. This session is Integrating — Finish Anyway remains
-        available whenever you are ready.
+        <LocalizedMessage message={message("player.responseNo")} />
       </p>,
     },
   ] : [];
@@ -134,11 +136,13 @@ export function TerminalNemarUnit({
     <section data-testid="terminal-nemar-unit">
       <AtomicActionLayout
         primaryContent={<>
-          <h2 ref={headingRef} tabIndex={-1}>Terminal NEMAR</h2>
-          <p>Is it NEMAR that this treatment ended successfully?</p>
+          <h2 ref={headingRef} tabIndex={-1}><LocalizedMessage message={message("player.terminalTitle")} /></h2>
+          <p><LocalizedMessage message={message("player.terminalQuestion")} /></p>
         </>}
         actions={actions}
         banners={banners}
+        actionsLabel={message("player.availableActions").text}
+        selectedLabel={message("player.selected").text}
       />
     </section>
   );

@@ -195,6 +195,188 @@ describe("UnifiedPlayerScreen", () => {
     resetTreatmentContentCacheForTest();
   });
 
+  it("offers only language while resolving and keeps the pending content read across selection", async () => {
+    const release = holdParsedContent();
+    const read = vi.mocked(compositionRoot.treatmentContentActions.getParsedTreatmentContent);
+    await seedPlayerSession(buildSession());
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    fireEvent.click(screen.getByRole("button", { name: "Open Player utilities" }));
+    expectActivePlayerAbsent();
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    expect(screen.getByText("הנגן המאוחד")).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "כלי הנגן" })).toBeTruthy();
+    expectActivePlayerAbsent();
+    expect(read).toHaveBeenCalledTimes(1);
+    release();
+    await waitFor(() => expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy());
+  });
+
+  it("localizes navigation states and guidance names without claiming an authored source language", async () => {
+    localStorage.setItem("pic-web.locale.v1", "he");
+    const session = buildSession();
+    await seedPlayerSession(session);
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    const heading = await screen.findByTestId("atomic-unit-title");
+    expect(screen.getByRole("region", { name: "הנחיה ליחידה אטומית" })).toBeTruthy();
+    expect(heading.getAttribute("lang")).toBe("");
+    expect(heading.getAttribute("dir")).toBe("auto");
+    expect(screen.getByTestId("atomic-unit-content").getAttribute("lang")).toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "פתיחת כלי הנגן" }));
+    expect(screen.getByRole("navigation", { name: "עץ הניווט" })).toBeTruthy();
+    const current = screen.getByTestId("navigation-tree-jump-unit-1");
+    expect(current.textContent).toBe("unit-1 (בתצוגה)");
+    expect(current.querySelector("bdi")?.textContent).toBe("unit-1");
+    expect(screen.getByTestId("navigation-tree-jump-unit-2").textContent).toBe("unit-2 (טרם הוצגה)");
+    expect(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`).textContent)
+      .toBe("נמ״ר מסכם (טרם הוצגה)");
+    expect(await compositionRoot.repositoryPort.getPlayerSession(session.id)).toEqual(session);
+  });
+
+  it.each(["yes", "no"] as const)("settles a pending %s response in the current locale without replay", async (answer) => {
+    const session = buildSession({ units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }] });
+    await seedPlayerSession(session);
+    const original = compositionRoot.playerEngineActions.respondTerminalNemar;
+    let release = () => {};
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const respond = vi.spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar")
+      .mockImplementation(async (...args) => { await held; return original(...args); });
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    const control = await screen.findByTestId(`terminal-nemar-${answer}`);
+    fireEvent.click(control);
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    expect(screen.getByTestId(`terminal-nemar-${answer}`)).toBe(control);
+    release();
+    await waitFor(() => expect(screen.getByTestId("terminal-nemar-response-recorded").textContent)
+      .toContain(answer === "yes" ? "תשובת כן נרשמה" : "תשובת לא נרשמה"));
+    expect(respond).toHaveBeenCalledTimes(1);
+    const reflected = await compositionRoot.repositoryPort.getPlayerSession(session.id);
+    expect(reflected?.terminal_nemar_response).toBe(answer);
+    expect(reflected?.success_declared).toBe(false);
+    expect(reflected?.integrating_reason).toBe(answer === "no" ? "terminal_nemar_no" : null);
+  });
+
+  it("settles pending Finish Anyway recovery in the selected language and retries the same request", async () => {
+    await seedPlayerSession(buildSession());
+    let reject = () => {};
+    const pending = new Promise<void>((_, rejectPromise) => {
+      reject = () => rejectPromise(new Error("unavailable"));
+    });
+    const finish = vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested")
+      .mockReturnValueOnce(pending).mockResolvedValueOnce();
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByTestId("finish-anyway-button"));
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    expect(screen.getByTestId("finish-anyway-button").textContent).toBe("סיום בכל זאת");
+    reject();
+    await screen.findByText("הסשן שלך מוכן כשמתאים לך.");
+    expect(finish).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "ניסיון נוסף לסיום" }));
+    await waitFor(() => expect(finish).toHaveBeenCalledTimes(2));
+    expect(finish).toHaveBeenNthCalledWith(2, "session-1", "finishAnyway");
+  });
+
+  it.each(["empty", "recovery"])("keeps %s source language access separate from prohibited execution", async (phase) => {
+    const read = vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent");
+    if (phase === "empty") read.mockResolvedValue([]);
+    else read.mockRejectedValue(new Error("unavailable"));
+    const session = buildSession({ units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }] });
+    await seedPlayerSession(session);
+    const finish = vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested");
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    await screen.findByTestId("zero-h3-guard-player");
+    fireEvent.click(screen.getByRole("button", { name: "Open Player utilities" }));
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    expect(screen.getByTestId("zero-h3-guard-player").textContent).toContain("ההנחיה עוברת כעת עיבוד פנימי");
+    expectActivePlayerAbsent();
+    expect(screen.getByText("אפשר לבחור את שפת הנגן.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "סגירת כלי הנגן" }));
+    expect(screen.getByRole("button", { name: "בחירת הנחיה אחרת" })).toBeTruthy();
+    if (phase === "recovery") {
+      expect(screen.getByRole("button", { name: "ניסיון נוסף לטעינת ההנחיה" })).toBeTruthy();
+    }
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(finish).not.toHaveBeenCalled();
+    expect(await compositionRoot.repositoryPort.getPlayerSession(session.id)).toEqual(session);
+  });
+
+  it("localizes only the parser's unit-0 title and retains arbitrary authored titles", async () => {
+    localStorage.setItem("pic-web.locale.v1", "he");
+    const source = [
+      { unit_id: "unit-0", unit_order: 0, unit_title: "Continuous Guidance",
+        unit_content: "Personal preamble.", unit_rationale: null },
+      { unit_id: "unit-1", unit_order: 1, unit_title: "Continuous Guidance",
+        unit_content: "Personal prose.", unit_rationale: null },
+    ];
+    vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockResolvedValue(source);
+    await seedPlayerSession(buildSession({ units: [
+      { unit_id: "unit-0", state: "in_view" }, { unit_id: "unit-1", state: "unseen" },
+      { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "unseen" },
+    ] }));
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-title").textContent).toBe("הנחיה רציפה"));
+    fireEvent.click(screen.getByRole("button", { name: "פתיחת כלי הנגן" }));
+    fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-1"));
+    await waitFor(() => expect(screen.getByTestId("atomic-unit-title").textContent).toBe("Continuous Guidance"));
+    expect(source[0]?.unit_title).toBe("Continuous Guidance");
+    expect(screen.getByTestId("atomic-unit-content").textContent).toBe("Personal prose.");
+  });
+
+  it("declares the table region UI language while leaving authored table text unknown", async () => {
+    localStorage.setItem("pic-web.locale.v1", "he");
+    vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockResolvedValue([
+      { unit_id: "unit-1", unit_order: 1, unit_title: "My table",
+        unit_content: "| My text |\n| --- |\n| abc אבג |", unit_rationale: null },
+    ]);
+    await seedPlayerSession(buildSession());
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    const region = await screen.findByRole("region", { name: "טבלת ההנחיה" });
+    expect(region.closest("[lang]")?.getAttribute("lang")).toBe("he");
+    expect(region.querySelector("table")?.getAttribute("lang")).toBe("");
+    expect(region.getAttribute("dir")).toBe("auto");
+    expect(region.querySelector("table")?.closest("[dir]")).toBe(region);
+  });
+
+  it("settles pending navigation recovery with current-language copy and retains its chosen unit", async () => {
+    await seedPlayerSession(buildSession());
+    let reject = () => {};
+    const pending = new Promise<void>((_, rejectPromise) => {
+      reject = () => rejectPromise(new Error("unavailable"));
+    });
+    const jump = vi.spyOn(compositionRoot.playerEngineActions, "jumpTo")
+      .mockReturnValueOnce(pending).mockResolvedValueOnce();
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByTestId("navigation-tree-jump-unit-2"));
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    reject();
+    await screen.findByText("אפשר לנסות שוב לפתוח את השלב שבחרת.");
+    expect(jump).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "ניסיון נוסף לפתיחת השלב" }));
+    await waitFor(() => expect(jump).toHaveBeenCalledTimes(2));
+    expect(jump).toHaveBeenNthCalledWith(2, "session-1", "unit-2");
+  });
+
+  it("settles pending response recovery in the current language without replaying its answer", async () => {
+    await seedPlayerSession(buildSession({ units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }] }));
+    let reject = () => {};
+    const pending = new Promise<void>((_, rejectPromise) => {
+      reject = () => rejectPromise(new Error("unavailable"));
+    });
+    const respond = vi.spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar").mockReturnValueOnce(pending);
+    render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
+    fireEvent.click(await screen.findByTestId("terminal-nemar-no"));
+    await openPlayerUtilities();
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    reject();
+    await screen.findByText("אפשר לנסות שוב לרשום את תשובת הנמ״ר המסכם.");
+    expect(respond).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "סגירת כלי הנגן" }));
+    expect(screen.getByRole("button", { name: "ניסיון נוסף לרישום תשובת נמ״ר מסכם" })).toBeTruthy();
+    expect(compositionRoot.playerSessionStore.getSnapshot("session-1")?.terminal_nemar_response).toBeNull();
+  });
+
   it("switches real Player utilities without changing the session, active unit or canonical source cache", async () => {
     localStorage.removeItem("pic-web.locale.v1");
     const session = buildSession();

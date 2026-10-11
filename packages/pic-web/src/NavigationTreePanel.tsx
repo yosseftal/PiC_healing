@@ -3,10 +3,17 @@
  * subtree — no skip/back/done buttons.
  */
 import { useRef } from "react";
-import type { PlayerSession } from "pic-engine";
+import { TERMINAL_NEMAR_UNIT_ID, type PlayerSession } from "pic-engine";
 import { usePlayerEngineActions } from "./player-engine-context";
 import { useAsyncAction } from "./use-async-action";
 import { UTILITY_CONTROL } from "./control-affordance";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
+
+const stateMessages = {
+  unseen: "player.state.unseen", in_view: "player.state.in_view",
+  skipped: "player.state.skipped", completed: "player.state.completed",
+} as const;
 
 export function NavigationTreePanel({
   sessionId,
@@ -19,6 +26,7 @@ export function NavigationTreePanel({
   onNavigationRequested?: (unitId: string) => void;
   onNavigationFailed?: (unitId: string) => void;
 }) {
+  const { message } = useLocale();
   const requestedUnitRef = useRef<string | null>(null);
   const { jumpTo } = usePlayerEngineActions();
   const {
@@ -37,7 +45,7 @@ export function NavigationTreePanel({
   }
 
   return (
-    <nav aria-label="Navigation tree" data-testid="navigation-tree-panel">
+    <nav aria-label={message("player.navigation").text} data-testid="navigation-tree-panel">
       <ul>
         {session.units.map((unit) => (
           <li key={unit.unit_id}>
@@ -47,14 +55,18 @@ export function NavigationTreePanel({
               data-testid={`navigation-tree-jump-${unit.unit_id}`}
               onClick={() => void requestNavigation(unit.unit_id)}
             >
-              {unit.unit_id} ({unit.state})
+              <LocalizedMessage message={message("player.navigationEntry", {
+                unit: unit.unit_id === TERMINAL_NEMAR_UNIT_ID ? message("player.terminalTitle").text
+                  : unit.unit_id === "unit-0" ? message("player.continuousGuidance").text : unit.unit_id,
+                state: message(stateMessages[unit.state]).text,
+              })} />
             </button>
           </li>
         ))}
       </ul>
       {navigationStatus === "recovery" ? (
         <div role="status">
-          <p>Your chosen step is ready for another try.</p>
+          <p><LocalizedMessage message={message("player.navigationRecovery")} /></p>
           <button
             className={UTILITY_CONTROL}
             type="button"
@@ -64,7 +76,7 @@ export function NavigationTreePanel({
               }
             }}
           >
-            Try this navigation again
+            <LocalizedMessage message={message("player.retryNavigation")} />
           </button>
         </div>
       ) : null}

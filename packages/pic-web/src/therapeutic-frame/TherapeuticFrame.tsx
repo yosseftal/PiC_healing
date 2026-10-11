@@ -186,6 +186,7 @@ export function TherapeuticContentCard({
 
 export type TherapeuticTableScrollerProps = AccessibleName & {
   children: ReactNode;
+  dir?: "auto" | "ltr" | "rtl";
 };
 
 export function TherapeuticTableScroller({

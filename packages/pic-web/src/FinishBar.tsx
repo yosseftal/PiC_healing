@@ -6,6 +6,8 @@ import type { PlayerSession } from "pic-engine";
 import { useSessionEngineActions } from "./session-engine-context";
 import { useAsyncAction } from "./use-async-action";
 import { UTILITY_CONTROL } from "./control-affordance";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
 
 export function FinishBar({
   sessionId,
@@ -16,6 +18,7 @@ export function FinishBar({
   session: PlayerSession;
   onFinishResolved?: () => void;
 }) {
+  const { message } = useLocale();
   const { onFinishRequested } = useSessionEngineActions();
   const {
     status: finishStatus,
@@ -49,13 +52,13 @@ export function FinishBar({
         data-testid="finish-anyway-button"
         onClick={() => void finish()}
       >
-        Finish Anyway
+        <LocalizedMessage message={message("player.finishAnyway")} />
       </button>
       {finishStatus === "recovery" ? (
         <div role="status">
-          <p>Your session is ready when you are.</p>
+          <p><LocalizedMessage message={message("player.finishRecovery")} /></p>
           <button className={UTILITY_CONTROL} type="button" onClick={() => void retry()}>
-            Try finishing again
+            <LocalizedMessage message={message("player.retryFinish")} />
           </button>
         </div>
       ) : null}
