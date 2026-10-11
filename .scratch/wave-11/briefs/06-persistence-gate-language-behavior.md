@@ -56,7 +56,7 @@ _Avoid_: Failed, error, incomplete, stuck, "In-Process, Not Yet Complete" as a s
 - Run scoped typecheck, frontend component/unit tests, depcruise, affected browser tests, build, and owned lint/line checks.
 - If a sandbox failure blocks tests, request the needed tool escalation; do not weaken tests or bypass TLS.
 - No new dependencies or root lockfile changes. Use the existing React, Radix, Motion, Markdown, and Intl capabilities.
-- Hebrew UI copy remains blocked until the orchestrator supplies the user answer. Do not invent approval.
+- User approved drafting/using Hebrew UI copy on 2026-10-11; record new labels as product-approved, not website quotes.
 - Three bundled seed treatments may be translated as product-approved Wave 11 content per the 2026-10-11 user answer.
 - Do not describe those seeds as official website publications; preserve provenance as product-approved content.
 - Preserve English test expectations by explicit locale fixtures where appropriate; production first use remains Hebrew.

@@ -8,7 +8,7 @@ Eight pre-dispatch briefs are at `.scratch/wave-11/briefs/`. No duplicate ticket
 
 | Ticket | Owned presentation seam | Depends on | Main risk |
 | --- | --- | --- | --- |
-| 11.1 | Locale authority, storage, typed messages, selector and metadata | None | Remount/state reset; pending copy |
+| 11.1 | Locale authority, storage, typed messages, selector and metadata | None | Remount/state reset; approved product copy |
 | 11.2 | Frame/card/Sheet logical layout, interrupted/reduced motion | 11.1 | Double reversal; focus/callback races |
 | 11.3 | Player, NEMAR, navigation/Finish copy and recovery language access | 11.1 | Changing eligibility or state |
 | 11.4 | Group creation, symptom addition and blind-rating UI | 11.2 | Draft loss or implicit history reveal |
@@ -33,8 +33,9 @@ Order: 11.1 -> 11.2 -> 11.3 -> 11.6 -> 11.4 -> 11.5 -> 11.7 -> 11.8.
 
 ## Must-fix and decision log
 
-1. UI copy approval is pending the explicit user answer; the prior instruction prohibited invented Hebrew values.
-   Do not implement copy-dependent portions until that answer is supplied; locale contracts may proceed.
+1. On 2026-10-11 the user explicitly approved drafting and using Hebrew UI controls, banners and assistive text.
+   This supersedes pending UI-copy prerequisites for this run. Record new wording as product-approved copy,
+   grounded in official PIC terminology and tone; never claim new labels are website quotations.
 2. The user authorized translating the three bundled treatments as product-approved content on 2026-10-11.
    This supersedes the official-content-pack prerequisite for this run; never claim website publication provenance.
 3. The web workspace lacks a test script. Ticket 11.1 must add a scoped script using the root Vitest config,
