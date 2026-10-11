@@ -11,7 +11,11 @@ if (rootElement === null) {
   throw new Error("Unified Player fixture requires #root");
 }
 
-document.documentElement.dir = new URLSearchParams(location.search).get("direction") === "rtl" ? "rtl" : "ltr";
+// Legacy layout cases declare a locale explicitly; real selector cases leave browser preference authoritative.
+const directionFixture = new URLSearchParams(location.search).get("direction");
+if (directionFixture !== null) {
+  localStorage.setItem("pic-web.locale.v1", directionFixture === "rtl" ? "he" : "en");
+}
 
 const longGuidance = Array.from(
   { length: 80 },

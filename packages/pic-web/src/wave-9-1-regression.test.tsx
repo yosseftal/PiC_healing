@@ -24,6 +24,7 @@ afterEach(() => {
 
 describe("Wave 9.1 Continuous Guidance playability", () => {
   beforeEach(() => {
+    localStorage.setItem("pic-web.locale.v1", "en");
     resetGuestFlowFactsForTest();
     resetTreatmentContentCacheForTest();
   });

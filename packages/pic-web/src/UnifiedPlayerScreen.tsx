@@ -21,11 +21,15 @@ import { useTreatmentContentActions } from "./treatment-content-context";
 import { useAsyncAction } from "./use-async-action";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
 import { UTILITY_CONTROL } from "./control-affordance";
+import { LanguageSelector } from "./i18n/language-selector";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
 import "./unified-player-screen.css";
 
 type PlayerContentPhase = "resolving" | "ready" | "empty";
 
 export function UnifiedPlayerScreen() {
+  const { message } = useLocale();
   const { activePlayerSessionId } = useGuestFlowFacts();
   const session = usePlayerSession(activePlayerSessionId ?? "");
   const { getParsedTreatmentContent } = useTreatmentContentActions();
@@ -98,10 +102,12 @@ export function UnifiedPlayerScreen() {
         stageLabel="Player guidance"
         utilityTrigger={showUtilities ? (
           <TherapeuticSheet
-            title="Player utilities"
-            description="Choose a step or finish when you are ready."
-            triggerLabel="Open Player utilities"
-            trigger={<><Menu aria-hidden="true" size={20} /><span>Utilities</span></>}
+            title={message("utilities.playerTitle").text}
+            description={message("utilities.playerDescription").text}
+            triggerLabel={message("utilities.openPlayer").text}
+            closeLabel={message("utilities.closePlayer").text}
+            contentLabel={message("utilities.playerContent").text}
+            trigger={<><Menu aria-hidden="true" size={20} /><LocalizedMessage message={message("utilities.trigger")} /></>}
             open={utilitiesOpen}
             onOpenChange={setUtilitiesOpen}
             onCloseAutoFocus={() => {
@@ -148,6 +154,7 @@ export function UnifiedPlayerScreen() {
             }}
           >
             <div className="pic-player-utilities">
+              <LanguageSelector />
               <NavigationTreePanel
                 sessionId={activePlayerSessionId}
                 session={session}

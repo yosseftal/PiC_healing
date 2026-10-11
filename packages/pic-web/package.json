@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node scripts/test.mjs",
     "test:browser": "playwright test",
     "typecheck": "tsc --noEmit",
     "depcruise": "npx depcruise --validate .dependency-cruiser.cjs src"

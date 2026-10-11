@@ -55,6 +55,7 @@ function assignTracerEnv(env: Record<string, string>, email: string, password: s
 }
 
 function renderHappyPathApp() {
+  localStorage.setItem("pic-web.locale.v1", "en");
   return render(
     <AppProviders>
       <GuestModeShell>

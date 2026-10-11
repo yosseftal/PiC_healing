@@ -13,8 +13,8 @@ async function openPlayer(page: Page, direction: "ltr" | "rtl" = "ltr") {
 }
 
 async function openUtilities(page: Page) {
-  await page.getByRole("button", { name: "Open Player utilities" }).click();
-  const dialog = page.getByRole("dialog", { name: "Player utilities" });
+  await page.getByRole("button", { name: /Open Player utilities|פתיחת כלי הנגן/ }).click();
+  const dialog = page.getByRole("dialog", { name: /Player utilities|כלי הנגן/ });
   await expect(dialog).toBeVisible();
   await expect.poll(() => dialog.evaluate((element) => element.getAnimations().length)).toBe(0);
   return dialog;

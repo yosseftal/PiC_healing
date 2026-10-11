@@ -10,7 +10,8 @@
 ## Permissions
 
 - Read-Write: active ticket Resolution and owned implementation/tests inside packages/pic-web only.
-- Owned surfaces: src/i18n/**; App.tsx; TherapeuticFrame.tsx; therapeutic-sheet.tsx; UnifiedPlayerScreen.tsx; index.html;
+- Owned surfaces: src/i18n/**; App.tsx; app-providers.tsx; TherapeuticFrame.tsx; therapeutic-sheet.tsx;
+  UnifiedPlayerScreen.tsx; index.html;
   package.json; owned tests
 - Read-Only: approved Wave 11 spec, CONTEXT.md, decisions.md, CLAUDE.md, engine/port/adapter source and sibling tickets.
 - Off limits: all application changes outside packages/pic-web, including engines, adapters, migrations and root metadata.

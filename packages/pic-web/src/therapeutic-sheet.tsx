@@ -9,10 +9,13 @@ import {
   useState,
 } from "react";
 import { UTILITY_CONTROL } from "./control-affordance";
+import { useOptionalLocale } from "./i18n/locale-provider";
 import "./therapeutic-sheet.css";
 
 export interface TherapeuticSheetProps {
   children: ReactNode;
+  closeLabel?: string;
+  contentLabel?: string;
   defaultOpen?: boolean;
   description?: string;
   onCloseAutoFocus?: () => boolean;
@@ -54,6 +57,8 @@ function useInertBackground(open: boolean, triggerRef: RefObject<HTMLButtonEleme
 
 export function TherapeuticSheet({
   children,
+  closeLabel,
+  contentLabel,
   defaultOpen = false,
   description,
   onCloseAutoFocus,
@@ -63,6 +68,7 @@ export function TherapeuticSheet({
   trigger,
   triggerLabel,
 }: TherapeuticSheetProps) {
+  const locale = useOptionalLocale();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -105,6 +111,8 @@ export function TherapeuticSheet({
             "overflow-hidden border-s border-pic-line bg-pic-surface shadow-pic-sheet",
           ].join(" ")}
           data-testid="therapeutic-sheet-content"
+          lang={locale?.locale}
+          dir={locale?.direction}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             const background = triggerRef.current?.closest("body > *");
@@ -130,7 +138,7 @@ export function TherapeuticSheet({
               )}
             </div>
             <Dialog.Close
-              aria-label={`Close ${title.toLocaleLowerCase()}`}
+              aria-label={closeLabel ?? `Close ${title.toLocaleLowerCase()}`}
               className={`${UTILITY_CONTROL} shrink-0`}
               type="button"
             >
@@ -139,7 +147,7 @@ export function TherapeuticSheet({
           </header>
 
           <div
-            aria-label={`${title} content`}
+            aria-label={contentLabel ?? `${title} content`}
             className={[
               "min-h-0 overflow-y-auto overscroll-contain p-6",
               "[scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]",

@@ -8,17 +8,20 @@ import { GroupEngineProvider } from "./group-engine-context";
 import { PlayerEngineProvider } from "./player-engine-context";
 import { SessionEngineProvider } from "./session-engine-context";
 import { TreatmentContentProvider } from "./treatment-content-context";
+import { LocaleProvider } from "./i18n/locale-provider";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <SessionEngineProvider>
-      <CatalogProvider>
-        <TreatmentContentProvider>
-          <GroupEngineProvider>
-            <PlayerEngineProvider>{children}</PlayerEngineProvider>
-          </GroupEngineProvider>
-        </TreatmentContentProvider>
-      </CatalogProvider>
-    </SessionEngineProvider>
+    <LocaleProvider>
+      <SessionEngineProvider>
+        <CatalogProvider>
+          <TreatmentContentProvider>
+            <GroupEngineProvider>
+              <PlayerEngineProvider>{children}</PlayerEngineProvider>
+            </GroupEngineProvider>
+          </TreatmentContentProvider>
+        </CatalogProvider>
+      </SessionEngineProvider>
+    </LocaleProvider>
   );
 }

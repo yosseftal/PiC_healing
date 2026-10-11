@@ -3,6 +3,7 @@ import {
   useId,
   useLayoutEffect,
 } from "react";
+import { useOptionalLocale } from "../i18n/locale-provider";
 import "./therapeutic-frame.css";
 
 type AccessibleName =
@@ -119,6 +120,7 @@ export function TherapeuticFrame({
   width = "reading",
   ...accessibleName
 }: TherapeuticFrameProps) {
+  const locale = useOptionalLocale();
   const generatedTitleId = useId();
   const titleId = title === undefined ? undefined : generatedTitleId;
   const frameLabelledBy = accessibleName["aria-labelledby"] ?? titleId;
@@ -131,6 +133,8 @@ export function TherapeuticFrame({
       className="pic-therapeutic-frame"
       data-tone={tone}
       data-width={width}
+      lang={locale?.locale}
+      dir={locale?.direction}
     >
       <header className="pic-therapeutic-frame__header">
         <div className="pic-therapeutic-frame__heading">

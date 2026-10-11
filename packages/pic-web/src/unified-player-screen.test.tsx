@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import {
@@ -189,8 +190,44 @@ afterEach(() => {
 
 describe("UnifiedPlayerScreen", () => {
   beforeEach(() => {
+    localStorage.setItem("pic-web.locale.v1", "en");
     resetGuestFlowFactsForTest();
     resetTreatmentContentCacheForTest();
+  });
+
+  it("switches real Player utilities without changing the session, active unit or canonical source cache", async () => {
+    localStorage.removeItem("pic-web.locale.v1");
+    const session = buildSession();
+    await seedPlayerSession(session);
+    const repository = compositionRoot.repositoryPort;
+    const source = await compositionRoot.treatmentContentActions.getParsedTreatmentContent(session.treatment_id);
+    const treatmentRead = vi.spyOn(repository, "getTreatment");
+    const advance = vi.spyOn(compositionRoot.playerEngineActions, "advance");
+    const jump = vi.spyOn(compositionRoot.playerEngineActions, "jumpTo");
+    const respond = vi.spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar");
+    const finish = vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested");
+    const { container } = render(
+      <StrictMode><AppProviders><GuestModeShell><UnifiedPlayerScreen /></GuestModeShell></AppProviders></StrictMode>,
+    );
+    const trigger = await screen.findByRole("button", { name: "פתיחת כלי הנגן" });
+    const currentUnit = container.querySelector("[data-active-key]");
+    fireEvent.click(trigger);
+    const english = screen.getByRole("button", { name: "English" });
+    english.focus();
+    fireEvent.click(english);
+    expect(screen.getByRole("dialog", { name: "Player utilities" })).toBeTruthy();
+    expect(document.activeElement).toBe(english);
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    fireEvent.click(english);
+    expect(container.querySelector("[data-active-key]")).toBe(currentUnit);
+    expect(await repository.getPlayerSession(session.id)).toEqual(session);
+    expect(compositionRoot.repositoryPort).toBe(repository);
+    expect(await compositionRoot.treatmentContentActions.getParsedTreatmentContent(session.treatment_id)).toBe(source);
+    expect(treatmentRead).not.toHaveBeenCalled();
+    expect(advance).not.toHaveBeenCalled();
+    expect(jump).not.toHaveBeenCalled();
+    expect(respond).not.toHaveBeenCalled();
+    expect(finish).not.toHaveBeenCalled();
   });
 
   it("renders the current unit without throwing given a fresh player session state", async () => {
