@@ -6,9 +6,9 @@ unchanged, and saving or discarding guest work preserves the independent languag
 
 **Blocked by:** [11.1 — Persistent Language Choice](01-persistent-language-choice.md).
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Dispatch state:** Not dispatched; complete 11.1 and resolve Persistence Gate copy prerequisites first.
+**Dispatch state:** Implemented and verified; orchestrator review pending.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.2–3.5, 4, and 6.2.
 
@@ -70,3 +70,56 @@ Extend existing Persistence Gate and guest-promotion UI tests at their establish
 Choose language through existing utilities before browser gate scenarios; use the provider seam for mounted-update tests.
 Run affected unit/integration/browser tests, root typecheck, web depcruise/build, lint, line-length and scope checks.
 Later Resolution must address TB-01–TB-10, including exact evidence that therapeutic payloads exclude locale preferences.
+
+## Resolution — 2026-10-11
+
+Hebrew UI copy was explicitly product-approved on 2026-10-11 and uses the PIC session vocabulary and empowering tone.
+These newly authored labels are product-approved copy, not website quotations. Apple/Google remain disabled stubs;
+the existing development sign-in remains identified as a development demonstration. No auth capability was added.
+
+- TB-01: Done. Nine typed `gate.*` messages cover title, explanation, sign-in stubs, pending, recovery, retry and discard
+  in Hebrew and English. The existing English labels remain explicit fixtures in the gate tests.
+- TB-02: Done. `PersistenceGateModal` consumes the existing LocaleProvider and binds `lang`/`dir` directly to its native
+  dialog outside the Frame. Provider tests retain the same dialog and focused controls across message/name updates.
+- TB-03: Done. Deferred sign-in and real SessionEngine promotion tests switch the mounted provider during pending and
+  recovery. Requests, guest snapshot, promotion state and focus stay intact; settlement uses the current language.
+  The existing gate has no editable inputs; personal session content stays unchanged in integration/browser checks.
+- TB-04: Done. Existing visibility, auth disabled states and native action delegates remain intact. Provider changes
+  make no additional sign-in, Finish, promotion or discard calls. Only explicit retry starts another attempt.
+- TB-05: Done. Both selected locales survive successful promotion and development sign-in; explicit discard preserves
+  the key and browser reload restores the choice. Exact snapshot equality is `{ group, playerSession }`; exact promotion
+  equality is `{ idempotencyKey, group, playerSession, newUserId }`. Stored group/session equality, exact timeline fields
+  (`log_type`, `treatment_id`, `library_row_id`, `linked_group_id`, `metadata`) and exact credential equality
+  (`email`, `password`) exclude locale/direction leakage. No account locale write or sync was introduced.
+- TB-06: Done. Key-specific preference read/write failures retain in-memory language and allow sign-in, retry and discard.
+  Remount falls back to Hebrew through 11.1's existing storage contract without an extra error/confirmation flow.
+- TB-07: Done for automated evidence. Hebrew and English Chromium cases at 320 CSS px retain the existing Finish-to-gate
+  focus handoff, keyboard sign-in/retry/discard, disabled stubs, bounded internal overflow and 44 px targets. Computed
+  active text contrast meets 4.5:1. Personal content remains unchanged. Manual device/accessibility limits are below.
+- TB-08: Done. Existing fake authenticated RepositoryPort and development sign-in boundary prove preference preservation;
+  mounted provider/action tests cover pending and recovery. Browser fixtures defer the existing promotion action at the
+  repository boundary and contact no new auth service. Both locales cover idle, pending, recovery, retry and discard.
+- TB-09: Done. Required dictionary validation covers all nine gate keys with complete parameter-free parity and no
+  fallback. English identifies stubs; Hebrew identifies unavailable Apple/Google and the development demonstration.
+- TB-10: Done. Scoped and affected gates pass; application changes stay inside `packages/pic-web`. Engine, adapters,
+  schemas, contracts, seed data, dependency metadata and root tooling remain unchanged.
+
+### Verification
+
+TDD red: the new Hebrew dialog test failed against the English-only gate (`Keep your session`). Green: localized gate
+and dictionary tests passed 2 files / 7 tests. Subsequent provider/action checks passed at the approved existing seams.
+
+- `npm run typecheck -w packages/pic-web`: passed; `npm run typecheck`: passed all four workspaces.
+- `npm test -w packages/pic-web`: passed 26 files / 185 tests, including existing remote integration behavior.
+- `npm run depcruise -w packages/pic-web`: passed, 731 modules / 1465 dependencies, zero violations.
+- `npm run test:browser -w packages/pic-web -- tests/persistence-gate.browser.test.ts --workers=2`: 2 Chromium cases passed.
+- Affected `localized-player.browser.test.ts` and `unified-player.browser.test.ts`, grep
+  `Terminal NEMAR retains|sovereign Finish`, workers 2: 4 Chromium cases passed.
+- `npm run build -w packages/pic-web`: passed with existing dynamic-import and chunk-size warnings.
+- Owned ESLint, 130-character line checks and whitespace/scope checks: passed.
+
+The initial sandbox browser launch failed because its cache path lacked Chromium. The approved escalated rerun used
+installed Chromium and passed; no test was skipped or weakened. Timing-sensitive tests ran apart from build/typecheck.
+
+Manual evidence remains unverified for physical device cutouts, mobile soft keyboards, desktop zoom and Hebrew screen-reader
+pronunciation. Chromium evidence does not substitute for those checks. Existing auth-provider stubs remain the product limit.

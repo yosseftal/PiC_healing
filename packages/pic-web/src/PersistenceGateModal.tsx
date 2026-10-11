@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { UTILITY_CONTROL } from "./control-affordance";
+import { useLocale } from "./i18n/locale-provider";
 import {
   usePromotePathActions,
   useSessionEngineActions,
@@ -12,6 +13,7 @@ import {
  * imports. Ephemeral `preRpcPromotionFailed` covers sign-in/env failures before `SessionEngine.promote()`.
  */
 export function PersistenceGateModal() {
+  const { locale, direction, message } = useLocale();
   const { gateTriggered, promotionStatus } = useSessionEngineState();
   const { discardGuestState } = useSessionEngineActions();
   const { promoteGuestSessionFromEnv } = usePromotePathActions();
@@ -32,47 +34,47 @@ export function PersistenceGateModal() {
   }
 
   return (
-    <dialog open aria-labelledby="persistence-gate-title" tabIndex={-1}
+    <dialog open aria-labelledby="persistence-gate-title" tabIndex={-1} lang={locale} dir={direction}
       className={[
         "fixed inset-0 z-50 m-auto grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[28rem]",
         "gap-3 overflow-y-auto rounded-pic-card border border-pic-quiet bg-pic-surface p-6 shadow-pic-sheet",
       ].join(" ")}
     >
       <h2 className="text-pic-heading font-pic-heading leading-pic-heading" id="persistence-gate-title">
-        Keep your session
+        {message("gate.title").text}
       </h2>
 
       {promotionStatus === "pending" ? (
-        <p>Anchoring your session…</p>
+        <p>{message("gate.pending").text}</p>
       ) : null}
 
       {showIdleUi ? (
         <>
-          <p>Sign in to keep this session — your work stays on this device until you choose to anchor it.</p>
+          <p>{message("gate.body").text}</p>
           <button className={UTILITY_CONTROL} type="button" onClick={anchorSession}>
-            Sign in (dev tracer stub)
+            {message("gate.signInDev").text}
           </button>
           <button className={UTILITY_CONTROL} type="button" disabled aria-disabled="true">
-            Sign in with Apple (stub)
+            {message("gate.signInApple").text}
           </button>
           <button className={UTILITY_CONTROL} type="button" disabled aria-disabled="true">
-            Sign in with Google (stub)
+            {message("gate.signInGoogle").text}
           </button>
         </>
       ) : null}
 
       {showFailedUi ? (
         <>
-          <p>We could not anchor your session yet. You can try again whenever you are ready.</p>
+          <p>{message("gate.recovery").text}</p>
           <button className={UTILITY_CONTROL} type="button" onClick={anchorSession}>
-            Try again
+            {message("gate.retry").text}
           </button>
         </>
       ) : null}
 
       {showIdleUi || showFailedUi ? (
         <button className={UTILITY_CONTROL} type="button" onClick={() => void discardGuestState()}>
-          Continue without saving
+          {message("gate.continueWithoutSaving").text}
         </button>
       ) : null}
     </dialog>

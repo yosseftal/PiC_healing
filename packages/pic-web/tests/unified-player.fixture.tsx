@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { parseStructuredMarkdown, TRACER_BULLET_SEED_TREATMENTS } from "pic-engine";
+import type { RepositoryPort } from "pic-engine";
 import { AppProviders } from "../src/app-providers";
 import { compositionRoot } from "../src/composition-root";
 import { GuestModeShell } from "../src/GuestModeShell";
@@ -53,6 +54,25 @@ compositionRoot.treatmentContentActions.getParsedTreatmentContent = async () => 
   if (phase === "recovery" || phase === "recovery-empty") throw new Error("Guidance is reconnecting");
   return units;
 };
+
+// Existing promotion seam, controlled at the repository boundary; this fixture contacts no auth service.
+if (new URLSearchParams(location.search).get("gateRequest") === "deferred") {
+  const failingPort: RepositoryPort = {
+    ...(compositionRoot.repositoryPort.getProvider() as RepositoryPort),
+    async promoteGuestToAccount() {
+      await new Promise<void>((resolve) => {
+        window.addEventListener("fixture-reject-promotion", () => resolve(), { once: true });
+      });
+      throw new Error("Fixture connection dropped");
+    },
+  };
+  compositionRoot.promotePathActions.promoteGuestSessionFromEnv = async () => {
+    const snapshot = await compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate();
+    if (snapshot !== null) {
+      await compositionRoot.promotePathActions.promoteWithAuthenticatedRepository(failingPort, snapshot, "fixture-account");
+    }
+  };
+}
 
 await compositionRoot.playerEngineActions.startSession(
   TRACER_BULLET_SEED_TREATMENTS[0]!.id,

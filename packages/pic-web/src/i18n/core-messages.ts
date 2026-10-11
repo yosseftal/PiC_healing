@@ -1,6 +1,15 @@
 import { createMessageResolver, type MessageTemplate } from "./messages";
 
 export const messageDefinitions = {
+  "gate.title": { params: [] },
+  "gate.body": { params: [] },
+  "gate.pending": { params: [] },
+  "gate.recovery": { params: [] },
+  "gate.signInDev": { params: [] },
+  "gate.signInApple": { params: [] },
+  "gate.signInGoogle": { params: [] },
+  "gate.retry": { params: [] },
+  "gate.continueWithoutSaving": { params: [] },
   "player.title": { params: [] },
   "player.languageDescription": { params: [] },
   "player.guidance": { params: [] },
@@ -56,6 +65,15 @@ export const messageDefinitions = {
 // Newly authored UI copy is product-approved for Wave 11 (2026-10-11), not a website quotation.
 export const dictionaries = {
   he: {
+    "gate.title": "שמירת הסשן שלך",
+    "gate.body": "אפשר להתחבר כדי לשמור את הסשן — העבודה נשארת במכשיר הזה עד לבחירתך לשמור אותה.",
+    "gate.pending": "הסשן שלך נשמר…",
+    "gate.recovery": "עדיין לא הצלחנו לשמור את הסשן שלך. אפשר לנסות שוב כשמתאים לך.",
+    "gate.signInDev": "התחברות (הדגמת פיתוח)",
+    "gate.signInApple": "התחברות עם Apple (טרם זמינה)",
+    "gate.signInGoogle": "התחברות עם Google (טרם זמינה)",
+    "gate.retry": "ניסיון נוסף",
+    "gate.continueWithoutSaving": "המשך ללא שמירה",
     "player.title": "הנגן המאוחד",
     "player.languageDescription": "אפשר לבחור את שפת הנגן.",
     "player.guidance": "הנחיית הנגן",
@@ -108,6 +126,15 @@ export const dictionaries = {
     "utilities.sessionContent": "תוכן הכלים",
   },
   en: {
+    "gate.title": "Keep your session",
+    "gate.body": "Sign in to keep this session — your work stays on this device until you choose to anchor it.",
+    "gate.pending": "Anchoring your session…",
+    "gate.recovery": "We could not anchor your session yet. You can try again whenever you are ready.",
+    "gate.signInDev": "Sign in (dev tracer stub)",
+    "gate.signInApple": "Sign in with Apple (stub)",
+    "gate.signInGoogle": "Sign in with Google (stub)",
+    "gate.retry": "Try again",
+    "gate.continueWithoutSaving": "Continue without saving",
     "player.title": "Unified Player",
     "player.languageDescription": "Choose the Player language.",
     "player.guidance": "Player guidance",

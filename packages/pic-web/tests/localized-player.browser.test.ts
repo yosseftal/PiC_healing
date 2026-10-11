@@ -7,6 +7,7 @@ const copy = {
     yes: "כן", no: "לא", change: "שינוי תשובה", finish: "סיום", anyway: "סיום בכל זאת",
     integrating: "הסשן בהטמעה", retry: "ניסיון נוסף לטעינת ההנחיה", recovery: "אפשר לחבר מחדש",
     guard: "ההנחיה עוברת כעת עיבוד פנימי", choose: "בחירת הנחיה אחרת", state: "בתצוגה",
+    gate: "שמירת הסשן שלך",
   },
   en: {
     direction: "ltr", title: "Unified Player", open: "Open Player utilities", sheet: "Player utilities",
@@ -14,6 +15,7 @@ const copy = {
     yes: "Yes", no: "No", change: "Change response", finish: "Finish", anyway: "Finish Anyway",
     integrating: "This session is Integrating", retry: "Try guidance again", recovery: "Your guidance can reconnect",
     guard: "This guidance is currently undergoing", choose: "Choose another guidance", state: "In view",
+    gate: "Keep your session",
   },
 } as const;
 
@@ -144,17 +146,16 @@ for (const locale of ["he", "en"] as const) {
     expect(await finish.evaluate((element, original) => element === original, yesNode)).toBe(false);
     await expect(finish).not.toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("dialog", { name: "Keep your session" })).toHaveCount(0);
+    await expect(page.getByRole("dialog", { name: text.gate })).toHaveCount(0);
     await expect(actions.getByRole("button")).toHaveCount(2);
     await actions.getByRole("button", { name: text.finish, exact: true }).click();
-    await expect(page.getByRole("dialog", { name: "Keep your session" })).toBeVisible();
-    // Gate localization is Ticket 11.6; the existing account action remains unchanged.
+    await expect(page.getByRole("dialog", { name: text.gate })).toBeVisible();
     await page.reload();
     await expect(page.getByTestId("atomic-unit-title")).toBeVisible();
     sheet = await openSheet(page, locale);
     await sheet.getByTestId("finish-anyway-button").click();
     await expect(sheet).toBeHidden();
-    await expect(page.getByRole("dialog", { name: "Keep your session" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: text.gate })).toBeVisible();
   });
 
   for (const phase of ["resolving", "empty", "recovery-empty", "recovery"] as const) {

@@ -11,6 +11,7 @@ import {
   assembleGuestSnapshotForPendingGate,
   createSupabaseRepositoryFromClient,
   promoteWithAuthenticatedRepository,
+  signInAsTestUser,
 } from "./promote-path";
 
 function loadEnvLocal(path: string): Record<string, string> {
@@ -156,9 +157,10 @@ describe("promoteWithAuthenticatedRepository", () => {
     expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("failed");
   });
 
-  it("leaves guest storage clear and provider swapped on success", async () => {
+  it.each(["he", "en"])("preserves %s preference through promotion without therapeutic payload leakage", async (locale) => {
     vi.resetModules();
     localStorage.clear();
+    localStorage.setItem("pic-web.locale.v1", locale);
     const { compositionRoot: root } = await import("./composition-root");
     const { repositoryPort, sessionEngineActions, promotePathActions, sessionEngineStore } = root;
     const group = buildFinalizedGroup();
@@ -168,7 +170,10 @@ describe("promoteWithAuthenticatedRepository", () => {
     expect(storageHasGuestEntityData(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY))).toBe(true);
 
     const authenticatedPort = createInMemoryAuthenticatedPort();
+    const promotion = vi.spyOn(authenticatedPort, "promoteGuestToAccount");
+    const timeline = vi.spyOn(authenticatedPort, "appendTimelineEvent");
     await sessionEngineActions.onFinishRequested(session.id, "finish");
+    expect(await promotePathActions.assembleGuestSnapshotForPendingGate()).toEqual({ group, playerSession: session });
 
     await promotePathActions.promoteWithAuthenticatedRepository(
       authenticatedPort,
@@ -179,6 +184,22 @@ describe("promoteWithAuthenticatedRepository", () => {
     expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
     expect(repositoryPort.getProvider()).toBe(authenticatedPort);
     expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
+    expect(localStorage.getItem("pic-web.locale.v1")).toBe(locale);
+    expect(promotion).toHaveBeenCalledWith({
+      idempotencyKey: group.id, group, playerSession: session, newUserId: "user-success",
+    });
+    expect(await authenticatedPort.getGroup(group.id)).toEqual(group);
+    expect(await authenticatedPort.getPlayerSession(session.id)).toEqual({
+      ...session, success_declared: true, finished_at: expect.any(String),
+    });
+    for (const [event] of timeline.mock.calls) {
+      expect(event).toEqual({
+        log_type: "treatment_execution", treatment_id: session.treatment_id,
+        library_row_id: expect.any(String), linked_group_id: group.id, metadata: null,
+      });
+    }
+    promotion.mockRestore();
+    timeline.mockRestore();
   });
 
   it("promotes an unlinked session (group: null) successfully via assembleGuestSnapshotForPendingGate (ticket 08)", async () => {
@@ -214,6 +235,30 @@ describe("promoteWithAuthenticatedRepository", () => {
     expect(promoted?.success_declared).toBe(true);
     expect(promoted?.finished_at).not.toBeNull();
     expect(promoted?.linked_group_id).toBeNull();
+  });
+});
+
+describe("development sign-in language independence", () => {
+  it.each(["he", "en"])("keeps %s preference and sends only the existing password credentials", async (locale) => {
+    localStorage.setItem("pic-web.locale.v1", locale);
+    const client = createClient("https://auth-fixture.invalid", "fixture-anon-key", {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const user = {
+      id: "account-fixture", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-10-11",
+    };
+    const signIn = vi.spyOn(client.auth, "signInWithPassword")
+      .mockResolvedValue({ data: { user, session: {
+        access_token: "fixture-access", refresh_token: "fixture-refresh", expires_in: 3600,
+        token_type: "bearer", user,
+      } }, error: null });
+    const credentials = { email: "fixture@example.com", password: "fixture-password" };
+    const result = await signInAsTestUser(client, credentials);
+    expect(signIn).toHaveBeenCalledExactlyOnceWith(credentials);
+    expect(result.userId).toBe("account-fixture");
+    expect(localStorage.getItem("pic-web.locale.v1")).toBe(locale);
+    expect(result.client).toBe(client);
+    signIn.mockRestore();
   });
 });
 

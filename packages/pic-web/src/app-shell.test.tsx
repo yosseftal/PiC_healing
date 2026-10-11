@@ -6,6 +6,7 @@ import { DelegatingRepositoryPort } from "pic-engine";
 import { App } from "./App";
 import { GuestModeShell } from "./GuestModeShell";
 import { SessionEngineProvider } from "./session-engine-context";
+import { LocaleProvider } from "./i18n/locale-provider";
 import { compositionRoot } from "./composition-root";
 
 /**
@@ -22,11 +23,11 @@ describe("pic-web app shell", () => {
   it("renders GuestModeShell without throwing given a freshly-booted SessionEngine", () => {
     expect(() =>
       render(
-        <SessionEngineProvider>
+        <LocaleProvider><SessionEngineProvider>
           <GuestModeShell>
             <div>child content</div>
           </GuestModeShell>
-        </SessionEngineProvider>,
+        </SessionEngineProvider></LocaleProvider>,
       ),
     ).not.toThrow();
   });
