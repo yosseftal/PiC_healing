@@ -24,7 +24,7 @@ import {
   SessionEngine,
   TimelineEngine,
 } from "pic-engine";
-import type { AtomicUnitContent, Intensity, JointTreatmentMuscleTestResult, Polarity } from "pic-engine";
+import type { AtomicUnitContent, Intensity, JointTreatmentMuscleTestResult, Polarity, Treatment } from "pic-engine";
 import type { GuestSnapshot, RepositoryPort } from "pic-engine";
 import type { PlayerSession } from "pic-engine";
 import {
@@ -316,13 +316,30 @@ const catalogActions = {
 /** Module-scoped parsed-content cache — fresh on tab reload, per Wave 9 Content Cache Lifetime decision. */
 const parsedTreatmentContentById = new Map<string, AtomicUnitContent[]>();
 
+/** Web-only source metadata, read from the same tab-cached source as canonical parsing. */
+const treatmentSourceById = new Map<string, Promise<Treatment | null>>();
+function getTreatmentContentSource(treatmentId: string): Promise<Treatment | null> {
+  const cached = treatmentSourceById.get(treatmentId);
+  if (cached !== undefined) return cached;
+  const pending = repositoryPort.getTreatment(treatmentId).then((source) => {
+    if (source === null) treatmentSourceById.delete(treatmentId);
+    return source;
+  }).catch((error: unknown) => {
+    treatmentSourceById.delete(treatmentId);
+    throw error;
+  });
+  treatmentSourceById.set(treatmentId, pending);
+  return pending;
+}
+
 const treatmentContentActions = {
+  getTreatmentContentSource,
   async getParsedTreatmentContent(treatmentId: string): Promise<AtomicUnitContent[]> {
     const cached = parsedTreatmentContentById.get(treatmentId);
     if (cached !== undefined) {
       return cached;
     }
-    const treatment = await repositoryPort.getTreatment(treatmentId);
+    const treatment = await getTreatmentContentSource(treatmentId);
     if (treatment === null) {
       return [];
     }
@@ -335,6 +352,7 @@ const treatmentContentActions = {
 /** Clears the tab-scoped treatment content cache between tests. */
 export function resetTreatmentContentCacheForTest(): void {
   parsedTreatmentContentById.clear();
+  treatmentSourceById.clear();
 }
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */

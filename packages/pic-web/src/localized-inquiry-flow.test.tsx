@@ -162,11 +162,13 @@ it("flows through joint Yes, summary and the complete catalog into a canonically
   const link = screen.getByTestId("link-to-group-toggle") as HTMLInputElement;
   expect(link.checked).toBe(false);
   fireEvent.click(link);
+  const validationReads = read.mock.calls.length;
   fireEvent.click(screen.getByRole("button", { name: "עברית" }));
   expect(screen.getByTestId("link-to-group-toggle")).toBe(link);
   expect(link.checked).toBe(true);
   expect(start).not.toHaveBeenCalled();
-  expect(read).not.toHaveBeenCalled();
+  expect(read).toHaveBeenCalledTimes(validationReads);
+  expect(read.mock.calls.map(([id]) => id)).toEqual(catalog.map((item) => item.id));
   fireEvent.click(screen.getByTestId(`pick-treatment-${treatment.id}`));
   await waitFor(() => expect(screen.getByTestId("guest-flow-player")).toBeTruthy());
   expect(start).toHaveBeenCalledExactlyOnceWith(treatment.id, groupId, parsed.map((unit) => unit.unit_id));

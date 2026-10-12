@@ -211,16 +211,16 @@ describe("UnifiedPlayerScreen", () => {
     await waitFor(() => expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy());
   });
 
-  it("localizes navigation states and guidance names without claiming an authored source language", async () => {
+  it("localizes navigation states and validated approved guidance with truthful source language", async () => {
     localStorage.setItem("pic-web.locale.v1", "he");
     const session = buildSession();
     await seedPlayerSession(session);
     render(<AppProviders><UnifiedPlayerScreen /></AppProviders>);
     const heading = await screen.findByTestId("atomic-unit-title");
     expect(screen.getByRole("region", { name: "הנחיה ליחידה אטומית" })).toBeTruthy();
-    expect(heading.getAttribute("lang")).toBe("");
-    expect(heading.getAttribute("dir")).toBe("auto");
-    expect(screen.getByTestId("atomic-unit-content").getAttribute("lang")).toBe("");
+    expect(heading.getAttribute("lang")).toBe("he");
+    expect(heading.getAttribute("dir")).toBe("rtl");
+    expect(screen.getByTestId("atomic-unit-content").getAttribute("lang")).toBe("he");
     fireEvent.click(screen.getByRole("button", { name: "פתיחת כלי הנגן" }));
     expect(screen.getByRole("navigation", { name: "עץ הניווט" })).toBeTruthy();
     const current = screen.getByTestId("navigation-tree-jump-unit-1");

@@ -92,3 +92,69 @@ No machine translation, course content, clinical instruction changes, or writes 
 Reuse the existing content facade and canonical fixtures; test display outputs and unmodified startup/persistence inputs.
 Run owned resolver/UI/browser tests, root typecheck, web depcruise/build, lint, line-length and implementation-scope checks.
 Later Resolution must address TB-01–TB-12 with approval references, canonical parity evidence, and source-cache/race results.
+
+## Resolution
+
+Implemented and scoped verification completed 2026-10-12. **Implementation: done; orchestrator commit/review: pending.**
+The user's 2026-10-11 authorization, recorded in the brief and seam map, approves all three bundled treatments
+and drafted Hebrew UI copy as product content. It supersedes the official-content-pack/copy prerequisites for
+this run. These assets do not claim therapeutic website authorship or publication provenance. Courses remain deferred.
+
+- **TB-01:** All three approved IDs have frozen web-owned English source snapshots, source-language metadata,
+  revision, permission/provenance, and complete English/Hebrew titles and three-unit assets. All rationales remain null.
+  Source parity tests compare these literals to the independently imported canonical seed rows and parsed units.
+- **TB-02:** Actual picker-to-Player Chromium cases show matching approved titles/guidance in both locales,
+  preserve treatment/session/active-unit identities, and retain canonical startup IDs. Production first use remains Hebrew.
+- **TB-03:** The pure resolver compares catalog/source title, ID, format and exact source representation, plus
+  actual parsed IDs/order/titles/bodies/rationales. Changed body under identical IDs/count and real raw seed source rejects.
+  Source validation never derives its expected snapshot from a live engine export.
+- **TB-04:** Complete locale assets must preserve ordered unit IDs/count/order and rationale presence; partial,
+  reordered, wrong-locale, unapproved and stale-revision assets reject the whole treatment display coherently.
+- **TB-05:** Source fallback preserves canonical guidance and has required approved bilingual availability copy.
+  Unknown source uses empty lang/auto dir; validated English fallback uses en/ltr; approved Hebrew uses he/rtl.
+  Renamed rows, edited/personal identities and unavailable source metadata cannot claim approved display.
+- **TB-06:** Empty actual units never gain guidance from an asset and keep existing startup/Player guards.
+  Nonempty unit-0 retains canonical identity/body/parser title while its system heading follows the UI locale.
+- **TB-07:** Picker validation reads only the three allowlisted candidates. The web source-metadata facade
+  shares the repository source with the existing tab-scoped canonical cache; other catalog rows are not fetched.
+  Locale selection causes no additional content read or network request. Null/rejected reads remain explicitly retryable.
+- **TB-08:** Display-cache keys include treatment, validated revision and locale, with validation before cache hits.
+  Delayed-read locale round trips and changed-treatment races use current identity/locale and invoke no advance/jump.
+- **TB-09:** Existing ReactMarkdown safety, GFM and table scroller remain. A stable table component plus content
+  metadata context retains table DOM through switching. Existing long-source card/table scroll assertions pass unchanged.
+  Fallback notice follows guidance to preserve reading scroll when translated notice height changes.
+- **TB-10:** Personal wording/source records stay unchanged. Overlays supply rendering fields only; startup sends
+  canonical IDs, while existing engine actions own session/library/timeline/promotion data. Browser snapshot comparisons
+  and existing persistence regressions pass; translated guidance is never supplied to any persistence action.
+- **TB-11:** Resolver/provider/source-cache tests cover body/title/rationale/order/format/catalog changes, empty
+  and Continuous Guidance, personal bypass, asset approval/completeness/revision, validation-before-cache and races.
+  Browser tests exercise matching assets and stale/unavailable fallback through the actual utility selector.
+- **TB-12:** Approved coverage is complete for all three treatments/two locales; no approval or coverage blocker.
+  Implementation owns **22 web paths**; only this Resolution is outside web. No engine/adapter/contract/seed/migration,
+  dependency/root-tooling, staging or commit changes.
+
+Behavioral red→green evidence: picker/Player first rendered English instead of approved Hebrew; stale asset revision
+was incorrectly accepted; a null source poisoned retry; metadata validation failure blanked canonical guidance; and
+eight Chromium long-card cases shifted scrollTop by 28–56px when the notice changed locale. Their fixes pass without
+weakened scroll thresholds or therapeutic assertions. Initial module-scaffold failure is separate from these behavior failures.
+
+Verification:
+
+- Full web: `npm run test --workspace=pic-web -- --maxWorkers=2` — **31 files / 229 tests**.
+- Final asset/content/copy: `npx vitest run packages/pic-web/src/content-localization
+  packages/pic-web/src/i18n/core-messages.test.ts --maxWorkers=1` — **4 files / 36 tests**.
+- Affected Chromium: content-localization, localized-player, localized-inquiry-selection — **39 / 39**, worker 1.
+  After asset line formatting/GFM restoration, owned content Chromium repeated cleanly: **11 / 11**.
+- Scoped and root typechecks pass. Web depcruise passes: **746 modules / 1551 dependencies**.
+  Production build, owned ESLint, 130-character scan and git diff check pass.
+- Build retains the existing dynamic-import/chunk-size warnings. Sandbox Vitest EPERM temp renames and missing
+  sandbox Chromium were reported as infrastructure failures and rerun with approved escalation; no TLS overrides/skips.
+
+Owned additions are `src/content-localization/{approved-content,permission,treatment-1,treatment-2,treatment-3,
+types,resolver,use-treatment-display,TreatmentPickerTitle}` with three test files, plus the content-localization
+browser test/fixture. Integration touches AtomicUnitView, TreatmentPickerScreen, composition-root, the shared required
+availability message, and existing web tests' explicit locale/validated-metadata expectations. Canonical guidance is
+never parsed from translated Markdown, and locale/dictionary runtime modules still import no engine or adapter.
+
+Real mobile keyboard/visual viewport changes, device cutouts, desktop zoom and Hebrew screen-reader pronunciation
+remain unverified manually. Chromium covers the specified 320, 390, 768 and 1440px viewports; no Safari/Firefox claim.

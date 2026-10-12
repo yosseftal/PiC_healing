@@ -14,10 +14,12 @@ afterEach(() => {
   vi.restoreAllMocks();
   resetGuestFlowFactsForTest();
   resetTreatmentContentCacheForTest();
+  localStorage.clear();
 });
 
 describe("AtomicUnitView", () => {
   beforeEach(() => {
+    localStorage.setItem("pic-web.locale.v1", "en");
     resetGuestFlowFactsForTest();
     resetTreatmentContentCacheForTest();
   });

@@ -14,6 +14,7 @@ import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
 import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
+import { TreatmentPickerTitle } from "./content-localization/TreatmentPickerTitle";
 
 export function TreatmentPickerScreen() {
   const { message } = useLocale();
@@ -85,7 +86,7 @@ export function TreatmentPickerScreen() {
                   data-testid={`pick-treatment-${treatment.id}`}
                   onClick={() => void selectTreatment(treatment.id)}
                 >
-                  <bdi dir="auto" lang="">{treatment.title}</bdi>
+                  <TreatmentPickerTitle treatmentId={treatment.id} title={treatment.title} />
                 </button>
                 {zeroH3GuardTreatmentId === treatment.id ? (
                   <p role="status" data-testid={`zero-h3-guard-${treatment.id}`}>
