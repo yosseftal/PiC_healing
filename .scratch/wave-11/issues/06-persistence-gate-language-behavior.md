@@ -8,7 +8,7 @@ unchanged, and saving or discarding guest work preserves the independent languag
 
 **Status:** done
 
-**Dispatch state:** Implemented and verified; orchestrator review pending.
+**Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.2–3.5, 4, and 6.2.
 
@@ -123,3 +123,10 @@ installed Chromium and passed; no test was skipped or weakened. Timing-sensitive
 
 Manual evidence remains unverified for physical device cutouts, mobile soft keyboards, desktop zoom and Hebrew screen-reader
 pronunciation. Chromium evidence does not substitute for those checks. Existing auth-provider stubs remain the product limit.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Commits and separate review results: 31161c2; Standards 0; Spec 0.
+All reported corrective findings are closed; no blocking Standards or Spec finding remains.
+The original Resolution records slice verification at implementation time.
+Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.

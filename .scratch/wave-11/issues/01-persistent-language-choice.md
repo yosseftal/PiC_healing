@@ -8,7 +8,7 @@ the current healing work. This is a working UI-to-preference tracer bullet, not 
 
 **Status:** done
 
-**Dispatch state:** Implemented and verified; Spec review runtime-locale correction passed its gates on 2026-10-11.
+**Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.2–3.4 and 6.2.
 
@@ -167,3 +167,10 @@ Corrective gates passed: resolver tests **14/14**, full scoped frontend suite **
 depcruise, changed-resolver ESLint, changed-file 130-character checks and `git diff --check`. Prior **12/12 Chromium** evidence
 remains valid: supported locales, selector behavior, dictionaries and browser composition are unchanged by this fix.
 The corrective diff is limited to `messages.ts`, its resolver tests and this Resolution. No staging or commit was performed.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Commits and separate review results: b617a0e, 2e69889; Standards 0; Spec runtime-locale finding closed.
+All reported corrective findings are closed; no blocking Standards or Spec finding remains.
+The original Resolution records slice verification at implementation time.
+Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.

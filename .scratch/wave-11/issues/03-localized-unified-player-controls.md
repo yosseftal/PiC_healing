@@ -8,7 +8,7 @@ the session's meaning or authority. Language access remains available in every P
 
 **Status:** done
 
-**Dispatch state:** Implemented and verified; independent parent review pending.
+**Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.3–3.4, 4, and 6.2.
 
@@ -222,3 +222,10 @@ Another Enter after Yes does not focus or activate Finish or open the Gate.
 
 The original 51-case Chromium evidence remains above; final wave closure reruns the full configured suite.
 Parent review of the committed correction remains pending.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Commits and separate review results: d6d73a7, fb1af26; Standards action-identity finding closed; Spec 0.
+All reported corrective findings are closed; no blocking Standards or Spec finding remains.
+The original Resolution records slice verification at implementation time.
+Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.

@@ -14,7 +14,7 @@ Their transitive prerequisites include 11.1, 11.2, 11.3, and 11.5; these edges c
 
 **Status:** done
 
-**Dispatch state:** Implemented; two-axis review, commit and final root gates pending with the orchestrator.
+**Dispatch state:** Done; committed, independent Standards/Spec reviews closed, and final root gates passed.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 5–6.
 
@@ -110,7 +110,7 @@ Historical Wave 10 passes or ticket creation are not Wave 11 verification.
 
 ## Resolution — 2026-10-12
 
-Implementation and scoped verification are done; parent review/commit and final root gates are pending.
+Implementation, scoped verification, parent commit/review and final root gates are complete; closure evidence is below.
 The user's 2026-10-11 approvals, recorded in the execution brief and seam map, close UI-copy and three-bundled-treatment
 prerequisites for this run. All 110 required messages and all three English/Hebrew content assets are product-approved.
 They are not represented as website quotations/publications. No new approval or translation-service dependency was added.
@@ -150,7 +150,7 @@ MOTION = `tests/dynamic-rtl.browser.test.ts`. Prior evidence is explicitly ident
 | TB-07 | Prior CONTENT and resolver tests: 3 approved assets, full source/unit match, stale/personal/empty fallback. |
 | TB-08 | FLOW offline loaded-asset switches through the selector preserve session; no requests or auth action. |
 | TB-09 | All 110 keys resolve in both locales without fallback/raw/pending text; parameters/plurals and 3 assets validate. |
-| TB-10 | Scoped units/types/depcruise/build/lint/130/diff pass; root types pass. Final root regressions/gates await parent. |
+| TB-10 | Scoped gates pass; parent closure below records passing root types/lint, 442 tests, depcruise and 161 Chromium cases. |
 | TB-11 | 12 web paths plus this Resolution; separate path review; locale dependency rule and existing adapter rule retained. |
 | TB-12 | Every AC mapped below; product approvals closed; physical devices/manual checks explicitly unverified. |
 
@@ -204,10 +204,34 @@ Verification and command evidence:
 The initial sandbox Chromium launch failed before tests because its browser path was unavailable. Approved escalation used
 the installed browser. The first long-flow batch exhausted the original 30s scenario budget late in the journey; only the new
 assembled test received the documented total budget. No assertion, clinical choice, TLS setting, retry or skip was relaxed.
-Final repository lint, all-workspace depcruise, root `npm test`, and full configured Chromium are pending parent closure after
-review/commit. They are not claimed green here, and no remote-service availability is inferred from scoped web passes.
+At implementation handoff, repository lint, all-workspace depcruise, root `npm test`, and full configured Chromium
+were pending parent closure. Their subsequent genuine results are recorded below; scoped web passes alone did not prove them.
 
 Physical cutouts, mobile keyboards/visual viewport, real desktop zoom and Hebrew screen-reader pronunciation remain
 unverified without actual devices/manual runs. Chromium evidence does not prove these. No Safari/Firefox, service worker,
 offline installation, course translation, account synchronization, extra locale or broader content-versioning claim is made.
 No engine, adapter, port, seed, schema/migration, dependency/root tooling, staging, commit, PR or publishing change was made.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Implementation commit: `e9696e6`, reviewed against `f34427d` on both axes.
+Standards: zero documented violations; Spec: zero findings. A nonblocking P3 possible viewport-helper duplication
+was acknowledged and deferred: fixture-local animation prerequisites differ. The handoff records this carry-forward.
+No blocking review finding remains. All eight ticket resolutions and dispatch states are closed.
+
+Final assembled-wave gates on `e9696e6`:
+
+- Root `npm run typecheck`: passed in all four workspaces.
+- Root `npm run lint`: passed.
+- Root `npm test`: **46 files / 442 tests passed**, 54.01s, including configured remote adapter regressions.
+  Its all-workspace depcruise passed: engine **72 modules / 199 dependencies**; web **746 / 1551**; zero violations.
+- From `packages/pic-web`, `npx playwright test --workers=2`: **161 / 161 Chromium tests passed**, 6.5m, exit zero.
+  This is the full configured suite, including earlier motion, foundation, frame, Sheet and Player coverage.
+- Final scoped web units: **31 files / 229 tests**. Web build: **2698 modules**; existing warnings unchanged.
+- Separate baseline scope audit: **84 web paths**; outside web only authorized planning/Resolution documentation.
+  Zero engine/adapter/port/seed/schema/migration/root metadata diff. All wave-changed tracked files pass 130 characters.
+- Final staged documentation line-length and diff checks are enforced before the closure commit.
+
+The parent handoff at `docs/handoffs/wave-11-handoff.md` records approvals, commits, review closure, gates,
+deduplication sweep and manual limitations. Physical-device and Hebrew screen-reader checks remain unverified;
+the passing browser matrix does not claim manual evidence, course support or broader content versioning.

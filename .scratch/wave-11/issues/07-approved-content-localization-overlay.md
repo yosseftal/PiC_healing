@@ -11,9 +11,9 @@ progress; absent, unapproved, or stale translations retain original guidance wit
 
 These tickets establish the localized Player and picker presentation surfaces consumed by this overlay.
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Dispatch state:** Not dispatched; upstream tickets and explicit official-content approvals are prerequisites.
+**Dispatch state:** Done; committed and independent Standards/Spec reviews closed under recorded product approvals.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.7, 4–5, and 6.2–6.3.
 
@@ -95,7 +95,7 @@ Later Resolution must address TB-01–TB-12 with approval references, canonical 
 
 ## Resolution
 
-Implemented and scoped verification completed 2026-10-12. **Implementation: done; orchestrator commit/review: pending.**
+Implemented and scoped verification completed 2026-10-12. **Implementation: done; orchestrator commit/review: closed.**
 The user's 2026-10-11 authorization, recorded in the brief and seam map, approves all three bundled treatments
 and drafted Hebrew UI copy as product content. It supersedes the official-content-pack/copy prerequisites for
 this run. These assets do not claim therapeutic website authorship or publication provenance. Courses remain deferred.
@@ -158,3 +158,10 @@ never parsed from translated Markdown, and locale/dictionary runtime modules sti
 
 Real mobile keyboard/visual viewport changes, device cutouts, desktop zoom and Hebrew screen-reader pronunciation
 remain unverified manually. Chromium covers the specified 320, 390, 768 and 1440px viewports; no Safari/Firefox claim.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Commits and separate review results: f34427d; Standards 0; Spec 0.
+All reported corrective findings are closed; no blocking Standards or Spec finding remains.
+The original Resolution records slice verification at implementation time.
+Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.

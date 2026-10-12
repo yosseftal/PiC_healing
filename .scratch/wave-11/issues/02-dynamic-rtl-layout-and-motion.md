@@ -8,7 +8,7 @@ The same thin frame/drawer composition becomes reusable by earlier Guest Flow sc
 
 **Status:** done
 
-**Dispatch state:** Implemented and verified; parent commit/review in progress.
+**Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.4–3.6 and 6.3.
 
@@ -198,3 +198,10 @@ parent stages only the three correction paths. Ticket 11.3 and the final wave ga
   during corrective work; no staging/commit, shared i18n/style edit, feature migration or token change was performed.
 
 Correction complete; edits stopped for parent verification, atomic commit and independent review. Manual limits above remain.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Commits and separate review results: 8dff295, 929e85f; Standards 0; Spec outgoing-motion finding closed.
+All reported corrective findings are closed; no blocking Standards or Spec finding remains.
+The original Resolution records slice verification at implementation time.
+Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.

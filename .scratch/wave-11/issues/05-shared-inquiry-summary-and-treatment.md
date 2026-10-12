@@ -8,7 +8,7 @@ while routing, voluntary group linking, personal wording, and treatment identiti
 
 **Status:** done
 
-**Dispatch state:** Implemented and verified; orchestrator review pending.
+**Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
 
@@ -129,3 +129,10 @@ Correction verification: scoped/root typechecks, full web **28 files / 195 tests
 web depcruise **734 modules / 1508 dependencies**, production build, owned ESLint, 130-character scan and
 diff check pass. The corrective diff owns two web files plus this addendum; existing manual-verification limits
 and build warnings remain as recorded above. Orchestrator corrective commit and review closure are pending.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Commits and separate review results: b5b6a23, 27719a0; Standards 0; Spec summary-action finding closed.
+All reported corrective findings are closed; no blocking Standards or Spec finding remains.
+The original Resolution records slice verification at implementation time.
+Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.

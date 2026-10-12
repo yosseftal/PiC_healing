@@ -8,7 +8,7 @@ draft values, and Blind-by-Default behavior throughout that complete flow.
 
 **Status:** done
 
-**Dispatch state:** Implemented and verified; review pending.
+**Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
 
@@ -111,3 +111,10 @@ creation or picker per query stage, preserving its checkbox checks without stack
 A common reachable 40px card offset survives selection; a locale-dependent maximum may naturally clamp
 when translated content is shorter. Real device cutouts, mobile keyboard, desktop zoom, and Hebrew
 screen-reader pronunciation were not manually verified and remain follow-up evidence for the final wave.
+
+## Orchestrator closure
+
+Closed on 2026-10-12. Commits and separate review results: b25b55b; Standards 0; Spec 0.
+All reported corrective findings are closed; no blocking Standards or Spec finding remains.
+The original Resolution records slice verification at implementation time.
+Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
