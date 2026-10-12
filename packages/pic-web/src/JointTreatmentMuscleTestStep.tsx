@@ -6,12 +6,18 @@ import { useGuestFlowFacts } from "./guest-flow-context";
 import { useGroupEngineActions } from "./group-engine-context";
 import { useAsyncAction } from "./use-async-action";
 import { UTILITY_CONTROL } from "./control-affordance";
+import { AtomicActionLayout, type ActionTuple } from "./action-layout/AtomicActionLayout";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
+import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
+import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
 
 export interface JointTreatmentMuscleTestStepProps {
   groupId: string;
 }
 
 export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTestStepProps): ReactNode {
+  const { message } = useLocale();
   const { symptomAdditionComplete } = useGuestFlowFacts();
   const { setJointTreatmentMuscleTest, finalizeGroup } = useGroupEngineActions();
   const [awaitingFinalize, setAwaitingFinalize] = useState(false);
@@ -38,52 +44,43 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
     return null;
   }
 
-  return (
-    <section data-testid="guest-flow-joint-treatment">
-      <div data-testid="joint-treatment-muscle-test">
-        <h1>Joint Treatment Muscle Test</h1>
-        <p>Is it NEMAR to treat these symptoms together?</p>
-        {!awaitingFinalize ? (
-          <>
-            <button className={UTILITY_CONTROL} type="button"
-              data-testid="muscle-test-yes" onClick={() => void applyResponse("yes")}>
-              Yes
-            </button>
-            <button className={UTILITY_CONTROL} type="button"
-              data-testid="muscle-test-no" onClick={() => void applyResponse("no")}>
-              No
-            </button>
-          </>
-        ) : (
-          <>
-            {!advisoryDismissed ? (
-              <div data-testid="split-advisory" role="status">
-                <p>These symptoms may heal better as separate groups.</p>
-                <button
-                  className={UTILITY_CONTROL}
-                  type="button"
-                  data-testid="dismiss-split-advisory"
-                  onClick={() => setAdvisoryDismissed(true)}
-                >
-                  Dismiss
-                </button>
-              </div>
-            ) : null}
-            <button className={UTILITY_CONTROL} type="button"
-              data-testid="finalize-anyway" onClick={() => void applyResponse("finalize")}>
-              Finalize anyway
-            </button>
-          </>
-        )}
-        {responseStatus === "recovery" ? (
-          <div role="status">
-            <p>Your response is ready for another try.</p>
-            <button className={UTILITY_CONTROL} type="button" onClick={() => void retryResponse()}>
-              Try this muscle test response again
-            </button>
-          </div>
-        ) : null}
-      </div>
-    </section>
-  );
+  const finalizeAction = {
+    kind: "button", id: "joint-finalize", intent: "primary", testId: "finalize-anyway",
+    label: message("joint.finalize").text, onAction: () => void applyResponse("finalize"),
+  } as const;
+  const actions: ActionTuple = !awaitingFinalize ? [
+    { kind: "button", id: "joint-yes", intent: "primary", testId: "muscle-test-yes",
+      label: message("player.yes").text, onAction: () => void applyResponse("yes") },
+    { kind: "button", id: "joint-no", intent: "secondary", testId: "muscle-test-no",
+      label: message("player.no").text, onAction: () => void applyResponse("no") },
+  ] : advisoryDismissed ? [finalizeAction] : [finalizeAction,
+    { kind: "button", id: "joint-dismiss", intent: "quiet", testId: "dismiss-split-advisory",
+      label: message("joint.dismiss").text, onAction: () => setAdvisoryDismissed(true) },
+  ];
+
+  return <section data-testid="guest-flow-joint-treatment">
+    <TherapeuticScreenFrame title={message("joint.title").text} stageLabel={message("joint.title").text}
+      utilities={responseStatus === "recovery" ? <div role="status">
+        <p><LocalizedMessage message={message("joint.recovery")} /></p>
+        <button className={UTILITY_CONTROL} type="button" onClick={() => void retryResponse()}>
+          <LocalizedMessage message={message("joint.retry")} />
+        </button>
+      </div> : null}>
+      <TherapeuticContentCard aria-label={message("joint.title").text}>
+        <div data-testid="joint-treatment-muscle-test">
+          <AtomicActionLayout actions={actions} actionsLabel={message("player.availableActions").text}
+            selectedLabel={message("player.selected").text} primaryContent={<>
+              <p><LocalizedMessage message={message("joint.question")} /></p>
+              {awaitingFinalize && !advisoryDismissed ? <p data-testid="split-advisory" role="status">
+                <LocalizedMessage message={message("joint.advisory")} />
+              </p> : null}
+              {responseStatus === "recovery" ? <p role="status">
+                <LocalizedMessage message={message("joint.recovery")} />
+                {" "}<LocalizedMessage message={message("joint.recoveryHint")} />
+              </p> : null}
+            </>} />
+        </div>
+      </TherapeuticContentCard>
+    </TherapeuticScreenFrame>
+  </section>;
 }

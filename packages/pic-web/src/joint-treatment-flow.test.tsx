@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
@@ -10,10 +10,13 @@ import {
 import { JointTreatmentMuscleTestStep } from "./JointTreatmentMuscleTestStep";
 import { SymptomGroupSummaryScreen } from "./SymptomGroupSummaryScreen";
 
+beforeEach(() => localStorage.setItem("pic-web.locale.v1", "en"));
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   resetGuestFlowFactsForTest();
+  localStorage.clear();
 });
 
 function renderMuscleTestStep(groupId: string) {
@@ -130,6 +133,7 @@ describe("JointTreatmentMuscleTestStep", () => {
     renderMuscleTestStep(groupId);
     fireEvent.click(screen.getByTestId("muscle-test-yes"));
 
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Try this muscle test response again" })).toBeTruthy();
     });
@@ -175,7 +179,7 @@ describe("SymptomGroupSummaryScreen", () => {
       expect(screen.getByTestId("guest-flow-group-summary")).toBeTruthy();
       expect(screen.getByTestId("summary-group-name").textContent).toBe("Lower Back");
       expect(screen.getByTestId("summary-symptom-symptom-1").textContent).toContain("Neck Pain");
-      expect(screen.getByTestId("summary-symptom-symptom-1").textContent).toContain("negative");
+      expect(screen.getByTestId("summary-symptom-symptom-1").textContent).toContain("Negative");
       expect(screen.getByTestId("summary-symptom-symptom-1").textContent).toContain("7/10");
       expect(screen.getByTestId("summary-muscle-test").textContent).toContain("together");
     });

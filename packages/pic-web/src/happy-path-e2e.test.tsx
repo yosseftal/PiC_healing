@@ -172,6 +172,7 @@ describe("happy path E2E (Ticket 08-09)", () => {
         expect(screen.getByTestId("guest-flow-pick-treatment")).toBeTruthy();
       });
 
+      fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
       fireEvent.click(screen.getByTestId("link-to-group-toggle"));
       fireEvent.click(screen.getByTestId(`pick-treatment-${seedTreatment.id}`));
 

@@ -6,9 +6,9 @@ while routing, voluntary group linking, personal wording, and treatment identiti
 
 **Blocked by:** [11.2 — Dynamic RTL Layout and Motion](02-dynamic-rtl-layout-and-motion.md).
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Dispatch state:** Not dispatched; complete 11.2 and resolve inquiry/summary/picker copy prerequisites first.
+**Dispatch state:** Implemented and verified; orchestrator review pending.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
 
@@ -73,3 +73,42 @@ Shared layout is owned by 11.2; localized content overlays belong to 11.7.
 Use existing joint-treatment/group-summary/catalog/content action seams and real adopted screen composition.
 Run affected unit/integration/browser tests, root typecheck, web depcruise/build, lint, line-length and scope checks.
 Later Resolution must address TB-01–TB-10 and record unchanged domain payloads and approved copy references.
+
+## Resolution
+
+Implemented 2026-10-11; verification completed 2026-10-12. Hebrew UI copy uses the product approval of
+2026-10-11 recorded in the execution brief and seam map; newly authored copy is not a website quotation.
+
+- **TB-01:** All three screens, including summary loading, use one bounded TherapeuticScreenFrame/card and
+  the shared language Sheet. Switching retains mounted controls, advisory state and voluntary linking.
+- **TB-02:** Complete joint/summary/picker messages cover headings, question/actions, summary ratings/counts,
+  linking, catalog accessibility and recovery. Required-key/parameter/plural coverage passes without fallback.
+- **TB-03:** Yes still records `together` then finalizes; No records `split_suggested` and leaves dismissal and
+  sovereign Finalize Anyway available. Language selection invokes neither action and changes no routing facts.
+- **TB-04:** Personal group/symptom names render as escaped text in `bdi` with automatic direction and unknown
+  language. Summary polarity is display copy; counts/intensity use locale formatting without stored-value changes.
+- **TB-05:** Every catalog ID remains reachable in the shared Sheet. Selection still reads canonical source units
+  and calls startSession with their IDs, including `unit-0`; genuinely empty source still blocks startup.
+- **TB-06:** Linking defaults off, survives selection and remains voluntary. Linked/standalone start payloads pass.
+- **TB-07:** Joint has at most two main actions; summary has one. The full catalog and linking live in utilities,
+  without recommendations. Phone summary/card and long catalog/Sheet scroll internally. Visible focus and 44px
+  targets pass; the native checkbox remains 20px inside its 44px-or-larger clickable label.
+- **TB-08:** Pending joint response, summary read, catalog read and selection recovery settle in current-locale
+  presentation without duplicate calls or draft/link resets. Existing retries retain their original payload meaning.
+- **TB-09:** Real-provider integration covers joint Yes through summary/catalog into a canonical linked Player;
+  No/dismissal/finalization and empty/Continuous Guidance paths retain action assertions. Chromium covers each
+  adopted screen in Hebrew and English, language focus, containment, internal scrolling and canonical startup.
+- **TB-10:** Full web suite: **28 files / 195 tests**. Fresh Chromium: **7 / 7** including existing control-affordance.
+  Scoped/root typechecks, web depcruise (**734 modules / 1508 dependencies**), production build, owned ESLint,
+  130-character scan and diff check pass. Application changes occupy 13 web paths; only this Resolution is outside web.
+
+TDD evidence: joint language/advisory test failed on missing utilities, pending-summary test failed on missing
+loading language access, and full catalog/Player test failed on absent picker composition; each slice passed after
+its implementation. Five new integration regressions also cover pending calls and recovery. Existing English tests
+use explicit English fixtures and open the real Sheet; their therapeutic payload and guard assertions remain.
+
+Sandbox Vitest EPERM and missing sandbox Chromium were rerun with approved escalation. A host-suspended browser
+run timed out its first navigation after 11.1 hours; a fresh zero-retry run passed all seven cases. Build retains the
+existing chunk-size/dynamic-import warnings. Real device cutouts, mobile keyboard, desktop zoom and Hebrew
+screen-reader pronunciation remain unverified manually. Treatment source titles/bodies are unchanged; their
+validated translations belong to 11.7. No engine, adapter, schema, contract, seed, dependency or root-tooling edits.

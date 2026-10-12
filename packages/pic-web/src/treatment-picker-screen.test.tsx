@@ -1,6 +1,4 @@
 // @vitest-environment jsdom
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
@@ -14,10 +12,12 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   resetTreatmentContentCacheForTest();
+  localStorage.clear();
 });
 
 describe("TreatmentPickerScreen", () => {
   beforeEach(() => {
+    localStorage.setItem("pic-web.locale.v1", "en");
     resetGuestFlowFactsForTest();
     resetTreatmentContentCacheForTest();
   });
@@ -33,6 +33,7 @@ describe("TreatmentPickerScreen", () => {
         <TreatmentPickerScreen />
       </AppProviders>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
 
     await waitFor(() => {
       expect(screen.getByTestId("treatment-list")).toBeTruthy();
@@ -68,6 +69,7 @@ describe("TreatmentPickerScreen", () => {
         <TreatmentPickerScreen />
       </AppProviders>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
 
     await waitFor(() => screen.getByTestId("pick-treatment-treatment-a"));
     fireEvent.click(screen.getByTestId("pick-treatment-treatment-a"));
@@ -97,6 +99,7 @@ describe("TreatmentPickerScreen", () => {
         <TreatmentPickerScreen />
       </AppProviders>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
 
     await waitFor(() => screen.getByTestId("pick-treatment-prose-treatment"));
     fireEvent.click(screen.getByTestId("pick-treatment-prose-treatment"));
@@ -128,6 +131,7 @@ describe("TreatmentPickerScreen", () => {
         <TreatmentPickerScreen />
       </AppProviders>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
 
     await waitFor(() => screen.getByTestId("link-to-group-toggle"));
     fireEvent.click(screen.getByTestId("link-to-group-toggle"));
@@ -154,6 +158,7 @@ describe("TreatmentPickerScreen", () => {
         <TreatmentPickerScreen />
       </AppProviders>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
 
     await waitFor(() => screen.getByTestId("pick-treatment-empty-treatment"));
     fireEvent.click(screen.getByTestId("pick-treatment-empty-treatment"));
@@ -164,7 +169,7 @@ describe("TreatmentPickerScreen", () => {
     expect(startSession).not.toHaveBeenCalled();
   });
 
-  it("renders the shared ZERO_H3_GUARD_MESSAGE constant rather than a forked string literal", async () => {
+  it("keeps the unavailable source guard and canonical selection through a language change", async () => {
     vi.spyOn(compositionRoot.catalogActions, "listTreatments").mockResolvedValue([
       { id: "empty-treatment", title: "Empty Treatment" },
     ]);
@@ -175,6 +180,7 @@ describe("TreatmentPickerScreen", () => {
         <TreatmentPickerScreen />
       </AppProviders>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
 
     await waitFor(() => screen.getByTestId("pick-treatment-empty-treatment"));
     fireEvent.click(screen.getByTestId("pick-treatment-empty-treatment"));
@@ -183,12 +189,10 @@ describe("TreatmentPickerScreen", () => {
       expect(screen.getByTestId("zero-h3-guard-empty-treatment").textContent).toBe(ZERO_H3_GUARD_MESSAGE);
     });
 
-    const pickerSource = readFileSync(
-      join(process.cwd(), "packages/pic-web/src/TreatmentPickerScreen.tsx"),
-      "utf8",
-    );
-    expect(pickerSource).toMatch(/import \{ ZERO_H3_GUARD_MESSAGE \} from "\.\/zero-h3-guard-message";/);
-    expect(pickerSource).not.toContain(ZERO_H3_GUARD_MESSAGE);
+    fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+    expect(screen.getByTestId("zero-h3-guard-empty-treatment").textContent)
+      .toBe("ההנחיה עוברת כעת עיבוד פנימי ואינה זמינה לביצוע כרגע. נמ״ר לבחור הנחיה אחרת?");
+    expect(screen.getByTestId("pick-treatment-empty-treatment").textContent).toBe("Empty Treatment");
   });
 
   it("offers a visible retry when the treatment list needs to reconnect", async () => {
@@ -202,6 +206,7 @@ describe("TreatmentPickerScreen", () => {
         <TreatmentPickerScreen />
       </AppProviders>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Try loading treatments again" })).toBeTruthy();

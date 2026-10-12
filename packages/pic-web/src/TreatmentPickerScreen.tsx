@@ -9,10 +9,14 @@ import { useGroupEngineState } from "./group-engine-context";
 import { usePlayerEngineActions } from "./player-engine-context";
 import { useTreatmentContentActions } from "./treatment-content-context";
 import { useAsyncAction } from "./use-async-action";
-import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
 import { CONTROL_FOCUS, UTILITY_CONTROL } from "./control-affordance";
+import { useLocale } from "./i18n/locale-provider";
+import { LocalizedMessage } from "./i18n/localized-message";
+import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
+import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
 
 export function TreatmentPickerScreen() {
+  const { message } = useLocale();
   const { listTreatments } = useCatalogActions();
   const { getParsedTreatmentContent } = useTreatmentContentActions();
   const { startSession } = usePlayerEngineActions();
@@ -59,50 +63,68 @@ export function TreatmentPickerScreen() {
 
   return (
     <section data-testid="guest-flow-pick-treatment">
-      <h1>Pick Treatment</h1>
-      {listStatus === "recovery" ? (
-        <div role="status">
-          <p>The treatment list is ready to reconnect.</p>
-          <button className={UTILITY_CONTROL} type="button" onClick={() => void retryLoadTreatments()}>
-            Try loading treatments again
-          </button>
-        </div>
-      ) : null}
-      <label className="inline-flex min-h-11 min-w-11 items-center gap-3 rounded-pic-button px-3 py-2">
-        <input
-          className={`size-5 shrink-0 accent-pic-sage-700 ${CONTROL_FOCUS}`}
-          type="checkbox"
-          checked={linkToGroup}
-          onChange={(event) => setLinkToGroup(event.target.checked)}
-          data-testid="link-to-group-toggle"
-        />
-        Link to this symptom group
-      </label>
-      <ul data-testid="treatment-list">
-        {treatments.map((treatment) => (
-          <li key={treatment.id}>
-            <button
-              className={UTILITY_CONTROL}
-              type="button"
-              data-testid={`pick-treatment-${treatment.id}`}
-              onClick={() => void selectTreatment(treatment.id)}
-            >
-              {treatment.title}
-            </button>
-            {zeroH3GuardTreatmentId === treatment.id ? (
-              <p data-testid={`zero-h3-guard-${treatment.id}`}>{ZERO_H3_GUARD_MESSAGE}</p>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-      {selectStatus === "recovery" ? (
-        <div role="status">
-          <p>This treatment is ready when you are.</p>
-          <button className={UTILITY_CONTROL} type="button" onClick={() => void retrySelectTreatment()}>
-            Try opening treatment again
-          </button>
-        </div>
-      ) : null}
+      <TherapeuticScreenFrame title={message("picker.title").text} stageLabel={message("picker.title").text}
+        utilities={<div className="grid min-w-0 gap-4">
+          <label className="inline-flex min-h-11 min-w-11 items-center gap-3 rounded-pic-button px-3 py-2">
+            <input
+              className={`size-5 shrink-0 accent-pic-sage-700 ${CONTROL_FOCUS}`}
+              type="checkbox"
+              checked={linkToGroup}
+              onChange={(event) => setLinkToGroup(event.target.checked)}
+              data-testid="link-to-group-toggle"
+            />
+            <LocalizedMessage message={message("picker.link")} />
+          </label>
+          <ul className="grid min-w-0 gap-3 p-0 list-none" aria-label={message("picker.catalog").text}
+            data-testid="treatment-list">
+            {treatments.map((treatment) => (
+              <li key={treatment.id}>
+                <button
+                  className={`${UTILITY_CONTROL} w-full min-w-0 [overflow-wrap:anywhere]`}
+                  type="button"
+                  data-testid={`pick-treatment-${treatment.id}`}
+                  onClick={() => void selectTreatment(treatment.id)}
+                >
+                  <bdi dir="auto" lang="">{treatment.title}</bdi>
+                </button>
+                {zeroH3GuardTreatmentId === treatment.id ? (
+                  <p role="status" data-testid={`zero-h3-guard-${treatment.id}`}>
+                    <LocalizedMessage message={message("player.sourceGuard")} />
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {listStatus === "recovery" ? (
+            <div role="status">
+              <p><LocalizedMessage message={message("picker.listRecovery")} /></p>
+              <button className={UTILITY_CONTROL} type="button" onClick={() => void retryLoadTreatments()}>
+                <LocalizedMessage message={message("picker.retryList")} />
+              </button>
+            </div>
+          ) : null}
+          {selectStatus === "recovery" ? (
+            <div role="status">
+              <p><LocalizedMessage message={message("picker.selectRecovery")} /></p>
+              <button className={UTILITY_CONTROL} type="button" onClick={() => void retrySelectTreatment()}>
+                <LocalizedMessage message={message("picker.retrySelect")} />
+              </button>
+            </div>
+          ) : null}
+        </div>}>
+        <TherapeuticContentCard aria-label={message("picker.title").text}>
+          <p><LocalizedMessage message={message("picker.prompt")} /></p>
+          {listStatus === "recovery" ? <p role="status">
+            <LocalizedMessage message={message("picker.listRecovery")} />
+          </p> : null}
+          {selectStatus === "recovery" ? <p role="status">
+            <LocalizedMessage message={message("picker.selectRecovery")} />
+          </p> : null}
+          {zeroH3GuardTreatmentId === null ? null : <p role="status">
+            <LocalizedMessage message={message("player.sourceGuard")} />
+          </p>}
+        </TherapeuticContentCard>
+      </TherapeuticScreenFrame>
     </section>
   );
 }
