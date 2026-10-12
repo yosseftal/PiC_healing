@@ -26,7 +26,7 @@ async function checkContainment(page: Page) {
   expect(await page.evaluate(() => ({
     width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
     x: window.scrollX, y: window.scrollY,
-  }))).toEqual({ width: 320, height: 568, x: 0, y: 0 });
+  }))).toEqual({ ...page.viewportSize()!, x: 0, y: 0 });
   const card = page.locator(".pic-therapeutic-content-card");
   expect(await card.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
   for (const target of await page.locator(".pic-therapeutic-frame button").all()) {
@@ -44,16 +44,20 @@ async function expectSummaryChoiceInViewport(page: Page) {
   });
   expect(bounds.top).toBeGreaterThanOrEqual(0);
   expect(bounds.left).toBeGreaterThanOrEqual(0);
-  expect(bounds.right).toBeLessThanOrEqual(320);
-  expect(bounds.bottom).toBeLessThanOrEqual(568);
+  expect(bounds.right).toBeLessThanOrEqual(page.viewportSize()!.width);
+  expect(bounds.bottom).toBeLessThanOrEqual(page.viewportSize()!.height);
   await expect(button).toBeVisible();
 }
 
 for (const locale of ["he", "en"] as const) {
   const other = locale === "he" ? "en" : "he";
-  test(`${locale} joint inquiry retains No advisory, dismissal and sovereign finalization in one phone frame`,
+  for (const viewport of [
+    { width: 320, height: 568 }, { width: 390, height: 844 },
+    { width: 768, height: 1024 }, { width: 1440, height: 900 },
+  ]) {
+  test(`${locale} joint inquiry retains No advisory, dismissal and sovereign finalization in one frame at ${viewport.width}px`,
     async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 568 });
+    await page.setViewportSize(viewport);
     await page.goto(`/tests/inquiry-selection.fixture.html?locale=${locale}&stage=joint`);
     await expect(page.getByRole("heading", { name: copy[locale].joint })).toBeVisible();
     const no = await page.getByTestId("muscle-test-no").elementHandle();
@@ -77,8 +81,9 @@ for (const locale of ["he", "en"] as const) {
     await checkContainment(page);
   });
 
-  test(`${locale} long summary retains isolated personal names and card scroll through language selection`, async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 568 });
+  test(`${locale} long summary retains names and card scroll through language selection at ${viewport.width}px`,
+    async ({ page }) => {
+    await page.setViewportSize(viewport);
     await page.goto(`/tests/inquiry-selection.fixture.html?locale=${locale}&stage=summary`);
     await expect(page.getByRole("heading", { name: copy[locale].summary })).toBeVisible();
     const name = page.getByTestId("summary-group-name").locator("bdi");
@@ -103,9 +108,9 @@ for (const locale of ["he", "en"] as const) {
     await checkContainment(page);
   });
 
-  test(`${locale} complete catalog scrolls in the shared Sheet and preserves voluntary linking and canonical start`,
+  test(`${locale} catalog scroll retains voluntary linking and canonical start at ${viewport.width}px`,
     async ({ page }) => {
-      await page.setViewportSize({ width: 320, height: 568 });
+      await page.setViewportSize(viewport);
       await page.goto(`/tests/inquiry-selection.fixture.html?locale=${locale}&stage=picker`);
       await expect(page.getByRole("heading", { name: copy[locale].picker })).toBeVisible();
       await expect(page.getByTestId("treatment-list")).toHaveCount(0);
@@ -139,4 +144,5 @@ for (const locale of ["he", "en"] as const) {
         JSON.stringify([treatmentId, groupId, JSON.parse(unitIds!)]));
       await expect(page.locator("#root")).toHaveAttribute("data-action-calls", "1");
     });
+}
 }

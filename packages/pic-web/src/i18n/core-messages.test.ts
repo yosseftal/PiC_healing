@@ -15,6 +15,10 @@ describe("required approved shared utility messages", () => {
           ? resolveMessage(locale, key, { count: 2 })
           : resolveMessage(locale, key);
         expect(resolved.fallback).toBe(false);
+        expect(resolved.locale).toBe(locale);
+        expect(resolved.text.trim().length).toBeGreaterThan(0);
+        expect(resolved.text).not.toBe(key);
+        expect(resolved.text).not.toMatch(/\bpending\b|\btodo\b|\btbd\b|\{[a-zA-Z]+\}/i);
       }
     }
   });

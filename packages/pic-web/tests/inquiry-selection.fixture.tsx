@@ -12,7 +12,9 @@ localStorage.setItem("pic-web.locale.v1", params.get("locale") === "en" ? "en" :
 const groupId = await compositionRoot.groupEngineActions.createDraftGroup("גב <b>Back</b> 123");
 rootElement.dataset.groupId = groupId;
 for (let index = 0; index < (params.get("stage") === "summary" ? 30 : 1); index++) {
-  const symptomId = await compositionRoot.groupEngineActions.addSymptom(groupId, `צוואר Neck ${index + 1}`);
+  const personalName = `צוואר Neck ${index + 1}` +
+    (params.get("stage") === "summary" ? " — תחושה אישית Personal sensation".repeat(4) : "");
+  const symptomId = await compositionRoot.groupEngineActions.addSymptom(groupId, personalName);
   await compositionRoot.groupEngineActions.rate(symptomId, { polarity: "positive", intensity: 7 });
 }
 setGuestFlowSymptomAdditionComplete(true);

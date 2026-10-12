@@ -88,45 +88,47 @@ export function SymptomAddStep({
         </div>
       ) : null}</>}
     >
-      <TherapeuticContentCard aria-label={message("group.card").text}>
-        {groupName === undefined ? null : <p><bdi lang="" dir="auto">{groupName}</bdi></p>}
-        {recoveryStatus === undefined ? null : <p role="status">{recoveryStatus}</p>}
-        <form className="pic-symptom-form" data-testid="symptom-add-step" onSubmit={handleSubmit}>
-          <label>
-            <LocalizedMessage message={message("symptom.name")} />
-            <input
-              className={INPUT_CONTROL}
-              aria-label={message("symptom.name").text}
-              placeholder={message("symptom.placeholder").text}
-              lang="" dir="auto"
-              value={symptomName}
-              onChange={(event) => setSymptomName(event.target.value)}
+      <form className="pic-symptom-step" data-testid="symptom-add-step" onSubmit={handleSubmit}>
+        <TherapeuticContentCard aria-label={message("group.card").text}>
+          {groupName === undefined ? null : <p><bdi lang="" dir="auto">{groupName}</bdi></p>}
+          {recoveryStatus === undefined ? null : <p role="status">{recoveryStatus}</p>}
+          <div className="pic-symptom-form">
+            <label>
+              <LocalizedMessage message={message("symptom.name")} />
+              <input
+                className={INPUT_CONTROL}
+                aria-label={message("symptom.name").text}
+                placeholder={message("symptom.placeholder").text}
+                lang="" dir="auto"
+                value={symptomName}
+                onChange={(event) => setSymptomName(event.target.value)}
+              />
+            </label>
+
+            <RatingControl
+              key={stepKey}
+              symptomId={null}
+              polarity={polarity}
+              intensity={intensity}
+              onPolarityChange={setPolarity}
+              onIntensityChange={setIntensity}
             />
-          </label>
 
-          <RatingControl
-            key={stepKey}
-            symptomId={null}
-            polarity={polarity}
-            intensity={intensity}
-            onPolarityChange={setPolarity}
-            onIntensityChange={setIntensity}
-          />
-
-          <div className="pic-symptom-form__actions" role="group" aria-label={message("player.availableActions").text}>
-            <button className={UTILITY_CONTROL} type="submit" data-testid="add-symptom-action">
-              <LocalizedMessage message={message("symptom.add")} />
-            </button>
-            {symptomCount > 0 && onDone !== undefined ? (
-              <button className={UTILITY_CONTROL} type="button" data-testid="finish-symptom-addition" onClick={onDone}>
-                <LocalizedMessage message={message("symptom.done")} />
-              </button>
-            ) : null}
+            {needsRetry ? <p role="status"><LocalizedMessage message={message("symptom.recovery")} />{" "}
+              <LocalizedMessage message={message("symptom.recoveryHint")} /></p> : null}
           </div>
-          {needsRetry ? <p role="status"><LocalizedMessage message={message("symptom.recovery")} />{" "}
-            <LocalizedMessage message={message("symptom.recoveryHint")} /></p> : null}
-        </form>
-      </TherapeuticContentCard>
+        </TherapeuticContentCard>
+        <div className="pic-symptom-form__actions" role="group" aria-label={message("player.availableActions").text}>
+          <button className={UTILITY_CONTROL} type="submit" data-testid="add-symptom-action">
+            <LocalizedMessage message={message("symptom.add")} />
+          </button>
+          {symptomCount > 0 && onDone !== undefined ? (
+            <button className={UTILITY_CONTROL} type="button" data-testid="finish-symptom-addition" onClick={onDone}>
+              <LocalizedMessage message={message("symptom.done")} />
+            </button>
+          ) : null}
+        </div>
+      </form>
     </TherapeuticScreenFrame>
   );
 }

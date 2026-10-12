@@ -29,4 +29,13 @@
 
 .pic-symptom-form__actions > button {
   flex: 1 1 10rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.pic-symptom-step {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--spacing-pic-calm-2);
+  min-block-size: 0;
+  min-inline-size: 0;
 }

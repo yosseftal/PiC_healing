@@ -6,12 +6,15 @@ import { useGuestFlowFacts } from "../src/guest-flow-context";
 import { TreatmentPickerScreen } from "../src/TreatmentPickerScreen";
 import { UnifiedPlayerScreen } from "../src/UnifiedPlayerScreen";
 import { GuestModeShell } from "../src/GuestModeShell";
+import { GuestFlowRouter } from "../src/guest-flow-router";
 import "../src/visual-foundation/visual-foundation.css";
 
 const root = document.getElementById("root");
 if (root === null) throw new Error("Content fixture needs #root");
 const params = new URLSearchParams(location.search);
-localStorage.setItem("pic-web.locale.v1", params.get("locale") === "en" ? "en" : "he");
+if (params.get("mode") !== "flow") {
+  localStorage.setItem("pic-web.locale.v1", params.get("locale") === "en" ? "en" : "he");
+}
 const catalog = await compositionRoot.catalogActions.listTreatments();
 const target = catalog[params.get("treatment") === "grounding" ? 1 : 0]!;
 root.dataset.treatmentId = target.id;
@@ -29,6 +32,22 @@ if (params.get("mode") === "unavailable") {
     index === 0 ? { ...unit, unit_content: "Personal edited guidance <script>unsafe()</script>" } : unit);
 }
 
+// Observe the public mutation actions while delegating every call to the real engines.
+const actions: string[] = [];
+root.dataset.actions = "[]";
+for (const boundary of [compositionRoot.groupEngineActions, compositionRoot.playerEngineActions,
+  compositionRoot.sessionEngineActions]) {
+  for (const key of Object.keys(boundary)) {
+    if (key === "getGroup" || key === "hasPriorRating") continue;
+    const original = Object.getOwnPropertyDescriptor(boundary, key)!.value as (...args: never[]) => unknown;
+    Object.assign(boundary, { [key]: (...args: never[]) => {
+      actions.push(key);
+      root.dataset.actions = JSON.stringify(actions);
+      return original(...args);
+    } });
+  }
+}
+
 function ContentFixture() {
   const { activePlayerSessionId } = useGuestFlowFacts();
   useEffect(() => {
@@ -39,7 +58,8 @@ function ContentFixture() {
     reflect();
     return compositionRoot.playerSessionStore.subscribe(reflect);
   }, [activePlayerSessionId]);
-  return <GuestModeShell>{activePlayerSessionId === null ? <TreatmentPickerScreen /> : <UnifiedPlayerScreen />}</GuestModeShell>;
+  return <GuestModeShell>{params.get("mode") === "flow" ? <GuestFlowRouter />
+    : activePlayerSessionId === null ? <TreatmentPickerScreen /> : <UnifiedPlayerScreen />}</GuestModeShell>;
 }
 
 createRoot(root).render(<AppProviders><ContentFixture /></AppProviders>);

@@ -12,9 +12,9 @@ therapeutic behavior. Complete the cross-screen browser matrix and release-valid
 
 Their transitive prerequisites include 11.1, 11.2, 11.3, and 11.5; these edges cover all seven implementation slices.
 
-**Status:** ready-for-agent
+**Status:** done
 
-**Dispatch state:** Not dispatched; upstream implementation and copy/content prerequisites must be complete first.
+**Dispatch state:** Implemented; two-axis review, commit and final root gates pending with the orchestrator.
 
 **Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 5–6.
 
@@ -107,3 +107,107 @@ Run these from the repository root during later execution, not during ticket per
 Use the existing changed-file line-length checker and a separate implementation-diff review.
 Later Resolution must map TB-01–TB-12 and AC-01–AC-25 to observed tests/checks and approved content/copy evidence.
 Historical Wave 10 passes or ticket creation are not Wave 11 verification.
+
+## Resolution — 2026-10-12
+
+Implementation and scoped verification are done; parent review/commit and final root gates are pending.
+The user's 2026-10-11 approvals, recorded in the execution brief and seam map, close UI-copy and three-bundled-treatment
+prerequisites for this run. All 110 required messages and all three English/Hebrew content assets are product-approved.
+They are not represented as website quotations/publications. No new approval or translation-service dependency was added.
+
+The real content fixture now has a complete-flow mode using AppProviders, GuestFlowRouter and GuestModeShell.
+Its action observations delegate every mutation to the original engine action; there is no replacement healing simulation.
+Eight assembled cases exercise Hebrew/English at 320x568, 390x844, 768x1024 and 1440x900. They cover fresh Hebrew,
+actual keyboard Sheet selection, preference reload, creation, add/rate, joint inquiry, summary, voluntary linking,
+approved picker/Player, Terminal No/revision/Yes, explicit Finish and Gate. Offline selector round trips after loaded
+assets introduce no requests/auth requirement and preserve the canonical session and guest persistence byte-for-byte.
+
+Direct geometry before actions found Done below the 320x568 viewport: bottom 618.015625px, with the card at zero.
+SymptomAddStep now uses the same single submit form around a bounded scrolling input/rating card and stationary
+Add/Done row. Existing trim, rating, retry, draft/history, counts and action payload behavior remain unchanged.
+The flow measures Confirm, Add/Done and summary Continue before clicks; Add/Done also pass at reading scroll and
+after locale switches. Playwright auto-scroll is not used to conceal primary-choice clipping.
+
+The expanded tablet summary initially had only 113px scroll capacity. Summary-only fixture personal names were
+lengthened, retaining 30 symptoms and the exact 120px before/after-switch assertions; no application threshold changed.
+The new assembled scenario gets a 60s total budget for reload plus 18 modal language selections; its assertions retain
+the existing 5s expect budget. Legacy test timeouts/configuration, motion thresholds and retries remain unchanged.
+
+Evidence abbreviations below name files under `packages/pic-web`: FLOW = `tests/bilingual-guest-flow.browser.test.ts`;
+CREATE = `tests/localized-symptom-creation.browser.test.ts`; INQUIRY = `tests/localized-inquiry-selection.browser.test.ts`;
+PLAYER = `tests/localized-player.browser.test.ts`; GATE = `tests/persistence-gate.browser.test.ts`;
+CONTENT = `tests/content-localization.browser.test.ts`; LOCALE = `tests/locale-choice.browser.test.ts`;
+MOTION = `tests/dynamic-rtl.browser.test.ts`. Prior evidence is explicitly identified, not a claim of rerunning those suites here.
+
+| Ticket requirement | Evidence / result |
+| --- | --- |
+| TB-01 | FLOW: 8 real journeys; CREATE: 16, INQUIRY: 24, PLAYER: 52, GATE: 8 cases cover both locales/all four sizes. |
+| TB-02 | FLOW keyboard/pressed/document/Frame/portal/focus/reload; prior LOCALE and Sheet trap/inert/close-path tests. |
+| TB-03 | Direct geometry, locked zero document scroll; exact card 40/120/200px and internal Sheet/table assertions retained. |
+| TB-04 | CREATE/INQUIRY/GATE 44px targets; picker label >=44px, native checkbox 20px; prior AA/focus/edge tests. |
+| TB-05 | Prior MOTION: transforms before actions, both directions, interruptions, rapid switches, one callback, zero movement. |
+| TB-06 | FLOW action/storage/session invariance; CREATE blind/reveal drafts; pending group/Gate tests; PLAYER Finish identity. |
+| TB-07 | Prior CONTENT and resolver tests: 3 approved assets, full source/unit match, stale/personal/empty fallback. |
+| TB-08 | FLOW offline loaded-asset switches through the selector preserve session; no requests or auth action. |
+| TB-09 | All 110 keys resolve in both locales without fallback/raw/pending text; parameters/plurals and 3 assets validate. |
+| TB-10 | Scoped units/types/depcruise/build/lint/130/diff pass; root types pass. Final root regressions/gates await parent. |
+| TB-11 | 12 web paths plus this Resolution; separate path review; locale dependency rule and existing adapter rule retained. |
+| TB-12 | Every AC mapped below; product approvals closed; physical devices/manual checks explicitly unverified. |
+
+| Wave acceptance criterion | Explicit evidence |
+| --- | --- |
+| AC-01 | FLOW fresh browser storage renders Hebrew before any selection; locale-provider missing/invalid preference cases. |
+| AC-02 | FLOW selector/reload; GATE discard/reload and component successful promotion retain preference. |
+| AC-03 | FLOW/INQUIRY/PLAYER open the actual Sheet; selector is present in utilities throughout the real router. |
+| AC-04 | FLOW switches on every Guest Flow screen; PLAYER resolves/empty/recovery at all four sizes. |
+| AC-05 | Immediate document/Frame/portal updates in FLOW; pending action/Gate messages settle in current locale. |
+| AC-06 | FLOW/PLAYER/GATE bind he/rtl and en/ltr; prior MOTION logical-edge and safe-area mapping measurements. |
+| AC-07 | FLOW Space, LOCALE Enter/Space/Tab, native-button pressed/autonym metadata and labelled group assertions. |
+| AC-08 | FLOW/GATE portal/document metadata; CONTENT guidance lang/dir. Actual screen-reader pronunciation unverified. |
+| AC-09 | FLOW selection retains focused selector and open Sheet, then Escape restores trigger; prior LOCALE trap/inert checks. |
+| AC-10 | FLOW canonical ordered IDs/session snapshot remains exact offline; CONTENT and presentation race/cache tests. |
+| AC-11 | FLOW/CREATE retain group/symptom values and polarity/intensity; pending save/reveal component tests. |
+| AC-12 | CREATE all-size real prior history stays blind until explicit reveal; retained reveal/drafts and no selector action. |
+| AC-13 | PLAYER all-size sovereign Finish Anyway; FLOW explicit Finish requests Gate without prematurely finishing. |
+| AC-14 | PLAYER/FLOW Terminal No shows Integrating, permits revision and does not invoke Finish. |
+| AC-15 | FLOW approved title/guidance; prior CONTENT 8 picker/Player cases; resolver covers 3 bilingual assets. |
+| AC-16 | Resolver source/title/order/body/rationale/approval defects; prior CONTENT stale/unavailable canonical fallback. |
+| AC-17 | FLOW/CREATE/INQUIRY names preserved/escaped; PLAYER source content/DOM and resolver personal/Continuous bypass. |
+| AC-18 | PLAYER exact long-card scroll; INQUIRY exact summary/Sheet scroll; prior GFM/table containment/DOM tests. |
+| AC-19 | Prior MOTION both locales: zero step/drawer movement and duration with reduced motion; timing unchanged. |
+| AC-20 | FLOW direct action bounds; CREATE/INQUIRY/GATE 44x44 measures; picker label retains visual checkbox <44px test. |
+| AC-21 | GATE rendered contrast >=4.5, INQUIRY solid focus; prior foundation/control/MOTION contrast/wrapping tests. |
+| AC-22 | FLOW switches Hebrew/English offline after loaded assets with zero requests or auth; bundled resolver/cache behavior. |
+| AC-23 | Locale-provider denied/quota/unavailable-storage and GATE key-specific failure tests preserve in-memory language. |
+| AC-24 | Core message validation: 110 complete nonempty keys, interpolation/plural parity, no raw/pending/required fallback. |
+| AC-25 | Separate web-only path scan; enforced locale no-engine/adapter rule plus retained composition-root adapter boundary. |
+
+Verification and command evidence:
+
+- `npm run test:browser --workspace=pic-web -- tests/bilingual-guest-flow.browser.test.ts
+  tests/localized-symptom-creation.browser.test.ts tests/localized-inquiry-selection.browser.test.ts
+  tests/persistence-gate.browser.test.ts --workers=2`: **54 passed / 2 failed**, 4.3m. Both failures were the new 768px
+  summary fixture's 113px capacity, before the fixed 120px requirement could be exercised. All 8 FLOW, 16 CREATE and 8 GATE pass.
+- Corrective `npm run test:browser --workspace=pic-web -- tests/localized-player.browser.test.ts
+  tests/localized-inquiry-selection.browser.test.ts --workers=2`: **76/76 passed**, 2.6m: 52 PLAYER and 24 INQUIRY.
+  Together these runs establish **108 distinct owned passing cases**. The final combined configured run belongs to the parent.
+- Prior Ticket 11.7 CONTENT/PLAYER/INQUIRY affected Chromium **39/39** and owned CONTENT **11/11** remain recorded evidence
+  for approved/stale/unavailable/GFM display; prior Ticket 11.2 MOTION/Sheet/foundation evidence covers motion and contrast.
+- `npm run test --workspace=pic-web -- --maxWorkers=2`: **31 files / 229 tests passed**, including strengthened release checks.
+- `npm run typecheck --workspace=pic-web`: passed; `npm run typecheck`: all four workspaces passed during this ticket.
+- `npm run depcruise --workspace=pic-web`: passed, **746 modules / 1551 dependencies**, zero violations.
+- `npm run build --workspace=pic-web`: passed, **2698 modules**; existing mixed dynamic/static-import and large-chunk notices.
+- `npx eslint @lintPaths` over every owned JS/TS/CJS path: passed; bundled Python
+  `scripts/check-max-line-length.py @ownedPaths` over all 12 changed/untracked web files: passed at 130 characters.
+- `git diff --check` and separate baseline `f34427d` path review: passed. The parent-owned handoff is excluded from this slice.
+
+The initial sandbox Chromium launch failed before tests because its browser path was unavailable. Approved escalation used
+the installed browser. The first long-flow batch exhausted the original 30s scenario budget late in the journey; only the new
+assembled test received the documented total budget. No assertion, clinical choice, TLS setting, retry or skip was relaxed.
+Final repository lint, all-workspace depcruise, root `npm test`, and full configured Chromium are pending parent closure after
+review/commit. They are not claimed green here, and no remote-service availability is inferred from scoped web passes.
+
+Physical cutouts, mobile keyboards/visual viewport, real desktop zoom and Hebrew screen-reader pronunciation remain
+unverified without actual devices/manual runs. Chromium evidence does not prove these. No Safari/Firefox, service worker,
+offline installation, course translation, account synchronization, extra locale or broader content-versioning claim is made.
+No engine, adapter, port, seed, schema/migration, dependency/root tooling, staging, commit, PR or publishing change was made.

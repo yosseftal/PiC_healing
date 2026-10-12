@@ -1,6 +1,12 @@
 module.exports = {
   forbidden: [
     {
+      name: "locale-has-no-engine-or-adapter-dependency",
+      severity: "error",
+      from: { path: "^src/i18n/", pathNot: ["\\.test\\.tsx?$"] },
+      to: { path: "(^|/)pic-(engine|adapter-[^/]+)/" },
+    },
+    {
       // Ticket 14 DoD: "no component other than this composition root imports pic-adapter-local-guest or
       // pic-adapter-supabase directly" - every screen/component reaches the active RepositoryPort and
       // engine instances exclusively through session-engine-context.tsx's React Context.

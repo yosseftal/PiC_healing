@@ -46,7 +46,10 @@ async function checkContainment(page: Page, width: number, height: number) {
 
 for (const locale of ["he", "en"] as const) {
   const other = locale === "he" ? "en" : "he";
-  for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }]) {
+  for (const viewport of [
+    { width: 320, height: 568 }, { width: 390, height: 844 },
+    { width: 768, height: 1024 }, { width: 1440, height: 900 },
+  ]) {
     test(`${locale} creation preserves names and rating drafts in one phone frame at ${viewport.width}px`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await page.goto(`/tests/symptom-creation.fixture.html?locale=${locale}`);

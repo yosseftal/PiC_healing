@@ -27,6 +27,26 @@ async function openSheet(page: Page, locale: keyof typeof copy) {
   return sheet;
 }
 
+async function checkViewport(page: Page) {
+  const viewport = page.viewportSize()!;
+  const frame = page.locator(".pic-therapeutic-frame");
+  await expect(frame).toHaveCount(1);
+  const box = await frame.boundingBox();
+  expect(box!.x).toBeGreaterThanOrEqual(-1);
+  expect(box!.y).toBeGreaterThanOrEqual(-1);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 1);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height + 1);
+  const dimensions = await page.evaluate(() => ({
+    width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
+    x: window.scrollX, y: window.scrollY, overflow: getComputedStyle(document.documentElement).overflowY,
+  }));
+  expect(dimensions.width).toBeLessThanOrEqual(viewport.width + 1);
+  expect(dimensions.height).toBeLessThanOrEqual(viewport.height + 1);
+  expect(dimensions.x).toBe(0);
+  expect(dimensions.y).toBe(0);
+  expect(dimensions.overflow).toBe("hidden");
+}
+
 for (const locale of ["he", "en"] as const) {
   const text = copy[locale];
   for (const sourceDirection of ["ltr", "rtl"] as const) {
@@ -121,7 +141,12 @@ for (const locale of ["he", "en"] as const) {
       });
   }
 
-  test(`${locale} Terminal NEMAR retains No, revision, Yes, standard Finish and sovereign Finish Anyway`, async ({ page }) => {
+  for (const viewport of [
+    { width: 320, height: 568 }, { width: 390, height: 844 },
+    { width: 768, height: 1024 }, { width: 1440, height: 900 },
+  ]) {
+  test(`${locale} Terminal No/revision/Yes retain standard and sovereign Finish at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
     await page.goto(`/tests/unified-player.fixture.html?direction=${text.direction}`);
     await expect(page.getByTestId("atomic-unit-title")).toBeVisible();
     let sheet = await openSheet(page, locale);
@@ -156,12 +181,15 @@ for (const locale of ["he", "en"] as const) {
     await sheet.getByTestId("finish-anyway-button").click();
     await expect(sheet).toBeHidden();
     await expect(page.getByRole("dialog", { name: text.gate })).toBeVisible();
+    await checkViewport(page);
   });
 
   for (const phase of ["resolving", "empty", "recovery-empty", "recovery"] as const) {
-    test(`${locale} ${phase} keeps language access and the source-content eligibility guard`, async ({ page }) => {
+    test(`${locale} ${phase} retains language access and source guard at ${viewport.width}px`, async ({ page }) => {
+      await page.setViewportSize(viewport);
       await page.goto(`/tests/unified-player.fixture.html?direction=${text.direction}&phase=${phase}`);
       await expect(page.getByRole("heading", { name: text.title })).toBeVisible();
+      await checkViewport(page);
       if (phase !== "resolving") await expect(page.getByTestId("zero-h3-guard-player")).toContainText(text.guard);
       const sheet = await openSheet(page, locale);
       const eligible = phase === "recovery";
@@ -189,6 +217,8 @@ for (const locale of ["he", "en"] as const) {
         await expect(page.getByText(copy[target].recovery, { exact: false })).toBeVisible();
       }
       await expect(page.getByTestId("terminal-nemar-unit")).toHaveCount(0);
+      await checkViewport(page);
     });
+  }
   }
 }

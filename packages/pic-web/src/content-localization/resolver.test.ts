@@ -71,6 +71,15 @@ it.each(TRACER_BULLET_SEED_TREATMENT_ROWS)("covers every unit of $title in both 
   for (const locale of ["en", "he"] as const) {
     const display = resolveTreatmentDisplay({ treatmentId: source.id, source, units, locale });
     expect(display.notice).toBeNull();
+    expect(display.title.trim().length).toBeGreaterThan(0);
+    expect(display.language).toBe(locale);
+    if (locale === "en") expect(display.units).toEqual(units);
+    for (const unit of display.units) {
+      for (const text of [unit.unit_title, unit.unit_content, unit.unit_rationale ?? "authored rationale absent"]) {
+        expect(text.trim().length).toBeGreaterThan(0);
+        expect(text).not.toMatch(/\bpending\b|\btodo\b|\btbd\b/i);
+      }
+    }
     expect(display.units).toHaveLength(3);
     expect(display.units.map((unit) => [unit.unit_id, unit.unit_order, unit.unit_rationale]))
       .toEqual([["unit-1", 1, null], ["unit-2", 2, null], ["unit-3", 3, null]]);

@@ -17,7 +17,10 @@ const copy = {
 } as const;
 
 for (const locale of ["he", "en"] as const) {
-  const viewport = { width: 320, height: 568 };
+  for (const viewport of [
+    { width: 320, height: 568 }, { width: 390, height: 844 },
+    { width: 768, height: 1024 }, { width: 1440, height: 900 },
+  ]) {
     test(`${locale} gate retains keyboard actions and preference across pending, recovery and discard at ${viewport.width}px`,
       async ({ page }) => {
         const text = copy[locale];
@@ -100,4 +103,5 @@ for (const locale of ["he", "en"] as const) {
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         await expect(page.getByTestId("atomic-unit-title")).toBeVisible();
       });
+}
 }
