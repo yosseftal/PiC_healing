@@ -36,6 +36,19 @@ async function checkContainment(page: Page) {
   }
 }
 
+async function expectSummaryChoiceInViewport(page: Page) {
+  const button = page.getByTestId("confirm-group-summary");
+  const bounds = await button.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right };
+  });
+  expect(bounds.top).toBeGreaterThanOrEqual(0);
+  expect(bounds.left).toBeGreaterThanOrEqual(0);
+  expect(bounds.right).toBeLessThanOrEqual(320);
+  expect(bounds.bottom).toBeLessThanOrEqual(568);
+  await expect(button).toBeVisible();
+}
+
 for (const locale of ["he", "en"] as const) {
   const other = locale === "he" ? "en" : "he";
   test(`${locale} joint inquiry retains No advisory, dismissal and sovereign finalization in one phone frame`,
@@ -75,10 +88,14 @@ for (const locale of ["he", "en"] as const) {
     await expect(name.locator("b")).toHaveCount(0);
     await checkContainment(page);
     const card = page.locator(".pic-therapeutic-content-card");
+    expect(await card.evaluate((node) => node.scrollTop)).toBe(0);
+    await expectSummaryChoiceInViewport(page);
     await card.evaluate((node) => { node.scrollTop = 120; });
     expect(await card.evaluate((node) => node.scrollTop)).toBe(120);
+    await expectSummaryChoiceInViewport(page);
     await switchLanguage(page, locale, other);
     expect(await card.evaluate((node) => node.scrollTop)).toBe(120);
+    await expectSummaryChoiceInViewport(page);
     await expect(page.getByTestId("symptom-count")).toHaveText(other === "he"
       ? "30 סימפטומים בקבוצה" : "30 symptoms in this group");
     await page.getByTestId("confirm-group-summary").click();

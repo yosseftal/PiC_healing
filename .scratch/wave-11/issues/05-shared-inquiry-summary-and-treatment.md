@@ -112,3 +112,20 @@ run timed out its first navigation after 11.1 hours; a fresh zero-retry run pass
 existing chunk-size/dynamic-import warnings. Real device cutouts, mobile keyboard, desktop zoom and Hebrew
 screen-reader pronunciation remain unverified manually. Treatment source titles/bodies are unchanged; their
 validated translations belong to 11.7. No engine, adapter, schema, contract, seed, dependency or root-tooling edits.
+
+### Spec review correction — visible summary choice area (2026-10-12)
+
+The P2 review finding against `b5b6a23` identified Continue inside the scrolling summary card, contrary to
+the frozen specification's visible active-choice requirement (line 229). The earlier browser click auto-scrolled
+to Continue and concealed this defect. A geometry assertion before any click failed in both Hebrew and English
+at 320×568: Continue's bottom was 1086.1875px, outside the 568px viewport.
+
+The summary now uses its own bounded two-row grid: the reading card scrolls in `minmax(0,1fr)` and the existing
+AtomicActionLayout renders Continue in the separate auto row. No shared API, read effect, personal/count copy,
+semantic action ID or acknowledgement timing changed. Both locale regressions check Continue's full viewport
+rectangle before clicking, with the card at 0px and 120px, and after switching while the card remains at 120px.
+
+Correction verification: scoped/root typechecks, full web **28 files / 195 tests**, affected Chromium **6 / 6**,
+web depcruise **734 modules / 1508 dependencies**, production build, owned ESLint, 130-character scan and
+diff check pass. The corrective diff owns two web files plus this addendum; existing manual-verification limits
+and build warnings remain as recorded above. Orchestrator corrective commit and review closure are pending.

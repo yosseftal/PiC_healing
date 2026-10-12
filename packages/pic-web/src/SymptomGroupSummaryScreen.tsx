@@ -38,12 +38,9 @@ export function SymptomGroupSummaryScreen({ groupId }: SymptomGroupSummaryScreen
 
   return <section data-testid="guest-flow-group-summary">
     <TherapeuticScreenFrame title={message("summary.title").text} stageLabel={message("summary.title").text}>
-      <TherapeuticContentCard aria-label={message("summary.title").text}>
-        <AtomicActionLayout actionsLabel={message("player.availableActions").text}
-          selectedLabel={message("player.selected").text}
-          actions={group === null ? [] : [{ kind: "button", id: "summary-confirm", intent: "primary",
-            testId: "confirm-group-summary", label: message("summary.continue").text, onAction: handleConfirm }]}
-          primaryContent={group === null ? <p role="status">
+      <div className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-4">
+        <TherapeuticContentCard aria-label={message("summary.title").text}>
+          {group === null ? <p role="status">
             <LocalizedMessage message={message("summary.loading")} />
           </p> : <>
             <p data-testid="summary-group-name"><bdi dir="auto" lang="">{group.name}</bdi></p>
@@ -62,8 +59,13 @@ export function SymptomGroupSummaryScreen({ groupId }: SymptomGroupSummaryScreen
             <p data-testid="summary-muscle-test"><LocalizedMessage message={message(
               group.joint_treatment_muscle_test === "together" ? "summary.together" : "summary.split",
             )} /></p>
-          </>} />
-      </TherapeuticContentCard>
+          </>}
+        </TherapeuticContentCard>
+        <AtomicActionLayout primaryContent={null} actionsLabel={message("player.availableActions").text}
+          selectedLabel={message("player.selected").text}
+          actions={group === null ? [] : [{ kind: "button", id: "summary-confirm", intent: "primary",
+            testId: "confirm-group-summary", label: message("summary.continue").text, onAction: handleConfirm }]} />
+      </div>
     </TherapeuticScreenFrame>
   </section>;
 }
