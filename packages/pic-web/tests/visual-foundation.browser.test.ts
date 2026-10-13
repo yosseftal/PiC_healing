@@ -24,7 +24,7 @@ test("loads semantic tokens and full-size app roots in a real browser", async ({
     rootHeight: "720px",
     rootWidth: "1280px",
     bodyMargin: "0px",
-    sterile: "#F7F9F5",
+    sterile: "#FAFDFC",
     standardMotion: "240ms",
   });
 });

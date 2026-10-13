@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { expectReadable } from "./palette-contrast";
 
 const copy = {
   he: {
@@ -77,13 +78,16 @@ for (const locale of ["he", "en"] as const) {
         await page.keyboard.press("Tab");
         const signIn = gate.getByRole("button", { name: text.signIn, exact: true });
         await expect(signIn).toBeFocused();
+        await expectReadable(signIn, true, true);
         await page.keyboard.press("Enter");
         await expect(gate.getByText(text.pending, { exact: true })).toBeVisible();
+        await expectReadable(gate.locator("p"));
         await expect(gate.getByRole("button")).toHaveCount(0);
         expect(await gate.evaluate((element, node) => element === node, original)).toBe(true);
         expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).toBe(before);
         await page.evaluate(() => window.dispatchEvent(new Event("fixture-reject-promotion")));
         await expect(gate.getByText(text.recovery, { exact: true })).toBeVisible();
+        await expectReadable(gate.locator("p, button:not(:disabled)"));
         await gate.focus();
         await page.keyboard.press("Tab");
         await expect(gate.getByRole("button", { name: text.retry })).toBeFocused();

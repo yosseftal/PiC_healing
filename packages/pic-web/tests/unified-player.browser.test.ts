@@ -95,7 +95,7 @@ test("sovereign Finish opens a Persistence Gate with visible full-size controls 
   await page.keyboard.press("Tab");
   const signIn = gate.getByRole("button", { name: "Sign in (dev tracer stub)", exact: true });
   await signIn.focus();
-  await expect(signIn).toHaveCSS("outline-color", "rgb(111, 86, 143)");
+  await expect(signIn).toHaveCSS("outline-color", "rgb(101, 89, 106)");
   await expect(signIn).toHaveCSS("outline-width", "3px");
   await gate.getByRole("button", { name: "Continue without saving" }).click();
   await expect(gate).toBeHidden();

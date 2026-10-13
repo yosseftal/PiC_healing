@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expectReadable } from "./palette-contrast";
 
 const viewports = [
   { width: 320, height: 568 }, { width: 390, height: 844 },
@@ -44,6 +45,7 @@ async function frameBounds(page: Page) {
   expect(size.x).toBe(0);
   expect(size.y).toBe(0);
   expect(size.overflow).toBe("hidden");
+  await expectReadable(page.locator(".pic-therapeutic-frame").locator("h1, h2, p, button:not(:disabled)"));
 }
 
 async function choose(page: Page, from: Locale, to: Locale, player = false) {
@@ -58,6 +60,8 @@ async function choose(page: Page, from: Locale, to: Locale, player = false) {
   await page.keyboard.press("Space");
   await expect(selector).toBeFocused();
   await expect(selector).toHaveAttribute("aria-pressed", "true");
+  await expectReadable(sheet.locator("h2, h3, p, button:not(:disabled)"));
+  await expectReadable(selector, true, true);
   await expect(sheet).toHaveAttribute("lang", to);
   await expect(sheet).toHaveAttribute("dir", to === "he" ? "rtl" : "ltr");
   await expect(page.locator("html")).toHaveAttribute("lang", to);
@@ -171,6 +175,7 @@ for (const locale of ["he", "en"] as const) {
         await contained(page, gate);
         await expect(gate).toHaveAttribute("lang", locale);
         await expect(gate).toHaveAttribute("dir", locale === "he" ? "rtl" : "ltr");
+        await expectReadable(gate.locator("h2, p, button:not(:disabled)"));
         expect(requests).toEqual([]);
         const actions = JSON.parse((await page.locator("#root").getAttribute("data-actions"))!);
         expect(actions.filter((action: string) => action === "onFinishRequested")).toHaveLength(1);
