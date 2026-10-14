@@ -1,5 +1,7 @@
+import { createElement } from "react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FinalizedSymptomGroup, LibraryRow, PlayerSession, RepositoryPort, TimelineEvent } from "pic-engine";
 import { DEFAULT_GUEST_STORAGE_KEY, LocalGuestRepository } from "pic-adapter-local-guest";
 import type { GuestSnapshot } from "pic-engine";
@@ -380,4 +382,141 @@ describe("clear stale session pointers on completion / discard / promotion (tick
     expect(session?.success_declared).toBe(false);
     expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
   });
+});
+
+describe("W12 reset composition boundaries", () => {
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+
+  it("retains work when an outstanding flow-fact write rejects, then cleans up on retry", async () => {
+    vi.resetModules();
+    localStorage.clear();
+    const { compositionRoot: fresh } = await import("./composition-root");
+    const facts = await import("./guest-flow-facts");
+    const groupId = await fresh.groupEngineActions.createDraftGroup("Recover pointer write");
+    const guestRepository = fresh.repositoryPort.getProvider() as LocalGuestRepository;
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    vi.spyOn(guestRepository, "saveGuestFlowFacts").mockImplementationOnce(async () => {
+      await pending;
+      throw new Error("Pointer storage unavailable");
+    });
+    facts.setGuestFlowSummaryAcknowledged(true);
+    const reset = fresh.inquiryResetActions.resetInquiry(true);
+    expect(fresh.groupEngineStore.getSnapshot().activeGroupId).toBe(groupId);
+    release();
+    await expect(reset).rejects.toThrow("Guest flow persistence needs retry");
+    expect((await fresh.repositoryPort.getGroup(groupId))?.name).toBe("Recover pointer write");
+    expect(fresh.groupEngineStore.getSnapshot().activeGroupId).toBe(groupId);
+    await fresh.inquiryResetActions.resetInquiry(true);
+    expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
+  });
+
+  describe("anchored inquiry presentation", () => {
+    async function prepareSavedInquiry() {
+    vi.resetModules();
+    localStorage.clear();
+    const { compositionRoot: fresh, swapToSupabaseAdapter: swap } = await import("./composition-root");
+    await import("./guest-flow-facts");
+    const authenticatedPort = createInMemoryAuthenticatedPort();
+    swap(authenticatedPort);
+    const guestRepository = fresh.repositoryPort.getProvider() as LocalGuestRepository;
+    vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation(async (input) => {
+      return authenticatedPort.promoteGuestToAccount(input);
+    });
+    await fresh.sessionEngineActions.promote(buildGuestSnapshot(), "saved-owner");
+    const groupId = await fresh.groupEngineActions.createDraftGroup("Saved group");
+    const before = await authenticatedPort.getGroup(groupId);
+    const stateBefore = fresh.sessionEngineStore.getSnapshot();
+    const finish = vi.spyOn(fresh.playerEngine, "finish");
+    const finishAnyway = vi.spyOn(fresh.playerEngine, "finishAnyway");
+    const { AppProviders } = await import("./app-providers");
+    const { GuestFlowRouter } = await import("./guest-flow-router");
+    const { useLocale } = await import("./i18n/locale-provider");
+    let locale!: ReturnType<typeof useLocale>;
+    function PreferencesProbe() {
+      locale = useLocale();
+      return null;
+    }
+    localStorage.setItem("pic-web.locale.v1", "en");
+    render(createElement(AppProviders, { children: [
+      createElement(GuestFlowRouter, { key: "flow" }), createElement(PreferencesProbe, { key: "preferences" }),
+    ] }));
+    act(() => locale.setCustomNemarAlias("My chosen phrase"));
+      return { fresh, authenticatedPort, groupId, before, stateBefore, finish, finishAnyway, preferences: () => locale };
+    }
+    let fixture!: Awaited<ReturnType<typeof prepareSavedInquiry>>;
+    beforeAll(async () => { fixture = await prepareSavedInquiry(); });
+    it("detaches saved focus, preserves preferences, and confirms only unsaved input", async () => {
+      const { fresh, authenticatedPort, groupId, before, stateBefore, finish, finishAnyway, preferences } = fixture;
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
+    fireEvent.click(screen.getByRole("button", { name: "New symptom group" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(preferences().customNemarAlias).toBe("My chosen phrase");
+    expect(preferences().locale).toBe("en");
+    expect(await authenticatedPort.getGroup(groupId)).toEqual(before);
+    expect(fresh.sessionEngineStore.getSnapshot()).toEqual(stateBefore);
+    expect(fresh.repositoryPort.getProvider()).toBe(authenticatedPort);
+    expect(fresh.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+    expect(finish).not.toHaveBeenCalled();
+    expect(finishAnyway).not.toHaveBeenCalled();
+    let nextGroup!: string;
+    await act(async () => { nextGroup = await fresh.groupEngineActions.createDraftGroup("Saved with draft"); });
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Unwritten symptom" } });
+    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
+    fireEvent.click(screen.getByRole("button", { name: "New symptom group" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Keep current inquiry" }));
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("Unwritten symptom");
+    expect((await authenticatedPort.getGroup(nextGroup))?.name).toBe("Saved with draft");
+    });
+  });
+});
+
+it("W12-03 refuses a pending Gate reset and preserves its exact Finish intent for W12-04", async () => {
+  vi.resetModules();
+  localStorage.clear();
+  const { compositionRoot: fresh } = await import("./composition-root");
+  await import("./guest-flow-facts");
+  const groupId = await fresh.groupEngineActions.createDraftGroup("Gate work");
+  const sessionId = await fresh.playerEngineActions.startSession("gate-treatment", groupId, ["unit-one"]);
+  await fresh.sessionEngineActions.onFinishRequested(sessionId, "finishAnyway");
+  const before = localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY);
+  const pending = await fresh.repositoryPort.getGuestSessionGate();
+  await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow("This inquiry stage does not support reset yet");
+  expect(await fresh.repositoryPort.getGuestSessionGate()).toEqual(pending);
+  expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBe(before);
+  expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+});
+
+it.each(["discard", "promote"])("keeps %s cleanup last after delayed pointer persistence", async (kind) => {
+  vi.resetModules();
+  localStorage.clear();
+  const { compositionRoot: fresh, swapToSupabaseAdapter: swap } = await import("./composition-root");
+  const facts = await import("./guest-flow-facts");
+  await fresh.groupEngineActions.createDraftGroup("Pending pointer");
+  const guestRepository = fresh.repositoryPort.getProvider() as LocalGuestRepository;
+  const save = guestRepository.saveGuestFlowFacts.bind(guestRepository);
+  let release!: () => void;
+  let writeStarted!: () => void;
+  const paused = new Promise<void>((resolve) => { release = resolve; });
+  const started = new Promise<void>((resolve) => { writeStarted = resolve; });
+  vi.spyOn(guestRepository, "saveGuestFlowFacts").mockImplementationOnce(async (pointer) => {
+    writeStarted();
+    await paused;
+    await save(pointer);
+  });
+  if (kind === "promote") {
+    const port = createInMemoryAuthenticatedPort();
+    swap(port);
+    vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation((input) => port.promoteGuestToAccount(input));
+  }
+  const cleanup = kind === "discard"
+    ? fresh.sessionEngineActions.discardGuestState()
+    : fresh.sessionEngineActions.promote(buildGuestSnapshot(), "cleanup-owner");
+  await started;
+  release();
+  await cleanup;
+  await facts.settleGuestFlowPersistence();
+  expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
 });

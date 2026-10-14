@@ -64,7 +64,7 @@ export function TreatmentPickerScreen() {
 
   return (
     <section data-testid="guest-flow-pick-treatment">
-      <TherapeuticScreenFrame title={message("picker.title").text} stageLabel={message("picker.title").text}
+      <TherapeuticScreenFrame allowInquiryReset title={message("picker.title").text} stageLabel={message("picker.title").text}
         utilities={<div className="grid min-w-0 gap-4">
           <label className="inline-flex min-h-11 min-w-11 items-center gap-3 rounded-pic-button px-3 py-2">
             <input

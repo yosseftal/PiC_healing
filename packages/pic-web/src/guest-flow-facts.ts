@@ -88,9 +88,11 @@ let activePlayerSessionId: string | null = null;
 let symptomAdditionComplete = false;
 let groupFinalized = false;
 let summaryAcknowledged = false;
-let persistGuestFlowFacts: ((facts: PersistedGuestFlowFacts) => void) | null = null;
+let pendingPersistence: Promise<void> = Promise.resolve();
+let persistenceFailed = false;
+let persistGuestFlowFacts: ((facts: PersistedGuestFlowFacts) => void | Promise<void>) | null = null;
 
-function collectPersistedGuestFlowFacts(): PersistedGuestFlowFacts {
+export function collectPersistedGuestFlowFacts(): PersistedGuestFlowFacts {
   return {
     activeGroupId: getActiveGroupId(),
     activePlayerSessionId,
@@ -101,7 +103,13 @@ function collectPersistedGuestFlowFacts(): PersistedGuestFlowFacts {
 }
 
 function saveGuestFlowFactsToStorage(): void {
-  persistGuestFlowFacts?.(collectPersistedGuestFlowFacts());
+  try {
+    const write = persistGuestFlowFacts?.(collectPersistedGuestFlowFacts());
+    const settled = Promise.resolve(write).catch(() => { persistenceFailed = true; });
+    pendingPersistence = Promise.all([pendingPersistence, settled]).then(() => undefined);
+  } catch {
+    persistenceFailed = true;
+  }
 }
 
 /** Called by composition-root after mutating `activeGroupId` outside this module. */
@@ -136,7 +144,7 @@ export function initGuestFlowFacts(deps: {
   subscribeToGroup: (listener: () => void) => () => void;
   subscribeToSession: (listener: () => void) => () => void;
   initialFacts?: PersistedGuestFlowFacts;
-  persistGuestFlowFacts?: (facts: PersistedGuestFlowFacts) => void;
+  persistGuestFlowFacts?: (facts: PersistedGuestFlowFacts) => void | Promise<void>;
 }): void {
   getActiveGroupId = deps.getActiveGroupId;
   getSessionState = deps.getSessionState;
@@ -188,5 +196,23 @@ export function resetGuestFlowFactsForTest(): void {
   summaryAcknowledged = false;
   persistGuestFlowFacts = null;
   resetGroupFlowFactsForTest();
+  notifyGuestFlowStores();
+}
+
+/** Await queued pointer writes before any owned Guest storage cleanup. */
+export async function settleGuestFlowPersistence(): Promise<void> {
+  await pendingPersistence;
+  if (persistenceFailed) {
+    persistenceFailed = false;
+    throw new Error("Guest flow persistence needs retry");
+  }
+}
+
+/** Publish only after composition has successfully completed storage cleanup. */
+export function clearGuestFlowFacts(): void {
+  activePlayerSessionId = null;
+  symptomAdditionComplete = false;
+  groupFinalized = false;
+  summaryAcknowledged = false;
   notifyGuestFlowStores();
 }

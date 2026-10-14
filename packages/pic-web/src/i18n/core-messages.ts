@@ -1,6 +1,16 @@
 import { createMessageResolver, type MessageTemplate } from "./messages";
 
 export const messageDefinitions = {
+  "reset.newGroup": { params: [] },
+  "reset.confirm": { params: [] },
+  "reset.loss": { params: [] },
+  "reset.keep": { params: [] },
+  "reset.discard": { params: [] },
+  "reset.pending": { params: [] },
+  "reset.recovery": { params: [] },
+  "reset.retry": { params: [] },
+  "reset.success": { params: [] },
+
   "joint.title": { params: [] },
   "joint.question": { params: [], terminology: ["nemar"] },
   "joint.advisory": { params: [] },
@@ -117,6 +127,16 @@ export const messageDefinitions = {
 // Newly authored UI copy is product-approved for Wave 11 (2026-10-11), not a website quotation.
 export const dictionaries = {
   he: {
+    "reset.newGroup": "קבוצת סימפטומים חדשה",
+    "reset.confirm": "להתחיל בירור חדש?",
+    "reset.loss": "טיוטה מקומית זו תימחק. קבוצות שנשמרו יישארו זמינות.",
+    "reset.keep": "להמשיך בבירור הנוכחי",
+    "reset.discard": "למחוק את הטיוטה ולהתחיל מחדש",
+    "reset.pending": "מכינים את הבירור…",
+    "reset.recovery": "הבירור שלך נשמר כאן. לא ניתן היה להתחיל מחדש.",
+    "reset.retry": "לנסות להתחיל מחדש",
+    "reset.success": "בירור חדש מוכן.",
+
     "joint.title": "בדיקת שריר לטיפול משותף",
     "joint.question": "האם {nemar} לטפל בסימפטומים האלה יחד?",
     "joint.advisory": "ייתכן שמתאים יותר לטפל בסימפטומים האלה בקבוצות נפרדות.",
@@ -230,6 +250,16 @@ export const dictionaries = {
     "utilities.sessionContent": "תוכן הכלים",
   },
   en: {
+    "reset.newGroup": "New symptom group",
+    "reset.confirm": "Start a new inquiry?",
+    "reset.loss": "Discarding removes this local draft. Saved groups remain available.",
+    "reset.keep": "Keep current inquiry",
+    "reset.discard": "Discard draft and start new",
+    "reset.pending": "Preparing your inquiry…",
+    "reset.recovery": "Your inquiry is still here. Starting new could not complete.",
+    "reset.retry": "Retry starting new",
+    "reset.success": "A new inquiry is ready.",
+
     "joint.title": "Joint Treatment Muscle Test",
     "joint.question": "Is it {nemar} to treat these symptoms together?",
     "joint.advisory": "These symptoms may heal better as separate groups.",

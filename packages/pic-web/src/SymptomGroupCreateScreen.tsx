@@ -1,3 +1,4 @@
+import { useInquiryDraft } from "./inquiry-lifecycle";
 /**
  * One-screen group creation flow (Ticket 08-05): name input → confirm, then repeatable symptom add + rate.
  * Symptom count is derived from `getGroup` — never mirrored in local state (DEC-015 dumb reflection).
@@ -20,6 +21,7 @@ export function SymptomGroupCreateScreen(): ReactNode {
   const { activeGroupId } = useGroupEngineState();
   const { createDraftGroup, getGroup } = useGroupEngineActions();
   const [groupName, setGroupName] = useState("");
+  useInquiryDraft(activeGroupId === null && groupName.length > 0);
   const [group, setGroup] = useState<SymptomGroup | null>(null);
   const {
     status: loadStatus,
@@ -64,7 +66,7 @@ export function SymptomGroupCreateScreen(): ReactNode {
   if (activeGroupId === null) {
     return (
       <section data-testid="guest-flow-create-group">
-        <TherapeuticScreenFrame title={message("group.title").text} stageLabel={message("group.stage").text}>
+        <TherapeuticScreenFrame allowInquiryReset title={message("group.title").text} stageLabel={message("group.stage").text}>
           <TherapeuticContentCard aria-label={message("group.card").text}>
             <form className="pic-symptom-form" data-testid="create-group-form" onSubmit={handleCreateGroup}>
               <label>

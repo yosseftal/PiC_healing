@@ -59,7 +59,7 @@ export function JointTreatmentMuscleTestStep({ groupId }: JointTreatmentMuscleTe
   ];
 
   return <section data-testid="guest-flow-joint-treatment">
-    <TherapeuticScreenFrame title={message("joint.title").text} stageLabel={message("joint.title").text}
+    <TherapeuticScreenFrame allowInquiryReset title={message("joint.title").text} stageLabel={message("joint.title").text}
       utilities={responseStatus === "recovery" ? <div role="status">
         <p><LocalizedMessage message={message("joint.recovery")} /></p>
         <button className={UTILITY_CONTROL} type="button" onClick={() => void retryResponse()}>

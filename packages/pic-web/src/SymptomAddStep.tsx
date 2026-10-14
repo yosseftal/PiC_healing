@@ -1,3 +1,4 @@
+import { useInquiryDraft } from "./inquiry-lifecycle";
 /**
  * Repeatable single-symptom add + rate step (Ticket 08-05). One symptom per pass; `RatingControl` lives here
  * only.
@@ -32,6 +33,7 @@ export function SymptomAddStep({
   const [symptomName, setSymptomName] = useState("");
   const [polarity, setPolarity] = useState<Polarity>("negative");
   const [intensity, setIntensity] = useState<Intensity>(5);
+  useInquiryDraft(symptomName.length > 0 || polarity !== "negative" || intensity !== 5);
   const [stepKey, setStepKey] = useState(0);
   const {
     status: ratingStatus,
@@ -74,7 +76,7 @@ export function SymptomAddStep({
 
   const needsRetry = additionStatus === "recovery" || ratingStatus === "recovery";
   return (
-    <TherapeuticScreenFrame
+    <TherapeuticScreenFrame allowInquiryReset
       title={message("group.title").text} stageLabel={message("group.stage").text}
       progress={<span data-testid="symptom-count"><LocalizedMessage
         message={message("symptom.count", { count: symptomCount })} /></span>}

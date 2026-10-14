@@ -1,0 +1,189 @@
+// @vitest-environment jsdom
+import { afterEach, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { AppProviders } from "./app-providers";
+import { GuestFlowRouter } from "./guest-flow-router";
+import { compositionRoot } from "./composition-root";
+import {
+  resetGuestFlowFactsForTest, setGuestFlowSymptomAdditionComplete,
+  setGuestFlowGroupFinalized, setGuestFlowSummaryAcknowledged,
+} from "./guest-flow-facts";
+
+function mount() {
+  localStorage.setItem("pic-web.locale.v1", "en");
+  return render(<AppProviders><GuestFlowRouter /></AppProviders>);
+}
+function openReset() {
+  fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
+  fireEvent.click(screen.getByRole("button", { name: "New symptom group" }));
+}
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  resetGuestFlowFactsForTest();
+  localStorage.clear();
+});
+it("keeps typed-only work on cancel and clears it on confirmed reset in the same creation screen", async () => {
+  mount();
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "My draft" } });
+  openReset();
+  const keep = await screen.findByRole("button", { name: "Keep current inquiry" });
+  await waitFor(() => expect(keep).toBe(document.activeElement));
+  fireEvent.click(screen.getByRole("button", { name: "Keep current inquiry" }));
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("My draft");
+  openReset();
+  fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
+  await waitFor(() => expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("") );
+  expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+  await waitFor(() => expect(screen.getByRole("textbox")).toBe(document.activeElement));
+});
+
+
+it("resets an empty inquiry without confirmation and preserves unrelated preferences", async () => {
+  mount();
+  localStorage.setItem("other-app", "keep");
+  openReset();
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+  expect(localStorage.getItem("other-app")).toBe("keep");
+  expect(localStorage.getItem("pic-web.locale.v1")).toBe("en");
+  expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
+});
+
+it("waits for a slow create before re-evaluating loss, then removes the settled record", async () => {
+  const save = compositionRoot.repositoryPort.saveGroup.bind(compositionRoot.repositoryPort);
+  let release!: () => void;
+  const paused = new Promise<void>((resolve) => { release = resolve; });
+  vi.spyOn(compositionRoot.repositoryPort, "saveGroup").mockImplementationOnce(async (group) => {
+    await paused;
+    await save(group);
+  });
+  mount();
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Slow draft" } });
+  fireEvent.submit(screen.getByTestId("create-group-form"));
+  openReset();
+  expect(screen.queryByRole("button", { name: "Discard draft and start new" })).toBeNull();
+  await act(async () => { release(); });
+  fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+  expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
+  await act(async () => { await Promise.resolve(); });
+  expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+});
+
+it("retains the exact draft and record when storage removal fails and allows retry", async () => {
+  const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Retain me");
+  mount();
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Unsaved symptom" } });
+  fireEvent.change(screen.getByRole("slider"), { target: { value: "8" } });
+  const remove = Storage.prototype.removeItem;
+  vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key) {
+    if (key === "pic:guest-repository:v1") throw new Error("Storage unavailable");
+    remove.call(this, key);
+  });
+  openReset();
+  fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
+  await screen.findByRole("button", { name: "Retry starting new" });
+  expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBe(groupId);
+  expect((await compositionRoot.repositoryPort.getGroup(groupId))?.name).toBe("Retain me");
+  fireEvent.click(screen.getByRole("button", { name: "Keep current inquiry" }));
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("Unsaved symptom");
+  expect((screen.getByRole("slider") as HTMLInputElement).value).toBe("8");
+  vi.restoreAllMocks();
+  openReset();
+  fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
+});
+
+it("settles the entire add and rate chain and preserves work when its rating write fails", async () => {
+  const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Rating recovery");
+  const save = compositionRoot.repositoryPort.saveGroup.bind(compositionRoot.repositoryPort);
+  let release!: () => void;
+  const paused = new Promise<void>((resolve) => { release = resolve; });
+  vi.spyOn(compositionRoot.repositoryPort, "saveGroup")
+    .mockImplementationOnce(async (group) => { await paused; await save(group); })
+    .mockRejectedValueOnce(new Error("Rating storage unavailable"));
+  mount();
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Neck" } });
+  fireEvent.submit(screen.getByTestId("symptom-add-step"));
+  openReset();
+  await act(async () => { release(); });
+  await screen.findByRole("button", { name: "Retry starting new" });
+  expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBe(groupId);
+  const group = await compositionRoot.repositoryPort.getGroup(groupId);
+  expect(group?.symptoms[0]?.name).toBe("Neck");
+  expect(group?.symptoms[0]?.rated_at).toBeNull();
+  expect(screen.queryByRole("button", { name: "Discard draft and start new" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Retry starting new" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
+});
+
+it("settles delayed treatment parsing and its startSession continuation before reset", async () => {
+  await compositionRoot.groupEngineActions.createDraftGroup("Picker draft");
+  setGuestFlowSymptomAdditionComplete(true);
+  setGuestFlowGroupFinalized(true);
+  setGuestFlowSummaryAcknowledged(true);
+  let release!: () => void;
+  const paused = new Promise<void>((resolve) => { release = resolve; });
+  vi.spyOn(compositionRoot.catalogActions, "listTreatments").mockResolvedValue([
+    { id: "slow-treatment", title: "Slow treatment" },
+  ]);
+  vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent").mockImplementation(async () => {
+    await paused;
+    return [{ unit_id: "unit-one", unit_title: "One", unit_content: "Breathe", unit_order: 0, unit_rationale: null }];
+  });
+  mount();
+  fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
+  fireEvent.click(await screen.findByTestId("pick-treatment-slow-treatment"));
+  fireEvent.click(screen.getByRole("button", { name: "New symptom group" }));
+  await act(async () => { release(); });
+  fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(screen.queryByTestId("guest-flow-player")).toBeNull();
+  expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+  expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
+});
+
+it("rejects new therapeutic writes during cleanup so they cannot resurrect discarded records", async () => {
+  mount();
+  const remove = Storage.prototype.removeItem;
+  let lateWrite: Promise<string> | undefined;
+  vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key) {
+    if (key === "pic:guest-repository:v1") {
+      lateWrite = compositionRoot.groupEngineActions.createDraftGroup("Too late");
+      void lateWrite.catch(() => undefined);
+    }
+    remove.call(this, key);
+  });
+  openReset();
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  await expect(lateWrite).rejects.toThrow("Inquiry reset is pending");
+  expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
+});
+
+it.each(["joint", "summary", "picker"])("offers reset from a finalized Guest %s stage", async (stage) => {
+  const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Final Guest");
+  const symptomId = await compositionRoot.groupEngineActions.addSymptom(groupId, "Back");
+  await compositionRoot.groupEngineActions.rate(symptomId, { polarity: "positive", intensity: 7 });
+  setGuestFlowSymptomAdditionComplete(true);
+  if (stage !== "joint") {
+    await compositionRoot.groupEngineActions.setJointTreatmentMuscleTest(groupId, "together");
+    await compositionRoot.groupEngineActions.finalizeGroup(groupId);
+  }
+  if (stage === "picker") setGuestFlowSummaryAcknowledged(true);
+  mount();
+  openReset();
+  fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+  expect(await compositionRoot.repositoryPort.getGroup(groupId)).toBeNull();
+  expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
+});

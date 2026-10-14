@@ -19,6 +19,7 @@ export interface TherapeuticSheetProps {
   defaultOpen?: boolean;
   description?: string;
   onCloseAutoFocus?: () => boolean;
+  onOpenAutoFocus?: () => boolean;
   onOpenChange?: (open: boolean) => void;
   open?: boolean;
   title: string;
@@ -62,6 +63,7 @@ export function TherapeuticSheet({
   defaultOpen = false,
   description,
   onCloseAutoFocus,
+  onOpenAutoFocus,
   onOpenChange,
   open,
   title,
@@ -129,6 +131,9 @@ export function TherapeuticSheet({
           data-testid="therapeutic-sheet-content"
           lang={locale?.locale}
           dir={locale?.direction}
+          onOpenAutoFocus={(event) => {
+            if (onOpenAutoFocus?.()) event.preventDefault();
+          }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             const background = triggerRef.current?.closest("body > *");

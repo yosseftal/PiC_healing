@@ -1,3 +1,4 @@
+import { trackFlowOperation } from "./inquiry-lifecycle";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type AsyncActionStatus = "idle" | "recovery";
@@ -37,7 +38,7 @@ export function useAsyncAction<Arguments extends unknown[], Result>(
     }
 
     try {
-      const value = await actionRef.current(...arguments_);
+      const value = await trackFlowOperation(() => actionRef.current(...arguments_));
       return { ok: true, value };
     } catch {
       if (mountedRef.current && invocationRef.current === invocation) {

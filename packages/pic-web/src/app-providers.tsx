@@ -1,3 +1,4 @@
+import { InquiryUtilitiesProvider } from "./inquiry-utilities-context";
 /**
  * App-level provider nesting (Ticket 08-03): Session → Group → Player. `App.tsx` wraps its tree with this
  * component only — routing and screen shells remain in downstream tickets.
@@ -13,6 +14,7 @@ import { LocaleProvider } from "./i18n/locale-provider";
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <LocaleProvider>
+      <InquiryUtilitiesProvider>
       <SessionEngineProvider>
         <CatalogProvider>
           <TreatmentContentProvider>
@@ -22,6 +24,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           </TreatmentContentProvider>
         </CatalogProvider>
       </SessionEngineProvider>
+      </InquiryUtilitiesProvider>
     </LocaleProvider>
   );
 }
