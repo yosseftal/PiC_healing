@@ -236,7 +236,9 @@ describe("happy path E2E (Ticket 08-09)", () => {
       });
 
       const fetchBeforePromotion = fetchSpy.mock.calls.length;
-      fireEvent.click(screen.getByRole("button", { name: "Sign in (dev tracer stub)" }));
+      fireEvent.change(screen.getByLabelText("Email address"), { target: { value: testEmail } });
+      fireEvent.change(screen.getByLabelText("Password"), { target: { value: TEST_USER_PASSWORD } });
+      fireEvent.click(screen.getByRole("button", { name: "Sign in and save" }));
 
       await waitFor(
         () => {

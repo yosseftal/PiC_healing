@@ -71,13 +71,15 @@ function renderModal(
   SessionEngineProvider: Awaited<ReturnType<typeof loadFreshModules>>["SessionEngineProvider"],
   LocaleProvider: Awaited<ReturnType<typeof loadFreshModules>>["LocaleProvider"],
 ) {
-  return render(
+  const view = render(
     <LocaleProvider>
       <SessionEngineProvider>
         <PersistenceGateModal />
       </SessionEngineProvider>
     </LocaleProvider>,
   );
+  fillLogin();
+  return view;
 }
 
 function renderWithLocaleControl(modules: Awaited<ReturnType<typeof loadFreshModules>>) {
@@ -93,7 +95,15 @@ function renderWithLocaleControl(modules: Awaited<ReturnType<typeof loadFreshMod
       <SessionEngineProvider><PersistenceGateModal /></SessionEngineProvider>
     </LocaleProvider>,
   );
+  fillLogin();
   return { ...view, choose: (locale: "he" | "en") => act(() => selectLocale(locale)) };
+}
+
+function fillLogin() {
+  const email = document.getElementById("gate-email");
+  const password = document.getElementById("gate-password");
+  if (email) fireEvent.change(email, { target: { value: "fixture@example.com" } });
+  if (password) fireEvent.change(password, { target: { value: "  untouched password  " } });
 }
 
 afterEach(() => {
@@ -106,7 +116,7 @@ describe("PersistenceGateModal", () => {
     localStorage.clear();
   });
 
-  it("opens in the selected Hebrew language with truthful disabled auth stubs outside a Frame", async () => {
+  it("opens a real Hebrew login form with password-manager labels and no provider placeholders", async () => {
     const { compositionRoot, PersistenceGateModal, SessionEngineProvider, LocaleProvider } = await loadFreshModules();
     localStorage.setItem("pic-web.locale.v1", "he");
     await openGateWithGuestSession(compositionRoot);
@@ -116,9 +126,11 @@ describe("PersistenceGateModal", () => {
     expect(gate.getAttribute("lang")).toBe("he");
     expect(gate.getAttribute("dir")).toBe("rtl");
     expect(screen.getByText("אפשר להתחבר כדי לשמור את הסשן — העבודה נשארת במכשיר הזה עד לבחירתך לשמור אותה.")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "התחברות (הדגמת פיתוח)" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "התחברות עם Apple (טרם זמינה)" }).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByRole("button", { name: "התחברות עם Google (טרם זמינה)" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByLabelText("כתובת אימייל").getAttribute("autocomplete")).toBe("email");
+    expect(screen.getByLabelText("סיסמה").getAttribute("autocomplete")).toBe("current-password");
+    expect(screen.getByRole("button", { name: "התחברות ושמירה" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Apple|Google|הדגמת פיתוח/ })).toBeNull();
+    expect(gate.getAttribute("aria-describedby")).toBeTruthy();
     expect(screen.getByRole("button", { name: "המשך ללא שמירה" })).toBeTruthy();
   });
 
@@ -136,8 +148,36 @@ describe("PersistenceGateModal", () => {
     renderModal(PersistenceGateModal, SessionEngineProvider, LocaleProvider);
 
     expect(screen.getByRole("dialog", { name: "Keep your session" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Sign in (dev tracer stub)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sign in and save" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Continue without saving" })).toBeTruthy();
+  });
+
+  it("links validation to fields, submits the untouched password once, and clears the transient secret", async () => {
+    const modules = await loadFreshModules();
+    const { compositionRoot, PersistenceGateModal, SessionEngineProvider, LocaleProvider } = modules;
+    await openGateWithGuestSession(compositionRoot);
+    let reject!: (error: Error) => void;
+    const login = vi.spyOn(compositionRoot.promotePathActions, "signInAndPromote")
+      .mockImplementation(() => new Promise((_, fail) => { reject = fail; }));
+    renderModal(PersistenceGateModal, SessionEngineProvider, LocaleProvider);
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "invalid" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in and save" }));
+    expect(login).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Email address").getAttribute("aria-describedby")).toBe("gate-form-message");
+    expect(screen.getByRole("alert").textContent).toContain("valid email");
+    fillLogin();
+    const form = screen.getByLabelText("Password").closest("form")!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    expect(login).toHaveBeenCalledExactlyOnceWith({ email: "fixture@example.com", password: "  untouched password  " });
+    expect(screen.getByRole("dialog").getAttribute("aria-busy")).toBe("true");
+    await act(async () => { reject(new Error("credentials rejected")); });
+    expect((screen.getByLabelText("Password") as HTMLInputElement).value).toBe("");
+    expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).not.toContain("untouched password");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    expect(document.querySelectorAll("#gate-form-message")).toHaveLength(1);
+    expect(screen.getByRole("alert").textContent).toContain("valid email");
   });
 
   it("renders retry affordance when promotionStatus failed", async () => {
@@ -172,10 +212,10 @@ describe("PersistenceGateModal", () => {
     const signInError = new Error(
       "signInAsTestUserFromEnv (dev stub): missing Supabase URL/anon key or tracer test-user credentials in env",
     );
-    vi.spyOn(compositionRoot.promotePathActions, "promoteGuestSessionFromEnv").mockRejectedValue(signInError);
+    vi.spyOn(compositionRoot.promotePathActions, "signInAndPromote").mockRejectedValue(signInError);
 
     renderModal(PersistenceGateModal, SessionEngineProvider, LocaleProvider);
-    fireEvent.click(screen.getByRole("button", { name: "Sign in (dev tracer stub)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in and save" }));
 
     await vi.waitFor(() => {
       expect(screen.getByText(/We could not anchor your session yet/)).toBeTruthy();
@@ -208,6 +248,10 @@ describe("PersistenceGateModal", () => {
     });
     expect(compositionRoot.sessionEngineStore.getSnapshot().gateTriggered).toBe(false);
     expect(localStorage.getItem("pic-web.locale.v1")).toBe("en");
+    await act(async () => { await openGateWithGuestSession(compositionRoot); });
+    // This standalone mount uses local utility controls; the app provider normally closes confirmation on reset.
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect((screen.getByLabelText("Password") as HTMLInputElement).value).toBe("");
   });
 
   it("keeps a pending sign-in request and settles its recovery message in the current language", async () => {
@@ -216,20 +260,21 @@ describe("PersistenceGateModal", () => {
     await openGateWithGuestSession(compositionRoot);
     const snapshot = await compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate();
     let rejectSignIn!: (error: Error) => void;
-    const signIn = vi.spyOn(compositionRoot.promotePathActions, "promoteGuestSessionFromEnv")
+    const signIn = vi.spyOn(compositionRoot.promotePathActions, "signInAndPromote")
       .mockImplementation(() => new Promise((_, reject) => { rejectSignIn = reject; }));
     const discard = vi.spyOn(compositionRoot.sessionEngineActions, "discardGuestState");
     const finish = vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested");
     const promote = vi.spyOn(compositionRoot.sessionEngineActions, "promote");
     const { choose } = renderWithLocaleControl(modules);
     const gate = screen.getByRole("dialog");
-    const control = screen.getByRole("button", { name: "Sign in (dev tracer stub)" });
+    const control = screen.getByRole("button", { name: "Sign in and save" });
     control.focus();
     fireEvent.click(control);
     choose("he");
     expect(screen.getByRole("dialog", { name: "שמירת הסשן שלך" })).toBe(gate);
-    expect(screen.getByRole("button", { name: "התחברות (הדגמת פיתוח)" })).toBe(control);
-    expect(document.activeElement).toBe(control);
+    gate.focus();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(document.activeElement).toBe(gate);
     expect(signIn).toHaveBeenCalledTimes(1);
     expect(discard).not.toHaveBeenCalled();
     expect(finish).not.toHaveBeenCalled();
@@ -256,12 +301,12 @@ describe("PersistenceGateModal", () => {
       ...(compositionRoot.repositoryPort.getProvider() as RepositoryPort),
       promoteGuestToAccount: () => new Promise((_, reject) => { rejectPromotion = reject; }),
     };
-    const signIn = vi.spyOn(compositionRoot.promotePathActions, "promoteGuestSessionFromEnv")
+    const signIn = vi.spyOn(compositionRoot.promotePathActions, "signInAndPromote")
       .mockImplementation(() => compositionRoot.promotePathActions.promoteWithAuthenticatedRepository(
         failingPort, { group, playerSession: session }, "user-pending",
       ));
     const { choose } = renderWithLocaleControl(modules);
-    fireEvent.click(screen.getByRole("button", { name: "Sign in (dev tracer stub)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in and save" }));
     const gate = screen.getByRole("dialog");
     gate.focus();
     expect(screen.getByText("Anchoring your session…")).toBeTruthy();
@@ -281,6 +326,7 @@ describe("PersistenceGateModal", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBe(retry);
     expect(document.activeElement).toBe(retry);
     expect(signIn).toHaveBeenCalledTimes(1);
+    fillLogin();
     fireEvent.click(retry);
     expect(signIn).toHaveBeenCalledTimes(2);
     expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("pending");
@@ -293,7 +339,7 @@ describe("PersistenceGateModal", () => {
   it("keeps in-memory language and discard available when preference reads and writes fail", async () => {
     const modules = await loadFreshModules();
     await openGateWithGuestSession(modules.compositionRoot);
-    const signIn = vi.spyOn(modules.compositionRoot.promotePathActions, "promoteGuestSessionFromEnv")
+    const signIn = vi.spyOn(modules.compositionRoot.promotePathActions, "signInAndPromote")
       .mockRejectedValue(new Error("development sign-in unavailable"));
     const read = Storage.prototype.getItem;
     const write = Storage.prototype.setItem;
@@ -309,8 +355,9 @@ describe("PersistenceGateModal", () => {
     expect(screen.getByRole("dialog", { name: "שמירת הסשן שלך" })).toBeTruthy();
     choose("en");
     expect(screen.getByRole("dialog", { name: "Keep your session" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Sign in (dev tracer stub)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in and save" }));
     await screen.findByRole("button", { name: "Try again" });
+    fillLogin();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await vi.waitFor(() => expect(signIn).toHaveBeenCalledTimes(2));
     await screen.findByRole("button", { name: "Try again" });
@@ -322,5 +369,6 @@ describe("PersistenceGateModal", () => {
     await openGateWithGuestSession(modules.compositionRoot);
     renderWithLocaleControl(modules);
     expect(screen.getByRole("dialog", { name: "שמירת הסשן שלך" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "ניסיון נוסף" })).toBeNull();
   });
 });

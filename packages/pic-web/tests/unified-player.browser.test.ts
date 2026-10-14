@@ -82,18 +82,11 @@ test("sovereign Finish opens a Persistence Gate with visible full-size controls 
     expect(style.width).toBeGreaterThanOrEqual(44);
     expect(style.borderWidth).toBeGreaterThanOrEqual(1);
   }
-  await expect(gate.getByRole("button", { name: "Sign in with Apple (stub)" })).toBeDisabled();
-  await expect(gate.getByRole("button", { name: "Sign in with Google (stub)" })).toBeDisabled();
-  const enabledOpacity = await gate.getByRole("button", { name: "Sign in (dev tracer stub)", exact: true })
-    .evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity));
-  for (const name of ["Sign in with Apple (stub)", "Sign in with Google (stub)"]) {
-    const opacity = await gate.getByRole("button", { name }).evaluate(
-      (element) => Number.parseFloat(getComputedStyle(element).opacity),
-    );
-    expect(opacity).toBeLessThan(enabledOpacity);
-  }
+  await expect(gate.getByRole("button", { name: /Apple|Google|stub/ })).toHaveCount(0);
+  await expect(gate.getByLabel("Email address")).toHaveAttribute("autocomplete", "email");
+  await expect(gate.getByLabel("Password")).toHaveAttribute("autocomplete", "current-password");
   await page.keyboard.press("Tab");
-  const signIn = gate.getByRole("button", { name: "Sign in (dev tracer stub)", exact: true });
+  const signIn = gate.getByRole("button", { name: "Sign in and save", exact: true });
   await signIn.focus();
   await expect(signIn).toHaveCSS("outline-color", "rgb(101, 89, 106)");
   await expect(signIn).toHaveCSS("outline-width", "3px");

@@ -3,14 +3,14 @@ import { expectReadable } from "./palette-contrast";
 
 const copy = {
   he: {
-    title: "שמירת הסשן שלך", direction: "rtl", signIn: "התחברות (הדגמת פיתוח)",
-    apple: "התחברות עם Apple (טרם זמינה)", google: "התחברות עם Google (טרם זמינה)",
+    title: "שמירת הסשן שלך", direction: "rtl", signIn: "התחברות ושמירה",
+    email: "כתובת אימייל", password: "סיסמה",
     pending: "הסשן שלך נשמר…", recovery: "עדיין לא הצלחנו לשמור את הסשן שלך. אפשר לנסות שוב כשמתאים לך.",
     retry: "ניסיון נוסף", discard: "המשך ללא שמירה",
   },
   en: {
-    title: "Keep your session", direction: "ltr", signIn: "Sign in (dev tracer stub)",
-    apple: "Sign in with Apple (stub)", google: "Sign in with Google (stub)",
+    title: "Keep your session", direction: "ltr", signIn: "Sign in and save",
+    email: "Email address", password: "Password",
     pending: "Anchoring your session…",
     recovery: "We could not anchor your session yet. You can try again whenever you are ready.",
     retry: "Try again", discard: "Continue without saving",
@@ -40,8 +40,7 @@ for (const locale of ["he", "en"] as const) {
         await expect(gate).toBeFocused();
         await expect(gate).toHaveAttribute("lang", locale);
         await expect(gate).toHaveAttribute("dir", text.direction);
-        await expect(gate.getByRole("button", { name: text.apple })).toBeDisabled();
-        await expect(gate.getByRole("button", { name: text.google })).toBeDisabled();
+        await expect(gate.getByRole("button", { name: /Apple|Google|stub/ })).toHaveCount(0);
         const original = await gate.elementHandle();
         const before = await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"));
         expect(before).not.toBeNull();
@@ -75,6 +74,12 @@ for (const locale of ["he", "en"] as const) {
           expect(box!.width).toBeGreaterThanOrEqual(44);
           expect(box!.height).toBeGreaterThanOrEqual(44);
         }
+        await page.keyboard.press("Tab");
+        await expect(gate.getByLabel(text.email)).toBeFocused();
+        await page.keyboard.type("fixture@example.com");
+        await page.keyboard.press("Tab");
+        await expect(gate.getByLabel(text.password)).toBeFocused();
+        await page.keyboard.type("  unchanged password  ");
         await page.keyboard.press("Tab");
         const signIn = gate.getByRole("button", { name: text.signIn, exact: true });
         await expect(signIn).toBeFocused();

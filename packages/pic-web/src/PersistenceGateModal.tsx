@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { UTILITY_CONTROL } from "./control-affordance";
 import { InquiryResetControls, useInquiryResetControls } from "./inquiry-reset-controls";
 import { useLocale } from "./i18n/locale-provider";
@@ -19,35 +19,58 @@ export function PersistenceGateModal() {
   const { gateTriggered, promotionStatus } = state;
   const controls = useInquiryResetControls();
   const { confirmation, busy, open: utilitiesOpen, handoffPending, keepInquiry, requestReset, resetRef } = controls;
-  const { promoteGuestSessionFromEnv } = usePromotePathActions();
+  const { signInAndPromote, hasVerifiedIdentity } = usePromotePathActions();
   const [preRpcPromotionFailed, setPreRpcPromotionFailed] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [validation, setValidation] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => { setDismissed(false); }, [state]);
+  useEffect(() => {
+    if (gateTriggered) return;
+    setPassword("");
+    setValidation(false);
+    setPreRpcPromotionFailed(false);
+  }, [gateTriggered]);
 
   if (!gateTriggered) {
     return null;
   }
 
-  const showFailedUi = promotionStatus === "failed" || preRpcPromotionFailed;
+  const pending = submitting || promotionStatus === "pending";
+  const showFailedUi = !pending && (promotionStatus === "failed" || preRpcPromotionFailed);
   const showIdleUi = promotionStatus === "idle" && !preRpcPromotionFailed;
 
-  function anchorSession(): void {
+  function anchorSession(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    if (submittingRef.current) return;
+    if (!event.currentTarget.checkValidity()) { setValidation(true); return; }
+    submittingRef.current = true;
+    setSubmitting(true);
+    setValidation(false);
     setPreRpcPromotionFailed(false);
-    void promoteGuestSessionFromEnv(import.meta.env as Record<string, string | undefined>).catch(() => {
+    const credentials = hasVerifiedIdentity() ? undefined : { email: email.trim(), password };
+    setPassword("");
+    void signInAndPromote(credentials).catch(() => {
       setPreRpcPromotionFailed(true);
+    }).finally(() => {
+      submittingRef.current = false;
+      setSubmitting(false);
     });
   }
 
   return (
     <Dialog.Root open={!dismissed && !utilitiesOpen && !handoffPending} onOpenChange={(open) => {
-      if (busy || promotionStatus === "pending") return;
+      if (busy || pending) return;
       if (!open && confirmation) keepInquiry();
       else setDismissed(!open);
     }}>
     <Dialog.Portal>
     <Dialog.Overlay className="fixed inset-0 z-50 bg-pic-ink/30" data-testid="persistence-gate-overlay" />
-    <Dialog.Content asChild aria-describedby={undefined} onOpenAutoFocus={(event) => {
+    <Dialog.Content asChild aria-describedby="persistence-gate-description" onOpenAutoFocus={(event) => {
       event.preventDefault();
       (controls.keepRef.current ?? dialogRef.current)?.focus();
     }} onCloseAutoFocus={(event) => {
@@ -57,7 +80,7 @@ export function PersistenceGateModal() {
       target?.focus();
     }}>
     <dialog open ref={dialogRef} aria-labelledby="persistence-gate-title" tabIndex={-1} lang={locale} dir={direction}
-      aria-busy={busy}
+      aria-busy={busy || pending}
       className={[
         "fixed inset-0 z-50 m-auto grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[28rem]",
         "gap-3 overflow-y-auto rounded-pic-card border border-pic-quiet bg-pic-surface p-6 shadow-pic-sheet",
@@ -68,39 +91,39 @@ export function PersistenceGateModal() {
           {message(confirmation ? "reset.confirm" : "gate.title").text}
         </h2>
       </Dialog.Title>
+      <Dialog.Description asChild>
+        <p id="persistence-gate-description">{message("gate.body").text}</p>
+      </Dialog.Description>
 
       <InquiryResetControls controls={controls} />
       {confirmation ? null : <>
 
-      {promotionStatus === "pending" ? (
-        <p>{message("gate.pending").text}</p>
+      {pending ? (
+        <p role="status">{message("gate.pending").text}</p>
       ) : null}
 
-      {showIdleUi ? (
-        <>
-          <p>{message("gate.body").text}</p>
-          <button className={UTILITY_CONTROL} type="button" onClick={anchorSession}>
-            {message("gate.signInDev").text}
-          </button>
-          <button className={UTILITY_CONTROL} type="button" disabled aria-disabled="true">
-            {message("gate.signInApple").text}
-          </button>
-          <button className={UTILITY_CONTROL} type="button" disabled aria-disabled="true">
-            {message("gate.signInGoogle").text}
-          </button>
-        </>
+      {!pending ? (
+        <form noValidate onSubmit={anchorSession} className="grid gap-3">
+          {hasVerifiedIdentity() ? <p role="status">{message("gate.authenticated").text}</p> : <>
+          <label htmlFor="gate-email">{message("gate.email").text}</label>
+          <input id="gate-email" name="email" type="email" autoComplete="email" required value={email}
+            className={UTILITY_CONTROL} dir="ltr" aria-invalid={validation || showFailedUi}
+            aria-describedby={validation || showFailedUi ? "gate-form-message" : undefined}
+            onChange={(event) => setEmail(event.target.value)} />
+          <label htmlFor="gate-password">{message("gate.password").text}</label>
+          <input id="gate-password" name="password" type="password" autoComplete="current-password" required
+            className={UTILITY_CONTROL} value={password} aria-invalid={validation || showFailedUi}
+            aria-describedby={validation || showFailedUi ? "gate-form-message" : undefined}
+            onChange={(event) => setPassword(event.target.value)} />
+          </>}
+          {validation || showFailedUi ? <p id="gate-form-message" role="alert">
+            {message(validation ? "gate.validation" : "gate.recovery").text}
+          </p> : null}
+          <button className={UTILITY_CONTROL} type="submit">{message(showFailedUi ? "gate.retry" : "gate.signIn").text}</button>
+        </form>
       ) : null}
 
-      {showFailedUi ? (
-        <>
-          <p>{message("gate.recovery").text}</p>
-          <button className={UTILITY_CONTROL} type="button" onClick={anchorSession}>
-            {message("gate.retry").text}
-          </button>
-        </>
-      ) : null}
-
-      {showIdleUi || showFailedUi ? (
+      {!pending && (showIdleUi || showFailedUi) ? (
         <button className={UTILITY_CONTROL} ref={resetRef} disabled={busy} type="button"
           onClick={() => void requestReset(false)}>
           {message("gate.continueWithoutSaving").text}

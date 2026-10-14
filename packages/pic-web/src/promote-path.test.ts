@@ -11,7 +11,9 @@ import {
   assembleGuestSnapshotForPendingGate,
   createSupabaseRepositoryFromClient,
   promoteWithAuthenticatedRepository,
-  signInAsTestUser,
+  signInWithCredentials,
+  ensureOwnProfile,
+  getVerifiedUser,
 } from "./promote-path";
 
 function loadEnvLocal(path: string): Record<string, string> {
@@ -238,27 +240,113 @@ describe("promoteWithAuthenticatedRepository", () => {
   });
 });
 
-describe("development sign-in language independence", () => {
+describe("verified sign-in language independence", () => {
   it.each(["he", "en"])("keeps %s preference and sends only the existing password credentials", async (locale) => {
     localStorage.setItem("pic-web.locale.v1", locale);
     const client = createClient("https://auth-fixture.invalid", "fixture-anon-key", {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
     const user = {
-      id: "account-fixture", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-10-11",
+      id: "account-fixture", email_confirmed_at: "2026-10-11", app_metadata: {}, user_metadata: {},
+      aud: "authenticated", created_at: "2026-10-11",
     };
     const signIn = vi.spyOn(client.auth, "signInWithPassword")
       .mockResolvedValue({ data: { user, session: {
         access_token: "fixture-access", refresh_token: "fixture-refresh", expires_in: 3600,
         token_type: "bearer", user,
       } }, error: null });
-    const credentials = { email: "fixture@example.com", password: "fixture-password" };
-    const result = await signInAsTestUser(client, credentials);
+    const verified = vi.spyOn(client.auth, "getUser").mockResolvedValue({ data: { user }, error: null });
+    const credentials = { email: "fixture@example.com", password: "  fixture-password  " };
+    const result = await signInWithCredentials(client, credentials);
     expect(signIn).toHaveBeenCalledExactlyOnceWith(credentials);
     expect(result.userId).toBe("account-fixture");
     expect(localStorage.getItem("pic-web.locale.v1")).toBe(locale);
     expect(result.client).toBe(client);
+    expect(verified).toHaveBeenCalledOnce();
     signIn.mockRestore();
+  });
+});
+
+describe("real login promotion coordination", () => {
+  afterAll(() => vi.unstubAllEnvs());
+
+  it("deduplicates login, freezes retry work, and reuses a verified identity without another password", async () => {
+    vi.resetModules();
+    localStorage.clear();
+    vi.stubEnv("VITE_SUPABASE_URL", "https://coordination-fixture.invalid");
+    vi.stubEnv("VITE_SUPABASE_ANON_KEY", "fixture-public-key");
+    const path = await import("./promote-path");
+    const user = { id: randomUUID(), email_confirmed_at: "2026-10-14", app_metadata: {}, user_metadata: {},
+      aud: "authenticated", created_at: "2026-10-14" };
+    const client = createClient("https://coordination-fixture.invalid", "fixture-public-key", {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: async () => new Response(JSON.stringify([{ id: user.id }]), { status: 200 }) },
+    });
+    vi.spyOn(path, "createSupabaseBrowserClient").mockReturnValue(client);
+    const signIn = vi.spyOn(client.auth, "signInWithPassword").mockResolvedValue({
+      data: { user, session: {
+        user, access_token: "fixture-access", refresh_token: "fixture-refresh", expires_in: 3600, token_type: "bearer",
+      } }, error: null,
+    });
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    const getUser = vi.spyOn(client.auth, "getUser").mockImplementation(async () => {
+      await held;
+      return { data: { user }, error: null };
+    });
+    const repository = path.createSupabaseRepositoryFromClient(client);
+    const rpc = vi.spyOn(repository, "promoteGuestToAccount").mockRejectedValue(new Error("RPC unavailable"));
+    let rejectRpc!: (error: Error) => void;
+    rpc.mockImplementationOnce(() => new Promise((_, reject) => { rejectRpc = reject; }));
+    vi.spyOn(path, "createSupabaseRepositoryFromClient").mockReturnValue(repository);
+    const { compositionRoot: root } = await import("./composition-root");
+    const group = buildFinalizedGroup();
+    const session = buildPlayerSession(group.id);
+    await root.repositoryPort.saveGroup(group);
+    await root.repositoryPort.savePlayerSession(session);
+    await root.sessionEngineActions.onFinishRequested(session.id, "finishAnyway");
+    const guest = root.repositoryPort.getProvider();
+    let finishWrite!: () => void;
+    const pendingWrite = new Promise<void>((resolve) => { finishWrite = resolve; });
+    const save = guest.savePlayerSession.bind(guest);
+    vi.spyOn(guest, "savePlayerSession").mockImplementationOnce(async (record) => {
+      await pendingWrite;
+      await save(record);
+    });
+    const write = root.playerEngineActions.respondTerminalNemar(session.id, "no");
+    const credentials = { email: "fixture@example.com", password: "  unchanged secret  " };
+    const first = root.promotePathActions.signInAndPromote(credentials);
+    const duplicate = root.promotePathActions.signInAndPromote(credentials);
+    await Promise.resolve();
+    expect(signIn).not.toHaveBeenCalled();
+    finishWrite();
+    await write;
+    release();
+    await vi.waitFor(() => expect(rpc).toHaveBeenCalledOnce());
+    await expect(root.groupEngineActions.createDraftGroup("Must wait for saving")).rejects.toThrow("Saving is pending");
+    let resetSettled = false;
+    const reset = root.inquiryResetActions.resetInquiry().then((result) => { resetSettled = true; return result; });
+    await Promise.resolve();
+    expect(resetSettled).toBe(false);
+    rejectRpc(new Error("RPC unavailable"));
+    await Promise.all([first, duplicate]);
+    expect(await reset).toBe("confirmation");
+    expect(signIn).toHaveBeenCalledExactlyOnceWith(credentials);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    const original = rpc.mock.calls[0]![0];
+    expect(original.playerSession.terminal_nemar_response).toBe("no");
+    expect(root.promotePathActions.hasVerifiedIdentity()).toBe(true);
+    expect(root.repositoryPort.getProvider()).not.toBe(repository);
+    await root.repositoryPort.savePlayerSession({ ...session, terminal_nemar_response: "yes" });
+    await root.promotePathActions.signInAndPromote();
+    expect(signIn).toHaveBeenCalledTimes(1);
+    expect(rpc.mock.calls[1]![0]).toEqual(original);
+    expect((await root.repositoryPort.getGuestSessionGate()).pendingFinishRequest?.kind).toBe("finishAnyway");
+    getUser.mockResolvedValue({ data: { user: { ...user, id: randomUUID() } }, error: null });
+    await expect(root.promotePathActions.signInAndPromote()).rejects.toThrow("identity");
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(root.promotePathActions.hasVerifiedIdentity()).toBe(false);
+    vi.restoreAllMocks();
   });
 });
 
@@ -420,16 +508,12 @@ describe("promote path remote integration", () => {
       email,
       password: TEST_USER_PASSWORD,
       email_confirm: true,
+      user_metadata: { full_name: "  Verified Event Manager  " },
     });
     if (createError !== null || created.user === null) {
       throw new Error(`Failed to create ephemeral test user: ${createError?.message ?? "no user"}`);
     }
     createdUserIds.push(created.user.id);
-
-    const { error: profileError } = await serviceClient.from("profiles").insert({ id: created.user.id });
-    if (profileError !== null) {
-      throw new Error(`Failed to seed profiles row: ${profileError.message}`);
-    }
 
     const anonClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -443,6 +527,10 @@ describe("promote path remote integration", () => {
     }
 
     testUser = { userId: created.user.id, client: anonClient };
+    const missing = await anonClient.from("profiles").select("id").eq("id", created.user.id).maybeSingle();
+    expect(missing.error).toBeNull();
+    expect(missing.data).toBeNull();
+    await ensureOwnProfile(anonClient, await getVerifiedUser(anonClient));
   });
 
   afterAll(async () => {
@@ -457,20 +545,36 @@ describe("promote path remote integration", () => {
     }
   });
 
-  it("atomic promotion via SupabaseRepository after provider swap", async () => {
+  it("creates a missing own profile through RLS and preserves its edited name/preferences on repeated login", async () => {
+    const profile = () => testUser.client.from("profiles").select("full_name, language_preferences")
+      .eq("id", testUser.userId).single();
+    expect((await profile()).data?.full_name).toBe("Verified Event Manager");
+    const preferences = { positive_terms: ["personal choice"], inquiry_placeholder: "my words" };
+    const update = await testUser.client.from("profiles").update({
+      full_name: "Existing sovereign name", language_preferences: preferences,
+    }).eq("id", testUser.userId);
+    expect(update.error).toBeNull();
+    await ensureOwnProfile(testUser.client, await getVerifiedUser(testUser.client));
+    expect((await profile()).data).toEqual({ full_name: "Existing sovereign name", language_preferences: preferences });
+  });
+
+  it.each([true, false])("atomic promotion via real Auth/profile binding, linked=%s", async (linked) => {
     vi.resetModules();
     localStorage.clear();
     const { compositionRoot: root } = await import("./composition-root");
     const { repositoryPort, sessionEngineActions, promotePathActions, sessionEngineStore } = root;
 
     const group = buildFinalizedGroup();
-    const session = buildPlayerSession(group.id, { treatment_id: seedTreatmentId });
-    await repositoryPort.saveGroup(group);
+    const session = buildPlayerSession(group.id, {
+      treatment_id: seedTreatmentId, linked_group_id: linked ? group.id : null,
+      terminal_nemar_response: linked ? "yes" : "no",
+    });
+    if (linked) await repositoryPort.saveGroup(group);
     await repositoryPort.savePlayerSession(session);
-    await sessionEngineActions.onFinishRequested(session.id, "finish");
+    await sessionEngineActions.onFinishRequested(session.id, linked ? "finish" : "finishAnyway");
 
     const snapshot = await promotePathActions.assembleGuestSnapshotForPendingGate();
-    expect(snapshot).toEqual({ group, playerSession: session });
+    expect(snapshot).toEqual({ group: linked ? group : null, playerSession: session });
 
     const supabaseRepository = createSupabaseRepositoryFromClient(testUser.client);
     await promotePathActions.promoteWithAuthenticatedRepository(supabaseRepository, snapshot!, testUser.userId);
@@ -486,7 +590,19 @@ describe("promote path remote integration", () => {
       .eq("user_id", testUser.userId)
       .maybeSingle();
     expect(groupError).toBeNull();
-    expect(remoteGroup?.id).toBe(group.id);
+    expect(remoteGroup?.id ?? null).toBe(linked ? group.id : null);
+    const remoteSession = await supabaseRepository.getPlayerSession(session.id);
+    expect(remoteSession?.success_declared).toBe(true);
+    expect(remoteSession?.terminal_nemar_response).toBe(linked ? "yes" : "no");
+    expect(remoteSession?.linked_group_id).toBe(linked ? group.id : null);
+    expect(remoteSession?.units).toEqual(session.units);
+    const timeline = await testUser.client.from("timeline_events").select("id").eq("user_id", testUser.userId);
+    expect(timeline.error).toBeNull();
+    expect(timeline.data).toHaveLength(1);
+    const library = await testUser.client.from("personal_treatment_library").select("use_count")
+      .eq("user_id", testUser.userId);
+    expect(library.error).toBeNull();
+    expect(library.data).toEqual([{ use_count: 1 }]);
 
     await serviceClient.from("timeline_events").delete().eq("user_id", testUser.userId);
     await serviceClient.from("personal_treatment_library").delete().eq("user_id", testUser.userId);

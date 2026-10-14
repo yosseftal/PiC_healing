@@ -1,6 +1,6 @@
 import {
   advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore, reopenFlowOperations,
-  prepareFlowSettlement, trackFlowOperation,
+  prepareFlowSettlement, trackExclusiveFlowOperation, trackFlowOperation,
 } from "./inquiry-lifecycle";
 import {
   clearInquiryResetRecovery, readInquiryResetRecovery, saveInquiryResetRecovery,
@@ -41,10 +41,11 @@ import {
   createSupabaseRepositoryFromClient,
   promoteWithAuthenticatedRepository,
   readSupabasePublicConfigFromEnv,
-  readTestUserCredentialsFromEnv,
-  signInAsTestUser,
-  signInAsTestUserFromEnv,
+  ensureOwnProfile,
+  getVerifiedUser,
+  signInWithCredentials,
 } from "./promote-path";
+import type { LoginCredentials } from "./promote-path";
 
 const guestRepository = new LocalGuestRepository();
 const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(guestRepository);
@@ -102,6 +103,7 @@ function createExternalStore<TState>(getState: () => TState) {
 const sessionEngineStore = createExternalStore(() => sessionEngine.getState());
 
 let resetting = false;
+let promotionSwitching = false;
 let suppressSessionNotifications = false;
 sessionEngine.subscribe(() => { if (!suppressSessionNotifications) sessionEngineStore.notify(); });
 
@@ -247,19 +249,25 @@ const untrackedPlayerEngineActions = {
 };
 
 /** All public operations participate, including callers outside React event handlers. */
-function trackedActions<T extends Record<string, (...args: never[]) => Promise<unknown>>>(actions: T): T {
+function trackedActions<T extends Record<string, (...args: never[]) => Promise<unknown>>>(
+  actions: T, allowDuringPromotion = false,
+): T {
   return Object.fromEntries(Object.entries(actions).map(([name, action]) => [
-    name, (...args: never[]) => trackFlowOperation(() => resetRecovery === null ? action(...args) :
+    name, (...args: never[]) => trackFlowOperation(() => {
+      if (promotionSwitching && !allowDuringPromotion) return Promise.reject(new Error("Saving is pending"));
+      return resetRecovery === null ? action(...args) :
       initialResetRecovery.then(async () => {
         await recoverPendingReset();
         return action(...args);
-      })),
+      });
+    }),
   ])) as T;
 }
 const groupEngineActions = trackedActions(untrackedGroupEngineActions);
 const playerEngineActions = trackedActions(untrackedPlayerEngineActions);
 const sessionEngineActions = {
-  ...trackedActions(untrackedSessionEngineActions),
+  ...trackedActions({ onFinishRequested: untrackedSessionEngineActions.onFinishRequested }),
+  ...trackedActions({ promote: untrackedSessionEngineActions.promote }, true),
   async discardGuestState(): Promise<void> {
     await inquiryResetActions.resetInquiry(true);
   },
@@ -359,6 +367,12 @@ export function swapToSupabaseAdapter(port: RepositoryPort): void {
   authenticatedPort = port;
 }
 
+let browserClient: ReturnType<typeof createSupabaseBrowserClient> | null = null;
+let verifiedIdentity = false;
+let loginPromotion: Promise<void> | null = null;
+let frozenPromotion: {
+  generation: number; snapshot: GuestSnapshot; owner: string | null; kind: "finish" | "finishAnyway";
+} | null = null;
 const untrackedPromotePathActions = {
   assembleGuestSnapshotForPendingGate(): Promise<GuestSnapshot | null> {
     return assembleGuestSnapshotForPendingGate(guestRepository);
@@ -366,9 +380,9 @@ const untrackedPromotePathActions = {
   createSupabaseBrowserClient,
   createSupabaseRepositoryFromClient,
   readSupabasePublicConfigFromEnv,
-  readTestUserCredentialsFromEnv,
-  signInAsTestUser,
-  signInAsTestUserFromEnv,
+  ensureOwnProfile,
+  getVerifiedUser,
+  signInWithCredentials,
   promoteWithAuthenticatedRepository(
     port: RepositoryPort,
     guestSnapshot: GuestSnapshot,
@@ -379,33 +393,65 @@ const untrackedPromotePathActions = {
       authenticatedPort: port,
       guestSnapshot,
       newUserId,
-      promote: sessionEngineActions.promote.bind(sessionEngineActions),
+      promote: untrackedSessionEngineActions.promote,
       getPromotionStatus: () => sessionEngineStore.getSnapshot().promotionStatus,
       registerAuthenticatedPort: swapToSupabaseAdapter,
     });
   },
-  async promoteGuestSessionFromEnv(env: Record<string, string | undefined>): Promise<void> {
-    const guestSnapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
-    if (guestSnapshot === null) {
-      return;
-    }
-    const { userId, repository } = await signInAsTestUserFromEnv(env);
-    await promoteWithAuthenticatedRepository({
-      delegatingPort: repositoryPort,
-      authenticatedPort: repository,
-      guestSnapshot,
-      newUserId: userId,
-      promote: sessionEngineActions.promote.bind(sessionEngineActions),
-      getPromotionStatus: () => sessionEngineStore.getSnapshot().promotionStatus,
-      registerAuthenticatedPort: swapToSupabaseAdapter,
-    });
+  signInAndPromote(credentials?: LoginCredentials): Promise<void> {
+    if (loginPromotion !== null) return loginPromotion;
+    const generation = inquiryGenerationStore.getSnapshot();
+    loginPromotion = trackExclusiveFlowOperation(async () => {
+      const config = readSupabasePublicConfigFromEnv(import.meta.env as Record<string, string | undefined>);
+      if (config === null) throw new Error("Public authentication configuration is unavailable");
+      browserClient ??= createSupabaseBrowserClient(config);
+      const client = browserClient;
+      if (frozenPromotion?.generation !== generation) frozenPromotion = null;
+      if (frozenPromotion === null) {
+        const snapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
+        const pending = pendingGuestFinishRequest;
+        if (snapshot === null || pending === null) throw new Error("There is no pending work to save");
+        frozenPromotion = { generation, snapshot: structuredClone(snapshot), owner: null, kind: pending.kind };
+      }
+      const request = frozenPromotion;
+      if (credentials !== undefined && !verifiedIdentity) await signInWithCredentials(client, credentials);
+      const verifyOwner = async () => {
+        let user;
+        try { user = await getVerifiedUser(client); }
+        catch (error) { verifiedIdentity = false; throw error; }
+        if (request.generation !== inquiryGenerationStore.getSnapshot() ||
+          (request.owner !== null && request.owner !== user.id)) {
+          frozenPromotion = null;
+          verifiedIdentity = false;
+          throw new Error("The saving request no longer belongs to this inquiry and identity");
+        }
+        request.owner = user.id;
+        verifiedIdentity = true;
+        return user;
+      };
+      const user = await verifyOwner();
+      await ensureOwnProfile(client, user);
+      await verifyOwner();
+      if (pendingGuestFinishRequest?.kind !== request.kind ||
+        pendingGuestFinishRequest.sessionId !== request.snapshot.playerSession.id) {
+        throw new Error("The pending Finish request changed");
+      }
+      promotionSwitching = true;
+      try {
+        await untrackedPromotePathActions.promoteWithAuthenticatedRepository(
+          createSupabaseRepositoryFromClient(client), request.snapshot, user.id,
+        );
+        if (sessionEngineStore.getSnapshot().promotionStatus === "succeeded") frozenPromotion = null;
+      } finally { promotionSwitching = false; }
+    }).finally(() => { loginPromotion = null; });
+    return loginPromotion;
   },
+  hasVerifiedIdentity: () => verifiedIdentity,
 };
 const promotePathActions = {
   ...untrackedPromotePathActions,
   ...trackedActions({
     promoteWithAuthenticatedRepository: untrackedPromotePathActions.promoteWithAuthenticatedRepository,
-    promoteGuestSessionFromEnv: untrackedPromotePathActions.promoteGuestSessionFromEnv,
   }),
 };
 

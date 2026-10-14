@@ -67,7 +67,8 @@ if (new URLSearchParams(location.search).get("gateRequest") === "deferred") {
       throw new Error("Fixture connection dropped");
     },
   };
-  compositionRoot.promotePathActions.promoteGuestSessionFromEnv = async () => {
+  compositionRoot.promotePathActions.signInAndPromote = async () => {
+    compositionRoot.promotePathActions.hasVerifiedIdentity = () => true;
     const snapshot = await compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate();
     if (snapshot !== null) {
       await compositionRoot.promotePathActions.promoteWithAuthenticatedRepository(failingPort, snapshot, "fixture-account");

@@ -5,7 +5,7 @@
  * `SessionEngine.promote()` so `promoteGuestToAccount` targets Supabase (Ticket 13) instead of
  * `GuestRepositoryCannotPromoteError`.
  */
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { SupabaseRepository } from "pic-adapter-supabase";
 import type {
   FinalizedSymptomGroup,
@@ -22,7 +22,7 @@ export interface SupabasePublicConfig {
   anonKey: string;
 }
 
-export interface TestUserCredentials {
+export interface LoginCredentials {
   email: string;
   password: string;
 }
@@ -38,21 +38,6 @@ export function readSupabasePublicConfigFromEnv(
   return { url, anonKey };
 }
 
-/**
- * Dev tracer-bullet auth stub credentials — never ship real passwords in source; read from env only.
- * See `docs/testing/supabase-remote-testing.md`.
- */
-export function readTestUserCredentialsFromEnv(
-  env: Record<string, string | undefined>,
-): TestUserCredentials | null {
-  const email = env.PIC_TRACER_TEST_USER_EMAIL ?? env.VITE_PIC_TRACER_TEST_USER_EMAIL;
-  const password = env.PIC_TRACER_TEST_USER_PASSWORD ?? env.VITE_PIC_TRACER_TEST_USER_PASSWORD;
-  if (email === undefined || password === undefined || email === "" || password === "") {
-    return null;
-  }
-  return { email, password };
-}
-
 export function createSupabaseBrowserClient(config: SupabasePublicConfig): SupabaseClient {
   return createClient(config.url, config.anonKey, {
     auth: { persistSession: true, autoRefreshToken: true },
@@ -63,41 +48,37 @@ export function createSupabaseRepositoryFromClient(client: SupabaseClient): Supa
   return new SupabaseRepository(client);
 }
 
-/**
- * Tracer-bullet dev stub: signs in with password credentials from env. Label clearly in UI callers.
- * Returns a ready `SupabaseRepository` so Ticket 08-02 never imports `pic-adapter-supabase` directly.
- */
-export async function signInAsTestUser(
-  client: SupabaseClient,
-  credentials: TestUserCredentials,
-): Promise<{ userId: string; client: SupabaseClient; repository: SupabaseRepository }> {
-  const { data, error } = await client.auth.signInWithPassword({
-    email: credentials.email,
-    password: credentials.password,
-  });
-  if (error !== null || data.user === null) {
-    throw new Error(`signInAsTestUser (dev stub): ${error?.message ?? "no user returned"}`);
+/** Only a server-verified, email-confirmed Auth user can own a promotion. */
+export async function getVerifiedUser(client: SupabaseClient): Promise<User> {
+  const { data, error } = await client.auth.getUser();
+  if (error !== null || data.user === null || !data.user.email_confirmed_at) {
+    throw new Error("Verified sign-in is required");
   }
-  return {
-    userId: data.user.id,
-    client,
-    repository: createSupabaseRepositoryFromClient(client),
-  };
+  return data.user;
 }
 
-/** Reads public Supabase config + test-user credentials from env and returns an authenticated repository. */
-export async function signInAsTestUserFromEnv(
-  env: Record<string, string | undefined>,
-): Promise<{ userId: string; client: SupabaseClient; repository: SupabaseRepository }> {
-  const config = readSupabasePublicConfigFromEnv(env);
-  const credentials = readTestUserCredentialsFromEnv(env);
-  if (config === null || credentials === null) {
-    throw new Error(
-      "signInAsTestUserFromEnv (dev stub): missing Supabase URL/anon key or tracer test-user credentials in env",
-    );
+export async function signInWithCredentials(client: SupabaseClient, credentials: LoginCredentials) {
+  const { error } = await client.auth.signInWithPassword(credentials);
+  if (error !== null) throw new Error("Sign-in could not be completed");
+  const user = await getVerifiedUser(client);
+  return { userId: user.id, client, repository: createSupabaseRepositoryFromClient(client) };
+}
+
+/** Own-row identity bootstrap only. Existing display data and preferences are never overwritten. */
+export async function ensureOwnProfile(client: SupabaseClient, user: User): Promise<void> {
+  const read = () => client.from("profiles").select("id").eq("id", user.id).maybeSingle();
+  const existing = await read();
+  if (existing.error !== null) throw new Error("Profile could not be read");
+  if (existing.data !== null) return;
+  const name: unknown = user.user_metadata.full_name;
+  const inserted = await client.from("profiles").insert({
+    id: user.id, full_name: typeof name === "string" ? name.trim() : null,
+  });
+  // A concurrent creator can win the insert. Re-read through own-row RLS before treating it as success.
+  const confirmed = await read();
+  if (confirmed.error !== null || confirmed.data === null) {
+    throw new Error(inserted.error === null ? "Profile could not be confirmed" : "Profile could not be prepared");
   }
-  const client = createSupabaseBrowserClient(config);
-  return signInAsTestUser(client, credentials);
 }
 
 function isFinalizedSymptomGroup(group: SymptomGroup): group is FinalizedSymptomGroup {
@@ -160,9 +141,11 @@ export async function promoteWithAuthenticatedRepository(
   const previousProvider = options.delegatingPort.getProvider();
   options.delegatingPort.swapProvider(options.authenticatedPort);
 
-  await options.promote(options.guestSnapshot, options.newUserId);
-
-  if (options.getPromotionStatus() === "failed") {
+  try {
+    await options.promote(options.guestSnapshot, options.newUserId);
+  } catch (error) {
     options.delegatingPort.swapProvider(previousProvider);
+    throw error;
   }
+  if (options.getPromotionStatus() === "failed") options.delegatingPort.swapProvider(previousProvider);
 }
