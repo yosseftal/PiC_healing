@@ -55,9 +55,10 @@ export function NavigationTreePanel({
               data-testid={`navigation-tree-jump-${unit.unit_id}`}
               onClick={() => void requestNavigation(unit.unit_id)}
             >
-              <LocalizedMessage message={message("player.navigationEntry", {
-                unit: unit.unit_id === TERMINAL_NEMAR_UNIT_ID ? message("player.terminalTitle").text
-                  : unit.unit_id === "unit-0" ? message("player.continuousGuidance").text : unit.unit_id,
+              <LocalizedMessage message={unit.unit_id === TERMINAL_NEMAR_UNIT_ID
+                ? message("player.terminalNavigationEntry", { state: message(stateMessages[unit.state]).text })
+                : message("player.navigationEntry", {
+                unit: unit.unit_id === "unit-0" ? message("player.continuousGuidance").text : unit.unit_id,
                 state: message(stateMessages[unit.state]).text,
               })} />
             </button>

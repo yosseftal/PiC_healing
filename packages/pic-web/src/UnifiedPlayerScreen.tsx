@@ -23,6 +23,7 @@ import { UTILITY_CONTROL } from "./control-affordance";
 import { LanguageSelector } from "./i18n/language-selector";
 import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
+import { isolatedMessageText } from "./i18n/messages";
 import "./unified-player-screen.css";
 
 type PlayerContentPhase = "resolving" | "ready" | "empty";
@@ -212,7 +213,7 @@ export function UnifiedPlayerScreen() {
             <HorizontalSlideContainer
               activeKey={activeUnit.unit_id}
               orderedKeys={session.units.map((unit) => unit.unit_id)}
-              stepLabel={message(isTerminalNemar ? "player.terminalStep" : "player.atomicStep").text}
+              stepLabel={isolatedMessageText(message(isTerminalNemar ? "player.terminalStep" : "player.atomicStep"))}
               userInitiated={requestedUnitRef.current === activeKey}
               focusTargetRef={incomingHeadingRef}
               onTransitionComplete={({ activeKey: completedKey }) => {
@@ -222,7 +223,7 @@ export function UnifiedPlayerScreen() {
               }}
             >
               {isTerminalNemar ? (
-                <TherapeuticContentCard aria-label={message("player.terminalGuidance").text}>
+                <TherapeuticContentCard aria-label={isolatedMessageText(message("player.terminalGuidance"))}>
                   <TerminalNemarUnit
                     sessionId={activePlayerSessionId}
                     response={session.terminal_nemar_response}

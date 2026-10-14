@@ -22,6 +22,40 @@ const dictionaries = {
 afterEach(cleanup);
 
 describe("typed message resolution", () => {
+  it("resolves terminology in the fallback template language and treats custom wording as literal data", () => {
+    const terms = {
+      unavailable: { params: [] },
+      question: { params: ["count"], plural: "count", terminology: ["nemar"] },
+    } as const;
+    const copy = {
+      he: { unavailable: "לא זמין", question: { one: "{nemar}: {count}", two: "{nemar}: {count}",
+        other: "{nemar}: {count}" } },
+      en: { unavailable: "Unavailable", question: { one: "{count}: {nemar}", other: "{count}: {nemar}" } },
+    };
+    const hebrew = createMessageResolver(terms, { ...copy, en: {} }, "unavailable");
+    expect(hebrew("en", "question", { count: 2 })).toMatchObject({
+      text: "נכון ומדויק: 2", locale: "he", direction: "rtl", fallback: true,
+    });
+    const english = createMessageResolver(terms, { ...copy, he: {} }, "unavailable");
+    expect(english("he", "question", { count: 2 })).toMatchObject({
+      text: "2: NEMAR", locale: "en", direction: "ltr", fallback: true,
+    });
+    const alias = ' שלי Ready <img src=x> & {count} {nemar} ';
+    const custom = createMessageResolver(terms, { ...copy, en: {} }, "unavailable", undefined,
+      { customNemarAlias: alias });
+    const message = custom("en", "question", { count: 2 });
+    expect(message.text).toBe(`${alias}: 2`);
+    expect(message.parts.map((part) => typeof part === "string" ? part : part.text).join("")).toBe(message.text);
+    const { container } = render(<LocalizedMessage message={message} />);
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector('bdi[dir="auto"]')?.textContent).toBe(alias);
+    for (const blank of [null, "", " \t\n "]) {
+      const resolve = createMessageResolver(terms, copy, "unavailable", undefined, { customNemarAlias: blank });
+      expect(resolve("he", "question", { count: 2 }).text).toBe("נכון ומדויק: 2");
+      expect(resolve("en", "question", { count: 1 }).text).toBe("1: NEMAR");
+    }
+  });
+
   it("resolves the chosen language and renders personal inserts as isolated escaped text", () => {
     const resolve = createMessageResolver(definitions, dictionaries, "unavailable");
     const message = resolve("he", "greeting", { name: '<img src=x onerror="alert(1)">' });

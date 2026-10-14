@@ -10,6 +10,7 @@ import { useSessionEngineActions } from "./session-engine-context";
 import { useAsyncAction } from "./use-async-action";
 import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
+import { isolatedMessageText } from "./i18n/messages";
 
 interface TerminalNemarUnitProps {
   sessionId: string;
@@ -74,7 +75,7 @@ export function TerminalNemarUnit({
   const actions: ActionTuple = responseStatus === "recovery" ? [
     {
       id: "retry-response",
-      kind: "button", label: message("player.retryResponse").text, intent: "secondary",
+      kind: "button", label: isolatedMessageText(message("player.retryResponse")), intent: "secondary",
       onAction: () => void retryResponseRequest(),
     },
   ] : finishStatus === "recovery" ? [

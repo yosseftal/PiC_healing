@@ -106,13 +106,20 @@ function assertSlotIsNonInteractive(root: HTMLElement, slotName: string): void {
   }
 }
 
+function templateText(node: Node): string {
+  // Literal personal wording is not product copy and must never be rejected by the editorial guard.
+  if (node instanceof Element && node.hasAttribute("data-pic-literal")) return "";
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
+  return Array.from(node.childNodes, templateText).join("");
+}
+
 function assertRecoveryLanguageIsPositive(root: HTMLElement): void {
   const recoveryBanners = [
     ...(root.matches("[data-intent='recovery']") ? [root] : []),
     ...root.querySelectorAll<HTMLElement>("[data-intent='recovery']"),
   ];
   for (const banner of recoveryBanners) {
-    if (PROHIBITED_RECOVERY_LANGUAGE.test(banner.textContent ?? "")) {
+    if (PROHIBITED_RECOVERY_LANGUAGE.test(templateText(banner))) {
       throw new Error("Recovery banner language must remain positive and non-blocking.");
     }
   }

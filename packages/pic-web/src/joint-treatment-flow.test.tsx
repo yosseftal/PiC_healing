@@ -39,7 +39,8 @@ describe("JointTreatmentMuscleTestStep", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("joint-treatment-muscle-test")).toBeTruthy();
-      expect(screen.getByText("Is it NEMAR to treat these symptoms together?")).toBeTruthy();
+      expect(screen.getByTestId("atomic-primary-content").textContent)
+        .toBe("Is it NEMAR to treat these symptoms together?");
       expect(screen.getByTestId("muscle-test-yes")).toBeTruthy();
       expect(screen.getByTestId("muscle-test-no")).toBeTruthy();
     });

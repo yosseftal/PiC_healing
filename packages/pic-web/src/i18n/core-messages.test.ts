@@ -3,12 +3,21 @@ import { dictionaries, messageDefinitions, resolveMessage } from "./core-message
 import { validateMessages } from "./messages";
 
 describe("required approved shared utility messages", () => {
+  it("uses explicit Hebrew terminology and retains the English default throughout interface copy", () => {
+    expect(resolveMessage("he", "joint.question").text).toBe("האם נכון ומדויק לטפל בסימפטומים האלה יחד?");
+    expect(resolveMessage("he", "player.terminalQuestion").text)
+      .toBe("האם נכון ומדויק שטיפול זה הסתיים בהצלחה?");
+    expect(resolveMessage("en", "joint.question").text).toBe("Is it NEMAR to treat these symptoms together?");
+    expect(JSON.stringify(dictionaries.he)).not.toMatch(/נמ["״“”„‟'׳‘’]*ר/);
+  });
+
   it("has complete parameter-correct Hebrew and English dictionaries without required-key fallback", () => {
     expect(validateMessages(messageDefinitions, dictionaries)).toEqual([]);
     for (const locale of ["he", "en"] as const) {
       for (const key of Object.keys(messageDefinitions) as (keyof typeof messageDefinitions)[]) {
         const resolved = key === "player.navigationEntry"
           ? resolveMessage(locale, key, { unit: "unit-1", state: "In view" })
+          : key === "player.terminalNavigationEntry" ? resolveMessage(locale, key, { state: "In view" })
           : key === "rating.prior" || key === "summary.rating"
           ? resolveMessage(locale, key, { polarity: "Positive", intensity: 8, maximum: 10 })
           : key === "symptom.count" || key === "summary.count"

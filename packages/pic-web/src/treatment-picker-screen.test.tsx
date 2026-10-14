@@ -191,7 +191,7 @@ describe("TreatmentPickerScreen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "עברית" }));
     expect(screen.getByTestId("zero-h3-guard-empty-treatment").textContent)
-      .toBe("ההנחיה עוברת כעת עיבוד פנימי ואינה זמינה לביצוע כרגע. נמ״ר לבחור הנחיה אחרת?");
+      .toBe("ההנחיה עוברת כעת עיבוד פנימי ואינה זמינה לביצוע כרגע. האם נכון ומדויק לבחור הנחיה אחרת?");
     expect(screen.getByTestId("pick-treatment-empty-treatment").textContent).toBe("Empty Treatment");
   });
 

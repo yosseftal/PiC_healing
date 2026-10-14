@@ -2,6 +2,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { SymptomGroup } from "pic-engine";
+import { changeFixtureAlias, TerminologyFixture } from "./i18n/terminology-test-fixture";
 import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
 import { resetGuestFlowFactsForTest, setGuestFlowSymptomAdditionComplete } from "./guest-flow-facts";
@@ -27,8 +28,9 @@ it("retains a pending joint response and current-locale recovery without a third
   const response = vi.spyOn(compositionRoot.groupEngineActions, "setJointTreatmentMuscleTest")
     .mockReturnValueOnce(pending);
   const finalize = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup");
-  render(<AppProviders><JointTreatmentMuscleTestStep groupId={groupId} /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><JointTreatmentMuscleTestStep groupId={groupId} /></AppProviders>);
   fireEvent.click(screen.getByTestId("muscle-test-no"));
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   await act(async () => { reject(new Error("Reconnect")); await pending.catch(() => {}); });
   expect(screen.getByText("אפשר לנסות שוב לרשום את תשובת בדיקת השריר.")).toBeTruthy();
@@ -55,7 +57,8 @@ it("settles pending catalog and selection recovery in the chosen language withou
       unit_content: "Canonical prose.", unit_rationale: null,
     }]);
   const start = vi.spyOn(compositionRoot.playerEngineActions, "startSession").mockResolvedValue("session-fixture");
-  render(<AppProviders><TreatmentPickerScreen /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><TreatmentPickerScreen /></AppProviders>);
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   await act(async () => { releaseList([{ id: "prose", title: "Source מקור" }]); await pendingList; });
   fireEvent.click(screen.getByRole("button", { name: "פתיחת הכלים" }));
@@ -85,7 +88,8 @@ it("settles a pending summary in the chosen locale with isolated personal wordin
   let release!: (value: SymptomGroup | null) => void;
   const pending = new Promise<SymptomGroup | null>((resolve) => { release = resolve; });
   const read = vi.spyOn(compositionRoot.groupEngineActions, "getGroup").mockReturnValueOnce(pending);
-  render(<AppProviders><SymptomGroupSummaryScreen groupId={groupId} /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><SymptomGroupSummaryScreen groupId={groupId} /></AppProviders>);
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   expect(screen.getByText("סיכום הקבוצה נטען…")).toBeTruthy();
   await act(async () => { release(group); await pending; });
@@ -115,8 +119,9 @@ it("keeps joint No advisory and sovereign finalization through language changes 
   setGuestFlowSymptomAdditionComplete(true);
   const response = vi.spyOn(compositionRoot.groupEngineActions, "setJointTreatmentMuscleTest");
   const finalize = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup");
-  const view = render(<AppProviders><JointTreatmentMuscleTestStep groupId={groupId} /></AppProviders>);
+  const view = render(<AppProviders><TerminologyFixture /><JointTreatmentMuscleTestStep groupId={groupId} /></AppProviders>);
   const no = screen.getByTestId("muscle-test-no");
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   expect(screen.getByTestId("muscle-test-no")).toBe(no);
   expect(no.textContent).toBe("לא");
@@ -129,6 +134,7 @@ it("keeps joint No advisory and sovereign finalization through language changes 
   switchLanguage("en");
   expect(screen.getByTestId("split-advisory").textContent).toBe("These symptoms may heal better as separate groups.");
   fireEvent.click(screen.getByTestId("dismiss-split-advisory"));
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   expect(screen.queryByTestId("split-advisory")).toBeNull();
   expect(screen.getByRole("group", { name: "פעולות זמינות" }).querySelectorAll("button")).toHaveLength(1);
@@ -148,7 +154,8 @@ it("flows through joint Yes, summary and the complete catalog into a canonically
   const parsed = await compositionRoot.treatmentContentActions.getParsedTreatmentContent(treatment.id);
   const read = vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent");
   const start = vi.spyOn(compositionRoot.playerEngineActions, "startSession");
-  render(<AppProviders><GuestFlowRouter /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><GuestFlowRouter /></AppProviders>);
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   fireEvent.click(screen.getByTestId("muscle-test-yes"));
   await waitFor(() => expect(screen.getByTestId("confirm-group-summary")).toBeTruthy());

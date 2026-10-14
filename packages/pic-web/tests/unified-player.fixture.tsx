@@ -5,6 +5,7 @@ import { AppProviders } from "../src/app-providers";
 import { compositionRoot } from "../src/composition-root";
 import { GuestModeShell } from "../src/GuestModeShell";
 import { UnifiedPlayerScreen } from "../src/UnifiedPlayerScreen";
+import { TerminologyFixture } from "../src/i18n/terminology-test-fixture";
 import "../src/visual-foundation/visual-foundation.css";
 
 const rootElement = document.getElementById("root");
@@ -82,6 +83,7 @@ await compositionRoot.playerEngineActions.startSession(
 
 createRoot(rootElement).render(
   <AppProviders>
+    <TerminologyFixture />
     <GuestModeShell><UnifiedPlayerScreen /></GuestModeShell>
   </AppProviders>,
 );

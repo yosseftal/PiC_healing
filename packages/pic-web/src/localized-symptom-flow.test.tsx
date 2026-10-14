@@ -3,6 +3,7 @@ import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Intensity, Polarity } from "pic-engine";
+import { changeFixtureAlias, TerminologyFixture } from "./i18n/terminology-test-fixture";
 import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
 import { resetGuestFlowFactsForTest } from "./guest-flow-facts";
@@ -48,11 +49,12 @@ it("keeps real prior dimensions hidden until explicit reveal and retains that ch
   const hasPrior = vi.spyOn(compositionRoot.groupEngineActions, "hasPriorRating");
   const reveal = vi.spyOn(compositionRoot.groupEngineActions, "revealPriorRating");
   const rate = vi.spyOn(compositionRoot.groupEngineActions, "rate");
-  render(<AppProviders><PriorRatingScreen symptomId={symptomId} /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><PriorRatingScreen symptomId={symptomId} /></AppProviders>);
   await waitFor(() => expect(screen.getByTestId("reveal-prior-rating")).toBeTruthy());
   const slider = screen.getByLabelText("Intensity");
   fireEvent.change(slider, { target: { value: "7" } });
   fireEvent.change(screen.getByLabelText("Polarity"), { target: { value: "positive" } });
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   expect(screen.getByLabelText("עוצמה")).toBe(slider);
   expect((slider as HTMLInputElement).value).toBe("7");
@@ -77,9 +79,10 @@ it("retains a pending explicit reveal through selection without issuing another 
   let release!: (value: { polarity: Polarity; intensity: Intensity }) => void;
   const pending = new Promise<{ polarity: Polarity; intensity: Intensity }>((resolve) => { release = resolve; });
   const reveal = vi.spyOn(compositionRoot.groupEngineActions, "revealPriorRating").mockReturnValueOnce(pending);
-  render(<AppProviders><PriorRatingScreen symptomId={symptomId} /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><PriorRatingScreen symptomId={symptomId} /></AppProviders>);
   await waitFor(() => expect(screen.getByTestId("reveal-prior-rating")).toBeTruthy());
   fireEvent.click(screen.getByTestId("reveal-prior-rating"));
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   expect(screen.queryByTestId("revealed-prior-rating")).toBeNull();
   await act(async () => { release({ polarity: "positive", intensity: 8 }); await pending; });
@@ -97,7 +100,7 @@ it("keeps a pending save and its recovery payload through selection without addi
   let reject!: (reason: Error) => void;
   const pending = new Promise<void>((_, rejectPromise) => { reject = rejectPromise; });
   const rate = vi.spyOn(compositionRoot.groupEngineActions, "rate").mockReturnValueOnce(pending);
-  render(<AppProviders><SymptomGroupCreateScreen /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><SymptomGroupCreateScreen /></AppProviders>);
   await waitFor(() => expect(screen.getByTestId("finish-symptom-addition")).toBeTruthy());
   const name = screen.getByLabelText("Symptom name");
   fireEvent.change(name, { target: { value: "כוח Strength" } });
@@ -106,6 +109,7 @@ it("keeps a pending save and its recovery payload through selection without addi
   fireEvent.submit(screen.getByTestId("symptom-add-step"));
   await waitFor(() => expect(rate).toHaveBeenCalledTimes(1));
   const addedId = rate.mock.calls[0]![0];
+  act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   expect(screen.getByLabelText("שם הסימפטום")).toBe(name);
   expect((name as HTMLInputElement).value).toBe("כוח Strength");
@@ -125,7 +129,8 @@ it("creates and rates personal wording after language selection without changing
   const create = vi.spyOn(compositionRoot.groupEngineActions, "createDraftGroup");
   const add = vi.spyOn(compositionRoot.groupEngineActions, "addSymptom");
   const rate = vi.spyOn(compositionRoot.groupEngineActions, "rate");
-  render(<AppProviders><SymptomGroupCreateScreen /></AppProviders>);
+  render(<AppProviders><TerminologyFixture /><SymptomGroupCreateScreen /></AppProviders>);
+  act(() => changeFixtureAlias("My NEMAR נמ״ר"));
   const groupInput = screen.getByLabelText("שם הקבוצה");
   fireEvent.change(groupInput, { target: { value: "גב Back 123" } });
   fireEvent.click(screen.getByRole("button", { name: "פתיחת הכלים" }));
@@ -145,6 +150,7 @@ it("creates and rates personal wording after language selection without changing
   fireEvent.change(screen.getByLabelText("Polarity"), { target: { value: "positive" } });
   fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
   fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+  act(() => changeFixtureAlias("שינוי Literal"));
   expect(screen.getByLabelText("שם הסימפטום")).toBe(symptomInput);
   expect((symptomInput as HTMLInputElement).value).toBe("Neck צוואר");
   expect((screen.getByLabelText("עוצמה") as HTMLInputElement).value).toBe("7");

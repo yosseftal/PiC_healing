@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 const copy = {
   he: {
     direction: "rtl", title: "הנגן המאוחד", open: "פתיחת כלי הנגן", sheet: "כלי הנגן",
-    card: "הנחיה ליחידה אטומית", tree: "עץ הניווט", terminal: "נמ״ר מסכם", actions: "פעולות זמינות",
+    card: "הנחיה ליחידה אטומית", tree: "עץ הניווט", terminal: "בדיקה מסכמת: נכון ומדויק", actions: "פעולות זמינות",
     yes: "כן", no: "לא", change: "שינוי תשובה", finish: "סיום", anyway: "סיום בכל זאת",
     integrating: "הסשן בהטמעה", retry: "ניסיון נוסף לטעינת ההנחיה", recovery: "אפשר לחבר מחדש",
     guard: "ההנחיה עוברת כעת עיבוד פנימי", choose: "בחירת הנחיה אחרת", state: "בתצוגה",
@@ -45,6 +45,51 @@ async function checkViewport(page: Page) {
   expect(dimensions.x).toBe(0);
   expect(dimensions.y).toBe(0);
   expect(dimensions.overflow).toBe("hidden");
+}
+
+for (const locale of ["he", "en"] as const) {
+  test(`${locale} alias updates preserve the terminal response and saved work`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto(`/tests/unified-player.fixture.html?direction=${copy[locale].direction}`);
+    const source = page.getByTestId("atomic-unit-content");
+    await expect(source).toBeVisible();
+    const authored = await source.textContent();
+    const alias = 'שלי Right <img src=x> & {nemar} "literal"';
+    await page.evaluate((value) => window.dispatchEvent(new CustomEvent("fixture-set-alias", { detail: value })), alias);
+    expect(await source.textContent()).toBe(authored);
+    let sheet = await openSheet(page, locale);
+    const terminal = sheet.getByTestId("navigation-tree-jump-__terminal_nemar__");
+    await expect(terminal.locator("bdi").first()).toHaveText(alias);
+    await terminal.click();
+    await expect(sheet).toBeHidden();
+    await page.getByTestId("terminal-nemar-no").click();
+    await expect(page.getByTestId("terminal-nemar-response-recorded")).toContainText(copy[locale].integrating);
+    const unit = page.getByTestId("terminal-nemar-unit");
+    const original = await unit.elementHandle();
+    const before = await page.evaluate(() => Object.fromEntries(Object.entries(localStorage)
+      .filter(([key]) => key !== "pic-web.locale.v1")));
+    const nextAlias = "My wording stays mine {count} נכון ומדויק";
+    await page.evaluate((value) => window.dispatchEvent(new CustomEvent("fixture-set-alias", { detail: value })), nextAlias);
+    sheet = await openSheet(page, locale);
+    await expect(sheet.getByTestId("finish-anyway-button")).toBeEnabled();
+    const target = locale === "he" ? "en" : "he";
+    await sheet.getByRole("button", { name: target === "he" ? "עברית" : "English", exact: true }).click();
+    await expect(sheet.getByTestId("finish-anyway-button")).toBeEnabled();
+    await page.keyboard.press("Escape");
+    await expect(sheet).toBeHidden();
+    await expect(unit.getByRole("heading")).toHaveText(
+      target === "he" ? `בדיקה מסכמת: ${nextAlias}` : `Terminal ${nextAlias}`,
+    );
+    await expect(unit.locator("bdi").first()).toHaveAttribute("dir", "auto");
+    await expect(page.getByRole("region", { name: target === "he"
+      ? `הנחיית הבדיקה המסכמת: \u2068${nextAlias}\u2069` : `Terminal \u2068${nextAlias}\u2069 guidance` })).toBeVisible();
+    expect(await unit.evaluate((element, node) => element === node, original)).toBe(true);
+    await expect(unit.locator("img")).toHaveCount(0);
+    await expect(page.getByTestId("terminal-nemar-response-recorded")).toContainText(copy[target].integrating);
+    expect(await page.evaluate(() => Object.fromEntries(Object.entries(localStorage)
+      .filter(([key]) => key !== "pic-web.locale.v1")))).toEqual(before);
+    await checkViewport(page);
+  });
 }
 
 for (const locale of ["he", "en"] as const) {

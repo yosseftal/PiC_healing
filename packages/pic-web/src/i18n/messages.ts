@@ -1,6 +1,6 @@
 import { directionFor, isLocale, type Direction, type Locale } from "./locale";
 
-export type MessageDefinition = { params: readonly string[]; plural?: string };
+export type MessageDefinition = { params: readonly string[]; plural?: string; terminology?: readonly "nemar"[] };
 export type MessageDefinitions = Record<string, MessageDefinition>;
 export type MessageTemplate = string | Partial<Record<Intl.LDMLPluralRule, string>>;
 export type MessageDictionaries<D extends MessageDefinitions> = Record<Locale, Partial<Record<keyof D, MessageTemplate>>>;
@@ -18,6 +18,11 @@ export interface ResolvedMessage {
   fallback: boolean;
 }
 
+/** String-only labels cannot contain bdi elements; Unicode isolates preserve each literal insert. */
+export function isolatedMessageText(message: ResolvedMessage): string {
+  return message.parts.map((part) => typeof part === "string" ? part : `\u2068${part.text}\u2069`).join("");
+}
+
 export type MessageResolver<D extends MessageDefinitions> = <K extends keyof D>(
   locale: Locale, key: K, ...args: MessageArguments<D, K>
 ) => ResolvedMessage;
@@ -26,8 +31,9 @@ function validTemplate(template: unknown, definition: MessageDefinition): templa
   if (typeof template !== "string" || template.trim().length === 0) return false;
   const tokens = [...template.matchAll(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g)].map((match) => match[1]);
   const remainder = template.replace(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g, "");
-  return !/[{}]/.test(remainder) && tokens.every((token) => definition.params.includes(token)) &&
-    definition.params.every((parameter) => tokens.includes(parameter));
+  const parameters = [...definition.params, ...definition.terminology ?? []];
+  return !/[{}]/.test(remainder) && tokens.every((token) => parameters.includes(token)) &&
+    parameters.every((parameter) => tokens.includes(parameter));
 }
 
 function validParameters(definition: MessageDefinition, params: Record<string, string | number>): boolean {
@@ -66,6 +72,7 @@ export function validateMessages<D extends MessageDefinitions>(
 export function createMessageResolver<D extends MessageDefinitions>(
   definitions: D, dictionaries: MessageDictionaries<D>, unavailableKey: keyof D,
   report: (defect: string) => void = () => {},
+  terminology: { customNemarAlias?: string | null } = {},
 ): MessageResolver<D> {
   const resolve = (
     locale: Locale, key: keyof D, params: Record<string, string | number>, unavailable = false,
@@ -96,7 +103,10 @@ export function createMessageResolver<D extends MessageDefinitions>(
     let offset = 0;
     for (const match of template.matchAll(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g)) {
       parts.push(template.slice(offset, match.index));
-      const value = params[match[1]];
+      const value = match[1] === "nemar" && definition.terminology?.includes("nemar")
+        ? terminology.customNemarAlias?.trim() ? terminology.customNemarAlias
+          : resolvedLocale === "he" ? "נכון ומדויק" : "NEMAR"
+        : params[match[1]];
       const text = typeof value === "number" ? new Intl.NumberFormat(locale).format(value) : value;
       parts.push({ parameter: match[1], text });
       offset = match.index + match[0].length;

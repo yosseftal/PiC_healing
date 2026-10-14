@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import {
   TERMINAL_NEMAR_UNIT_ID,
   TRACER_BULLET_SEED_TREATMENT_ROWS,
@@ -21,6 +21,7 @@ import { setGuestFlowPlayerSession, resetGuestFlowFactsForTest } from "./guest-f
 import { GuestModeShell } from "./GuestModeShell";
 import { UnifiedPlayerScreen } from "./UnifiedPlayerScreen";
 import { ZERO_H3_GUARD_MESSAGE } from "./zero-h3-guard-message";
+import { changeFixtureAlias, TerminologyFixture } from "./i18n/terminology-test-fixture";
 
 /**
  * Minimal in-memory `RepositoryPort` fake for ticket 21's promotion-replay test (AC6) — only the surface
@@ -189,6 +190,60 @@ afterEach(() => {
 });
 
 describe("UnifiedPlayerScreen", () => {
+  it("keeps literal user wording available in recovery copy and accessible retry labels", async () => {
+    await seedPlayerSession(buildSession({ units: [{ unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }] }));
+    const respond = vi.spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar")
+      .mockRejectedValueOnce(new Error("Reconnect"));
+    render(<AppProviders><TerminologyFixture /><UnifiedPlayerScreen /></AppProviders>);
+    await screen.findByTestId("terminal-nemar-yes");
+    const alias = "My error is not failure שלי {nemar}";
+    act(() => changeFixtureAlias(alias));
+    fireEvent.click(screen.getByTestId("terminal-nemar-yes"));
+    await waitFor(() => expect(screen.getByTestId("therapeutic-banner").textContent)
+      .toBe(`Your Terminal ${alias} response is ready for another try.`));
+    expect(screen.getByRole("button", { name: `Try this Terminal \u2068${alias}\u2069 response again` })).toBeTruthy();
+    expect(respond).toHaveBeenCalledExactlyOnceWith("session-1", "yes");
+  });
+
+  it.each(["yes", "no"] as const)("retains the linked inquiry and %s response during live alias and locale changes",
+    async (answer) => {
+      const session = buildSession({ linked_group_id: "group-alias-fixture",
+        units: [{ unit_id: "unit-1", state: "completed" }, { unit_id: TERMINAL_NEMAR_UNIT_ID, state: "in_view" }],
+        terminal_nemar_response: answer, integrating_reason: answer === "no" ? "terminal_nemar_no" : null });
+      await seedPlayerSession(session);
+      const respond = vi.spyOn(compositionRoot.playerEngineActions, "respondTerminalNemar");
+      const finish = vi.spyOn(compositionRoot.sessionEngineActions, "onFinishRequested");
+      const jump = vi.spyOn(compositionRoot.playerEngineActions, "jumpTo");
+      const read = vi.spyOn(compositionRoot.treatmentContentActions, "getParsedTreatmentContent");
+      render(<AppProviders><TerminologyFixture /><UnifiedPlayerScreen /></AppProviders>);
+      const heading = await screen.findByRole("heading", { name: "Terminal NEMAR" });
+      const unit = screen.getByTestId("terminal-nemar-unit");
+      const alias = 'שלי Right <img src=x> {nemar} & "literal"';
+      act(() => changeFixtureAlias(alias));
+      expect(screen.getByRole("heading", { name: `Terminal ${alias}` })).toBe(heading);
+      expect(heading.querySelector('bdi[dir="auto"]')?.textContent).toBe(alias);
+      expect(unit.querySelector("img")).toBeNull();
+      expect(screen.getByRole("region", { name: `Terminal \u2068${alias}\u2069 guidance` })).toBeTruthy();
+      await openPlayerUtilities();
+      const anyway = screen.getByTestId("finish-anyway-button");
+      expect(anyway.hasAttribute("disabled")).toBe(false);
+      const navigation = screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`);
+      expect(navigation.querySelector("bdi")?.textContent).toBe(alias);
+      fireEvent.click(screen.getByRole("button", { name: "עברית" }));
+      expect(screen.getByTestId("finish-anyway-button")).toBe(anyway);
+      expect(anyway.hasAttribute("disabled")).toBe(false);
+      expect(navigation.textContent).toBe(`בדיקה מסכמת: ${alias} (בתצוגה)`);
+      fireEvent.click(screen.getByRole("button", { name: "סגירת כלי הנגן" }));
+      expect(screen.getByRole("heading", { name: `בדיקה מסכמת: ${alias}` })).toBe(heading);
+      expect(screen.getByTestId("terminal-nemar-unit")).toBe(unit);
+      expect(screen.queryByTestId("finish-button") !== null).toBe(answer === "yes");
+      expect(await compositionRoot.repositoryPort.getPlayerSession(session.id)).toEqual(session);
+      expect(read).toHaveBeenCalledTimes(1);
+      expect(respond).not.toHaveBeenCalled();
+      expect(finish).not.toHaveBeenCalled();
+      expect(jump).not.toHaveBeenCalled();
+    });
+
   beforeEach(() => {
     localStorage.setItem("pic-web.locale.v1", "en");
     resetGuestFlowFactsForTest();
@@ -228,7 +283,7 @@ describe("UnifiedPlayerScreen", () => {
     expect(current.querySelector("bdi")?.textContent).toBe("unit-1");
     expect(screen.getByTestId("navigation-tree-jump-unit-2").textContent).toBe("unit-2 (טרם הוצגה)");
     expect(screen.getByTestId(`navigation-tree-jump-${TERMINAL_NEMAR_UNIT_ID}`).textContent)
-      .toBe("נמ״ר מסכם (טרם הוצגה)");
+      .toBe("בדיקה מסכמת: נכון ומדויק (טרם הוצגה)");
     expect(await compositionRoot.repositoryPort.getPlayerSession(session.id)).toEqual(session);
   });
 
@@ -370,10 +425,13 @@ describe("UnifiedPlayerScreen", () => {
     await openPlayerUtilities();
     fireEvent.click(screen.getByRole("button", { name: "עברית" }));
     reject();
-    await screen.findByText("אפשר לנסות שוב לרשום את תשובת הנמ״ר המסכם.");
+    await waitFor(() => expect(screen.getByTestId("therapeutic-banner").textContent)
+      .toBe("אפשר לנסות שוב לרשום את התשובה לבדיקה המסכמת: נכון ומדויק."));
     expect(respond).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: "סגירת כלי הנגן" }));
-    expect(screen.getByRole("button", { name: "ניסיון נוסף לרישום תשובת נמ״ר מסכם" })).toBeTruthy();
+    expect(screen.getByRole("button", {
+      name: "ניסיון נוסף לרישום התשובה לבדיקה המסכמת: \u2068נכון ומדויק\u2069",
+    })).toBeTruthy();
     expect(compositionRoot.playerSessionStore.getSnapshot("session-1")?.terminal_nemar_response).toBeNull();
   });
 
@@ -742,7 +800,7 @@ describe("UnifiedPlayerScreen", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(ZERO_H3_GUARD_MESSAGE)).toBeTruthy();
+      expect(screen.getByTestId("zero-h3-guard-player").textContent).toBe(ZERO_H3_GUARD_MESSAGE);
     });
     expectActivePlayerAbsent();
 
@@ -770,7 +828,7 @@ describe("UnifiedPlayerScreen", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(ZERO_H3_GUARD_MESSAGE)).toBeTruthy();
+      expect(screen.getByTestId("zero-h3-guard-player").textContent).toBe(ZERO_H3_GUARD_MESSAGE);
     });
     expectActivePlayerAbsent();
     expect(screen.queryByTestId("finish-anyway-button")).toBeNull();
@@ -802,7 +860,7 @@ describe("UnifiedPlayerScreen", () => {
     await openPlayerUtilities();
     expect(screen.getByTestId("navigation-tree-panel")).toBeTruthy();
     expect(screen.getByTestId("finish-bar")).toBeTruthy();
-    expect(screen.queryByText(ZERO_H3_GUARD_MESSAGE)).toBeNull();
+    expect(screen.queryByTestId("zero-h3-guard-player")).toBeNull();
   });
 
   it("offers a visible retry when player guidance needs to reconnect", async () => {
@@ -880,11 +938,11 @@ describe("UnifiedPlayerScreen", () => {
     fireEvent.click(screen.getByTestId("terminal-nemar-yes"));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Try this Terminal NEMAR response again" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Try this Terminal \u2068NEMAR\u2069 response again" })).toBeTruthy();
     });
     expect(screen.getByTestId("terminal-nemar-unit").textContent).not.toMatch(/error|failed|invalid/i);
 
-    fireEvent.click(screen.getByRole("button", { name: "Try this Terminal NEMAR response again" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try this Terminal \u2068NEMAR\u2069 response again" }));
 
     await waitFor(() => {
       expect(respondTerminalNemar).toHaveBeenCalledTimes(2);

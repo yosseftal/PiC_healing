@@ -5,7 +5,7 @@ export function LocalizedMessage({ message }: { message: ResolvedMessage }) {
   return (
     <span lang={message.locale} dir={message.direction}>
       {message.parts.map((part, index) => typeof part === "string" ? part : (
-        <bdi dir="auto" key={`${part.parameter}-${index}`}>{part.text}</bdi>
+        <bdi dir="auto" data-pic-literal key={`${part.parameter}-${index}`}>{part.text}</bdi>
       ))}
     </span>
   );

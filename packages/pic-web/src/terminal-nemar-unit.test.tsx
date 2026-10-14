@@ -57,7 +57,7 @@ describe("TerminalNemarUnit", () => {
     control.focus();
     fireEvent.click(control);
     const retry = await screen.findByRole("button", {
-      name: kind === "finish" ? "Try finishing again" : "Try this Terminal NEMAR response again",
+      name: kind === "finish" ? "Try finishing again" : "Try this Terminal \u2068NEMAR\u2069 response again",
     });
     expect(retry).not.toBe(control);
     expect(document.activeElement).not.toBe(retry);

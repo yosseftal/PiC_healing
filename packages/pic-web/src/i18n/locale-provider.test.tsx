@@ -1,11 +1,29 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { StrictMode } from "react";
+import { StrictMode, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LocaleProvider, useLocale } from "./locale-provider";
 import { LanguageSelector } from "./language-selector";
 import { TherapeuticFrame } from "../therapeutic-frame/TherapeuticFrame";
 import { TherapeuticSheet } from "../therapeutic-sheet";
+import { LocalizedMessage } from "./localized-message";
+
+function AliasScreen() {
+  const { customNemarAlias, setCustomNemarAlias, selectLocale, message } = useLocale();
+  const [generation, setGeneration] = useState(0);
+  return <>
+    <output data-testid="alias-value">{JSON.stringify(customNemarAlias)}</output>
+    <input aria-label="Alias fixture" value={customNemarAlias ?? ""}
+      onChange={(event) => setCustomNemarAlias(event.target.value)} />
+    <button onClick={() => selectLocale("en")}>English</button>
+    <button onClick={() => setGeneration(generation + 1)}>Reset inquiry fixture</button>
+    <button onClick={() => setCustomNemarAlias(null)}>Clear alias fixture</button>
+    <div key={generation}>
+      <input aria-label="Inquiry draft" defaultValue="" />
+      <p data-testid="question"><LocalizedMessage message={message("joint.question")} /></p>
+    </div>
+  </>;
+}
 
 function LocaleScreen() {
   const { locale, direction, selectLocale } = useLocale();
@@ -26,6 +44,35 @@ afterEach(() => {
 });
 
 describe("locale authority", () => {
+  it("keeps a literal alias in provider memory across locale changes and inquiry subtree resets", () => {
+    const { unmount } = render(<LocaleProvider><AliasScreen /></LocaleProvider>);
+    expect(screen.getByTestId("alias-value").textContent).toBe("null");
+    const draft = screen.getByLabelText("Inquiry draft");
+    fireEvent.change(draft, { target: { value: "My NEMAR נמ״ר wording" } });
+    const alias = 'שלי Right <b>{nemar}</b> & "quoted"';
+    fireEvent.change(screen.getByLabelText("Alias fixture"), { target: { value: alias } });
+    expect(screen.getByTestId("question").textContent).toBe(`האם ${alias} לטפל בסימפטומים האלה יחד?`);
+    expect(screen.getByTestId("question").querySelector("b")).toBeNull();
+    expect(screen.getByTestId("question").querySelector("bdi")?.textContent).toBe(alias);
+    expect(localStorage.length).toBe(0);
+    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    expect(screen.getByTestId("question").textContent).toBe(`Is it ${alias} to treat these symptoms together?`);
+    expect(screen.getByLabelText("Inquiry draft")).toBe(draft);
+    expect((draft as HTMLInputElement).value).toBe("My NEMAR נמ״ר wording");
+    fireEvent.click(screen.getByRole("button", { name: "Reset inquiry fixture" }));
+    expect(screen.getByLabelText("Inquiry draft")).not.toBe(draft);
+    expect(screen.getByTestId("alias-value").textContent).toBe(JSON.stringify(alias));
+    fireEvent.change(screen.getByLabelText("Alias fixture"), { target: { value: " \t " } });
+    expect(screen.getByTestId("question").textContent).toBe("Is it NEMAR to treat these symptoms together?");
+    fireEvent.click(screen.getByRole("button", { name: "Clear alias fixture" }));
+    expect(screen.getByTestId("alias-value").textContent).toBe("null");
+    expect(localStorage.length).toBe(1);
+    fireEvent.change(screen.getByLabelText("Alias fixture"), { target: { value: alias } });
+    unmount();
+    render(<LocaleProvider><AliasScreen /></LocaleProvider>);
+    expect(screen.getByTestId("alias-value").textContent).toBe("null");
+  });
+
   it("defaults to Hebrew and changes presentation while retaining the mounted draft", () => {
     render(<LocaleProvider><LocaleScreen /></LocaleProvider>);
     expect(screen.getByRole("status").textContent).toBe("he");
