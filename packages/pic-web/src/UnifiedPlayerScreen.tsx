@@ -24,6 +24,7 @@ import { LanguageSelector } from "./i18n/language-selector";
 import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
 import { isolatedMessageText } from "./i18n/messages";
+import { InquiryResetControls, useInquiryResetControls } from "./inquiry-reset-controls";
 import "./unified-player-screen.css";
 
 type PlayerContentPhase = "resolving" | "ready" | "empty";
@@ -34,7 +35,11 @@ export function UnifiedPlayerScreen() {
   const session = usePlayerSession(activePlayerSessionId ?? "");
   const { getParsedTreatmentContent } = useTreatmentContentActions();
   const [loadingPhase, setLoadingPhase] = useState<PlayerContentPhase>("resolving");
-  const [utilitiesOpen, setUtilitiesOpen] = useState(false);
+  const resetControls = useInquiryResetControls();
+  const {
+    open: utilitiesOpen, setOpen: setUtilitiesOpen, confirmation, busy, keepRef, resetRef, keepInquiry, requestReset,
+    setHandoffPending,
+  } = resetControls;
   const playerRootRef = useRef<HTMLElement>(null);
   const incomingHeadingRef = useRef<HTMLHeadingElement>(null);
   const requestedUnitRef = useRef<string | null>(null);
@@ -102,25 +107,28 @@ export function UnifiedPlayerScreen() {
         stageLabel={message("player.guidance").text}
         utilityTrigger={(
           <TherapeuticSheet
-            title={message("utilities.playerTitle").text}
+            title={message(confirmation ? "reset.confirm" : "utilities.playerTitle").text}
             description={message(showUtilities ? "utilities.playerDescription" : "player.languageDescription").text}
             triggerLabel={message("utilities.openPlayer").text}
             closeLabel={message("utilities.closePlayer").text}
             contentLabel={message("utilities.playerContent").text}
             trigger={<><Menu aria-hidden="true" size={20} /><LocalizedMessage message={message("utilities.trigger")} /></>}
             open={utilitiesOpen}
-            onOpenChange={setUtilitiesOpen}
+            onOpenChange={(open) => {
+              if (busy) return;
+              if (!open && confirmation) keepInquiry();
+              else setUtilitiesOpen(open);
+            }}
+            onOpenAutoFocus={() => {
+              if (!confirmation) return false;
+              keepRef.current?.focus();
+              return true;
+            }}
             onCloseAutoFocus={() => {
               if (finishClosingRef.current) {
                 finishClosingRef.current = false;
-                const gate = document.querySelector<HTMLDialogElement>(
-                  'dialog[open][aria-labelledby="persistence-gate-title"]',
-                );
-                if (gate !== null) {
-                  gate.focus();
-                  return true;
-                }
-                return false;
+                setHandoffPending(false);
+                return true;
               }
               if (!navigationClosingRef.current) {
                 return false;
@@ -153,8 +161,14 @@ export function UnifiedPlayerScreen() {
               return true;
             }}
           >
-            <div className="pic-player-utilities">
+            <div className="pic-player-utilities" aria-busy={busy}>
+              <InquiryResetControls controls={resetControls} />
+              {confirmation ? null : <>
               <LanguageSelector />
+              <button className={UTILITY_CONTROL} type="button" disabled={busy} ref={resetRef}
+                onClick={() => void requestReset(false)}>
+                <LocalizedMessage message={message("reset.newGroup")} />
+              </button>
               {showUtilities ? <>
               <NavigationTreePanel
                 sessionId={activePlayerSessionId}
@@ -176,10 +190,12 @@ export function UnifiedPlayerScreen() {
                 session={session}
                 onFinishResolved={() => {
                   finishClosingRef.current = true;
+                  setHandoffPending(true);
                   setUtilitiesOpen(false);
                 }}
               />
               </> : null}
+              </>}
             </div>
           </TherapeuticSheet>
         )}

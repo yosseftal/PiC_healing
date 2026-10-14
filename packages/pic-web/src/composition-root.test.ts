@@ -473,21 +473,209 @@ describe("W12 reset composition boundaries", () => {
   });
 });
 
-it("W12-03 refuses a pending Gate reset and preserves its exact Finish intent for W12-04", async () => {
+it.each(["finish", "finishAnyway"] as const)("resets a Gate with pending %s without Finish effects", async (kind) => {
   vi.resetModules();
   localStorage.clear();
   const { compositionRoot: fresh } = await import("./composition-root");
   await import("./guest-flow-facts");
   const groupId = await fresh.groupEngineActions.createDraftGroup("Gate work");
   const sessionId = await fresh.playerEngineActions.startSession("gate-treatment", groupId, ["unit-one"]);
-  await fresh.sessionEngineActions.onFinishRequested(sessionId, "finishAnyway");
-  const before = localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY);
+  await fresh.sessionEngineActions.onFinishRequested(sessionId, kind);
   const pending = await fresh.repositoryPort.getGuestSessionGate();
-  await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow("This inquiry stage does not support reset yet");
+  expect(await fresh.inquiryResetActions.resetInquiry()).toBe("confirmation");
   expect(await fresh.repositoryPort.getGuestSessionGate()).toEqual(pending);
-  expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBe(before);
-  expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+  await fresh.inquiryResetActions.resetInquiry(true);
+  expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(false);
+  expect(fresh.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+  expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
 });
+
+it.each([false, true])("recovers Gate after cleanup/rearming fail and reload, boot failure=%s", async (bootFailure) => {
+  vi.resetModules();
+  localStorage.clear();
+  const { compositionRoot: fresh } = await import("./composition-root");
+  await import("./guest-flow-facts");
+  const groupId = await fresh.groupEngineActions.createDraftGroup("Recover Gate");
+  const sessionId = await fresh.playerEngineActions.startSession("gate-treatment", groupId, ["unit-one"]);
+  await fresh.sessionEngineActions.onFinishRequested(sessionId, "finishAnyway");
+  const before = await fresh.repositoryPort.getPlayerSession(sessionId);
+  const provider = fresh.repositoryPort.getProvider() as LocalGuestRepository;
+  vi.spyOn(provider, "clear").mockRejectedValue(new Error("cleanup unavailable"));
+  const saveGate = provider.saveGuestSessionGate.bind(provider);
+  vi.spyOn(provider, "saveGuestSessionGate").mockImplementation(async (gate) => {
+    if (gate.gateTriggered) throw new Error("rearm unavailable");
+    await saveGate(gate);
+  });
+  await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow();
+  expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+  expect(fresh.groupEngineStore.getSnapshot().activeGroupId).toBe(groupId);
+  vi.restoreAllMocks();
+  vi.resetModules();
+  if (bootFailure) {
+    const { LocalGuestRepository: ReloadRepository } = await import("pic-adapter-local-guest");
+    vi.spyOn(ReloadRepository.prototype, "saveGroup").mockRejectedValueOnce(new Error("Boot storage unavailable"));
+  }
+  const { compositionRoot: restored } = await import("./composition-root");
+  const facts = await import("./guest-flow-facts");
+  await vi.waitFor(async () => expect(await restored.repositoryPort.getGuestSessionGate()).toEqual({
+    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway" },
+  }));
+  expect(await restored.repositoryPort.getPlayerSession(sessionId)).toEqual(before);
+  expect(facts.guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
+  await restored.inquiryResetActions.resetInquiry(true);
+  expect(restored.sessionEngineStore.getSnapshot().gateTriggered).toBe(false);
+  expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
+  const nextGroup = await restored.groupEngineActions.createDraftGroup("Next inquiry");
+  expect((await restored.repositoryPort.getGroup(nextGroup))?.name).toBe("Next inquiry");
+});
+
+it("restores Gate records when removing the recovery envelope fails after Guest cleanup", async () => {
+  vi.resetModules();
+  localStorage.clear();
+  const { compositionRoot: fresh } = await import("./composition-root");
+  const facts = await import("./guest-flow-facts");
+  const groupId = await fresh.groupEngineActions.createDraftGroup("Still recoverable");
+  const sessionId = await fresh.playerEngineActions.startSession("recovery-treatment", groupId, ["one"]);
+  await fresh.sessionEngineActions.onFinishRequested(sessionId, "finishAnyway");
+  const before = await fresh.repositoryPort.getPlayerSession(sessionId);
+  const remove = Storage.prototype.removeItem;
+  vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key) {
+    if (key === "pic-web.inquiry-reset-recovery.v1") throw new Error("Envelope cleanup unavailable");
+    remove.call(this, key);
+  });
+  await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow("Envelope cleanup unavailable");
+  expect(await fresh.repositoryPort.getPlayerSession(sessionId)).toEqual(before);
+  expect((await fresh.repositoryPort.getGroup(groupId))?.name).toBe("Still recoverable");
+  expect(facts.guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
+  expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+  vi.restoreAllMocks();
+  await fresh.inquiryResetActions.resetInquiry(true);
+  expect(localStorage.getItem("pic-web.inquiry-reset-recovery.v1")).toBeNull();
+});
+
+it.each([false, true])("retains latest Finish kind after gate/cleanup failures, older persisted intent=%s", async (older) => {
+  vi.resetModules();
+  localStorage.clear();
+  const { compositionRoot: fresh } = await import("./composition-root");
+  await import("./guest-flow-facts");
+  const sessionId = await fresh.playerEngineActions.startSession("gate-write-treatment", null, ["one"]);
+  if (older) await fresh.sessionEngineActions.onFinishRequested(sessionId, "finish");
+  const provider = fresh.repositoryPort.getProvider() as LocalGuestRepository;
+  vi.spyOn(provider, "saveGuestSessionGate").mockRejectedValueOnce(new Error("Gate write unavailable"));
+  await expect(fresh.sessionEngineActions.onFinishRequested(sessionId, "finishAnyway"))
+    .rejects.toThrow("Gate write unavailable");
+  vi.spyOn(provider, "clear").mockRejectedValueOnce(new Error("Cleanup unavailable"));
+  await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow("Cleanup unavailable");
+  expect(await fresh.repositoryPort.getGuestSessionGate()).toEqual({
+    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway" },
+  });
+  expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+  await fresh.inquiryResetActions.resetInquiry(true);
+  expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
+});
+
+it.each([null, { activeGroupId: 4 }])("ignores malformed reset recovery facts %s without crashing boot", async (facts) => {
+  vi.resetModules();
+  localStorage.clear();
+  localStorage.setItem("pic-web.inquiry-reset-recovery.v1", JSON.stringify({
+    gate: { gateTriggered: true, pendingFinishRequest: { sessionId: "old", kind: "invalid" } }, facts,
+  }));
+  const { compositionRoot: fresh } = await import("./composition-root");
+  expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(false);
+  expect(fresh.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+});
+
+it.each([false, true])("waits for promotion and re-evaluates ownership, prior reset failure=%s", async (failedReset) => {
+  vi.resetModules();
+  localStorage.clear();
+  const { compositionRoot: fresh } = await import("./composition-root");
+  await import("./guest-flow-facts");
+  const groupId = await fresh.groupEngineActions.createDraftGroup("Promoted focus");
+  await fresh.groupEngineActions.setJointTreatmentMuscleTest(groupId, "together");
+  await fresh.groupEngineActions.finalizeGroup(groupId);
+  const sessionId = await fresh.playerEngineActions.startSession("promotion-treatment", groupId, ["one"]);
+  await fresh.sessionEngineActions.onFinishRequested(sessionId, "finishAnyway");
+  if (failedReset) {
+    vi.spyOn(fresh.repositoryPort.getProvider() as LocalGuestRepository, "clear")
+      .mockRejectedValueOnce(new Error("Temporary cleanup failure"));
+    await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow("Temporary cleanup failure");
+  }
+  const snapshot = (await fresh.promotePathActions.assembleGuestSnapshotForPendingGate())!;
+  const port = createInMemoryAuthenticatedPort();
+  const promote = port.promoteGuestToAccount.bind(port);
+  let release!: () => void;
+  const paused = new Promise<void>((resolve) => { release = resolve; });
+  vi.spyOn(port, "promoteGuestToAccount").mockImplementation(async (input) => {
+    await paused;
+    return promote(input);
+  });
+  const promotion = fresh.promotePathActions.promoteWithAuthenticatedRepository(port, snapshot, "saved-owner");
+  let settled = false;
+  const reset = fresh.inquiryResetActions.resetInquiry().then((result) => { settled = true; return result; });
+  await Promise.resolve();
+  expect(settled).toBe(false);
+  release();
+  await promotion;
+  const saved = await port.getPlayerSession(sessionId);
+  const row = await port.getOrCreateLibraryRow("promotion-treatment", { source: "test", first_seen_at: "2026-10-14" });
+  expect(await reset).toBe("reset");
+  expect(fresh.sessionEngineStore.getSnapshot().mode).toBe("authenticated");
+  expect(fresh.repositoryPort.getProvider()).toBe(port);
+  expect(await port.getPlayerSession(sessionId)).toEqual(saved);
+  expect((await port.getGroup(groupId))?.name).toBe("Promoted focus");
+  expect(row.use_count).toBe(1);
+  expect(fresh.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+});
+
+it("settles a pending Player write and preserves its recovery when the write fails", async () => {
+  vi.resetModules();
+  localStorage.clear();
+  const { compositionRoot: fresh } = await import("./composition-root");
+  await import("./guest-flow-facts");
+  const sessionId = await fresh.playerEngineActions.startSession("pending-treatment", null, ["one", "two"]);
+  const before = await fresh.repositoryPort.getPlayerSession(sessionId);
+  let reject!: (error: Error) => void;
+  vi.spyOn(fresh.repositoryPort, "savePlayerSession").mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; }));
+  const write = fresh.playerEngineActions.advance(sessionId);
+  const writeFailure = expect(write).rejects.toThrow("Player write unavailable");
+  const reset = fresh.inquiryResetActions.resetInquiry(true);
+  await vi.waitFor(() => expect(reject).toBeTypeOf("function"));
+  reject(new Error("Player write unavailable"));
+  await writeFailure;
+  await expect(reset).rejects.toThrow("Inquiry operation did not settle successfully");
+  expect(await fresh.repositoryPort.getPlayerSession(sessionId)).toEqual(before);
+  vi.restoreAllMocks();
+  await fresh.inquiryResetActions.resetInquiry(true);
+  expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
+});
+
+for (const linked of [false, true]) {
+  it.each(["yes", "no"] as const)(`detaches anchored linked=${linked} Player with terminal %s unchanged`, async (answer) => {
+    vi.resetModules();
+    localStorage.clear();
+    const { compositionRoot: fresh, swapToSupabaseAdapter: swap } = await import("./composition-root");
+    const facts = await import("./guest-flow-facts");
+    const port = createInMemoryAuthenticatedPort();
+    swap(port);
+    vi.spyOn(fresh.repositoryPort.getProvider(), "promoteGuestToAccount").mockImplementation((input) => {
+      return port.promoteGuestToAccount(input);
+    });
+    await fresh.sessionEngineActions.promote(buildGuestSnapshot(), "saved-owner");
+    const groupId = linked ? await fresh.groupEngineActions.createDraftGroup("Saved Player focus") : null;
+    const sessionId = await fresh.playerEngineActions.startSession("saved-treatment", groupId, ["one", "two"]);
+    await fresh.playerEngineActions.respondTerminalNemar(sessionId, answer);
+    const before = await port.getPlayerSession(sessionId);
+    const group = groupId === null ? null : await port.getGroup(groupId);
+    expect(await fresh.inquiryResetActions.resetInquiry()).toBe("reset");
+    expect(await port.getPlayerSession(sessionId)).toEqual(before);
+    expect(before?.success_declared).toBe(false);
+    const row = await port.getOrCreateLibraryRow("saved-treatment", { source: "test", first_seen_at: "2026-10-14" });
+    expect(row.use_count).toBe(0);
+    if (groupId !== null) expect(await port.getGroup(groupId)).toEqual(group);
+    expect(facts.guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBeNull();
+    expect(fresh.repositoryPort.getProvider()).toBe(port);
+  });
+}
 
 it.each(["discard", "promote"])("keeps %s cleanup last after delayed pointer persistence", async (kind) => {
   vi.resetModules();

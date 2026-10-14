@@ -2,7 +2,7 @@
  * Flat treatment picker (Ticket 08-07 / Wave 9): lists treatments via `catalogActions`, resolves real
  * parsed unit ids through the content seam, and starts a player session on selection.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TreatmentListItem } from "pic-engine";
 import { useCatalogActions } from "./catalog-context";
 import { useGroupEngineState } from "./group-engine-context";
@@ -15,9 +15,13 @@ import { LocalizedMessage } from "./i18n/localized-message";
 import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
 import { TreatmentPickerTitle } from "./content-localization/TreatmentPickerTitle";
+import { useInquiryUtilities } from "./inquiry-utilities-context";
 
 export function TreatmentPickerScreen() {
   const { message } = useLocale();
+  const utilities = useInquiryUtilities();
+  const utilitiesRef = useRef(utilities);
+  utilitiesRef.current = utilities;
   const { listTreatments } = useCatalogActions();
   const { getParsedTreatmentContent } = useTreatmentContentActions();
   const { startSession } = usePlayerEngineActions();
@@ -52,6 +56,7 @@ export function TreatmentPickerScreen() {
       linkedGroupId,
       parsedUnits.map((unit) => unit.unit_id),
     );
+    if (!utilitiesRef.current.busy && !utilitiesRef.current.confirmation) utilitiesRef.current.setOpen(false);
   });
 
   useEffect(() => {

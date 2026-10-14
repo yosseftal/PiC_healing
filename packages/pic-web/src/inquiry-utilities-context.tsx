@@ -6,18 +6,21 @@ function useUtilitiesState() {
   const [confirmation, setConfirmation] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recovery, setRecovery] = useState(false);
-  return { open, setOpen, confirmation, setConfirmation, busy, setBusy, recovery, setRecovery };
+  const [handoffPending, setHandoffPending] = useState(false);
+  return { open, setOpen, confirmation, setConfirmation, busy, setBusy, recovery, setRecovery,
+    handoffPending, setHandoffPending };
 }
 const InquiryUtilitiesContext = createContext<ReturnType<typeof useUtilitiesState> | null>(null);
 
 /** Keeps one controlled Sheet lifecycle across screen changes while an operation settles. */
 export function InquiryUtilitiesProvider({ children }: { children: ReactNode }) {
   const state = useUtilitiesState();
-  const { setOpen, setConfirmation } = state;
+  const { setOpen, setConfirmation, setHandoffPending } = state;
   useEffect(() => inquiryGenerationStore.subscribe(() => {
     setOpen(false);
     setConfirmation(false);
-  }), [setOpen, setConfirmation]);
+    setHandoffPending(false);
+  }), [setOpen, setConfirmation, setHandoffPending]);
   return <InquiryUtilitiesContext.Provider value={state}>{children}</InquiryUtilitiesContext.Provider>;
 }
 

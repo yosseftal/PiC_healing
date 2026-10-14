@@ -4,7 +4,7 @@ import type { RepositoryPort } from "pic-engine";
 import { AppProviders } from "../src/app-providers";
 import { compositionRoot } from "../src/composition-root";
 import { GuestModeShell } from "../src/GuestModeShell";
-import { UnifiedPlayerScreen } from "../src/UnifiedPlayerScreen";
+import { GuestFlowRouter } from "../src/guest-flow-router";
 import { TerminologyFixture } from "../src/i18n/terminology-test-fixture";
 import "../src/visual-foundation/visual-foundation.css";
 
@@ -84,6 +84,6 @@ await compositionRoot.playerEngineActions.startSession(
 createRoot(rootElement).render(
   <AppProviders>
     <TerminologyFixture />
-    <GuestModeShell><UnifiedPlayerScreen /></GuestModeShell>
+    <GuestModeShell><GuestFlowRouter /></GuestModeShell>
   </AppProviders>,
 );

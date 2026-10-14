@@ -100,6 +100,19 @@ for (const locale of ["he", "en"] as const) {
         await page.keyboard.press("Tab");
         await expect(gate.getByRole("button", { name: text.discard })).toBeFocused();
         await page.keyboard.press("Space");
+        const keep = page.getByRole("button", {
+          name: locale === "en" ? "Keep current inquiry" : "להמשיך בבירור הנוכחי", exact: true,
+        });
+        await expect(keep).toBeFocused();
+        await expect(page.getByRole("dialog")).toHaveCount(1);
+        await page.keyboard.press("Escape");
+        await expect(gate.getByRole("button", { name: text.discard })).toBeFocused();
+        expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).toBe(before);
+        await gate.getByRole("button", { name: text.discard }).click();
+        await expect(keep).toBeFocused();
+        await page.getByRole("button", {
+          name: locale === "en" ? "Discard draft and start new" : "למחוק את הטיוטה ולהתחיל מחדש", exact: true,
+        }).click();
         await expect(gate).toBeHidden();
         expect(await page.evaluate(() => localStorage.getItem("pic-web.locale.v1"))).toBe(locale);
         expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).toBeNull();

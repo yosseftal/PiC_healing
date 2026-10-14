@@ -98,6 +98,7 @@ test("sovereign Finish opens a Persistence Gate with visible full-size controls 
   await expect(signIn).toHaveCSS("outline-color", "rgb(101, 89, 106)");
   await expect(signIn).toHaveCSS("outline-width", "3px");
   await gate.getByRole("button", { name: "Continue without saving" }).click();
+  await page.getByRole("button", { name: "Discard draft and start new" }).click();
   await expect(gate).toBeHidden();
 });
 

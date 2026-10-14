@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { AppProviders } from "./app-providers";
 import { GuestFlowRouter } from "./guest-flow-router";
 import { compositionRoot } from "./composition-root";
+import { useAsyncAction } from "./use-async-action";
 import {
   resetGuestFlowFactsForTest, setGuestFlowSymptomAdditionComplete,
   setGuestFlowGroupFinalized, setGuestFlowSummaryAcknowledged,
@@ -22,6 +23,21 @@ afterEach(() => {
   vi.restoreAllMocks();
   resetGuestFlowFactsForTest();
   localStorage.clear();
+});
+it("refuses a stale UI callback after reset while admitting work for the fresh inquiry", async () => {
+  let lateWrite!: () => Promise<unknown>;
+  function OldInquiry() {
+    const { run } = useAsyncAction(compositionRoot.groupEngineActions.createDraftGroup);
+    lateWrite = () => run("Stale callback");
+    return null;
+  }
+  const view = render(<OldInquiry />);
+  await compositionRoot.inquiryResetActions.resetInquiry(true);
+  view.unmount();
+  await lateWrite();
+  expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+  const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Current inquiry");
+  expect((await compositionRoot.repositoryPort.getGroup(groupId))?.name).toBe("Current inquiry");
 });
 it("keeps typed-only work on cancel and clears it on confirmed reset in the same creation screen", async () => {
   mount();

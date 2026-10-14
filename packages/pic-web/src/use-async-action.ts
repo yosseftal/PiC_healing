@@ -1,4 +1,4 @@
-import { trackFlowOperation } from "./inquiry-lifecycle";
+import { inquiryGenerationStore, trackFlowOperation } from "./inquiry-lifecycle";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type AsyncActionStatus = "idle" | "recovery";
@@ -14,6 +14,7 @@ export function useAsyncAction<Arguments extends unknown[], Result>(
   action: (...arguments_: Arguments) => Promise<Result>,
 ) {
   const actionRef = useRef(action);
+  const generationRef = useRef(inquiryGenerationStore.getSnapshot());
   const mountedRef = useRef(true);
   const invocationRef = useRef(0);
   const lastArgumentsRef = useRef<Arguments | null>(null);
@@ -38,6 +39,7 @@ export function useAsyncAction<Arguments extends unknown[], Result>(
     }
 
     try {
+      if (generationRef.current !== inquiryGenerationStore.getSnapshot()) throw new Error("Inquiry was reset");
       const value = await trackFlowOperation(() => actionRef.current(...arguments_));
       return { ok: true, value };
     } catch {

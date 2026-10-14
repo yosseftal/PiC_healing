@@ -2,6 +2,10 @@ import {
   advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore, reopenFlowOperations,
   prepareFlowSettlement, trackFlowOperation,
 } from "./inquiry-lifecycle";
+import {
+  clearInquiryResetRecovery, readInquiryResetRecovery, saveInquiryResetRecovery,
+  type InquiryResetRecovery,
+} from "./inquiry-reset-recovery";
 /**
  * The single composition root (ticket 14, Wave 7): constructs exactly one `LocalGuestRepository` and
  * exactly one `SessionEngine` - wired to a `PlayerEngine`/`LibraryEngine`/`TimelineEngine` trio built on
@@ -44,7 +48,10 @@ import {
 
 const guestRepository = new LocalGuestRepository();
 const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(guestRepository);
-const persistedGuestFlowFacts = guestRepository.getGuestFlowFactsSync();
+let resetRecovery = readInquiryResetRecovery();
+const persistedGuestFlowFacts = resetRecovery?.facts ?? guestRepository.getGuestFlowFactsSync();
+const persistedGuestGate = resetRecovery?.gate ?? guestRepository.getGuestSessionGateSync();
+let pendingGuestFinishRequest = persistedGuestGate.pendingFinishRequest;
 const libraryEngine = new LibraryEngine(repositoryPort);
 const timelineEngine = new TimelineEngine(repositoryPort);
 const playerEngine = new PlayerEngine(repositoryPort, libraryEngine, timelineEngine);
@@ -59,7 +66,7 @@ const sessionEngine = new SessionEngine(repositoryPort, playerEngine, {
     }
     void guestRepository.clear();
   },
-  initialGateState: guestRepository.getGuestSessionGateSync(),
+  initialGateState: persistedGuestGate,
 });
 
 /**
@@ -94,7 +101,9 @@ function createExternalStore<TState>(getState: () => TState) {
 
 const sessionEngineStore = createExternalStore(() => sessionEngine.getState());
 
-sessionEngine.subscribe(() => sessionEngineStore.notify());
+let resetting = false;
+let suppressSessionNotifications = false;
+sessionEngine.subscribe(() => { if (!suppressSessionNotifications) sessionEngineStore.notify(); });
 
 /** Composition-layer flow fact: last group created via wrapped `createDraftGroup`. */
 let activeGroupId: string | null = persistedGuestFlowFacts.activeGroupId;
@@ -108,6 +117,7 @@ const groupEngineStore = createExternalStore(() => ({ activeGroupId }));
 function createPlayerSessionStore(port: DelegatingRepositoryPort) {
   const listeners = new Set<() => void>();
   const snapshots = new Map<string, PlayerSession | null>();
+  if (resetRecovery?.playerSession) snapshots.set(resetRecovery.playerSession.id, resetRecovery.playerSession);
 
   return {
     getSnapshot(sessionId: string): PlayerSession | null {
@@ -124,7 +134,7 @@ function createPlayerSessionStore(port: DelegatingRepositoryPort) {
       const generation = inquiryGenerationStore.getSnapshot();
       const session = await port.getPlayerSession(sessionId);
       if (generation !== inquiryGenerationStore.getSnapshot()) return;
-      snapshots.set(sessionId, session);
+      snapshots.set(sessionId, session ?? (resetRecovery?.playerSession?.id === sessionId ? resetRecovery.playerSession : null));
       for (const listener of listeners) {
         listener();
       }
@@ -141,6 +151,8 @@ const playerSessionStore = createPlayerSessionStore(repositoryPort);
  */
 const untrackedSessionEngineActions = {
   async onFinishRequested(sessionId: string, kind: "finish" | "finishAnyway"): Promise<void> {
+    // Public call arguments retain the newest intent even when the engine's gate storage write rejects.
+    pendingGuestFinishRequest = sessionEngine.getState().mode === "guest" ? { sessionId, kind } : null;
     await sessionEngine.onFinishRequested(sessionId, kind);
     await playerSessionStore.refresh(sessionId);
     if (playerSessionStore.getSnapshot(sessionId)?.success_declared === true) {
@@ -151,6 +163,7 @@ const untrackedSessionEngineActions = {
   async promote(guestState: GuestSnapshot, newUserId: string): Promise<void> {
     await sessionEngine.promote(guestState, newUserId);
     if (sessionEngineStore.getSnapshot().promotionStatus === "succeeded") {
+      pendingGuestFinishRequest = null;
       const { setGuestFlowPlayerSession, settleGuestFlowPersistence } = await import("./guest-flow-facts");
       setGuestFlowPlayerSession(null);
       await settleGuestFlowPersistence();
@@ -159,6 +172,10 @@ const untrackedSessionEngineActions = {
       // blob that `onPromotionSucceeded` already cleared moments ago (DEC-017 "evaporate" - no guest
       // residue survives a successful promotion). Re-clearing here, last, keeps that guarantee intact.
       await guestRepository.clear();
+      if (resetRecovery !== null) {
+        clearInquiryResetRecovery();
+        resetRecovery = null;
+      }
     }
   },
 
@@ -232,7 +249,11 @@ const untrackedPlayerEngineActions = {
 /** All public operations participate, including callers outside React event handlers. */
 function trackedActions<T extends Record<string, (...args: never[]) => Promise<unknown>>>(actions: T): T {
   return Object.fromEntries(Object.entries(actions).map(([name, action]) => [
-    name, (...args: never[]) => trackFlowOperation(() => action(...args)),
+    name, (...args: never[]) => trackFlowOperation(() => resetRecovery === null ? action(...args) :
+      initialResetRecovery.then(async () => {
+        await recoverPendingReset();
+        return action(...args);
+      })),
   ])) as T;
 }
 const groupEngineActions = trackedActions(untrackedGroupEngineActions);
@@ -240,18 +261,32 @@ const playerEngineActions = trackedActions(untrackedPlayerEngineActions);
 const sessionEngineActions = {
   ...trackedActions(untrackedSessionEngineActions),
   async discardGuestState(): Promise<void> {
-    await sessionEngine.discardGuestState();
-    const { setGuestFlowPlayerSession, settleGuestFlowPersistence } = await import("./guest-flow-facts");
-    setGuestFlowPlayerSession(null);
-    await settleGuestFlowPersistence();
-    // Clearing the pointer persists guest flow facts (see comment in `promote` above); `guestRepository
-    // .clear()` must run last so that write never resurrects the storage blob this discard is meant to
-    // erase entirely.
-    await guestRepository.clear();
+    await inquiryResetActions.resetInquiry(true);
   },
 };
 
-let resetting = false;
+async function restoreResetRecovery(recovery: InquiryResetRecovery): Promise<void> {
+  // Restore through public contracts. onFinishRequested rearms memory even if its storage write rejects.
+  try {
+    if (recovery.group !== null) await guestRepository.saveGroup(recovery.group);
+    if (recovery.playerSession !== null) await guestRepository.savePlayerSession(recovery.playerSession);
+    await guestRepository.saveGuestFlowFacts(recovery.facts);
+  } finally {
+    const pending = recovery.gate.pendingFinishRequest;
+    pendingGuestFinishRequest = pending;
+    if (pending !== null) await sessionEngine.onFinishRequested(pending.sessionId, pending.kind);
+  }
+}
+async function recoverPendingReset(): Promise<void> {
+  if (resetRecovery === null) return;
+  await restoreResetRecovery(resetRecovery);
+  clearInquiryResetRecovery();
+  resetRecovery = null;
+}
+const initialResetRecovery = resetRecovery === null ? Promise.resolve() :
+  recoverPendingReset().catch(() => undefined);
+// Failed recovery stays in the envelope and can be retried from the Gate; never discard it on boot.
+
 const inquiryResetActions = {
   async resetInquiry(confirmed = false): Promise<"confirmation" | "reset"> {
     if (resetting) throw new Error("Inquiry reset is already pending");
@@ -259,30 +294,46 @@ const inquiryResetActions = {
     const settleOperations = prepareFlowSettlement();
     try {
       const facts = await import("./guest-flow-facts");
-      const initialState = sessionEngine.getState();
-      if (initialState.gateTriggered || initialState.promotionStatus === "pending") {
-        throw new Error("This inquiry stage does not support reset yet");
-      }
+      await initialResetRecovery;
       await settleOperations();
+      await recoverPendingReset();
       await facts.settleGuestFlowPersistence();
       const state = sessionEngine.getState();
-      if (state.gateTriggered || state.promotionStatus === "pending") {
-        throw new Error("This inquiry stage does not support reset yet");
-      }
       const localWork = state.mode === "guest" && (
         activeGroupId !== null || facts.guestFlowFactsStore.getSnapshot().activePlayerSessionId !== null ||
         state.gateTriggered
       );
       if (!confirmed && (localWork || hasInquiryDraft())) return "confirmation";
       const previousFacts = facts.collectPersistedGuestFlowFacts();
+      if (state.mode === "guest" && state.gateTriggered && resetRecovery === null) {
+        const persistedGate = await repositoryPort.getGuestSessionGate();
+        const gate = { gateTriggered: true,
+          pendingFinishRequest: pendingGuestFinishRequest ?? persistedGate.pendingFinishRequest };
+        const sessionId = gate.pendingFinishRequest?.sessionId ?? previousFacts.activePlayerSessionId;
+        const playerSession = sessionId === null ? null : await repositoryPort.getPlayerSession(sessionId);
+        const groupId = previousFacts.activeGroupId ?? playerSession?.linked_group_id ?? null;
+        const group = groupId === null ? null : await repositoryPort.getGroup(groupId);
+        const recovery = { gate, facts: previousFacts, group, playerSession };
+        saveInquiryResetRecovery(recovery);
+        resetRecovery = recovery;
+      }
+      suppressSessionNotifications = true;
       try {
         // Clear persisted pointers first, retaining the visible work until the owned blob is removed.
         await guestRepository.saveGuestFlowFacts(facts.DEFAULT_PERSISTED_GUEST_FLOW_FACTS);
+        if (state.mode === "guest" && state.gateTriggered) await sessionEngine.discardGuestState();
         await guestRepository.clear();
+        if (resetRecovery !== null) clearInquiryResetRecovery();
       } catch (error) {
-        await guestRepository.saveGuestFlowFacts(previousFacts);
+        if (resetRecovery !== null) {
+          try { await restoreResetRecovery(resetRecovery); } catch { /* Envelope retains the retry. */ }
+        } else {
+          await guestRepository.saveGuestFlowFacts(previousFacts);
+        }
         throw error;
       }
+      resetRecovery = null;
+      pendingGuestFinishRequest = null;
       activeGroupId = null;
       playerSessionStore.clear();
       facts.clearGuestFlowFacts();
@@ -292,6 +343,9 @@ const inquiryResetActions = {
     } finally {
       reopenFlowOperations();
       resetting = false;
+      const publishSession = suppressSessionNotifications;
+      suppressSessionNotifications = false;
+      if (publishSession) sessionEngineStore.notify();
     }
   },
 };
@@ -305,7 +359,7 @@ export function swapToSupabaseAdapter(port: RepositoryPort): void {
   authenticatedPort = port;
 }
 
-const promotePathActions = {
+const untrackedPromotePathActions = {
   assembleGuestSnapshotForPendingGate(): Promise<GuestSnapshot | null> {
     return assembleGuestSnapshotForPendingGate(guestRepository);
   },
@@ -347,6 +401,13 @@ const promotePathActions = {
     });
   },
 };
+const promotePathActions = {
+  ...untrackedPromotePathActions,
+  ...trackedActions({
+    promoteWithAuthenticatedRepository: untrackedPromotePathActions.promoteWithAuthenticatedRepository,
+    promoteGuestSessionFromEnv: untrackedPromotePathActions.promoteGuestSessionFromEnv,
+  }),
+};
 
 /** Resets composition-layer group flow pointer between tests. */
 export function resetGroupFlowFactsForTest(): void {
@@ -367,6 +428,7 @@ void import("./guest-flow-facts").then(async ({ initGuestFlowFacts, setGuestFlow
   });
 
   const initialGeneration = inquiryGenerationStore.getSnapshot();
+  try { await initialResetRecovery; } catch { return; }
   const sessionId = persistedGuestFlowFacts.activePlayerSessionId;
   if (sessionId !== null) {
     const session = await repositoryPort.getPlayerSession(sessionId);

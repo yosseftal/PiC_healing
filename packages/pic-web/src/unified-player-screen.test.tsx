@@ -244,7 +244,8 @@ describe("UnifiedPlayerScreen", () => {
       expect(jump).not.toHaveBeenCalled();
     });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await compositionRoot.sessionEngineActions.discardGuestState();
     localStorage.setItem("pic-web.locale.v1", "en");
     resetGuestFlowFactsForTest();
     resetTreatmentContentCacheForTest();

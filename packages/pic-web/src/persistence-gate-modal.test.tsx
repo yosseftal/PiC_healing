@@ -184,14 +184,25 @@ describe("PersistenceGateModal", () => {
     expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("idle");
   });
 
-  it("decline calls discardGuestState and clears guest storage", async () => {
+  it("decline confirms loss and cancel or Escape preserves the pending Gate", async () => {
     const { compositionRoot, PersistenceGateModal, SessionEngineProvider, LocaleProvider } = await loadFreshModules();
     await openGateWithGuestSession(compositionRoot);
     expect(storageHasGuestEntityData(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY))).toBe(true);
 
     renderModal(PersistenceGateModal, SessionEngineProvider, LocaleProvider);
     fireEvent.click(screen.getByRole("button", { name: "Continue without saving" }));
-
+    const keep = await screen.findByRole("button", { name: "Keep current inquiry" });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    await vi.waitFor(() => expect(document.activeElement).toBe(keep));
+    fireEvent.click(keep);
+    expect(screen.getByRole("button", { name: "Continue without saving" })).toBeTruthy();
+    expect(compositionRoot.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Continue without saving" }));
+    await screen.findByRole("button", { name: "Keep current inquiry" });
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+    expect(screen.getByRole("button", { name: "Continue without saving" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Continue without saving" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
     await vi.waitFor(() => {
       expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
     });
@@ -304,6 +315,7 @@ describe("PersistenceGateModal", () => {
     await vi.waitFor(() => expect(signIn).toHaveBeenCalledTimes(2));
     await screen.findByRole("button", { name: "Try again" });
     fireEvent.click(screen.getByRole("button", { name: "Continue without saving" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
     unmount();

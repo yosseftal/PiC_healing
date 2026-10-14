@@ -1,8 +1,7 @@
-import { useInquiryUtilities } from "../inquiry-utilities-context";
 import { Menu } from "lucide-react";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode } from "react";
 import { UTILITY_CONTROL } from "../control-affordance";
-import { useInquiryReset } from "../inquiry-reset-context";
+import { InquiryResetControls, useInquiryResetControls } from "../inquiry-reset-controls";
 import { LanguageSelector } from "../i18n/language-selector";
 import { useLocale } from "../i18n/locale-provider";
 import { LocalizedMessage } from "../i18n/localized-message";
@@ -20,38 +19,8 @@ export function TherapeuticScreenFrame({
   utilities, allowInquiryReset = false, ...frameProps
 }: TherapeuticScreenFrameProps) {
   const { message } = useLocale();
-  const { resetInquiry } = useInquiryReset();
-  const { open, setOpen, confirmation, setConfirmation, busy, setBusy, recovery, setRecovery } = useInquiryUtilities();
-  const confirmedRef = useRef(false);
-  const keepRef = useRef<HTMLButtonElement>(null);
-  const resetRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (confirmation) keepRef.current?.focus();
-  }, [confirmation]);
-
-  function keepInquiry(): void {
-    if (busy) return;
-    setConfirmation(false);
-    setRecovery(false);
-    confirmedRef.current = false;
-    setTimeout(() => resetRef.current?.focus(), 0);
-  }
-
-  async function requestReset(confirmed: boolean): Promise<void> {
-    if (busy) return;
-    confirmedRef.current = confirmed;
-    setBusy(true);
-    setRecovery(false);
-    try {
-      const result = await resetInquiry(confirmed);
-      if (result === "confirmation") setConfirmation(true);
-      else setOpen(false);
-    } catch {
-      setRecovery(true);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const controls = useInquiryResetControls();
+  const { open, setOpen, confirmation, busy, keepRef, resetRef, keepInquiry, requestReset } = controls;
 
   return (
     <TherapeuticFrame
@@ -76,15 +45,8 @@ export function TherapeuticScreenFrame({
           trigger={<><Menu aria-hidden="true" size={20} /><LocalizedMessage message={message("utilities.trigger")} /></>}
         >
           <div className="grid gap-6" aria-busy={busy}>
-            {confirmation ? <>
-              <p><LocalizedMessage message={message("reset.loss")} /></p>
-              <button className={UTILITY_CONTROL} ref={keepRef} disabled={busy} type="button" onClick={keepInquiry}>
-                <LocalizedMessage message={message("reset.keep")} />
-              </button>
-              <button className={UTILITY_CONTROL} disabled={busy} type="button" onClick={() => void requestReset(true)}>
-                <LocalizedMessage message={message("reset.discard")} />
-              </button>
-            </> : <>
+            <InquiryResetControls controls={controls} />
+            {confirmation ? null : <>
               <LanguageSelector />
               {allowInquiryReset ? <button className={UTILITY_CONTROL} ref={resetRef} disabled={busy}
                 type="button" onClick={() => void requestReset(false)}>
@@ -92,14 +54,7 @@ export function TherapeuticScreenFrame({
               </button> : null}
               {busy ? null : utilities}
             </>}
-            {busy ? <p role="status"><LocalizedMessage message={message("reset.pending")} /></p> : null}
-            {recovery ? <div role="status">
-              <p><LocalizedMessage message={message("reset.recovery")} /></p>
-              <button className={UTILITY_CONTROL} type="button"
-                onClick={() => void requestReset(confirmedRef.current)}>
-                <LocalizedMessage message={message("reset.retry")} />
-              </button>
-            </div> : null}
+
           </div>
         </TherapeuticSheet>
       )}
