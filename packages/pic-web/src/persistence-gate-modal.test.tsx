@@ -315,6 +315,7 @@ describe("PersistenceGateModal", () => {
     expect(document.activeElement).toBe(gate);
     expect(screen.getByText("הסשן שלך נשמר…")).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
+    await act(async () => { await Promise.resolve(); });
     expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("pending");
     expect(await compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate())
       .toEqual({ group, playerSession: session });
@@ -326,8 +327,7 @@ describe("PersistenceGateModal", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBe(retry);
     expect(document.activeElement).toBe(retry);
     expect(signIn).toHaveBeenCalledTimes(1);
-    fillLogin();
-    fireEvent.click(retry);
+    await act(async () => { fireEvent.click(retry); });
     expect(signIn).toHaveBeenCalledTimes(2);
     expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("pending");
     await act(async () => { rejectPromotion(new Error("still reconnecting")); });

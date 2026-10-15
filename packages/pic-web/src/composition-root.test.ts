@@ -152,6 +152,13 @@ function buildGuestSnapshot(overrides: Partial<GroupBoundGuestSnapshot> = {}): G
   return { group, playerSession, ...overrides };
 }
 
+async function prepareGate(root: typeof compositionRoot, snapshot = buildGuestSnapshot()) {
+  await root.repositoryPort.saveGroup(snapshot.group);
+  await root.repositoryPort.savePlayerSession(snapshot.playerSession);
+  await root.sessionEngineActions.onFinishRequested(snapshot.playerSession.id, "finish");
+  return snapshot;
+}
+
 describe("composition root engine wiring", () => {
   it("composition root exposes a single shared DelegatingRepositoryPort to all engines", async () => {
     const { repositoryPort, groupEngineActions, playerEngineActions } = compositionRoot;
@@ -202,10 +209,7 @@ describe("composition root guest storage lifecycle", () => {
       const authenticatedPort = createInMemoryAuthenticatedPort();
       swapToSupabaseAdapter(authenticatedPort);
 
-      const guestRepository = repositoryPort.getProvider() as LocalGuestRepository;
-      const promoteSpy = vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation(async (input) => {
-        return authenticatedPort.promoteGuestToAccount(input);
-      });
+      const promoteSpy = vi.spyOn(authenticatedPort, "promoteGuestToAccount");
 
       const sessionId = guestSnapshot.playerSession.id;
       await sessionEngineActions.onFinishRequested(sessionId, "finish");
@@ -281,8 +285,8 @@ describe("clear stale session pointers on completion / discard / promotion (tick
       return authenticatedPort.promoteGuestToAccount(input);
     });
 
-    // Promote with no pending Finish request: this flips mode -> "authenticated" without any replay.
-    await sessionEngineActions.promote(buildGuestSnapshot(), "user-ac1");
+    // Bootstrap through a real matching Guest Gate before exercising subsequent authenticated Finish.
+    await sessionEngineActions.promote(await prepareGate(fresh), "user-ac1");
     expect(sessionEngineStore.getSnapshot().mode).toBe("authenticated");
 
     const sessionId = await playerEngineActions.startSession("treatment-ac1", null, ["unit-a"]);
@@ -319,6 +323,7 @@ describe("clear stale session pointers on completion / discard / promotion (tick
     setGuestFlowPlayerSession(guestSnapshot.playerSession.id);
     expect(guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(guestSnapshot.playerSession.id);
 
+    await prepareGate(fresh, guestSnapshot);
     await sessionEngineActions.promote(guestSnapshot, "user-ac2");
 
     expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
@@ -332,16 +337,16 @@ describe("clear stale session pointers on completion / discard / promotion (tick
       guestFlowFactsStore,
       setGuestFlowPlayerSession,
     } = await loadFreshCompositionRoot();
-    const { repositoryPort, sessionEngineActions, sessionEngineStore } = fresh;
+    const { sessionEngineActions, sessionEngineStore } = fresh;
 
     const authenticatedPort = createInMemoryAuthenticatedPort();
     freshSwap(authenticatedPort);
-    const guestRepository = repositoryPort.getProvider() as LocalGuestRepository;
-    vi.spyOn(guestRepository, "promoteGuestToAccount").mockRejectedValue(new Error("network drop"));
+    vi.spyOn(authenticatedPort, "promoteGuestToAccount").mockRejectedValue(new Error("network drop"));
 
     const guestSnapshot = buildGuestSnapshot();
     setGuestFlowPlayerSession(guestSnapshot.playerSession.id);
 
+    await prepareGate(fresh, guestSnapshot);
     await sessionEngineActions.promote(guestSnapshot, "user-ac2-fail");
 
     expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("failed");
@@ -423,7 +428,7 @@ describe("W12 reset composition boundaries", () => {
     vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation(async (input) => {
       return authenticatedPort.promoteGuestToAccount(input);
     });
-    await fresh.sessionEngineActions.promote(buildGuestSnapshot(), "saved-owner");
+    await fresh.sessionEngineActions.promote(await prepareGate(fresh), "saved-owner");
     const groupId = await fresh.groupEngineActions.createDraftGroup("Saved group");
     const before = await authenticatedPort.getGroup(groupId);
     const stateBefore = fresh.sessionEngineStore.getSnapshot();
@@ -660,7 +665,7 @@ for (const linked of [false, true]) {
     vi.spyOn(fresh.repositoryPort.getProvider(), "promoteGuestToAccount").mockImplementation((input) => {
       return port.promoteGuestToAccount(input);
     });
-    await fresh.sessionEngineActions.promote(buildGuestSnapshot(), "saved-owner");
+    await fresh.sessionEngineActions.promote(await prepareGate(fresh), "saved-owner");
     const groupId = linked ? await fresh.groupEngineActions.createDraftGroup("Saved Player focus") : null;
     const sessionId = await fresh.playerEngineActions.startSession("saved-treatment", groupId, ["one", "two"]);
     await fresh.playerEngineActions.respondTerminalNemar(sessionId, answer);
@@ -699,9 +704,10 @@ it.each(["discard", "promote"])("keeps %s cleanup last after delayed pointer per
     swap(port);
     vi.spyOn(guestRepository, "promoteGuestToAccount").mockImplementation((input) => port.promoteGuestToAccount(input));
   }
+  facts.persistGuestFlowFactsNow();
   const cleanup = kind === "discard"
     ? fresh.sessionEngineActions.discardGuestState()
-    : fresh.sessionEngineActions.promote(buildGuestSnapshot(), "cleanup-owner");
+    : fresh.sessionEngineActions.promote(await prepareGate(fresh), "cleanup-owner");
   await started;
   release();
   await cleanup;

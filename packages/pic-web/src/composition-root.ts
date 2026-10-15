@@ -1,6 +1,9 @@
 import {
+  clearPromotionRecovery, readPromotionRecovery, savePromotionRecovery, type PromotionRecovery,
+} from "./promotion-recovery";
+import {
   advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore, reopenFlowOperations,
-  prepareFlowSettlement, trackExclusiveFlowOperation, trackFlowOperation,
+  prepareFlowSettlement, restoreInquiryGeneration, trackExclusiveFlowOperation, trackFlowOperation,
 } from "./inquiry-lifecycle";
 import {
   clearInquiryResetRecovery, readInquiryResetRecovery, saveInquiryResetRecovery,
@@ -10,9 +13,9 @@ import {
  * The single composition root (ticket 14, Wave 7): constructs exactly one `LocalGuestRepository` and
  * exactly one `SessionEngine` - wired to a `PlayerEngine`/`LibraryEngine`/`TimelineEngine` trio built on
  * that same adapter, since `SessionEngine`'s constructor requires a `PlayerEngine` to complete a gated
- * Finish request after promotion (ticket 09) - once, at module load time, outside any React render. ES
- * modules are cached per process, so every import of this file anywhere in the app sees the exact same
- * `guestRepository`/`sessionEngine` instances; nothing here is reconstructed by a re-render.
+ * Finish request after promotion (ticket 09). One authoritative SessionEngine is active outside React;
+ * interrupted completion rebinds it through its public constructor with the retained pending intent.
+ * ES module consumers share these composition-owned resources; React renders never reconstruct them.
  *
  * **Convention (ticket 14 DoD - "no component other than this composition root imports
  * pic-adapter-local-guest or pic-adapter-supabase directly"):** `./composition-root.ts` and
@@ -50,8 +53,20 @@ import type { LoginCredentials } from "./promote-path";
 const guestRepository = new LocalGuestRepository();
 const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(guestRepository);
 let resetRecovery = readInquiryResetRecovery();
-const persistedGuestFlowFacts = resetRecovery?.facts ?? guestRepository.getGuestFlowFactsSync();
-const persistedGuestGate = resetRecovery?.gate ?? guestRepository.getGuestSessionGateSync();
+let promotionRecovery = readPromotionRecovery();
+if (promotionRecovery !== null) restoreInquiryGeneration(promotionRecovery.generation);
+const persistedGuestFlowFacts = promotionRecovery === null ?
+  resetRecovery?.facts ?? guestRepository.getGuestFlowFactsSync() : {
+    activeGroupId: promotionRecovery.snapshot.group?.id ?? null,
+    activePlayerSessionId: promotionRecovery.snapshot.playerSession.id,
+    symptomAdditionComplete: true, groupFinalized: true, summaryAcknowledged: true,
+  };
+const persistedGuestGate = promotionRecovery === null ?
+  resetRecovery?.gate ?? guestRepository.getGuestSessionGateSync() : {
+    gateTriggered: true, pendingFinishRequest: {
+      sessionId: promotionRecovery.snapshot.playerSession.id, kind: promotionRecovery.kind,
+    },
+  };
 let pendingGuestFinishRequest = persistedGuestGate.pendingFinishRequest;
 const libraryEngine = new LibraryEngine(repositoryPort);
 const timelineEngine = new TimelineEngine(repositoryPort);
@@ -60,15 +75,16 @@ const groupEngine = new GroupEngine(repositoryPort);
 
 let authenticatedPort: RepositoryPort | null = null;
 
-const sessionEngine = new SessionEngine(repositoryPort, playerEngine, {
+const sessionOptions = {
   onPromotionSucceeded: () => {
     if (authenticatedPort !== null) {
       repositoryPort.swapProvider(authenticatedPort);
     }
-    void guestRepository.clear();
   },
   initialGateState: persistedGuestGate,
-});
+};
+let sessionEngine = new SessionEngine(repositoryPort, playerEngine, sessionOptions);
+let recoveryStatus: "pending" | "failed" | null = promotionRecovery === null ? null : "failed";
 
 /**
  * A `useSyncExternalStore`-compatible wrapper around a plain synchronous getter (ticket 14: "Dumb
@@ -101,11 +117,15 @@ function createExternalStore<TState>(getState: () => TState) {
 }
 
 const sessionEngineStore = createExternalStore(() => sessionEngine.getState());
+const promotionRecoveryStore = createExternalStore(() => recoveryStatus);
 
 let resetting = false;
 let promotionSwitching = false;
 let suppressSessionNotifications = false;
-sessionEngine.subscribe(() => { if (!suppressSessionNotifications) sessionEngineStore.notify(); });
+function subscribeSessionEngine() {
+  return sessionEngine.subscribe(() => { if (!suppressSessionNotifications) sessionEngineStore.notify(); });
+}
+let unsubscribeSessionEngine = subscribeSessionEngine();
 
 /** Composition-layer flow fact: last group created via wrapped `createDraftGroup`. */
 let activeGroupId: string | null = persistedGuestFlowFacts.activeGroupId;
@@ -119,6 +139,9 @@ const groupEngineStore = createExternalStore(() => ({ activeGroupId }));
 function createPlayerSessionStore(port: DelegatingRepositoryPort) {
   const listeners = new Set<() => void>();
   const snapshots = new Map<string, PlayerSession | null>();
+  if (promotionRecovery !== null) {
+    snapshots.set(promotionRecovery.snapshot.playerSession.id, promotionRecovery.snapshot.playerSession);
+  }
   if (resetRecovery?.playerSession) snapshots.set(resetRecovery.playerSession.id, resetRecovery.playerSession);
 
   return {
@@ -136,7 +159,8 @@ function createPlayerSessionStore(port: DelegatingRepositoryPort) {
       const generation = inquiryGenerationStore.getSnapshot();
       const session = await port.getPlayerSession(sessionId);
       if (generation !== inquiryGenerationStore.getSnapshot()) return;
-      snapshots.set(sessionId, session ?? (resetRecovery?.playerSession?.id === sessionId ? resetRecovery.playerSession : null));
+      const recoverySession = promotionRecovery?.snapshot.playerSession ?? resetRecovery?.playerSession;
+      snapshots.set(sessionId, session ?? (recoverySession?.id === sessionId ? recoverySession : null));
       for (const listener of listeners) {
         listener();
       }
@@ -164,21 +188,6 @@ const untrackedSessionEngineActions = {
   },
   async promote(guestState: GuestSnapshot, newUserId: string): Promise<void> {
     await sessionEngine.promote(guestState, newUserId);
-    if (sessionEngineStore.getSnapshot().promotionStatus === "succeeded") {
-      pendingGuestFinishRequest = null;
-      const { setGuestFlowPlayerSession, settleGuestFlowPersistence } = await import("./guest-flow-facts");
-      setGuestFlowPlayerSession(null);
-      await settleGuestFlowPersistence();
-      // `setGuestFlowPlayerSession` persists via a direct `guestRepository.saveGuestFlowFacts` binding
-      // (bypassing the just-swapped delegating port), which would otherwise resurrect the guest storage
-      // blob that `onPromotionSucceeded` already cleared moments ago (DEC-017 "evaporate" - no guest
-      // residue survives a successful promotion). Re-clearing here, last, keeps that guarantee intact.
-      await guestRepository.clear();
-      if (resetRecovery !== null) {
-        clearInquiryResetRecovery();
-        resetRecovery = null;
-      }
-    }
   },
 
 };
@@ -254,7 +263,9 @@ function trackedActions<T extends Record<string, (...args: never[]) => Promise<u
 ): T {
   return Object.fromEntries(Object.entries(actions).map(([name, action]) => [
     name, (...args: never[]) => trackFlowOperation(() => {
-      if (promotionSwitching && !allowDuringPromotion) return Promise.reject(new Error("Saving is pending"));
+      if ((promotionSwitching || promotionRecovery !== null) && !allowDuringPromotion) {
+        return Promise.reject(new Error("Saving is pending"));
+      }
       return resetRecovery === null ? action(...args) :
       initialResetRecovery.then(async () => {
         await recoverPendingReset();
@@ -267,7 +278,9 @@ const groupEngineActions = trackedActions(untrackedGroupEngineActions);
 const playerEngineActions = trackedActions(untrackedPlayerEngineActions);
 const sessionEngineActions = {
   ...trackedActions({ onFinishRequested: untrackedSessionEngineActions.onFinishRequested }),
-  ...trackedActions({ promote: untrackedSessionEngineActions.promote }, true),
+  promote(snapshot: GuestSnapshot, owner: string): Promise<void> {
+    return coordinatePromotion(authenticatedPort ?? repositoryPort.getProvider(), snapshot, owner);
+  },
   async discardGuestState(): Promise<void> {
     await inquiryResetActions.resetInquiry(true);
   },
@@ -311,7 +324,7 @@ const inquiryResetActions = {
         activeGroupId !== null || facts.guestFlowFactsStore.getSnapshot().activePlayerSessionId !== null ||
         state.gateTriggered
       );
-      if (!confirmed && (localWork || hasInquiryDraft())) return "confirmation";
+      if (!confirmed && (localWork || promotionRecovery !== null || hasInquiryDraft())) return "confirmation";
       const previousFacts = facts.collectPersistedGuestFlowFacts();
       if (state.mode === "guest" && state.gateTriggered && resetRecovery === null) {
         const persistedGate = await repositoryPort.getGuestSessionGate();
@@ -332,6 +345,7 @@ const inquiryResetActions = {
         if (state.mode === "guest" && state.gateTriggered) await sessionEngine.discardGuestState();
         await guestRepository.clear();
         if (resetRecovery !== null) clearInquiryResetRecovery();
+        if (promotionRecovery !== null) clearPromotionRecovery();
       } catch (error) {
         if (resetRecovery !== null) {
           try { await restoreResetRecovery(resetRecovery); } catch { /* Envelope retains the retry. */ }
@@ -341,12 +355,17 @@ const inquiryResetActions = {
         throw error;
       }
       resetRecovery = null;
+      promotionRecovery = null;
+      frozenPromotion = null;
+      recoveryStatus = null;
+      if (state.mode === "authenticated" && authenticatedPort !== null) repositoryPort.swapProvider(authenticatedPort);
       pendingGuestFinishRequest = null;
       activeGroupId = null;
       playerSessionStore.clear();
       facts.clearGuestFlowFacts();
       groupEngineStore.notify();
       advanceInquiryGeneration();
+      promotionRecoveryStore.notify();
       return "reset";
     } finally {
       reopenFlowOperations();
@@ -369,10 +388,12 @@ export function swapToSupabaseAdapter(port: RepositoryPort): void {
 
 let browserClient: ReturnType<typeof createSupabaseBrowserClient> | null = null;
 let verifiedIdentity = false;
+let recoveryIdentityRejected = false;
 let loginPromotion: Promise<void> | null = null;
+let publicPromotionOwner: string | null = null;
 let frozenPromotion: {
   generation: number; snapshot: GuestSnapshot; owner: string | null; kind: "finish" | "finishAnyway";
-} | null = null;
+} | null = promotionRecovery;
 const untrackedPromotePathActions = {
   assembleGuestSnapshotForPendingGate(): Promise<GuestSnapshot | null> {
     return assembleGuestSnapshotForPendingGate(guestRepository);
@@ -383,20 +404,67 @@ const untrackedPromotePathActions = {
   ensureOwnProfile,
   getVerifiedUser,
   signInWithCredentials,
-  promoteWithAuthenticatedRepository(
+  async promoteWithAuthenticatedRepository(
     port: RepositoryPort,
     guestSnapshot: GuestSnapshot,
     newUserId: string,
   ): Promise<void> {
-    return promoteWithAuthenticatedRepository({
-      delegatingPort: repositoryPort,
-      authenticatedPort: port,
-      guestSnapshot,
-      newUserId,
-      promote: untrackedSessionEngineActions.promote,
-      getPromotionStatus: () => sessionEngineStore.getSnapshot().promotionStatus,
-      registerAuthenticatedPort: swapToSupabaseAdapter,
-    });
+    const pending = pendingGuestFinishRequest;
+    const frozen = promotionRecovery ?? frozenPromotion ?? {
+      snapshot: structuredClone(guestSnapshot), owner: newUserId,
+      generation: inquiryGenerationStore.getSnapshot(), kind: pending?.kind ?? "finish",
+    };
+    if (pending?.sessionId !== frozen.snapshot.playerSession.id || pending.kind !== frozen.kind) {
+      throw new Error("The snapshot does not belong to the current pending work");
+    }
+    if ((frozen.owner !== null && frozen.owner !== newUserId) ||
+      frozen.generation !== inquiryGenerationStore.getSnapshot()) {
+      throw new Error("The saving request no longer belongs to this inquiry and identity");
+    }
+    const request: PromotionRecovery = { ...frozen, owner: newUserId };
+    frozenPromotion = request;
+    savePromotionRecovery(request);
+    promotionRecovery = request;
+    recoveryStatus = "pending";
+    promotionRecoveryStore.notify();
+    // After an interrupted completion the old engine has already consumed its pending intent.
+    // Replace the one authoritative engine through its public constructor, retaining the exact gate.
+    if (sessionEngine.getState().mode === "authenticated") {
+      unsubscribeSessionEngine();
+      sessionEngine = new SessionEngine(repositoryPort, playerEngine, {
+        ...sessionOptions, initialGateState: { gateTriggered: true,
+          pendingFinishRequest: { sessionId: request.snapshot.playerSession.id, kind: request.kind } },
+      });
+      unsubscribeSessionEngine = subscribeSessionEngine();
+    }
+    try {
+      await promoteWithAuthenticatedRepository({
+        delegatingPort: repositoryPort, authenticatedPort: port, guestSnapshot: request.snapshot, newUserId,
+        promote: untrackedSessionEngineActions.promote,
+        getPromotionStatus: () => sessionEngine.getState().promotionStatus,
+        registerAuthenticatedPort: swapToSupabaseAdapter,
+      });
+      if (sessionEngine.getState().promotionStatus !== "succeeded") {
+        recoveryStatus = "failed";
+        return;
+      }
+      const completed = await port.getPlayerSession(request.snapshot.playerSession.id);
+      if (completed?.success_declared !== true) throw new Error("Completion needs recovery");
+      const facts = await import("./guest-flow-facts");
+      await facts.settleGuestFlowPersistence();
+      if (resetRecovery !== null) clearInquiryResetRecovery();
+      await guestRepository.clear();
+      clearPromotionRecovery();
+      promotionRecovery = null;
+      frozenPromotion = null;
+      resetRecovery = null;
+      pendingGuestFinishRequest = null;
+      facts.setGuestFlowPlayerSession(null, false);
+      recoveryStatus = null;
+    } catch (error) {
+      recoveryStatus = "failed";
+      throw error;
+    } finally { sessionEngineStore.notify(); promotionRecoveryStore.notify(); }
   },
   signInAndPromote(credentials?: LoginCredentials): Promise<void> {
     if (loginPromotion !== null) return loginPromotion;
@@ -406,7 +474,9 @@ const untrackedPromotePathActions = {
       if (config === null) throw new Error("Public authentication configuration is unavailable");
       browserClient ??= createSupabaseBrowserClient(config);
       const client = browserClient;
-      if (frozenPromotion?.generation !== generation) frozenPromotion = null;
+      if (frozenPromotion !== null && frozenPromotion.generation !== generation) {
+        throw new Error("The saving request no longer belongs to this inquiry and identity");
+      }
       if (frozenPromotion === null) {
         const snapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
         const pending = pendingGuestFinishRequest;
@@ -418,15 +488,18 @@ const untrackedPromotePathActions = {
       const verifyOwner = async () => {
         let user;
         try { user = await getVerifiedUser(client); }
-        catch (error) { verifiedIdentity = false; throw error; }
+        catch (error) { verifiedIdentity = false; recoveryIdentityRejected = true; throw error; }
         if (request.generation !== inquiryGenerationStore.getSnapshot() ||
           (request.owner !== null && request.owner !== user.id)) {
-          frozenPromotion = null;
           verifiedIdentity = false;
+          recoveryIdentityRejected = true;
           throw new Error("The saving request no longer belongs to this inquiry and identity");
         }
         request.owner = user.id;
         verifiedIdentity = true;
+        recoveryIdentityRejected = false;
+        savePromotionRecovery({ ...request, owner: user.id });
+        promotionRecovery = { ...request, owner: user.id };
         return user;
       };
       const user = await verifyOwner();
@@ -441,18 +514,32 @@ const untrackedPromotePathActions = {
         await untrackedPromotePathActions.promoteWithAuthenticatedRepository(
           createSupabaseRepositoryFromClient(client), request.snapshot, user.id,
         );
-        if (sessionEngineStore.getSnapshot().promotionStatus === "succeeded") frozenPromotion = null;
+        if (sessionEngineStore.getSnapshot().promotionStatus === "succeeded") {
+          frozenPromotion = null;
+        }
       } finally { promotionSwitching = false; }
     }).finally(() => { loginPromotion = null; });
     return loginPromotion;
   },
   hasVerifiedIdentity: () => verifiedIdentity,
+  canRetryWithoutCredentials: () => verifiedIdentity || (promotionRecovery !== null && !recoveryIdentityRejected),
 };
+function coordinatePromotion(port: RepositoryPort, snapshot: GuestSnapshot, owner: string): Promise<void> {
+  if (loginPromotion !== null) {
+    if ((publicPromotionOwner ?? promotionRecovery?.owner ?? frozenPromotion?.owner) !== owner) {
+      return Promise.reject(new Error("The saving request belongs to another identity"));
+    }
+    return loginPromotion;
+  }
+  publicPromotionOwner = owner;
+  loginPromotion = trackExclusiveFlowOperation(() =>
+    untrackedPromotePathActions.promoteWithAuthenticatedRepository(port, snapshot, owner),
+  ).finally(() => { loginPromotion = null; publicPromotionOwner = null; });
+  return loginPromotion;
+}
 const promotePathActions = {
   ...untrackedPromotePathActions,
-  ...trackedActions({
-    promoteWithAuthenticatedRepository: untrackedPromotePathActions.promoteWithAuthenticatedRepository,
-  }),
+  promoteWithAuthenticatedRepository: coordinatePromotion,
 };
 
 /** Resets composition-layer group flow pointer between tests. */
@@ -464,7 +551,7 @@ export function resetGroupFlowFactsForTest(): void {
 void import("./guest-flow-facts").then(async ({ initGuestFlowFacts, setGuestFlowPlayerSession }) => {
   initGuestFlowFacts({
     getActiveGroupId: () => activeGroupId,
-    getSessionState: () => sessionEngine.getState(),
+    getSessionState: () => sessionEngineStore.getSnapshot(),
     subscribeToGroup: groupEngineStore.subscribe,
     subscribeToSession: sessionEngineStore.subscribe,
     initialFacts: persistedGuestFlowFacts,
@@ -542,6 +629,7 @@ export const compositionRoot = {
   groupEngine,
   playerEngine,
   sessionEngineStore,
+  promotionRecoveryStore,
   sessionEngineActions,
   groupEngineStore,
   groupEngineActions,

@@ -165,10 +165,10 @@ export function notifyGuestFlowFacts(): void {
   notifyGuestFlowStores();
 }
 
-export function setGuestFlowPlayerSession(sessionId: string | null): void {
+export function setGuestFlowPlayerSession(sessionId: string | null, persist = true): void {
   activePlayerSessionId = sessionId;
   notifyGuestFlowStores();
-  saveGuestFlowFactsToStorage();
+  if (persist) saveGuestFlowFactsToStorage();
 }
 
 export function setGuestFlowGroupFinalized(finalized: boolean): void {

@@ -6,6 +6,7 @@ import { useLocale } from "./i18n/locale-provider";
 import {
   usePromotePathActions,
   useSessionEngineState,
+  usePromotionRecoveryState,
 } from "./session-engine-context";
 
 /**
@@ -16,10 +17,11 @@ import {
 export function PersistenceGateModal() {
   const { locale, direction, message } = useLocale();
   const state = useSessionEngineState();
+  const recovery = usePromotionRecoveryState();
   const { gateTriggered, promotionStatus } = state;
   const controls = useInquiryResetControls();
   const { confirmation, busy, open: utilitiesOpen, handoffPending, keepInquiry, requestReset, resetRef } = controls;
-  const { signInAndPromote, hasVerifiedIdentity } = usePromotePathActions();
+  const { signInAndPromote, hasVerifiedIdentity, canRetryWithoutCredentials } = usePromotePathActions();
   const [preRpcPromotionFailed, setPreRpcPromotionFailed] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [email, setEmail] = useState("");
@@ -28,20 +30,20 @@ export function PersistenceGateModal() {
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  useEffect(() => { setDismissed(false); }, [state]);
+  useEffect(() => { setDismissed(false); }, [state, recovery]);
   useEffect(() => {
-    if (gateTriggered) return;
+    if (gateTriggered || recovery !== null) return;
     setPassword("");
     setValidation(false);
     setPreRpcPromotionFailed(false);
-  }, [gateTriggered]);
+  }, [gateTriggered, recovery]);
 
-  if (!gateTriggered) {
+  if (!gateTriggered && recovery === null) {
     return null;
   }
 
-  const pending = submitting || promotionStatus === "pending";
-  const showFailedUi = !pending && (promotionStatus === "failed" || preRpcPromotionFailed);
+  const pending = submitting || promotionStatus === "pending" || recovery === "pending";
+  const showFailedUi = !pending && (promotionStatus === "failed" || recovery === "failed" || preRpcPromotionFailed);
   const showIdleUi = promotionStatus === "idle" && !preRpcPromotionFailed;
 
   function anchorSession(event: FormEvent<HTMLFormElement>): void {
@@ -52,7 +54,7 @@ export function PersistenceGateModal() {
     setSubmitting(true);
     setValidation(false);
     setPreRpcPromotionFailed(false);
-    const credentials = hasVerifiedIdentity() ? undefined : { email: email.trim(), password };
+    const credentials = canRetryWithoutCredentials() ? undefined : { email: email.trim(), password };
     setPassword("");
     void signInAndPromote(credentials).catch(() => {
       setPreRpcPromotionFailed(true);
@@ -104,7 +106,8 @@ export function PersistenceGateModal() {
 
       {!pending ? (
         <form noValidate onSubmit={anchorSession} className="grid gap-3">
-          {hasVerifiedIdentity() ? <p role="status">{message("gate.authenticated").text}</p> : <>
+          {hasVerifiedIdentity() ? <p role="status">{message("gate.authenticated").text}</p> :
+            canRetryWithoutCredentials() ? null : <>
           <label htmlFor="gate-email">{message("gate.email").text}</label>
           <input id="gate-email" name="email" type="email" autoComplete="email" required value={email}
             className={UTILITY_CONTROL} dir="ltr" aria-invalid={validation || showFailedUi}

@@ -75,6 +75,11 @@ export function advanceInquiryGeneration(): void {
   for (const listener of listeners) listener();
 }
 
+/** Boot-only restoration of the generation bound to a durable, unfinished promotion. */
+export function restoreInquiryGeneration(value: number): void {
+  generation = Math.max(generation, value);
+}
+
 export function reopenFlowOperations(): void {
   admissionClosed = false;
 }

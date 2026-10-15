@@ -134,6 +134,7 @@ describe("promoteWithAuthenticatedRepository", () => {
     const session = buildPlayerSession(group.id);
     await repositoryPort.saveGroup(group);
     await repositoryPort.savePlayerSession(session);
+    await sessionEngineActions.onFinishRequested(session.id, "finish");
 
     const failingPort: RepositoryPort = {
       ...(guestProvider as RepositoryPort),
@@ -556,6 +557,48 @@ describe("promote path remote integration", () => {
     expect(update.error).toBeNull();
     await ensureOwnProfile(testUser.client, await getVerifiedUser(testUser.client));
     expect((await profile()).data).toEqual({ full_name: "Existing sovereign name", language_preferences: preferences });
+  });
+
+  it.each([true, false])("recovers a real committed RPC with a lost response exactly once, linked=%s", async (linked) => {
+    vi.resetModules();
+    localStorage.clear();
+    const { compositionRoot: root } = await import("./composition-root");
+    const group = buildFinalizedGroup();
+    const session = buildPlayerSession(group.id, {
+      treatment_id: seedTreatmentId, linked_group_id: linked ? group.id : null,
+      terminal_nemar_response: linked ? "yes" : "no",
+    });
+    if (linked) await root.repositoryPort.saveGroup(group);
+    await root.repositoryPort.savePlayerSession(session);
+    await root.sessionEngineActions.onFinishRequested(session.id, linked ? "finish" : "finishAnyway");
+    const snapshot = await root.promotePathActions.assembleGuestSnapshotForPendingGate();
+    expect(snapshot).not.toBeNull();
+    const port = createSupabaseRepositoryFromClient(testUser.client);
+    const commit = port.promoteGuestToAccount.bind(port);
+    const rpc = vi.spyOn(port, "promoteGuestToAccount").mockImplementationOnce(async (input) => {
+      await commit(input);
+      throw new Error("Committed response lost in transit");
+    });
+    await root.promotePathActions.promoteWithAuthenticatedRepository(port, snapshot!, testUser.userId);
+    expect(root.sessionEngineStore.getSnapshot().promotionStatus).toBe("failed");
+    expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).not.toBeNull();
+    await root.promotePathActions.promoteWithAuthenticatedRepository(port, snapshot!, testUser.userId);
+    expect(rpc.mock.calls[1]![0]).toEqual(rpc.mock.calls[0]![0]);
+    expect((await port.getPlayerSession(session.id))?.success_declared).toBe(true);
+    const timeline = await testUser.client.from("timeline_events").select("id").eq("user_id", testUser.userId);
+    const library = await testUser.client.from("personal_treatment_library").select("use_count")
+      .eq("user_id", testUser.userId);
+    expect(timeline.error).toBeNull();
+    expect(timeline.data).toHaveLength(1);
+    expect(library.error).toBeNull();
+    expect(library.data).toEqual([{ use_count: 1 }]);
+    expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem("pic-web.promotion-recovery.v1")).toBeNull();
+    rpc.mockRestore();
+    for (const table of ["timeline_events", "personal_treatment_library", "player_sessions", "symptom_groups"]) {
+      const cleanup = await serviceClient.from(table).delete().eq("user_id", testUser.userId);
+      expect(cleanup.error).toBeNull();
+    }
   });
 
   it.each([true, false])("atomic promotion via real Auth/profile binding, linked=%s", async (linked) => {

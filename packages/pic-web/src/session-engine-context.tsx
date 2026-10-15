@@ -45,6 +45,13 @@ export function useSessionEngineState(): SessionState {
   return useSyncExternalStore(subscribe, getSnapshot);
 }
 
+/** Web save bookkeeping remains separate from the active engine's truthful therapeutic state. */
+export function usePromotionRecoveryState() {
+  useSessionEngineContext();
+  const { subscribe, getSnapshot } = compositionRoot.promotionRecoveryStore;
+  return useSyncExternalStore(subscribe, getSnapshot);
+}
+
 /** The only way any component may trigger a `SessionEngine` mutation. */
 export function useSessionEngineActions(): SessionEngineActions {
   return useSessionEngineContext().actions;

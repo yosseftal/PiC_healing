@@ -243,6 +243,7 @@ describe("happy path E2E (Ticket 08-09)", () => {
       await waitFor(
         () => {
           expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
+          expect(compositionRoot.promotionRecoveryStore.getSnapshot()).toBeNull();
         },
         { timeout: 30_000 },
       );
