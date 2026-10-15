@@ -52,6 +52,12 @@ export function usePromotionRecoveryState() {
   return useSyncExternalStore(subscribe, getSnapshot);
 }
 
+export function useVerificationPending() {
+  useSessionEngineContext();
+  const { subscribe, getSnapshot } = compositionRoot.verificationStore;
+  return useSyncExternalStore(subscribe, getSnapshot);
+}
+
 /** The only way any component may trigger a `SessionEngine` mutation. */
 export function useSessionEngineActions(): SessionEngineActions {
   return useSessionEngineContext().actions;

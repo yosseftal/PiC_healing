@@ -59,7 +59,7 @@ export async function getVerifiedUser(client: SupabaseClient): Promise<User> {
 
 export async function signInWithCredentials(client: SupabaseClient, credentials: LoginCredentials) {
   const { error } = await client.auth.signInWithPassword(credentials);
-  if (error !== null) throw new Error("Sign-in could not be completed");
+  if (error !== null) throw error;
   const user = await getVerifiedUser(client);
   return { userId: user.id, client, repository: createSupabaseRepositoryFromClient(client) };
 }

@@ -14,7 +14,7 @@ function record(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object";
 }
 
-function validRecovery(value: unknown): value is PromotionRecovery {
+export function validRecovery(value: unknown): value is PromotionRecovery {
   if (!record(value) || typeof value.generation !== "number" || !Number.isSafeInteger(value.generation) ||
     value.generation < 0 || typeof value.owner !== "string" || value.owner.length === 0 ||
     (value.kind !== "finish" && value.kind !== "finishAnyway") || !record(value.snapshot)) return false;

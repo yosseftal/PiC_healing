@@ -1,6 +1,7 @@
 import {
   clearPromotionRecovery, readPromotionRecovery, savePromotionRecovery, type PromotionRecovery,
 } from "./promotion-recovery";
+import { readVerificationPending, saveVerificationPending } from "./verification-pending";
 import {
   advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore, reopenFlowOperations,
   prepareFlowSettlement, restoreInquiryGeneration, trackExclusiveFlowOperation, trackFlowOperation,
@@ -67,6 +68,10 @@ const persistedGuestGate = promotionRecovery === null ?
       sessionId: promotionRecovery.snapshot.playerSession.id, kind: promotionRecovery.kind,
     },
   };
+let verificationPending = readVerificationPending();
+if (verificationPending?.sessionId !== persistedGuestGate.pendingFinishRequest?.sessionId ||
+  verificationPending?.kind !== persistedGuestGate.pendingFinishRequest?.kind) verificationPending = null;
+if (verificationPending !== null) restoreInquiryGeneration(verificationPending.generation);
 let pendingGuestFinishRequest = persistedGuestGate.pendingFinishRequest;
 const libraryEngine = new LibraryEngine(repositoryPort);
 const timelineEngine = new TimelineEngine(repositoryPort);
@@ -118,6 +123,7 @@ function createExternalStore<TState>(getState: () => TState) {
 
 const sessionEngineStore = createExternalStore(() => sessionEngine.getState());
 const promotionRecoveryStore = createExternalStore(() => recoveryStatus);
+const verificationStore = createExternalStore(() => verificationPending);
 
 let resetting = false;
 let promotionSwitching = false;
@@ -344,6 +350,7 @@ const inquiryResetActions = {
         await guestRepository.saveGuestFlowFacts(facts.DEFAULT_PERSISTED_GUEST_FLOW_FACTS);
         if (state.mode === "guest" && state.gateTriggered) await sessionEngine.discardGuestState();
         await guestRepository.clear();
+        if (verificationPending !== null) saveVerificationPending(null);
         if (resetRecovery !== null) clearInquiryResetRecovery();
         if (promotionRecovery !== null) clearPromotionRecovery();
       } catch (error) {
@@ -358,6 +365,8 @@ const inquiryResetActions = {
       promotionRecovery = null;
       frozenPromotion = null;
       recoveryStatus = null;
+      verificationPending = null;
+      verificationStore.notify();
       if (state.mode === "authenticated" && authenticatedPort !== null) repositoryPort.swapProvider(authenticatedPort);
       pendingGuestFinishRequest = null;
       activeGroupId = null;
@@ -393,7 +402,7 @@ let loginPromotion: Promise<void> | null = null;
 let publicPromotionOwner: string | null = null;
 let frozenPromotion: {
   generation: number; snapshot: GuestSnapshot; owner: string | null; kind: "finish" | "finishAnyway";
-} | null = promotionRecovery;
+} | null = promotionRecovery ?? (verificationPending?.frozen ? { ...verificationPending.frozen, owner: null } : null);
 const untrackedPromotePathActions = {
   assembleGuestSnapshotForPendingGate(): Promise<GuestSnapshot | null> {
     return assembleGuestSnapshotForPendingGate(guestRepository);
@@ -452,9 +461,12 @@ const untrackedPromotePathActions = {
       if (completed?.success_declared !== true) throw new Error("Completion needs recovery");
       const facts = await import("./guest-flow-facts");
       await facts.settleGuestFlowPersistence();
+      if (verificationPending !== null) saveVerificationPending(null);
       if (resetRecovery !== null) clearInquiryResetRecovery();
       await guestRepository.clear();
       clearPromotionRecovery();
+      verificationPending = null;
+      verificationStore.notify();
       promotionRecovery = null;
       frozenPromotion = null;
       resetRecovery = null;
@@ -465,6 +477,53 @@ const untrackedPromotePathActions = {
       recoveryStatus = "failed";
       throw error;
     } finally { sessionEngineStore.notify(); promotionRecoveryStore.notify(); }
+  },
+  register(credentials: LoginCredentials & { name: string }): Promise<void> {
+    if (loginPromotion !== null) return loginPromotion;
+    const generation = inquiryGenerationStore.getSnapshot();
+    loginPromotion = trackExclusiveFlowOperation(async () => {
+      const config = readSupabasePublicConfigFromEnv(import.meta.env as Record<string, string | undefined>);
+      if (config === null) throw new Error("Public authentication configuration is unavailable");
+      const pending = pendingGuestFinishRequest;
+      if (pending === null || verificationPending !== null || (frozenPromotion !== null &&
+        (frozenPromotion.owner !== null || frozenPromotion.generation !== generation ||
+          frozenPromotion.snapshot.playerSession.id !== pending.sessionId || frozenPromotion.kind !== pending.kind))) {
+        throw new Error("Use sign-in for the existing pending work");
+      }
+      browserClient ??= createSupabaseBrowserClient(config);
+      const { data, error } = await browserClient.auth.signUp({
+        email: credentials.email.trim(), password: credentials.password,
+        options: { data: { full_name: credentials.name.trim() } },
+      });
+      if (error !== null) throw error;
+      if (!data.user?.id || generation !== inquiryGenerationStore.getSnapshot()) {
+        throw new Error("Registration could not be confirmed");
+      }
+      // Even an immediate signup session is re-verified by the single explicit sign-in/save path.
+      verificationPending = { email: credentials.email.trim(), name: credentials.name.trim(),
+        generation, sessionId: pending.sessionId, kind: pending.kind,
+        frozen: frozenPromotion === null ? null : {
+          snapshot: frozenPromotion.snapshot, generation: frozenPromotion.generation, kind: frozenPromotion.kind,
+        } };
+      try { saveVerificationPending(verificationPending); } finally { verificationStore.notify(); }
+    }).finally(() => { loginPromotion = null; });
+    return loginPromotion;
+  },
+  resendVerification(): Promise<void> {
+    if (loginPromotion !== null) return loginPromotion;
+    const request = verificationPending;
+    loginPromotion = trackExclusiveFlowOperation(async () => {
+      if (request === null || request.generation !== inquiryGenerationStore.getSnapshot() ||
+        request.sessionId !== pendingGuestFinishRequest?.sessionId || request.kind !== pendingGuestFinishRequest.kind) {
+        throw new Error("There is no pending registration for this inquiry");
+      }
+      const config = readSupabasePublicConfigFromEnv(import.meta.env as Record<string, string | undefined>);
+      if (config === null) throw new Error("Public authentication configuration is unavailable");
+      browserClient ??= createSupabaseBrowserClient(config);
+      const { error } = await browserClient.auth.resend({ type: "signup", email: request.email });
+      if (error !== null) throw error;
+    }).finally(() => { loginPromotion = null; });
+    return loginPromotion;
   },
   signInAndPromote(credentials?: LoginCredentials): Promise<void> {
     if (loginPromotion !== null) return loginPromotion;
@@ -490,7 +549,11 @@ const untrackedPromotePathActions = {
         try { user = await getVerifiedUser(client); }
         catch (error) { verifiedIdentity = false; recoveryIdentityRejected = true; throw error; }
         if (request.generation !== inquiryGenerationStore.getSnapshot() ||
-          (request.owner !== null && request.owner !== user.id)) {
+          (request.owner !== null && request.owner !== user.id) ||
+          (verificationPending !== null && (verificationPending.email.toLowerCase() !== user.email?.toLowerCase() ||
+            verificationPending.generation !== request.generation ||
+            verificationPending.sessionId !== request.snapshot.playerSession.id ||
+            verificationPending.kind !== request.kind))) {
           verifiedIdentity = false;
           recoveryIdentityRejected = true;
           throw new Error("The saving request no longer belongs to this inquiry and identity");
@@ -624,6 +687,7 @@ export function resetTreatmentContentCacheForTest(): void {
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
+  verificationStore,
   inquiryResetActions,
   repositoryPort,
   groupEngine,

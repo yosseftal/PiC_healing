@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { randomUUID } from "node:crypto";
+import { AuthApiError } from "@supabase/supabase-js";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_GUEST_STORAGE_KEY } from "pic-adapter-local-guest";
@@ -112,6 +113,50 @@ afterEach(() => {
 });
 
 describe("PersistenceGateModal", () => {
+  it.each([
+    ["over_email_send_rate_limit", 429, /Please wait before trying again/],
+    ["otp_expired", 403, /verification link has expired/],
+    ["email_not_confirmed", 400, /Check your email for a verification message/],
+    ["weak_password", 422, /details or password could not be accepted/],
+  ] as const)("retains the draft with localized recoverable signup guidance for %s", async (code, status, expected) => {
+    const modules = await loadFreshModules();
+    await openGateWithGuestSession(modules.compositionRoot);
+    const before = await modules.compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate();
+    vi.spyOn(modules.compositionRoot.promotePathActions, "register")
+      .mockRejectedValue(new AuthApiError("Do not display provider details", status, code));
+    renderModal(modules.PersistenceGateModal, modules.SessionEngineProvider, modules.LocaleProvider);
+    fireEvent.click(screen.getByRole("button", { name: "Create an account" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Name" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    await screen.findByText(expected);
+    expect(screen.queryByText("Do not display provider details")).toBeNull();
+    expect(await modules.compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate()).toEqual(before);
+  });
+  it("switches registration modes with stable focus and non-secret input, then retains work while verification is needed",
+    async () => {
+      const modules = await loadFreshModules();
+      await openGateWithGuestSession(modules.compositionRoot);
+      const register = vi.spyOn(modules.compositionRoot.promotePathActions, "register").mockResolvedValue();
+      renderModal(modules.PersistenceGateModal, modules.SessionEngineProvider, modules.LocaleProvider);
+      const switchMode = screen.getByRole("button", { name: "Create an account" });
+      switchMode.focus();
+      fireEvent.click(switchMode);
+      expect(document.activeElement).toBe(switchMode);
+      expect((screen.getByLabelText("Email address") as HTMLInputElement).value).toBe("fixture@example.com");
+      expect((screen.getByLabelText("Password") as HTMLInputElement).value).toBe("");
+      expect(screen.getByLabelText("Password").getAttribute("autocomplete")).toBe("new-password");
+      fireEvent.change(screen.getByLabelText("Name"), { target: { value: "  My Name  " } });
+      fireEvent.click(switchMode);
+      fireEvent.click(switchMode);
+      expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("  My Name  ");
+      fireEvent.change(screen.getByLabelText("Password"), { target: { value: "  exact secret  " } });
+      fireEvent.click(screen.getByRole("button", { name: "Register" }));
+      await vi.waitFor(() => expect(register).toHaveBeenCalledExactlyOnceWith({
+        name: "  My Name  ", email: "fixture@example.com", password: "  exact secret  ",
+      }));
+      expect(modules.compositionRoot.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
+    });
   beforeEach(() => {
     localStorage.clear();
   });

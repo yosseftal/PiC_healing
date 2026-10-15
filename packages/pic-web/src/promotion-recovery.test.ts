@@ -18,8 +18,8 @@ async function setup(linked = true) {
   vi.stubEnv("VITE_SUPABASE_URL", "https://recovery.invalid");
   vi.stubEnv("VITE_SUPABASE_ANON_KEY", "fixture-public");
   const path = await import("./promote-path");
-  const user = { id: randomUUID(), email_confirmed_at: "2026-10-15", app_metadata: {}, user_metadata: {},
-    aud: "authenticated", created_at: "2026-10-15" };
+  const user = { id: randomUUID(), email: credentials.email, email_confirmed_at: "2026-10-15",
+    app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-10-15" };
   const client = createClient("https://recovery.invalid", "fixture-public", {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { fetch: async () => new Response(JSON.stringify([{ id: user.id }]), { status: 200 }) },
@@ -80,6 +80,29 @@ async function reload(f: Awaited<ReturnType<typeof setup>>) {
   vi.spyOn(path, "createSupabaseRepositoryFromClient").mockReturnValue(f.port);
   return (await import("./composition-root")).compositionRoot;
 }
+
+it("retains durable recovery when verification cleanup rejects, then retries the same operation after reload", async () => {
+  const f = await setup(false);
+  vi.spyOn(f.client.auth, "signUp").mockResolvedValue({
+    data: { user: { ...f.user, email_confirmed_at: undefined }, session: null }, error: null,
+  });
+  await f.root.promotePathActions.register({ ...credentials, name: "New Event Manager" });
+  const remove = Storage.prototype.removeItem;
+  const fault = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key: string) {
+    if (key === "pic-web.verification-pending.v1") throw new Error("Verification cleanup rejected");
+    return remove.call(this, key);
+  });
+  await expect(f.root.promotePathActions.signInAndPromote(credentials)).rejects.toThrow("Verification cleanup");
+  expect(localStorage.getItem(RECOVERY_KEY)).not.toBeNull();
+  expect(f.root.promotionRecoveryStore.getSnapshot()).toBe("failed");
+  fault.mockRestore();
+  const root = await reload(f);
+  await root.promotePathActions.signInAndPromote();
+  expect(f.rpc.mock.calls[1]![0]).toEqual(f.rpc.mock.calls[0]![0]);
+  expect(f.effects()).toBe(1);
+  expect(localStorage.getItem(RECOVERY_KEY)).toBeNull();
+  expect(localStorage.getItem("pic-web.verification-pending.v1")).toBeNull();
+});
 
 it.each([true, false])("persists one credential-free operation before duplicate RPCs, linked=%s", async (linked) => {
   const f = await setup(linked);
