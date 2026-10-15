@@ -7,7 +7,7 @@ import { useLocale } from "./i18n/locale-provider";
 
 /** Shared Sheet/Gate confirmation: changing its surface never makes a therapeutic decision. */
 export function useInquiryResetControls() {
-  const { resetInquiry } = useInquiryReset();
+  const { resetInquiry, uncertain } = useInquiryReset();
   const utilities = useInquiryUtilities();
   const { confirmation, setConfirmation, busy, setBusy, setRecovery, setOpen } = utilities;
   const confirmedRef = useRef(false);
@@ -38,15 +38,15 @@ export function useInquiryResetControls() {
       setBusy(false);
     }
   }
-  return { ...utilities, confirmedRef, keepRef, resetRef, keepInquiry, requestReset };
+  return { ...utilities, uncertain, confirmedRef, keepRef, resetRef, keepInquiry, requestReset };
 }
 
 export function InquiryResetControls({ controls }: { controls: ReturnType<typeof useInquiryResetControls> }) {
   const { message } = useLocale();
-  const { confirmation, busy, recovery, keepRef, keepInquiry, requestReset, confirmedRef } = controls;
+  const { confirmation, busy, recovery, keepRef, keepInquiry, requestReset, confirmedRef, uncertain } = controls;
   return <>
     {confirmation ? <>
-      <p><LocalizedMessage message={message("reset.loss")} /></p>
+      <p><LocalizedMessage message={message(uncertain ? "reset.uncertainLoss" : "reset.loss")} /></p>
       <button className={UTILITY_CONTROL} ref={keepRef} disabled={busy} type="button" onClick={keepInquiry}>
         <LocalizedMessage message={message("reset.keep")} />
       </button>

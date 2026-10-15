@@ -137,7 +137,9 @@ it.each([true, false])("retains Guest work and visible recovery after completion
   expect(f.timeline).not.toHaveBeenCalled();
   expect(f.root.sessionEngineStore.getSnapshot()).toMatchObject({ mode: "authenticated", gateTriggered: false,
     promotionStatus: "succeeded" });
-  expect(f.root.repositoryPort.getProvider()).toBe(f.port);
+  expect(await f.root.repositoryPort.getPlayerSession(f.snapshot.playerSession.id)).toEqual(
+    f.rows.get(f.snapshot.playerSession.id),
+  );
 });
 
 it.each([true, false])("keeps recovery when Guest cleanup rejects and never publishes saved, linked=%s", async (linked) => {
@@ -255,7 +257,9 @@ it.each([true, false])("restores a nonzero generation after reset and cleanup in
   await root.promotePathActions.signInAndPromote();
   expect(f.rpc.mock.calls[1]![0]).toEqual(f.rpc.mock.calls[0]![0]);
   expect(f.effects()).toBe(1);
-  expect(root.repositoryPort.getProvider()).toBe(f.port);
+  expect(await root.repositoryPort.getPlayerSession(f.snapshot.playerSession.id)).toEqual(
+    f.rows.get(f.snapshot.playerSession.id),
+  );
   expect(root.sessionEngineStore.getSnapshot().mode).toBe("authenticated");
   expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
   expect(localStorage.getItem(RECOVERY_KEY)).toBeNull();
@@ -381,5 +385,18 @@ it("preserves the frozen snapshot when storage rejects before a changed public r
     ...f.snapshot, playerSession: { ...f.snapshot.playerSession, units: [] },
   }, f.user.id);
   expect(f.rpc.mock.calls[0]![0].playerSession).toEqual(f.snapshot.playerSession);
+  expect(f.effects()).toBe(1);
+});
+it("restores an owner-bound split_suggested promotion without changing the Event Manager's answer", async () => {
+  const f = await setup();
+  const group = { ...f.snapshot.group!, joint_treatment_muscle_test: "split_suggested" as const };
+  await f.root.repositoryPort.saveGroup(group);
+  f.rpc.mockImplementationOnce(async (input) => { await f.commit(input); throw new Error("Promotion response lost"); });
+  await f.root.promotePathActions.signInAndPromote(credentials);
+  const root = await reload(f);
+  expect(root.promotionRecoveryStore.getSnapshot()).toBe("failed");
+  await root.promotePathActions.signInAndPromote();
+  expect(f.rpc.mock.calls[1]?.[0]).toEqual(f.rpc.mock.calls[0]?.[0]);
+  expect(f.rpc.mock.calls[1]?.[0].group?.joint_treatment_muscle_test).toBe("split_suggested");
   expect(f.effects()).toBe(1);
 });

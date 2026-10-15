@@ -4,7 +4,8 @@ import { inquiryGenerationStore } from "./inquiry-lifecycle";
 
 /** Web orchestration only; public engine actions remain responsible for therapeutic state. */
 export function useInquiryReset() {
-  return compositionRoot.inquiryResetActions;
+  const identity = useSyncExternalStore(compositionRoot.authStore.subscribe, compositionRoot.authStore.getSnapshot);
+  return { ...compositionRoot.inquiryResetActions, uncertain: identity.status === "uncertain" };
 }
 
 export function useInquiryGeneration(): number {

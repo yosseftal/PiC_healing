@@ -1,5 +1,8 @@
 import { useEffect, useId } from "react";
 
+/** Reset cancels a paused operation before its next provider call. */
+export class InquiryOperationCancelled extends Error {}
+
 const pending = new Set<Promise<boolean>>();
 const drafts = new Map<string, boolean>();
 const listeners = new Set<() => void>();
@@ -9,11 +12,23 @@ let saving = false;
 let failures = 0;
 
 /** Tracks the whole UI operation, including continuations between public engine calls. */
-export async function trackFlowOperation<T>(operation: () => Promise<T>): Promise<T> {
+export function trackFlowOperation<T>(operation: () => Promise<T>): Promise<T> {
+  return trackOperation(operation, false);
+}
+
+/** Reauthentication can settle a paused save, while remaining part of reset's drain. */
+export function trackIdentityOperation<T>(operation: () => Promise<T>): Promise<T> {
+  return trackOperation(operation, true);
+}
+
+async function trackOperation<T>(operation: () => Promise<T>, identity: boolean): Promise<T> {
   if (admissionClosed) throw new Error("Inquiry reset is pending");
-  if (saving) throw new Error("Saving is pending");
+  if (saving && !identity) throw new Error("Saving is pending");
   const result = operation();
-  const settled = result.then(() => true, () => { failures += 1; return false; });
+  const settled = result.then(() => true, (error: unknown) => {
+    if (error instanceof InquiryOperationCancelled) return true;
+    failures += 1; return false;
+  });
   pending.add(settled);
   try {
     return await result;
@@ -36,7 +51,7 @@ export function trackExclusiveFlowOperation<T>(operation: () => Promise<T>): Pro
 }
 
 /** Capture failures from the instant reset is requested, before its first asynchronous boundary. */
-export function prepareFlowSettlement(): () => Promise<void> {
+export function prepareFlowSettlement(isCurrent = () => true): () => Promise<void> {
   const initialFailures = failures;
   return async () => {
     let failed = false;
@@ -44,6 +59,7 @@ export function prepareFlowSettlement(): () => Promise<void> {
       const results = await Promise.all([...pending]);
       failed ||= results.includes(false);
     }
+    if (!isCurrent()) return;
     admissionClosed = true;
     if (failed || failures !== initialFailures) throw new Error("Inquiry operation did not settle successfully");
   };

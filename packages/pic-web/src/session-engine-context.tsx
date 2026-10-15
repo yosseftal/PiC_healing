@@ -3,7 +3,7 @@
  * how the tree reaches the one composition-root-constructed `SessionEngine`'s state and actions "with no
  * prop-drilling required, but no adapter import outside this one composition point" (ticket 14 DoD).
  */
-import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import type { SessionState } from "pic-engine";
 import { compositionRoot } from "./composition-root";
 
@@ -19,6 +19,7 @@ const SessionEngineContext = createContext<SessionEngineContextValue | null>(nul
 
 /** Wraps the whole app once, at the top (see `App.tsx`) - never re-constructed by a re-render. */
 export function SessionEngineProvider({ children }: { children: ReactNode }) {
+  useEffect(() => compositionRoot.authLifecycle.start(), []);
   const value: SessionEngineContextValue = {
     actions: compositionRoot.sessionEngineActions,
     promotePathActions: compositionRoot.promotePathActions,
@@ -66,4 +67,15 @@ export function useSessionEngineActions(): SessionEngineActions {
 /** Promote-path actions from the composition root (Wave 8 ticket 08-01). */
 export function usePromotePathActions(): PromotePathActions {
   return useSessionEngineContext().promotePathActions;
+}
+
+/** Restored identity is not a claim that local therapeutic work is saved. */
+export function useAuthIdentity() {
+  useSessionEngineContext();
+  return useSyncExternalStore(compositionRoot.authStore.subscribe, compositionRoot.authStore.getSnapshot);
+}
+
+export function useAuthenticatedDraft() {
+  const { subscribe, getSnapshot } = compositionRoot.authenticatedDraft.store;
+  return useSyncExternalStore(subscribe, getSnapshot);
 }

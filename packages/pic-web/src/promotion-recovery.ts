@@ -26,7 +26,7 @@ export function validRecovery(value: unknown): value is PromotionRecovery {
   if (group === null) return session.linked_group_id === null;
   return record(group) && typeof group.id === "string" && group.id === session.linked_group_id &&
     typeof group.name === "string" && Array.isArray(group.symptoms) &&
-    ["together", "separate"].includes(String(group.joint_treatment_muscle_test)) &&
+    ["together", "split_suggested"].includes(String(group.joint_treatment_muscle_test)) &&
     typeof group.joint_treatment_test_at === "string";
 }
 

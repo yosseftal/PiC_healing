@@ -1,10 +1,15 @@
 import {
+  createAuthenticatedDraft, readAuthenticatedDraft, hasAuthenticatedFocus, clearAuthenticatedFocus,
+  markAuthenticatedFocus,
+} from "./authenticated-draft";
+import { createAuthLifecycle } from "./auth-lifecycle";
+import {
   clearPromotionRecovery, readPromotionRecovery, savePromotionRecovery, type PromotionRecovery,
 } from "./promotion-recovery";
 import { readVerificationPending, saveVerificationPending } from "./verification-pending";
 import {
   advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore, reopenFlowOperations,
-  prepareFlowSettlement, restoreInquiryGeneration, trackExclusiveFlowOperation, trackFlowOperation,
+  prepareFlowSettlement, restoreInquiryGeneration, trackExclusiveFlowOperation, trackFlowOperation, trackIdentityOperation,
 } from "./inquiry-lifecycle";
 import {
   clearInquiryResetRecovery, readInquiryResetRecovery, saveInquiryResetRecovery,
@@ -53,17 +58,23 @@ import type { LoginCredentials } from "./promote-path";
 
 const guestRepository = new LocalGuestRepository();
 const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(guestRepository);
+const retainedDraft = readAuthenticatedDraft();
+const retainedAuthenticatedFocus = hasAuthenticatedFocus();
 let resetRecovery = readInquiryResetRecovery();
 let promotionRecovery = readPromotionRecovery();
+if (retainedDraft !== null) restoreInquiryGeneration(retainedDraft.generation);
 if (promotionRecovery !== null) restoreInquiryGeneration(promotionRecovery.generation);
 const persistedGuestFlowFacts = promotionRecovery === null ?
-  resetRecovery?.facts ?? guestRepository.getGuestFlowFactsSync() : {
+  retainedDraft !== null || retainedAuthenticatedFocus ? { activeGroupId: null, activePlayerSessionId: null,
+    symptomAdditionComplete: false, groupFinalized: false, summaryAcknowledged: false } :
+    resetRecovery?.facts ?? guestRepository.getGuestFlowFactsSync() : {
     activeGroupId: promotionRecovery.snapshot.group?.id ?? null,
     activePlayerSessionId: promotionRecovery.snapshot.playerSession.id,
     symptomAdditionComplete: true, groupFinalized: true, summaryAcknowledged: true,
   };
 const persistedGuestGate = promotionRecovery === null ?
-  resetRecovery?.gate ?? guestRepository.getGuestSessionGateSync() : {
+  retainedDraft !== null || retainedAuthenticatedFocus ? { gateTriggered: false, pendingFinishRequest: null } :
+    resetRecovery?.gate ?? guestRepository.getGuestSessionGateSync() : {
     gateTriggered: true, pendingFinishRequest: {
       sessionId: promotionRecovery.snapshot.playerSession.id, kind: promotionRecovery.kind,
     },
@@ -79,6 +90,7 @@ const playerEngine = new PlayerEngine(repositoryPort, libraryEngine, timelineEng
 const groupEngine = new GroupEngine(repositoryPort);
 
 let authenticatedPort: RepositoryPort | null = null;
+let authenticatedOwner: string | null = null;
 
 const sessionOptions = {
   onPromotionSucceeded: () => {
@@ -183,6 +195,7 @@ const playerSessionStore = createPlayerSessionStore(repositoryPort);
  */
 const untrackedSessionEngineActions = {
   async onFinishRequested(sessionId: string, kind: "finish" | "finishAnyway"): Promise<void> {
+    authLifecycle.assertCompletionAllowed(sessionId);
     // Public call arguments retain the newest intent even when the engine's gate storage write rejects.
     pendingGuestFinishRequest = sessionEngine.getState().mode === "guest" ? { sessionId, kind } : null;
     await sessionEngine.onFinishRequested(sessionId, kind);
@@ -200,6 +213,7 @@ const untrackedSessionEngineActions = {
 
 const untrackedGroupEngineActions = {
   async createDraftGroup(name: string): Promise<string> {
+    await prepareNewFocus();
     const groupId = await groupEngine.createDraftGroup(name);
     activeGroupId = groupId;
     groupEngineStore.notify();
@@ -220,6 +234,10 @@ const untrackedGroupEngineActions = {
     return groupEngine.revealPriorRating(symptomId);
   },
   setJointTreatmentMuscleTest(groupId: string, answer: JointTreatmentMuscleTestResult): Promise<void> {
+    const draft = authenticatedDraft.store.getSnapshot();
+    if (draft && draft.phase !== "draft" && draft.group.id === groupId && draft.group.joint_treatment_muscle_test === answer) {
+      return authenticatedDraft.retrySave();
+    }
     return groupEngine.setJointTreatmentMuscleTest(groupId, answer);
   },
   getGroup(groupId: string) {
@@ -235,6 +253,7 @@ const untrackedGroupEngineActions = {
 
 const untrackedPlayerEngineActions = {
   async startSession(treatmentId: string, linkedGroupId: string | null, unitIds: string[]): Promise<string> {
+    await prepareNewFocus();
     const sessionId = await playerEngine.startSession(treatmentId, linkedGroupId, unitIds);
     await playerSessionStore.refresh(sessionId);
     const { setGuestFlowPlayerSession } = await import("./guest-flow-facts");
@@ -254,14 +273,30 @@ const untrackedPlayerEngineActions = {
     await playerSessionStore.refresh(sessionId);
   },
   async finish(sessionId: string): Promise<void> {
+    authLifecycle.assertCompletionAllowed(sessionId);
     await playerEngine.finish(sessionId);
     await playerSessionStore.refresh(sessionId);
   },
   async finishAnyway(sessionId: string): Promise<void> {
+    authLifecycle.assertCompletionAllowed(sessionId);
     await playerEngine.finishAnyway(sessionId);
     await playerSessionStore.refresh(sessionId);
   },
 };
+
+/** Persist the classification before any authenticated focus can publish server-only pointers. */
+async function prepareNewFocus(): Promise<void> {
+  if (sessionEngine.getState().mode === "guest") {
+    if (hasAuthenticatedFocus()) {
+      const facts = await import("./guest-flow-facts");
+      // Replace suppressed server-only pointers durably before allowing Guest restoration on reload.
+      await guestRepository.saveGuestFlowFacts(facts.collectPersistedGuestFlowFacts());
+    }
+    clearAuthenticatedFocus();
+  }
+  else if (authenticatedOwner !== null) markAuthenticatedFocus(authenticatedOwner);
+  else throw new Error("Authenticated focus requires its original owner");
+}
 
 /** All public operations participate, including callers outside React event handlers. */
 function trackedActions<T extends Record<string, (...args: never[]) => Promise<unknown>>>(
@@ -269,6 +304,9 @@ function trackedActions<T extends Record<string, (...args: never[]) => Promise<u
 ): T {
   return Object.fromEntries(Object.entries(actions).map(([name, action]) => [
     name, (...args: never[]) => trackFlowOperation(() => {
+      if (authenticatedDraft.store.getSnapshot()?.restored) {
+        return Promise.reject(new Error("Retained local work needs an explicit decision"));
+      }
       if ((promotionSwitching || promotionRecovery !== null) && !allowDuringPromotion) {
         return Promise.reject(new Error("Saving is pending"));
       }
@@ -317,12 +355,35 @@ const initialResetRecovery = resetRecovery === null ? Promise.resolve() :
 const inquiryResetActions = {
   async resetInquiry(confirmed = false): Promise<"confirmation" | "reset"> {
     if (resetting) throw new Error("Inquiry reset is already pending");
+    const draft = authenticatedDraft.store.getSnapshot();
+    if (!confirmed && draft !== null && draft.phase !== "anchored") return "confirmation";
+    if (draft !== null && draft.phase === "flushing" && !draft.restored) {
+      throw new Error("Recover the pending group save before reset");
+    }
+    const uncertain = authStore.getSnapshot().status === "uncertain";
+    if (uncertain && !confirmed) return "confirmation";
+    if (authLifecycle.hasPending() && authLifecycle.hasPartialCompletion() && !uncertain) {
+      throw new Error("Reauthenticate to settle saved completion before reset");
+    }
+    if (!confirmed && authLifecycle.hasPending()) return "confirmation";
+    if (uncertain) authLifecycle.preserveUncertainty();
     resetting = true;
-    const settleOperations = prepareFlowSettlement();
+    authLifecycle.cancelPending();
+    let resetCurrent = true;
+    const settleOperations = prepareFlowSettlement(() => resetCurrent);
+    let unsubscribeAuth: () => void = () => undefined;
     try {
       const facts = await import("./guest-flow-facts");
       await initialResetRecovery;
-      await settleOperations();
+      await new Promise<void>((resolve, reject) => {
+        const check = () => {
+          if (authLifecycle.hasPending()) reject(new Error("Reauthenticate before resetting pending work"));
+        };
+        unsubscribeAuth = authStore.subscribe(check);
+        check();
+        void settleOperations().then(resolve, reject);
+      });
+      unsubscribeAuth();
       await recoverPendingReset();
       await facts.settleGuestFlowPersistence();
       const state = sessionEngine.getState();
@@ -353,6 +414,8 @@ const inquiryResetActions = {
         if (verificationPending !== null) saveVerificationPending(null);
         if (resetRecovery !== null) clearInquiryResetRecovery();
         if (promotionRecovery !== null) clearPromotionRecovery();
+        clearAuthenticatedFocus();
+        authenticatedDraft.discard();
       } catch (error) {
         if (resetRecovery !== null) {
           try { await restoreResetRecovery(resetRecovery); } catch { /* Envelope retains the retry. */ }
@@ -374,9 +437,12 @@ const inquiryResetActions = {
       facts.clearGuestFlowFacts();
       groupEngineStore.notify();
       advanceInquiryGeneration();
+      authLifecycle.completeDetachment();
       promotionRecoveryStore.notify();
       return "reset";
     } finally {
+      resetCurrent = false;
+      unsubscribeAuth();
       reopenFlowOperations();
       resetting = false;
       const publishSession = suppressSessionNotifications;
@@ -396,9 +462,24 @@ export function swapToSupabaseAdapter(port: RepositoryPort): void {
 }
 
 let browserClient: ReturnType<typeof createSupabaseBrowserClient> | null = null;
+function getBrowserClient() {
+  const config = readSupabasePublicConfigFromEnv(import.meta.env as Record<string, string | undefined>);
+  if (config === null) return null;
+  browserClient ??= createSupabaseBrowserClient(config);
+  return browserClient;
+}
+const authLifecycle = createAuthLifecycle(getBrowserClient, () => {
+  verifiedIdentity = false;
+  resetTreatmentContentCacheForTest();
+});
+if (promotionRecovery !== null) authLifecycle.bind(promotionRecovery.owner);
+else if (retainedDraft !== null) authLifecycle.bind(retainedDraft.owner);
+const authenticatedDraft = createAuthenticatedDraft(retainedDraft, authLifecycle);
+const authStore = authLifecycle.store;
 let verifiedIdentity = false;
 let recoveryIdentityRejected = false;
 let loginPromotion: Promise<void> | null = null;
+let reauthentication: Promise<void> | null = null;
 let publicPromotionOwner: string | null = null;
 let frozenPromotion: {
   generation: number; snapshot: GuestSnapshot; owner: string | null; kind: "finish" | "finishAnyway";
@@ -463,6 +544,8 @@ const untrackedPromotePathActions = {
       await facts.settleGuestFlowPersistence();
       if (verificationPending !== null) saveVerificationPending(null);
       if (resetRecovery !== null) clearInquiryResetRecovery();
+      authenticatedOwner = newUserId;
+      markAuthenticatedFocus(newUserId);
       await guestRepository.clear();
       clearPromotionRecovery();
       verificationPending = null;
@@ -546,7 +629,7 @@ const untrackedPromotePathActions = {
       if (credentials !== undefined && !verifiedIdentity) await signInWithCredentials(client, credentials);
       const verifyOwner = async () => {
         let user;
-        try { user = await getVerifiedUser(client); }
+        try { user = await authLifecycle.verify(); }
         catch (error) { verifiedIdentity = false; recoveryIdentityRejected = true; throw error; }
         if (request.generation !== inquiryGenerationStore.getSnapshot() ||
           (request.owner !== null && request.owner !== user.id) ||
@@ -558,6 +641,7 @@ const untrackedPromotePathActions = {
           recoveryIdentityRejected = true;
           throw new Error("The saving request no longer belongs to this inquiry and identity");
         }
+        authLifecycle.bind(user.id);
         request.owner = user.id;
         verifiedIdentity = true;
         recoveryIdentityRejected = false;
@@ -575,7 +659,10 @@ const untrackedPromotePathActions = {
       promotionSwitching = true;
       try {
         await untrackedPromotePathActions.promoteWithAuthenticatedRepository(
-          createSupabaseRepositoryFromClient(client), request.snapshot, user.id,
+          authenticatedDraft.decorate(
+            authLifecycle.guard(createSupabaseRepositoryFromClient(client), user.id, () => promotionSwitching), user.id,
+          ),
+          request.snapshot, user.id,
         );
         if (sessionEngineStore.getSnapshot().promotionStatus === "succeeded") {
           frozenPromotion = null;
@@ -584,8 +671,19 @@ const untrackedPromotePathActions = {
     }).finally(() => { loginPromotion = null; });
     return loginPromotion;
   },
-  hasVerifiedIdentity: () => verifiedIdentity,
-  canRetryWithoutCredentials: () => verifiedIdentity || (promotionRecovery !== null && !recoveryIdentityRejected),
+  reauthenticate(credentials: LoginCredentials): Promise<void> {
+    if (reauthentication !== null) return reauthentication;
+    reauthentication = trackIdentityOperation(async () => {
+      const client = getBrowserClient();
+      if (client === null) throw new Error("Public authentication configuration is unavailable");
+      await signInWithCredentials(client, credentials);
+      await authLifecycle.verify();
+    }).finally(() => { reauthentication = null; });
+    return reauthentication;
+  },
+  hasVerifiedIdentity: () => verifiedIdentity || authStore.getSnapshot().status === "verified",
+  canRetryWithoutCredentials: () => verifiedIdentity || authStore.getSnapshot().status === "verified" ||
+    (promotionRecovery !== null && !recoveryIdentityRejected),
 };
 function coordinatePromotion(port: RepositoryPort, snapshot: GuestSnapshot, owner: string): Promise<void> {
   if (loginPromotion !== null) {
@@ -687,6 +785,9 @@ export function resetTreatmentContentCacheForTest(): void {
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
+  authLifecycle,
+  authStore,
+  authenticatedDraft,
   verificationStore,
   inquiryResetActions,
   repositoryPort,

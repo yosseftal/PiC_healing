@@ -1,9 +1,14 @@
 import { createMessageResolver, type MessageTemplate } from "./messages";
 
 export const messageDefinitions = {
+  "draft.unsaved": { params: [] },
+  "draft.retainedTitle": { params: [] },
+  "draft.retainedBody": { params: [] },
+  "draft.anchored": { params: [] },
   "reset.newGroup": { params: [] },
   "reset.confirm": { params: [] },
   "reset.loss": { params: [] },
+  "reset.uncertainLoss": { params: [] },
   "reset.keep": { params: [] },
   "reset.discard": { params: [] },
   "reset.pending": { params: [] },
@@ -84,6 +89,10 @@ export const messageDefinitions = {
   "gate.password": { params: [] },
   "gate.validation": { params: [] },
   "gate.authenticated": { params: [] },
+  "gate.reauthTitle": { params: [] },
+  "gate.reauthBody": { params: [] },
+  "gate.reauthSubmit": { params: [] },
+  "gate.uncertain": { params: [] },
   "gate.retry": { params: [] },
   "gate.continueWithoutSaving": { params: [] },
   "player.title": { params: [] },
@@ -143,9 +152,16 @@ export const messageDefinitions = {
 // Newly authored UI copy is product-approved for Wave 11 (2026-10-11), not a website quotation.
 export const dictionaries = {
   he: {
+    "draft.unsaved": "טיוטת הקבוצה עדיין מקומית ולא נשמרה בחשבון.",
+    "draft.retainedTitle": "הטיוטה המקומית נשמרה במכשיר",
+    "draft.retainedBody": "אחרי טעינה מחדש אפשר לראות כאן את הטיוטה, אבל עדיין אי אפשר להמשיך אותה. " +
+      "היא תישאר במכשיר עד לבחירה מפורשת להתחיל מחדש. קבוצות שכבר נשמרו נשארות בחשבון.",
+    "draft.anchored": "הקבוצה נשמרה בחשבון. אפשר להתחיל חקירה חדשה.",
     "reset.newGroup": "קבוצת סימפטומים חדשה",
     "reset.confirm": "להתחיל בירור חדש?",
     "reset.loss": "טיוטה מקומית זו תימחק. קבוצות שנשמרו יישארו זמינות.",
+    "reset.uncertainLoss": "תוצאת התיעוד האחרון אינה ידועה. נשמור במכשיר את פרטי אי־הוודאות לפני התחלת בירור חדש. " +
+      "התיעוד לא יישלח שוב ולא יוצג כשמור. העבודה שכבר נשמרה נשארת בחשבון.",
     "reset.keep": "להמשיך בבירור הנוכחי",
     "reset.discard": "למחוק את הטיוטה ולהתחיל מחדש",
     "reset.pending": "מכינים את הבירור…",
@@ -226,6 +242,11 @@ export const dictionaries = {
     "gate.email": "כתובת אימייל",
     "gate.password": "סיסמה",
     "gate.validation": "יש להזין כתובת אימייל תקינה וסיסמה כדי להתחבר.",
+    "gate.reauthTitle": "התחברות מחדש",
+    "gate.reauthBody": "החיבור לחשבון הסתיים. העבודה השמורה נשארת בחשבון. התחברו שוב לאותו חשבון כדי להמשיך.",
+    "gate.reauthSubmit": "התחברות מחדש",
+    "gate.uncertain": "לא ניתן לאמת אם התיעוד האחרון הושלם. לא ננסה לשמור אותו שוב כדי למנוע כפילות. " +
+      "השמירה בהמתנה כדי למנוע כפילות. העבודה שכבר נשמרה נשארת בחשבון.",
     "gate.authenticated": "התחברת. העבודה עדיין במכשיר הזה עד שהשמירה תושלם.",
     "gate.retry": "ניסיון נוסף",
     "gate.continueWithoutSaving": "המשך ללא שמירה",
@@ -283,9 +304,16 @@ export const dictionaries = {
     "utilities.sessionContent": "תוכן הכלים",
   },
   en: {
+    "draft.unsaved": "This group draft is local and has not been saved to your account.",
+    "draft.retainedTitle": "Your local draft is retained",
+    "draft.retainedBody": "After reloading, you can view this draft here, but continuing it is not available yet. " +
+      "It stays on this device until you explicitly choose to start anew. Saved groups stay in your account.",
+    "draft.anchored": "The group is saved in your account. You can start a new inquiry.",
     "reset.newGroup": "New symptom group",
     "reset.confirm": "Start a new inquiry?",
     "reset.loss": "Discarding removes this local draft. Saved groups remain available.",
+    "reset.uncertainLoss": "The last timeline outcome is unknown. Its uncertainty details will stay on this device " +
+      "before starting a new inquiry. It will not be retried or shown as saved. Previously saved work stays in your account.",
     "reset.keep": "Keep current inquiry",
     "reset.discard": "Discard draft and start new",
     "reset.pending": "Preparing your inquiry…",
@@ -368,6 +396,12 @@ export const dictionaries = {
     "gate.email": "Email address",
     "gate.password": "Password",
     "gate.validation": "Enter a valid email address and your password to sign in.",
+    "gate.reauthTitle": "Sign in again",
+    "gate.reauthBody": "Your account connection ended. Saved work stays in your account. " +
+      "Sign in to the same account to continue.",
+    "gate.reauthSubmit": "Sign in again",
+    "gate.uncertain": "The last timeline entry could not be confirmed. We will not repeat it and risk a duplicate. " +
+      "Saving stays paused to avoid duplicates. Previously saved work stays in your account.",
     "gate.authenticated": "You are signed in. Your work stays on this device until saving completes.",
     "gate.retry": "Try again",
     "gate.continueWithoutSaving": "Continue without saving",

@@ -1,3 +1,4 @@
+import { useAuthenticatedDraft } from "../session-engine-context";
 import { Menu } from "lucide-react";
 import { type ReactNode } from "react";
 import { UTILITY_CONTROL } from "../control-affordance";
@@ -19,12 +20,15 @@ export function TherapeuticScreenFrame({
   utilities, allowInquiryReset = false, ...frameProps
 }: TherapeuticScreenFrameProps) {
   const { message } = useLocale();
+  const draft = useAuthenticatedDraft();
   const controls = useInquiryResetControls();
   const { open, setOpen, confirmation, busy, keepRef, resetRef, keepInquiry, requestReset } = controls;
 
   return (
     <TherapeuticFrame
       {...frameProps}
+      quietStatus={<>{frameProps.quietStatus}{draft && draft.phase !== "anchored" ?
+        <span role="status">{message("draft.unsaved").text}</span> : null}</>}
       utilityTrigger={(
         <TherapeuticSheet
           open={open}

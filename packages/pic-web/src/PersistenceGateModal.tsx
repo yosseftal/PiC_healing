@@ -9,6 +9,8 @@ import {
   useSessionEngineState,
   usePromotionRecoveryState,
   useVerificationPending,
+  useAuthIdentity,
+  useAuthenticatedDraft,
 } from "./session-engine-context";
 
 /**
@@ -19,12 +21,18 @@ import {
 export function PersistenceGateModal() {
   const { locale, direction, message } = useLocale();
   const state = useSessionEngineState();
+  const identity = useAuthIdentity();
+  const draft = useAuthenticatedDraft();
+  const retained = draft?.restored === true;
+  const reauth = identity.status === "reauthenticate" ||
+    (retained && identity.status !== "verified" && identity.status !== "checking");
+  const uncertain = identity.status === "uncertain";
   const recovery = usePromotionRecoveryState();
   const verification = useVerificationPending();
   const { gateTriggered, promotionStatus } = state;
   const controls = useInquiryResetControls();
   const { confirmation, busy, open: utilitiesOpen, handoffPending, keepInquiry, requestReset, resetRef } = controls;
-  const { signInAndPromote, register, resendVerification, hasVerifiedIdentity, canRetryWithoutCredentials } =
+  const { signInAndPromote, register, resendVerification, reauthenticate, hasVerifiedIdentity, canRetryWithoutCredentials } =
     usePromotePathActions();
   const [feedback, setFeedback] = useState<AuthFeedback | null>(verificationReturnFeedback);
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -36,11 +44,13 @@ export function PersistenceGateModal() {
   const [validation, setValidation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [reauthSubmitting, setReauthSubmitting] = useState(false);
+  const reauthSubmittingRef = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => { if (verification !== null) setMode("login"); }, [verification]);
-  useEffect(() => { setDismissed(false); }, [state, recovery]);
+  useEffect(() => { setDismissed(false); }, [state, recovery, identity, draft]);
   useEffect(() => {
-    if (gateTriggered || recovery !== null) return;
+    if (gateTriggered || recovery !== null || reauth || uncertain || retained) return;
     setPassword("");
     setValidation(false);
     setPreRpcPromotionFailed(false);
@@ -48,34 +58,39 @@ export function PersistenceGateModal() {
     setMode("login");
     setName("");
     setEmail("");
-  }, [gateTriggered, recovery]);
+  }, [gateTriggered, recovery, reauth, uncertain, retained]);
 
-  if (!gateTriggered && recovery === null) {
+  if (!gateTriggered && recovery === null && !reauth && !uncertain && !retained) {
     return null;
   }
 
-  const pending = submitting || promotionStatus === "pending" || recovery === "pending";
+  const pending = (reauth ? reauthSubmitting : !uncertain && submitting) ||
+    (retained && identity.status === "checking") ||
+    (!reauth && !uncertain && (promotionStatus === "pending" || recovery === "pending"));
   const showFailedUi = !pending && (promotionStatus === "failed" || recovery === "failed" || preRpcPromotionFailed);
   const showIdleUi = promotionStatus === "idle" && !preRpcPromotionFailed;
 
   function anchorSession(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    if (submittingRef.current) return;
+    const submission = reauth ? reauthSubmittingRef : submittingRef;
+    const setSubmission = reauth ? setReauthSubmitting : setSubmitting;
+    if (submission.current) return;
     if (!event.currentTarget.checkValidity() || (mode === "register" && !name.trim())) { setValidation(true); return; }
-    submittingRef.current = true;
-    setSubmitting(true);
+    submission.current = true;
+    setSubmission(true);
     setValidation(false);
     setPreRpcPromotionFailed(false);
-    const credentials = canRetryWithoutCredentials() ? undefined : { email: email.trim(), password };
+    const credentials = !reauth && canRetryWithoutCredentials() ? undefined : { email: email.trim(), password };
     setPassword("");
-    const operation = mode === "register" ? register({ name, email: email.trim(), password }) : signInAndPromote(credentials);
+    const operation = reauth ? reauthenticate({ email: email.trim(), password }) : mode === "register" ?
+      register({ name, email: email.trim(), password }) : signInAndPromote(credentials);
     setFeedback(null);
     void operation.then(() => { setMode("login"); }).catch((error: unknown) => {
       setFeedback(authFeedback(error));
       setPreRpcPromotionFailed(true);
     }).finally(() => {
-      submittingRef.current = false;
-      setSubmitting(false);
+      submission.current = false;
+      setSubmission(false);
     });
   }
 
@@ -105,11 +120,13 @@ export function PersistenceGateModal() {
     >
       <Dialog.Title asChild>
         <h2 className="text-pic-heading font-pic-heading leading-pic-heading" id="persistence-gate-title">
-          {message(confirmation ? "reset.confirm" : "gate.title").text}
+          {message(confirmation ? "reset.confirm" : reauth ? "gate.reauthTitle" :
+            retained ? "draft.retainedTitle" : "gate.title").text}
         </h2>
       </Dialog.Title>
       <Dialog.Description asChild>
-        <p id="persistence-gate-description">{message("gate.body").text}</p>
+        <p id="persistence-gate-description">{message(uncertain ? "gate.uncertain" : reauth ? "gate.reauthBody" :
+          retained ? "draft.retainedBody" : "gate.body").text}</p>
       </Dialog.Description>
 
       <InquiryResetControls controls={controls} />
@@ -119,13 +136,18 @@ export function PersistenceGateModal() {
         <p role="status">{message("gate.pending").text}</p>
       ) : null}
 
-      {!pending ? (
+      {retained && identity.status === "verified" && identity.owner === draft.owner ? <div>
+        <p dir="auto"><bdi>{draft.group.name}</bdi></p>
+        <ul>{draft.group.symptoms.map((symptom) => <li key={symptom.id}><bdi>{symptom.name}</bdi></li>)}</ul>
+        <p role="status">{message(draft.phase === "anchored" ? "draft.anchored" : "draft.unsaved").text}</p>
+      </div> : null}
+      {!pending && !uncertain && (!retained || reauth) ? (
         <form noValidate onSubmit={anchorSession} className="grid gap-3">
           {verification ? <div role="status">
             <p>{message("gate.verification").text}</p><p>{message("gate.otherDevice").text}</p>
           </div> : null}
-          {hasVerifiedIdentity() ? <p role="status">{message("gate.authenticated").text}</p> :
-            canRetryWithoutCredentials() ? null : <>
+          {!reauth && hasVerifiedIdentity() ? <p role="status">{message("gate.authenticated").text}</p> :
+            !reauth && canRetryWithoutCredentials() ? null : <>
           {mode === "register" ? <>
           <label htmlFor="gate-name">{message("gate.name").text}</label>
           <input id="gate-name" name="name" autoComplete="name" required value={name} className={UTILITY_CONTROL}
@@ -150,7 +172,8 @@ export function PersistenceGateModal() {
           </p> : null}
           {!validation && !showFailedUi && feedback ? <p role="status">{message(feedback).text}</p> : null}
           <button className={UTILITY_CONTROL} type="submit">
-            {message(showFailedUi ? "gate.retry" : mode === "register" ? "gate.register" : "gate.signIn").text}
+            {message(reauth ? "gate.reauthSubmit" : showFailedUi ? "gate.retry" :
+              mode === "register" ? "gate.register" : "gate.signIn").text}
           </button>
         </form>
       ) : null}
@@ -161,7 +184,7 @@ export function PersistenceGateModal() {
           setFeedback(authFeedback(error)); setPreRpcPromotionFailed(true);
         }).finally(() => { submittingRef.current = false; setSubmitting(false); });
       }}>{message("gate.resend").text}</button> : null}
-      {!pending && !verification && !canRetryWithoutCredentials() ? (
+      {!pending && !reauth && !uncertain && !retained && !verification && !canRetryWithoutCredentials() ? (
         <button className={UTILITY_CONTROL} type="button" onClick={() => {
           setMode(mode === "login" ? "register" : "login"); setPassword("");
           setValidation(false); setPreRpcPromotionFailed(false);
@@ -169,10 +192,11 @@ export function PersistenceGateModal() {
         }}>{message(mode === "login" ? "gate.registerMode" : "gate.loginMode").text}</button>
       ) : null}
 
-      {!pending && (showIdleUi || showFailedUi) ? (
+      {!pending && (retained || reauth || uncertain || showIdleUi || showFailedUi) ? (
         <button className={UTILITY_CONTROL} ref={resetRef} disabled={busy} type="button"
           onClick={() => void requestReset(false)}>
-          {message("gate.continueWithoutSaving").text}
+          {message((retained || state.mode === "authenticated") && recovery === null ?
+            "reset.newGroup" : "gate.continueWithoutSaving").text}
         </button>
       ) : null}
       </>}
