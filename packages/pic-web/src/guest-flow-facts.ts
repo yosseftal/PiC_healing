@@ -3,7 +3,6 @@
  * components. `deriveGuestFlowScreen` is pure; `guestFlowStore` notifies subscribers when facts change.
  */
 import type { SessionState } from "pic-engine";
-import { resetGroupFlowFactsForTest } from "./composition-root";
 
 export type GuestFlowScreen =
   | "create-group"
@@ -78,6 +77,7 @@ function createExternalStore<TState>(getState: () => TState) {
 }
 
 let getActiveGroupId: () => string | null = () => null;
+let resetActiveGroup: () => void = () => {};
 let getSessionState: () => SessionState = () => ({
   mode: "guest",
   gateTriggered: false,
@@ -140,6 +140,7 @@ export const guestFlowStore = createExternalStore(() => deriveGuestFlowScreen(co
 /** Wires upstream composition-root stores without creating a static import cycle. */
 export function initGuestFlowFacts(deps: {
   getActiveGroupId: () => string | null;
+  resetActiveGroup?: () => void;
   getSessionState: () => SessionState;
   subscribeToGroup: (listener: () => void) => () => void;
   subscribeToSession: (listener: () => void) => () => void;
@@ -147,6 +148,7 @@ export function initGuestFlowFacts(deps: {
   persistGuestFlowFacts?: (facts: PersistedGuestFlowFacts) => void | Promise<void>;
 }): void {
   getActiveGroupId = deps.getActiveGroupId;
+  resetActiveGroup = deps.resetActiveGroup ?? (() => {});
   getSessionState = deps.getSessionState;
   if (deps.initialFacts !== undefined) {
     activePlayerSessionId = deps.initialFacts.activePlayerSessionId;
@@ -195,7 +197,7 @@ export function resetGuestFlowFactsForTest(): void {
   groupFinalized = false;
   summaryAcknowledged = false;
   persistGuestFlowFacts = null;
-  resetGroupFlowFactsForTest();
+  resetActiveGroup();
   notifyGuestFlowStores();
 }
 

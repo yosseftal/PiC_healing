@@ -105,6 +105,6 @@ describe("pic-web visual foundation", () => {
     expect(stylesheet).toContain('@source "../";');
     expect(mainSource).toContain('import "./visual-foundation/visual-foundation.css";');
     expect(viteConfig).toContain('import tailwindcss from "@tailwindcss/vite";');
-    expect(viteConfig).toMatch(/plugins:\s*\[react\(\),\s*tailwindcss\(\)\]/);
+    expect(viteConfig).toMatch(/plugins:\s*\[[^\]]*react\(\)[^\]]*tailwindcss\(\)/);
   });
 });

@@ -1,3 +1,4 @@
+import * as guestFlowFacts from "./guest-flow-facts";
 import {
   createAuthenticatedDraft, readAuthenticatedDraft, hasAuthenticatedFocus, clearAuthenticatedFocus,
   markAuthenticatedFocus,
@@ -201,7 +202,7 @@ const untrackedSessionEngineActions = {
     await sessionEngine.onFinishRequested(sessionId, kind);
     await playerSessionStore.refresh(sessionId);
     if (playerSessionStore.getSnapshot(sessionId)?.success_declared === true) {
-      const { setGuestFlowPlayerSession } = await import("./guest-flow-facts");
+      const { setGuestFlowPlayerSession } = await Promise.resolve(guestFlowFacts);
       setGuestFlowPlayerSession(null);
     }
   },
@@ -217,7 +218,7 @@ const untrackedGroupEngineActions = {
     const groupId = await groupEngine.createDraftGroup(name);
     activeGroupId = groupId;
     groupEngineStore.notify();
-    const { persistGuestFlowFactsNow } = await import("./guest-flow-facts");
+    const { persistGuestFlowFactsNow } = await Promise.resolve(guestFlowFacts);
     persistGuestFlowFactsNow();
     return groupId;
   },
@@ -245,7 +246,7 @@ const untrackedGroupEngineActions = {
   },
   async finalizeGroup(groupId: string) {
     const result = await groupEngine.finalizeGroup(groupId);
-    const { setGuestFlowGroupFinalized } = await import("./guest-flow-facts");
+    const { setGuestFlowGroupFinalized } = await Promise.resolve(guestFlowFacts);
     setGuestFlowGroupFinalized(true);
     return result;
   },
@@ -256,7 +257,7 @@ const untrackedPlayerEngineActions = {
     await prepareNewFocus();
     const sessionId = await playerEngine.startSession(treatmentId, linkedGroupId, unitIds);
     await playerSessionStore.refresh(sessionId);
-    const { setGuestFlowPlayerSession } = await import("./guest-flow-facts");
+    const { setGuestFlowPlayerSession } = await Promise.resolve(guestFlowFacts);
     setGuestFlowPlayerSession(sessionId);
     return sessionId;
   },
@@ -288,7 +289,7 @@ const untrackedPlayerEngineActions = {
 async function prepareNewFocus(): Promise<void> {
   if (sessionEngine.getState().mode === "guest") {
     if (hasAuthenticatedFocus()) {
-      const facts = await import("./guest-flow-facts");
+      const facts = await Promise.resolve(guestFlowFacts);
       // Replace suppressed server-only pointers durably before allowing Guest restoration on reload.
       await guestRepository.saveGuestFlowFacts(facts.collectPersistedGuestFlowFacts());
     }
@@ -373,7 +374,7 @@ const inquiryResetActions = {
     const settleOperations = prepareFlowSettlement(() => resetCurrent);
     let unsubscribeAuth: () => void = () => undefined;
     try {
-      const facts = await import("./guest-flow-facts");
+      const facts = await Promise.resolve(guestFlowFacts);
       await initialResetRecovery;
       await new Promise<void>((resolve, reject) => {
         const check = () => {
@@ -540,7 +541,7 @@ const untrackedPromotePathActions = {
       }
       const completed = await port.getPlayerSession(request.snapshot.playerSession.id);
       if (completed?.success_declared !== true) throw new Error("Completion needs recovery");
-      const facts = await import("./guest-flow-facts");
+      const facts = await Promise.resolve(guestFlowFacts);
       await facts.settleGuestFlowPersistence();
       if (verificationPending !== null) saveVerificationPending(null);
       if (resetRecovery !== null) clearInquiryResetRecovery();
@@ -709,9 +710,10 @@ export function resetGroupFlowFactsForTest(): void {
   groupEngineStore.notify();
 }
 
-void import("./guest-flow-facts").then(async ({ initGuestFlowFacts, setGuestFlowPlayerSession }) => {
+void Promise.resolve(guestFlowFacts).then(async ({ initGuestFlowFacts, setGuestFlowPlayerSession }) => {
   initGuestFlowFacts({
     getActiveGroupId: () => activeGroupId,
+    resetActiveGroup: resetGroupFlowFactsForTest,
     getSessionState: () => sessionEngineStore.getSnapshot(),
     subscribeToGroup: groupEngineStore.subscribe,
     subscribeToSession: sessionEngineStore.subscribe,
