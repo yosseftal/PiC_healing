@@ -222,6 +222,12 @@ for (const locale of ["he", "en"] as const) {
     await expect(page.getByRole("dialog", { name: text.gate })).toBeVisible();
     await page.reload();
     await expect(page.getByTestId("atomic-unit-title")).toBeVisible();
+    const restoredGate = page.getByRole("dialog", { name: text.gate });
+    await expect(restoredGate).toBeVisible();
+    const pendingWork = await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"));
+    await page.keyboard.press("Escape");
+    await expect(restoredGate).toBeHidden();
+    expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).toBe(pendingWork);
     sheet = await openSheet(page, locale);
     await sheet.getByTestId("finish-anyway-button").click();
     await expect(sheet).toBeHidden();

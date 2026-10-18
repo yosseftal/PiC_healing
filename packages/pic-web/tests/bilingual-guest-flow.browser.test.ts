@@ -33,7 +33,7 @@ async function contained(page: Page, target: Locator) {
   expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height + 1);
 }
 
-async function frameBounds(page: Page) {
+async function frameBounds(page: Page, readingSurface = page.locator(".pic-therapeutic-frame")) {
   await contained(page, page.locator(".pic-therapeutic-frame"));
   const viewport = page.viewportSize()!;
   const size = await page.evaluate(() => ({
@@ -45,7 +45,7 @@ async function frameBounds(page: Page) {
   expect(size.x).toBe(0);
   expect(size.y).toBe(0);
   expect(size.overflow).toBe("hidden");
-  await expectReadable(page.locator(".pic-therapeutic-frame").locator("h1, h2, p, button:not(:disabled)"));
+  await expectReadable(readingSurface.locator("h1, h2, p, button:not(:disabled)"));
 }
 
 async function choose(page: Page, from: Locale, to: Locale, player = false) {
@@ -170,6 +170,7 @@ for (const locale of ["he", "en"] as const) {
         await expect(finish).not.toBeFocused();
         await page.keyboard.press("Enter");
         await expect(page.getByRole("dialog", { name: copy[locale].gate })).toHaveCount(0);
+        await frameBounds(page);
         await act(page, finish);
         const gate = page.getByRole("dialog", { name: copy[locale].gate });
         await contained(page, gate);
@@ -182,7 +183,8 @@ for (const locale of ["he", "en"] as const) {
         expect(actions).not.toContain("finish");
         expect(actions).not.toContain("finishAnyway");
         expect(actions).not.toContain("promote");
-        await frameBounds(page);
+        // The real modal makes the Player inert; retain geometry checks and measure the active reading surface.
+        await frameBounds(page, gate);
       });
   }
 }
