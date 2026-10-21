@@ -283,8 +283,8 @@ Key enforced rules include Ticket 04 module isolation (`no-player-into-group`, `
 
 ## Related Documents
 
-- [`CLAUDE.md`](../../CLAUDE.md) — Product manifesto and pillar definitions
-- [`decisions.md`](../../decisions.md) — DEC-001 through DEC-017
-- [`docs/audits/wave-4-audit.md`](../audits/wave-4-audit.md) — Wave 4 isolation audit
-- [`docs/audits/wave-5-wave-7-audit.md`](../audits/wave-5-wave-7-audit.md) — Session engine and composition root audit
-- [`packages/pic-web/src/composition-root.ts`](../../packages/pic-web/src/composition-root.ts) — Live composition root
+- [`CLAUDE.md`](../../../../CLAUDE.md) — Product manifesto and pillar definitions
+- [`decisions.md`](../../../../decisions.md) — DEC-001 through DEC-017
+- [`docs/waves/wave-4/audits/wave-4-audit.md`](../../wave-4/audits/wave-4-audit.md) — Wave 4 isolation audit
+- [`docs/waves/shared/audits/wave-5-wave-7-audit.md`](../audits/wave-5-wave-7-audit.md) — Session engine and composition root audit
+- [`packages/pic-web/src/composition-root.ts`](../../../../packages/pic-web/src/composition-root.ts) — Live composition root

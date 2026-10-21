@@ -96,17 +96,33 @@ of the existing deployment, not evidence that this cleanup has already been depl
 
 ## Quality gates
 
-| Gate | Result |
-| --- | --- |
-| `npm run depcruise -w packages/pic-web` | PASS — 766 modules, 1,669 dependencies, zero violations |
-| `npm run depcruise -w packages/pic-engine` | PASS — 72 modules, 199 dependencies, zero violations |
-| Root `npm run typecheck` | PASS — all four workspaces |
-| Root `npm run lint` | PASS |
-| Root `npm test` | PASS — 55 files, 572 tests, zero failures/skips; workspace depcruise passed |
-| `npx playwright test` in pic-web | PASS — 181/181 Chromium tests, 2.9 minutes, including compiled production preview |
-| `npm run build -w packages/pic-web` | PASS — zero warnings; one HTML entry, one CSS file, five JS files; largest JS chunk 322.69 kB |
-| Supplemental TypeScript check of new build/test/config files | PASS |
-| `git diff --check` | PASS |
+- **Gate:** `npm run depcruise -w packages/pic-web`
+  **Result:** PASS — 766 modules, 1,669 dependencies, zero violations
+
+- **Gate:** `npm run depcruise -w packages/pic-engine`
+  **Result:** PASS — 72 modules, 199 dependencies, zero violations
+
+- **Gate:** Root `npm run typecheck`
+  **Result:** PASS — all four workspaces
+
+- **Gate:** Root `npm run lint`
+  **Result:** PASS
+
+- **Gate:** Root `npm test`
+  **Result:** PASS — 55 files, 572 tests, zero failures/skips; workspace depcruise passed
+
+- **Gate:** `npx playwright test` in pic-web
+  **Result:** PASS — 181/181 Chromium tests, 2.9 minutes, including compiled production preview
+
+- **Gate:** `npm run build -w packages/pic-web`
+  **Result:** PASS — zero warnings; one HTML entry, one CSS file, five JS files; largest JS chunk 322.69 kB
+
+- **Gate:** Supplemental TypeScript check of new build/test/config files
+  **Result:** PASS
+
+- **Gate:** `git diff --check`
+  **Result:** PASS
+
 
 The 572 tests include twelve new production-boundary checks. Real signup used a fresh,
 user-authorized timestamp alias on `@pic-healing.com`; the existing test owns its cleanup.

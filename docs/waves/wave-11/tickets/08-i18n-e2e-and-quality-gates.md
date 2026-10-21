@@ -16,7 +16,7 @@ Their transitive prerequisites include 11.1, 11.2, 11.3, and 11.5; these edges c
 
 **Dispatch state:** Done; committed, independent Standards/Spec reviews closed, and final root gates passed.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 5–6.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 5–6.
 
 **Spec coverage:** AC-01–25, final approved-dictionary/content coverage, and Definition of Done.
 
@@ -232,6 +232,6 @@ Final assembled-wave gates on `e9696e6`:
   Zero engine/adapter/port/seed/schema/migration/root metadata diff. All wave-changed tracked files pass 130 characters.
 - Final staged documentation line-length and diff checks are enforced before the closure commit.
 
-The parent handoff at `docs/handoffs/wave-11-handoff.md` records approvals, commits, review closure, gates,
+The parent handoff at `docs/waves/wave-11/handoffs/wave-11-handoff.md` records approvals, commits, review closure, gates,
 deduplication sweep and manual limitations. Physical-device and Hebrew screen-reader checks remain unverified;
 the passing browser matrix does not claim manual evidence, course support or broader content versioning.

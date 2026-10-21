@@ -3,8 +3,8 @@
 **Paused:** 2026-09-24
 **Branch:** `main`
 **Last Wave 10 implementation commit:** `4d9ee50`
-**Approved specification:** `.scratch/wave-10-ui-primitives.md`
-**Canonical tickets:** `.scratch/wave-10-ui-primitives/issues/`
+**Approved specification:** `docs/waves/wave-10/specs/wave-10-ui-primitives.md`
+**Canonical tickets:** `docs/waves/wave-10/tickets/`
 
 ## Pause State
 
@@ -61,7 +61,7 @@ The primary development environment is expected to retain its existing green roo
    - Status: `ready-for-agent`
    - Blockers 10.2 and 10.4 are done.
    - Prepared brief:
-     `.scratch/wave-10-ui-primitives/briefs/06-unified-player-atomic-guidance-frame.md`
+     `docs/waves/wave-10/briefs/06-unified-player-atomic-guidance-frame.md`
 2. **10.7 — Sovereign Player Utility Drawer**
    - Blocked by 10.5 and 10.6.
 3. **10.8 — Terminal NEMAR Progressive Action Pattern**

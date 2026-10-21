@@ -6,11 +6,13 @@
 
 **Status:** done
 
-**What to build:** A returning user's verified identity is reused at a real Persistence Gate, while session expiry or external sign-out pauses authenticated writes and permits safe reauthentication without losing work.
+**What to build:** A returning user's verified identity is reused at a real Persistence Gate, while session expiry or external
+sign-out pauses authenticated writes and permits safe reauthentication without losing work.
 
 **Blocked by:** W12-06 — Recover interrupted promotion without loss or duplicate success.
 
-**Source:** [Approved Wave 12 specification](../../../docs/specs/wave-12-spec.md), Implementation Decisions D (Returning identity and engine limitation); User Stories 7, 21, 24-25 and 30.
+**Source:** [Approved Wave 12 specification][relocation-link-1], Implementation Decisions D (Returning identity and engine
+limitation); User Stories 7, 21, 24-25 and 30.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
 ## Context Injection (verbatim)
@@ -20,28 +22,41 @@ The nine-ticket breakdown and dependencies were approved without changes on 2026
 
 ## Owned vertical slice
 
-Own the web Auth lifecycle, owner-scoped cache/request handling, reauthentication presentation, and integration with existing reset and promotion actions. Engine bootstrap and authenticated workspace hydration are outside scope.
+Own the web Auth lifecycle, owner-scoped cache/request handling, reauthentication presentation, and integration with existing
+reset and promotion actions. Engine bootstrap and authenticated workspace hydration are outside scope.
 
 ## Acceptance criteria
 
-- [x] AC-01: Restore the SDK's persisted identity using one coordinated web client/listener lifecycle; at a real pending gate reuse a valid verified identity without asking for credentials again.
-- [x] AC-02: After a fresh load, a new unanchored inquiry may remain in local Guest storage until its real gate. Reflect identity separately from persistence and never label local work as already saved.
-- [x] AC-03: Do not mutate private SessionEngine mode or fabricate a promotion for login. Successful promotion in the current runtime retains the authenticated provider for subsequent work.
-- [x] AC-04: Detect session expiry or external sign-out and stop authenticated writes before retry. Present localized reauthentication while preserving pending intent and recoverable drafts.
-- [x] AC-05: Resume a pending write or promotion only for its verified owner using existing public contracts. A different user does not inherit old caches, pending actions, or Guest recovery ownership.
-- [x] AC-06: Keep already-anchored records classified as saved records during expiry; never treat them as disposable Guest data or overwrite them through a newly fabricated Guest promotion.
-- [x] AC-07: Starting anew after authentication detaches active focus and preserves saved groups, identity, and locale. Confirm loss of unsaved input; an empty/no-unsaved-input reset remains smooth.
-- [x] AC-08: Unsubscribe/coordinate duplicate Auth events, invalidate stale owner-specific reads, and serialize lifecycle changes with reset/promotion so old callbacks cannot revive a discarded session.
-- [x] AC-09: Test fresh-load identity reuse, expiry before saving, expiry during a pending operation, external sign-out, same-owner reauthentication, different-owner rejection, and authenticated new-group flow.
-- [x] AC-10: Provide truthful boundaries: this ticket does not add saved-history browsing, cross-device Guest transfer, general account switching, or authenticated workspace hydration after reload.
+- [x]  AC-01: Restore the SDK's persisted identity using one coordinated web client/listener lifecycle; at a real pending gate
+      reuse a valid verified identity without asking for credentials again.
+- [x]  AC-02: After a fresh load, a new unanchored inquiry may remain in local Guest storage until its real gate. Reflect identity
+      separately from persistence and never label local work as already saved.
+- [x]  AC-03: Do not mutate private SessionEngine mode or fabricate a promotion for login. Successful promotion in the current
+      runtime retains the authenticated provider for subsequent work.
+- [x]  AC-04: Detect session expiry or external sign-out and stop authenticated writes before retry. Present localized
+      reauthentication while preserving pending intent and recoverable drafts.
+- [x]  AC-05: Resume a pending write or promotion only for its verified owner using existing public contracts. A different user
+      does not inherit old caches, pending actions, or Guest recovery ownership.
+- [x]  AC-06: Keep already-anchored records classified as saved records during expiry; never treat them as disposable Guest data
+      or overwrite them through a newly fabricated Guest promotion.
+- [x]  AC-07: Starting anew after authentication detaches active focus and preserves saved groups, identity, and locale. Confirm
+      loss of unsaved input; an empty/no-unsaved-input reset remains smooth.
+- [x]  AC-08: Unsubscribe/coordinate duplicate Auth events, invalidate stale owner-specific reads, and serialize lifecycle changes
+      with reset/promotion so old callbacks cannot revive a discarded session.
+- [x]  AC-09: Test fresh-load identity reuse, expiry before saving, expiry during a pending operation, external sign-out,
+      same-owner reauthentication, different-owner rejection, and authenticated new-group flow.
+- [x]  AC-10: Provide truthful boundaries: this ticket does not add saved-history browsing, cross-device Guest transfer, general
+      account switching, or authenticated workspace hydration after reload.
 
 ## Verification and prior art
 
-Extend Auth/Gate/composition tests and browser journeys using the existing application seams. Use actual Supabase identity where required to establish session behavior; do not add an engine bootstrap API.
+Extend Auth/Gate/composition tests and browser journeys using the existing application seams. Use actual Supabase identity where
+required to establish session behavior; do not add an engine bootstrap API.
 
 ## Dependencies and exclusions
 
-Can proceed alongside 07 once 06 is done, subject to a single writer for overlapping Auth/composition modules. Registration behavior need not be implemented to verify returning-user expiry.
+Can proceed alongside 07 once 06 is done, subject to a single writer for overlapping Auth/composition modules. Registration
+behavior need not be implemented to verify returning-user expiry.
 
 ## Isolation bounds
 
@@ -87,7 +102,7 @@ Stashac51f52 was already restored by parent, once.
 |10|Retained draft same-owner read-only; no private hydration, history or account switching.|Boundary remains explicit.|
 
 Owner-bound staging was explicitly approved by the Event Manager; authoritative decision:
-.scratch/wave-12/authenticated-draft-seam-decision.md. The earlier blocker-only selection was withdrawn.
+docs/waves/wave-12/archive/authenticated-draft-seam-decision.md. The earlier blocker-only selection was withdrawn.
 Only NEW unanswered groups stage locally. Public GroupEngine creates/adds/rates the exact UUIDs; a real answer
 flushes through unchanged authenticated saveGroup. Local phase distinguishes draft/flushing/anchored; exact partial
 save retry and cleanup-only retry preserve payloads and server records. The live raw adapter still rejects an honest
@@ -224,5 +239,7 @@ Initial sandbox temporary-file rename EPERM required authorized escalated test e
 ## Parent closure
 
 Verified atomic commit bf1ecf26848aa9ca0eeeeda255c00d4c11079295; final Standards0 / Spec0.
-Canonical closed record: docs/specs/tickets/12-08-restored-identity-and-expiry.md.
+Canonical closed record: docs/waves/wave-12/tickets/12-08-restored-identity-and-expiry.md.
 Earlier pending/paused notes above are historical. Next ticket09; working tree clean.
+
+[relocation-link-1]: ../../specs/wave-12-spec.md

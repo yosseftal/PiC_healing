@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-06 — Recover interrupted promotion without loss or duplicate success
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/06-wave-12-promotion-recovery-and-idempotency.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/06-wave-12-promotion-recovery-and-idempotency.md`
 - Wave: 12. Dispatch authority covers all remaining Wave 12 tickets, 04 → 09 sequentially.
 - Authorized for implementation after all declared blockers are closed and the preceding ticket is committed.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -27,7 +27,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 
 > If the RPC committed but the response was lost, retry its exact payload/key.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -47,7 +47,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: web recovery envelope and retry.
 - Consumer/downstream: 07 and 08.
 - Risk to verify: Committed-but-lost response must reuse exact payload/key.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -92,7 +92,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 ## Resume checkpoint after verified W12-05
 
 Start from e88f19e4cd3dcc716195a26b61cf88a725fbee13; W12-04 and05 are complete and committed.
-Read .scratch/pic-tracer-bullet/wave-12-status.md for exact gate evidence and quota checkpoint.
+Read docs/waves/wave-12/archive/wave-12-status.md for exact gate evidence and quota checkpoint.
 W12-05 established lazy SDK Auth, verified owner/profile bootstrap, immutable in-memory retry request,
 exclusive web write admission, and real linked/unlinked promotion evidence. Reuse these seams.
 Durable recovery, lost response, post-promotion completion reconciliation, and early-cleanup correction remain06.

@@ -1,6 +1,8 @@
 # 📜 PiC: Personal Information Center
 # Project Manifesto & Framework V2 (English)
 
+Development records: [Wave index](docs/waves/INDEX.md) · [Wave 13 tickets](docs/waves/wave-13/tickets/INDEX.md).
+
 ## 🎯 Vision
 PiC teaches users how to connect to their
 Personal Information Center for self-healing.

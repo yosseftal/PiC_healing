@@ -9,7 +9,7 @@ the spec's own ticketing note: "`SessionEngine` (Guest/Promotion, depends on all
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §E in full, User Stories 1–5, 34–39, `CONTEXT.md`
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §E in full, User Stories 1–5, 34–39, `CONTEXT.md`
 Guest Group / Persistence Gate entries, `decisions.md` DEC-017.
 
 ## Objective

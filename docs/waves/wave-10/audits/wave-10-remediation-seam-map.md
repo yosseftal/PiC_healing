@@ -13,7 +13,7 @@ adapter payload field and an additive RPC migration; the Event Manager confirmed
 
 R1/R2/R3 are independent except that R2's root typecheck requires R3's six shared null guards.
 The orchestrator owns final verification, review, ticket closure, handoff, and commits after gates pass.
-All three closed tickets and their briefs are persisted under `docs/specs/tickets/10.R*.md`.
+All three closed tickets and their briefs are persisted under `docs/waves/10.R*.md`.
 Existing staged skill files and unstaged CLAUDE.md/package-lock.json belong to the Event Manager.
 
 Pre-agreed verification seams: rendered Player/forms and browser geometry; existing engine/RepositoryPort

@@ -11,7 +11,7 @@ recover the same work with the correct owner and no duplicate timeline/use incre
 
 **Blocked by:** W12-05 — Real Email/Password login and Guest promotion.
 
-**Source:** [Approved Wave 12 specification](../wave-12-spec.md), Implementation Decisions D (Promotion contract and cleanup);
+**Source:** [Approved Wave 12 specification][relocation-link-1], Implementation Decisions D (Promotion contract and cleanup);
 User Stories 24-26 and 30; DEC-018.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
@@ -173,3 +173,5 @@ The orchestrator verified web-only paths and changed-line limits before this ato
 - No domain, public-contract, or isolation-bound deviation. This active Resolution is the sole documentation
   exception; all runtime/tests stay in the web package. Registration/verification remains07 and expiry remains08.
 - Independent Standards/Spec review and final changed-line/path checks passed; the ticket is closed.
+
+[relocation-link-1]: ../specs/wave-12-spec.md

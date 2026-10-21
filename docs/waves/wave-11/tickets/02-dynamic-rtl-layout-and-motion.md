@@ -10,7 +10,7 @@ The same thin frame/drawer composition becomes reusable by earlier Guest Flow sc
 
 **Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.4–3.6 and 6.3.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 3.4–3.6 and 6.3.
 
 **Spec coverage:** AC-06, AC-08–10, AC-18–21, AC-25.
 
@@ -204,4 +204,4 @@ Correction complete; edits stopped for parent verification, atomic commit and in
 Closed on 2026-10-12. Commits and separate review results: 8dff295, 929e85f; Standards 0; Spec outgoing-motion finding closed.
 All reported corrective findings are closed; no blocking Standards or Spec finding remains.
 The original Resolution records slice verification at implementation time.
-Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
+Final assembled-wave gates and manual limitations are recorded in docs/waves/wave-11/handoffs/wave-11-handoff.md.

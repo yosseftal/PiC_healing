@@ -11,7 +11,7 @@ centrally resolved custom phrase available for future personalization.
 
 **Blocked by:** None (can start immediately).
 
-**Source:** [Approved Wave 12 specification](../../../docs/specs/wave-12-spec.md), Implementation Decisions C; User Stories 14-18.
+**Source:** [Approved Wave 12 specification](../../specs/wave-12-spec.md), Implementation Decisions C; User Stories 14-18.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
 ## Context Injection (verbatim)

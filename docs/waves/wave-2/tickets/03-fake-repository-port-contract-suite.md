@@ -7,7 +7,7 @@ the one shared contract-test suite that both real adapters (tickets 10, 12/13) m
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md`, Testing Decisions — "Primary seam, primary test
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md`, Testing Decisions — "Primary seam, primary test
 target" and "Contract tests, run against both adapters".
 
 ## Objective

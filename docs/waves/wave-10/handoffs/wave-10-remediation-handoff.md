@@ -18,7 +18,7 @@ manual SQL Editor application; real rated-snapshot and changed-timestamp replay 
 - 10.R2: Root lint configuration, unused bindings, and two session-engine test nullability guards.
 - 10.R3: Six contract guards, adapter capability tests, real fixtures, verified TLS, and rating timestamp repair.
 
-Canonical tickets and implementation briefs are under `docs/specs/tickets/10.R*.md`.
+Canonical tickets and implementation briefs are under `docs/waves/10.R*.md`.
 
 ## Verification
 

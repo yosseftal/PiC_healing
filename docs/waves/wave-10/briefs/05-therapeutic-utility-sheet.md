@@ -17,9 +17,9 @@
 ## Frozen Requirements
 
 Implement Ticket 10.5 from:
-`.scratch/wave-10-ui-primitives/issues/05-therapeutic-utility-sheet.md`.
+`docs/waves/wave-10/tickets/05-therapeutic-utility-sheet.md`.
 
-Use the approved specification at `.scratch/wave-10-ui-primitives.md`, especially Layer 3.4 and the
+Use the approved specification at `docs/waves/wave-10/specs/wave-10-ui-primitives.md`, especially Layer 3.4 and the
 Sheet-related viewport, action-budget, focus, direction, and motion rules.
 
 ## Seam Map

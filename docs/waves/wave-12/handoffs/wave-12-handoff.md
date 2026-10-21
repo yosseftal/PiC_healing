@@ -6,7 +6,7 @@ All nine Wave 12 tickets are closed. Required automated quality gates passed on 
 Physical-device and native Hebrew screen-reader checks remain **Pending Manual QA Verification**, under the user's
 explicit approval to complete automated W12-09 with those checks outstanding. No automated blocker remains.
 
-The frozen [Wave 12 specification](../specs/wave-12-spec.md) and closed records under `docs/specs/tickets/`
+The frozen [Wave 12 specification](../specs/wave-12-spec.md) and closed records under `docs/waves/`
 remain the requirement/evidence sources. This handoff supersedes the initial frontier-only execution status in the
 Wave 12 seam map and historical scratch checkpoints. Implementation baseline: `772df65`.
 

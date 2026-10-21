@@ -6,11 +6,15 @@
 
 **Status:** done
 
-**What to build:** The assembled application proves the complete new-inquiry, authentication, save, and subsequent-inquiry journey in both languages, with recorded regression and boundary evidence.
+**What to build:** The assembled application proves the complete new-inquiry, authentication, save, and subsequent-inquiry journey
+in both languages, with recorded regression and boundary evidence.
 
-**Blocked by:** W12-01 — Official brand palette and accessible inquiry surfaces; W12-02 — Explicit Hebrew terminology and dynamic NEMAR alias; W12-07 — Register and verify email while preserving the Guest inquiry; W12-08 — Restore identity and handle expiry without losing work.
+**Blocked by:** W12-01 — Official brand palette and accessible inquiry surfaces; W12-02 — Explicit Hebrew terminology and dynamic
+NEMAR alias; W12-07 — Register and verify email while preserving the Guest inquiry; W12-08 — Restore identity and handle expiry
+without losing work.
 
-**Source:** [Approved Wave 12 specification](../../../docs/specs/wave-12-spec.md), Testing Decisions and Quality Gates; High-Level Work Plan phase 5; all User Stories.
+**Source:** [Approved Wave 12 specification][relocation-link-1], Testing Decisions and Quality Gates; High-Level Work Plan phase
+5; all User Stories.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
 ## Context Injection (verbatim)
@@ -19,31 +23,48 @@ The nine-ticket breakdown and dependencies were approved without changes on 2026
 
 ## Owned vertical slice
 
-Own the assembled web E2E journey, cross-feature regression cases, scoped web fixes required by those cases, and quality evidence in this ticket. Feature owners' established seams remain authoritative.
+Own the assembled web E2E journey, cross-feature regression cases, scoped web fixes required by those cases, and quality evidence
+in this ticket. Feature owners' established seams remain authoritative.
 
 ## Acceptance criteria
 
-- [x] AC-01: Run an assembled journey through reset, fresh inquiry, Player/Terminal, registration, verification, promotion, and a subsequent inquiry using official tokens and explicit Hebrew terminology. Also cover returning-user login.
-- [x] AC-02: Assert preserved group/session identities, symptom ratings, unit progress, terminal answer, pending Finish kind, and exactly one intended timeline/use increment; cover linked and unlinked promotion and Finish Anyway.
-- [x] AC-03: Exercise locale changes during drafts, Player, Gate, verification, and recovery; custom alias changes remain presentation-only and alias/provider state survives reset without a production alias editor.
-- [x] AC-04: Exercise cancel/confirm reset, promotion/reset races, delayed callbacks, interrupted promotion/reload, and restored/expired identity across the actual assembled seams. Saved groups remain intact.
-- [x] AC-05: Verify both locales at 320x568, 390x844, 768x1024, and 1440x900 CSS pixels: 100dvh main frame, internal overflow, at most two direct main choices, keyboard focus/traps/restoration, reduced motion, and accessible names.
-- [x] AC-06: Validate computed contrast on final default/hover/pressed/selected/recovery/focus surfaces. Preserve blind-by-default ratings, sovereign Finish Anyway, and non-judgmental Integrating language.
-- [x] AC-07: Retain offline Guest inquiry once required assets are available; network-dependent auth/recovery reports truthful availability without losing local work.
-- [x] AC-08: Run root npm run typecheck, npm run lint, and npm test including all-workspace dependency checks; run web npm test, npm run depcruise, npm run build, and npx playwright test --workers=2.
-- [x] AC-09: Preserve all coverage represented by the historical 442 root unit/integration tests and 161 Chromium Playwright cases, adding Wave 12 tests. Update intentional text/token/stub expectations only; no skipped failures, weaker thresholds, or increased retries.
-- [x] AC-10: Record real signup/login, email-confirmation, own-profile RLS/bootstrap, and promotion evidence with isolated fixtures and cleanup. Mocks alone do not satisfy release; retain TLS verification and protect credentials.
-- [x] AC-11: Record manual mobile keyboard/visual viewport, physical safe-area, zoom, and Hebrew screen-reader checks; distinguish completed checks from unavailable evidence and do not claim Chromium proves them.
-- [x] AC-12: Audit the complete implementation diff for web-only changes and zero dependency violations. Record a read-only cross-boundary duplication review; any permitted fix stays within web.
-- [x] AC-13: Record gate commands, results, counts, environment limitations, and unresolved blockers in Resolution. Close only when required gates pass; an unavailable required remote/manual check remains explicitly unverified.
+- [x]  AC-01: Run an assembled journey through reset, fresh inquiry, Player/Terminal, registration, verification, promotion, and a
+      subsequent inquiry using official tokens and explicit Hebrew terminology. Also cover returning-user login.
+- [x]  AC-02: Assert preserved group/session identities, symptom ratings, unit progress, terminal answer, pending Finish kind, and
+      exactly one intended timeline/use increment; cover linked and unlinked promotion and Finish Anyway.
+- [x]  AC-03: Exercise locale changes during drafts, Player, Gate, verification, and recovery; custom alias changes remain
+      presentation-only and alias/provider state survives reset without a production alias editor.
+- [x]  AC-04: Exercise cancel/confirm reset, promotion/reset races, delayed callbacks, interrupted promotion/reload, and
+      restored/expired identity across the actual assembled seams. Saved groups remain intact.
+- [x]  AC-05: Verify both locales at 320x568, 390x844, 768x1024, and 1440x900 CSS pixels: 100dvh main frame, internal overflow, at
+      most two direct main choices, keyboard focus/traps/restoration, reduced motion, and accessible names.
+- [x]  AC-06: Validate computed contrast on final default/hover/pressed/selected/recovery/focus surfaces. Preserve
+      blind-by-default ratings, sovereign Finish Anyway, and non-judgmental Integrating language.
+- [x]  AC-07: Retain offline Guest inquiry once required assets are available; network-dependent auth/recovery reports truthful
+      availability without losing local work.
+- [x]  AC-08: Run root npm run typecheck, npm run lint, and npm test including all-workspace dependency checks; run web npm test,
+      npm run depcruise, npm run build, and npx playwright test --workers=2.
+- [x]  AC-09: Preserve all coverage represented by the historical 442 root unit/integration tests and 161 Chromium Playwright
+      cases, adding Wave 12 tests. Update intentional text/token/stub expectations only; no skipped failures, weaker thresholds,
+      or increased retries.
+- [x]  AC-10: Record real signup/login, email-confirmation, own-profile RLS/bootstrap, and promotion evidence with isolated
+      fixtures and cleanup. Mocks alone do not satisfy release; retain TLS verification and protect credentials.
+- [x]  AC-11: Record manual mobile keyboard/visual viewport, physical safe-area, zoom, and Hebrew screen-reader checks;
+      distinguish completed checks from unavailable evidence and do not claim Chromium proves them.
+- [x]  AC-12: Audit the complete implementation diff for web-only changes and zero dependency violations. Record a read-only
+      cross-boundary duplication review; any permitted fix stays within web.
+- [x]  AC-13: Record gate commands, results, counts, environment limitations, and unresolved blockers in Resolution. Close only
+      when required gates pass; an unavailable required remote/manual check remains explicitly unverified.
 
 ## Verification and prior art
 
-Use the inherited browser matrix and actual application providers. This ticket integrates and validates earlier vertical slices rather than deferring their own acceptance tests until the end.
+Use the inherited browser matrix and actual application providers. This ticket integrates and validates earlier vertical slices
+rather than deferring their own acceptance tests until the end.
 
 ## Dependencies and exclusions
 
-The transitive closure of 01, 02, 07, and 08 includes all nine tickets. This ticket adds no dependency upgrades or new backend capabilities. Manual/device and remote environment access are prerequisites, not authorization to weaken checks.
+The transitive closure of 01, 02, 07, and 08 includes all nine tickets. This ticket adds no dependency upgrades or new backend
+capabilities. Manual/device and remote environment access are prerequisites, not authorization to weaken checks.
 
 ## Isolation bounds
 
@@ -132,10 +153,10 @@ AC evidence map (paths below are relative to `packages/pic-web`):
   Required final root/scoped reruns are assigned to the orchestrator after the completed browser/build gates;
   normal TLS stays enabled. No extra signup probes were performed during the 2026-10-18 verification resume.
   The generated-link facility proves Auth confirmation, not mailbox delivery. Prior actual W12-08 evidence is in
-  `docs/specs/tickets/12-08-restored-identity-and-expiry.md` and is not relabeled as a W12-09 rerun.
+  `docs/waves/wave-12/tickets/12-08-restored-identity-and-expiry.md` and is not relabeled as a W12-09 rerun.
 - AC-11: Automated Chromium E2E and ARIA-tree evidence is recorded distinctly. Per the user's explicit instruction,
   physical mobile keyboard/visual viewport, physical safe-area, zoom, and Hebrew native screen-reader checks are
-  **Pending Manual QA Verification**, to be carried into `docs/audits/wave-12-handoff.md` by the orchestrator.
+  **Pending Manual QA Verification**, to be carried into `docs/waves/wave-12/handoffs/wave-12-handoff.md` by the orchestrator.
   Those unavailable checks are not claimed as passed and do not block automated closure under that instruction.
 - AC-12: Read-only full-wave path audit against `772df65` found all runtime/test/CSS/config changes confined to web;
   other tracked changes are approved specification/ticket/audit documentation. W12-09 adds four web test files,
@@ -223,8 +244,10 @@ Historical evidence retained distinctly from the successful 2026-10-18 browser/b
 All required automated gates passed on frozen reviewed files: root560/54files107.23s, scopedweb347/39files76.51s,
 Chromium179/1794.5m, focused22/221.5m, root typecheck/lint, webbuild and zero-violation all-workspace dependencies.
 Actual signup, generated confirmation, profile/promotion and owned cleanup passed with normal TLS in both unit runs.
-Closed record:docs/specs/tickets/12-09-e2e-journey-and-quality-gates.md. Final commit hash/checkpoint follows.
+Closed record:docs/waves/wave-12/tickets/12-09-e2e-journey-and-quality-gates.md. Final commit hash/checkpoint follows.
 Manual physical checks remain Pending Manual QA Verification under the explicit user approval. Historical pending
 statements above describe earlier checkpoints and are superseded by this final closure and the tracked closed record.
 
-Atomic09 commit:f8887fa0c14ef37e6d1fd7f977ee3a59d7ed78a6; canonical closed record in docs/specs/tickets/.
+Atomic09 commit:f8887fa0c14ef37e6d1fd7f977ee3a59d7ed78a6; canonical closed record in docs/waves/.
+
+[relocation-link-1]: ../../specs/wave-12-spec.md

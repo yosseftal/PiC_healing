@@ -10,9 +10,9 @@
 
 | Ticket | Commit | Evidence |
 | --- | --- | --- |
-| W12-01 | `018bf52` | [Brand palette Resolution](../specs/tickets/12-01-brand-palette.md) |
-| W12-02 | `4fb71c3` | [Explicit terminology Resolution](../specs/tickets/12-02-explicit-terminology.md) |
-| W12-03 | This `[W12-03]` commit | [Inquiry reset Resolution](../specs/tickets/12-03-inquiry-session-reset.md) |
+| W12-01 | `018bf52` | [Brand palette Resolution](../tickets/12-01-brand-palette.md) |
+| W12-02 | `4fb71c3` | [Explicit terminology Resolution](../tickets/12-02-explicit-terminology.md) |
+| W12-03 | This `[W12-03]` commit | [Inquiry reset Resolution](../tickets/12-03-inquiry-session-reset.md) |
 
 W12-01 declares official brand bases and documented accessible derivatives through CSS tokens.
 W12-02 resolves explicit Hebrew terminology and literal custom aliases through the existing i18n provider.
@@ -76,5 +76,5 @@ W12-05 → W12-06 implement login/promotion and recovery; W12-07 and W12-08 then
 W12-09 assembles the full Wave 12 journey and remaining remote/manual gates.
 These tickets were not dispatched in this authorized frontier.
 
-The approved `docs/specs/wave-12-spec.md` was already untracked at dispatch and is preserved unchanged.
+The approved `docs/waves/wave-12/specs/wave-12-spec.md` was already untracked at dispatch and is preserved unchanged.
 Open ticket files and execution briefs remain under `.scratch/`; the seam map is tracked beside this handoff.

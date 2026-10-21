@@ -8,7 +8,7 @@ this ticket.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §A ("`pic-web`... contains no business logic"), §F
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §A ("`pic-web`... contains no business logic"), §F
 (component hierarchy, top level).
 
 ## Objective

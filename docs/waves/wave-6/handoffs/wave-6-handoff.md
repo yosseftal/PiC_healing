@@ -54,7 +54,7 @@ Manager before landing.
 
 1. **`withInViewNormalized`-shaped DEC-015 boundary normalization is now duplicated in three places**, not
    two: `SessionEngine.normalizeForPermanentStore`, `LocalGuestRepository` (flagged already in the Wave
-   5/7 audit, `docs/audits/wave-5-wave-7-audit.md`), and now `SupabaseRepository` (ticket 12). No
+   5/7 audit, `docs/waves/shared/audits/wave-5-wave-7-audit.md`), and now `SupabaseRepository` (ticket 12). No
    `shared-helpers`-style module exists yet in this repo to consolidate into. Recommend a small, dedicated
    ticket to extract this into a module both adapters (and `SessionEngine`) can import — likely living in
    `pic-engine` itself (both adapters already depend on it for types) rather than a new package, but that's

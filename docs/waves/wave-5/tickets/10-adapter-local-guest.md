@@ -7,7 +7,7 @@ zero network calls.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §A, Testing Decisions ("Contract tests, run against
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §A, Testing Decisions ("Contract tests, run against
 both adapters"), `decisions.md` DEC-017 ("Guest Group data is not modeled in Supabase at all").
 
 ## Objective

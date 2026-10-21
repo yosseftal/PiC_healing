@@ -15,7 +15,7 @@ These tickets establish the localized Player and picker presentation surfaces co
 
 **Dispatch state:** Done; committed and independent Standards/Spec reviews closed under recorded product approvals.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.7, 4–5, and 6.2–6.3.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 3.7, 4–5, and 6.2–6.3.
 
 **Spec coverage:** AC-10, AC-15–18, AC-22, AC-24–25.
 
@@ -164,4 +164,4 @@ remain unverified manually. Chromium covers the specified 320, 390, 768 and 1440
 Closed on 2026-10-12. Commits and separate review results: f34427d; Standards 0; Spec 0.
 All reported corrective findings are closed; no blocking Standards or Spec finding remains.
 The original Resolution records slice verification at implementation time.
-Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
+Final assembled-wave gates and manual limitations are recorded in docs/waves/wave-11/handoffs/wave-11-handoff.md.

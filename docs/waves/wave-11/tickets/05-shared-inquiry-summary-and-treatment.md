@@ -10,7 +10,7 @@ while routing, voluntary group linking, personal wording, and treatment identiti
 
 **Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
 
 **Spec coverage:** AC-04–05, AC-08–09, AC-11, AC-17–18, AC-20–21, AC-24–25.
 
@@ -135,4 +135,4 @@ and build warnings remain as recorded above. Orchestrator corrective commit and 
 Closed on 2026-10-12. Commits and separate review results: b5b6a23, 27719a0; Standards 0; Spec summary-action finding closed.
 All reported corrective findings are closed; no blocking Standards or Spec finding remains.
 The original Resolution records slice verification at implementation time.
-Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
+Final assembled-wave gates and manual limitations are recorded in docs/waves/wave-11/handoffs/wave-11-handoff.md.

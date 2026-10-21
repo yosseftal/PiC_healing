@@ -11,7 +11,7 @@ sign-out pauses authenticated writes and permits safe reauthentication without l
 
 **Blocked by:** W12-06 — Recover interrupted promotion without loss or duplicate success.
 
-**Source:** [Approved Wave 12 specification](../wave-12-spec.md), Implementation Decisions D (Returning identity and engine
+**Source:** [Approved Wave 12 specification](../specs/wave-12-spec.md), Implementation Decisions D (Returning identity and engine
 limitation); User Stories 7, 21, 24-25 and 30.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 

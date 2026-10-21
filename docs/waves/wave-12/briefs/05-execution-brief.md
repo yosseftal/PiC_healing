@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-05 — Real Email/Password login and Guest promotion
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/05-wave-12-real-login-and-promotion.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/05-wave-12-real-login-and-promotion.md`
 - Wave: 12. Dispatch authority covers all remaining Wave 12 tickets, 04 → 09 sequentially.
 - Authorized for implementation after all declared blockers are closed and the preceding ticket is committed.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -27,7 +27,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 
 > Auth success and saved work are separate states.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -47,7 +47,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: login and web identity bootstrap.
 - Consumer/downstream: 06 recovery.
 - Risk to verify: Existing profile RLS must support own-row creation; no backend edits.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -96,7 +96,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 
 Remote connectivity and expected schema/RPC presence passed with normal TLS.
 Public Auth settings: email enabled, signup allowed, email confirmation enabled.
-Evidence: .scratch/wave-12/connectivity-preflight.md. No hosted settings were changed.
+Evidence: docs/waves/wave-12/archive/connectivity-preflight.md. No hosted settings were changed.
 Root .env.local has SUPABASE_URL/ANON_KEY and a test-only SERVICE_ROLE_KEY, with no VITE aliases or tracer credentials.
 The current Vite configuration does not expose root non-VITE values to browser import.meta.env.
 Resolve public configuration inside pic-web if required, exposing exactly URL+anon key; never use a broad SUPABASE_ prefix.

@@ -18,9 +18,9 @@
 ## Frozen Requirements
 
 Implement Ticket 10.6 from:
-`.scratch/wave-10-ui-primitives/issues/06-unified-player-atomic-guidance-frame.md`.
+`docs/waves/wave-10/tickets/06-unified-player-atomic-guidance-frame.md`.
 
-Use the approved specification at `.scratch/wave-10-ui-primitives.md`, especially the Atomic Guidance
+Use the approved specification at `docs/waves/wave-10/specs/wave-10-ui-primitives.md`, especially the Atomic Guidance
 Pattern and proof-of-concept Steps 4, 5, and 8.
 
 - Every existing Player phase uses stable `TherapeuticFrame` geometry.

@@ -7,7 +7,7 @@ Library entry, and explicitly no content snapshot.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §A, §B (`timeline_events` schema), User Stories 42–43,
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §A, §B (`timeline_events` schema), User Stories 42–43,
 `CONTEXT.md` Chronological Timeline / Linked Journey entries, `decisions.md` DEC-007 §3, DEC-008.
 
 ## Objective

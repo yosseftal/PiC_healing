@@ -4,9 +4,9 @@ Date: 2026-10-13. Start commit: `772df65`. Current authorization: W12-01 → W12
 
 ## Scope and inventory
 
-Approved requirements: `docs/specs/wave-12-spec.md`.
-All nine open tickets: `.scratch/pic-tracer-bullet/issues/*-wave-12-*.md`.
-All nine prepared briefs: `.scratch/wave-12/briefs/NN-execution-brief.md`.
+Approved requirements: `docs/waves/wave-12/specs/wave-12-spec.md`.
+All nine open tickets: `docs/waves/*-wave-12-*.md`.
+All nine prepared briefs: `docs/waves/wave-12/briefs/NN-execution-brief.md`.
 Only 01, 02, and 03 execute in this run. Later tickets remain ready-for-agent with their original blockers.
 
 Functional dependencies: 01 none; 02 none; 03 none; 04 ← 03; 05 ← 04; 06 ← 05;

@@ -44,7 +44,8 @@ No active writer/runners remain. W12-09 is unverified, not committed or closed.
    Preserve fixture cleanup/TLS/assertions. Heavy Vitest/Chromium runners remain sequential.
 4. Verify unchanged source equivalence, final line/diff/seam audit and gate counts. Re-review any material new delta.
 5. Once required automated gates pass, parent persists closed09record, atomic09commit and immediate status checkpoint.
-6. Create docs/audits/wave-12-handoff.md with all verified commit hashes/results/approvals; final notes already prepared.
+6.  Create docs/waves/wave-12/handoffs/wave-12-handoff.md with all verified commit hashes/results/approvals; final notes already
+   prepared.
    Record physical keyboard/safe areas/zoom/Hebrew reader as Pending Manual QA Verification (explicit user approval).
 7. Commit final handoff documentation and verify completely clean Git tree. Report Wave12 completion only then.
 

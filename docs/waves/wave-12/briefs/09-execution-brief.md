@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-09 — Verify the complete bilingual Wave 12 journey and quality gates
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/09-wave-12-e2e-journey-and-quality-gates.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/09-wave-12-e2e-journey-and-quality-gates.md`
 - Wave: 12. Dispatch authority covers all remaining Wave 12 tickets, 04 → 09 sequentially.
 - Authorized for implementation after all declared blockers are closed and the preceding ticket is committed.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -27,7 +27,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 
 > Preserve all existing behavioral coverage and add Wave 12 cases.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -47,7 +47,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: assembled web journeys and quality evidence.
 - Consumer/downstream: wave closure.
 - Risk to verify: Required remote/manual evidence cannot be silently skipped.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -96,7 +96,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 
 ## Manual evidence preparation
 
-The parent prepared .scratch/wave-12/manual-release-checklist.md from09 AC-11.
+The parent prepared docs/waves/wave-12/archive/manual-release-checklist.md from09 AC-11.
 The user's explicit manual-QA instruction below resolves availability; do not re-ask for devices or manual evidence.
 User approved Supabase-generated links as07's isolated verification facility; that does not prove SMTP delivery.
 Full442/161 historical coverage plus all new cases remains required; no final completion claim with unverified required gates.
@@ -105,13 +105,13 @@ Full442/161 historical coverage plus all new cases remains required; no final co
 
 No physical device/native screen reader is available. The user explicitly instructed completing automated
 Playwright E2E and ARIA accessibility-tree checks in Chromium, and recording physical-device keyboard, safe-area,
-zoom and Hebrew screen-reader checks as "Pending Manual QA Verification" in docs/audits/wave-12-handoff.md,
+zoom and Hebrew screen-reader checks as "Pending Manual QA Verification" in docs/waves/wave-12/handoffs/wave-12-handoff.md,
 following the established Wave11 handoff pattern. This supersedes the earlier requirement to block automated09
 closure for unavailable manual evidence. Never claim those physical/manual checks passed or were proved by Chromium.
 
-Wave11 handoff source located and read: docs/handoffs/wave-11-handoff.md, especially Boundaries and carry-forward.
+Wave11 handoff source located and read: docs/waves/wave-11/handoffs/wave-11-handoff.md, especially Boundaries and carry-forward.
 Follow its explicit distinction between automated evidence and unverified manual QA; final Wave12 output remains
-docs/audits/wave-12-handoff.md as requested. No further manual-device approval/question is needed.
+docs/waves/wave-12/handoffs/wave-12-handoff.md as requested. No further manual-device approval/question is needed.
 
 ## Shared hosted signup quota
 

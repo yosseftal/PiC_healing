@@ -39,7 +39,8 @@ Each material fix needs red/green proof and narrow independent re-review before 
 - Owner-bound web draft staging APPROVED; accidental earlier blocker-only answer withdrawn. Do not re-ask.
 - Full reload retained staged envelopes are same-verified-owner read-only; public hydration limits are explicit.
 - Manual physical keyboard/safe-area/zoom/Hebrew screen-reader checks: Pending Manual QA Verification in final
-  docs/audits/wave-12-handoff.md. Automated Playwright/ARIA checks remain required; do not re-ask device availability.
+  docs/waves/wave-12/handoffs/wave-12-handoff.md. Automated Playwright/ARIA checks remain required; do not re-ask device
+  availability.
 - Actual signup may use test-e2e@pic-healing.com or automated-test@pic-healing.com via PIC_REGISTRATION_TEST_EMAIL.
   Generated verification links approved; no claim of SMTP delivery. Marker-owned isolated cleanup remains required.
 

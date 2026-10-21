@@ -8,7 +8,7 @@ guardrail must exist before this ticket's code lands).
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §C in full, User Stories 6–17, Testing Decisions
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §C in full, User Stories 6–17, Testing Decisions
 ("Joint Treatment Muscle Test gate", "Blind-by-Default is tested at the API shape", "Rating dimension
 independence"), `CONTEXT.md` Symptom Group / Blind (re-)rating / Polarity / Intensity entries, `decisions.md`
 DEC-002, DEC-009, DEC-010, DEC-011.

@@ -7,7 +7,7 @@ each rendering `GroupEngine` state and calling its methods directly — no ratin
 
 **Status:** ready-for-agent
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §F, User Stories 6–13, `CONTEXT.md` Blind (re-)rating
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §F, User Stories 6–13, `CONTEXT.md` Blind (re-)rating
 / Polarity / Intensity entries.
 
 ## Locked Engine Interface (Dumb Reflection Contract)

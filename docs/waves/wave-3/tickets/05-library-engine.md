@@ -7,7 +7,7 @@ Personal Treatment Library row creation.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §A, §B (`personal_treatment_library` schema), §D
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §A, §B (`personal_treatment_library` schema), §D
 ("Exactly-once side effects"), `CONTEXT.md` Personal Treatment Library entry, `decisions.md` DEC-005/DEC-006.
 
 ## Objective

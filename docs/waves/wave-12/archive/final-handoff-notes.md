@@ -1,6 +1,6 @@
 # Wave12 final handoff preparation
 
-Not the final handoff. W12-09 gates and commit remain pending. Final target:docs/audits/wave-12-handoff.md.
+Not the final handoff. W12-09 gates and commit remain pending. Final target:docs/waves/wave-12/handoffs/wave-12-handoff.md.
 
 ## Verified commits to include
 

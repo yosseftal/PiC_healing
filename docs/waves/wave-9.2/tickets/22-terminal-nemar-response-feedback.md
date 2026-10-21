@@ -43,7 +43,7 @@ look for Finish below."
   `session.terminal_nemar_response`. The confirmation UI is derived purely from the already-persisted
   engine value passed down as a prop — this is the same "no component stores rating/response state locally"
   discipline the Wave 9 audit already verified holds for this subtree
-  (`docs/audits/wave-9-detailed-audit.md` §2). `responseStatus` (from `useAsyncAction`) is fine to keep as
+  (`docs/waves/wave-9/audits/wave-9-detailed-audit.md` §2). `responseStatus` (from `useAsyncAction`) is fine to keep as
   transient recovery-UI state; it is not domain state.
 - Never use "Failed"/"Error"/"Invalid" framing for a "No" response — "No" is **Integrating**, per
   `CLAUDE.md` §E and `decisions.md` DEC-015 §7b. Confirmation copy for "No" must read as a normal,

@@ -1,9 +1,9 @@
 # Wave 11: Bilingual (Hebrew/English) i18n Infrastructure & Dynamic RTL Support
 
-**Date:** 2026-10-08 (Asia/Jerusalem)  
-**Repository baseline inspected:** `dddd56d`  
-**Status:** Technical specification; implementation has not started. Copy and content approvals remain release prerequisites.  
-**Implementation boundary:** `packages/pic-web` only; zero changes to `packages/pic-engine` or storage adapters.  
+**Date:** 2026-10-08 (Asia/Jerusalem)
+**Repository baseline inspected:** `dddd56d`
+**Status:** Technical specification; implementation has not started. Copy and content approvals remain release prerequisites.
+**Implementation boundary:** `packages/pic-web` only; zero changes to `packages/pic-engine` or storage adapters.
 **Planning deliverable:** This document only. No application changes, issue publication, or implementation authorization.
 
 ## 1. Overview & Business Objectives
@@ -581,8 +581,8 @@ The remediation handoff records prior passes; it is historical evidence, not ver
 [S5]: https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html "WCAG text contrast"
 [S6]: https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html "WCAG enhanced target size"
 
-Repository authority: [Domain glossary](../../CONTEXT.md), [Decisions](../../decisions.md),
-[Project manifesto](../../CLAUDE.md), [Wave 10 specification](../../.scratch/wave-10-ui-primitives.md),
-[Wave 10 remediation handoff](../audits/wave-10-remediation-handoff.md),
-[Hybrid ownership ADR](../adr/0001-hybrid-ownership-for-shared-reference-tables.md), and
-[Content storage ADR](../adr/0002-protocol-content-jsonb.md).
+Repository authority: [Domain glossary](../../../../CONTEXT.md), [Decisions](../../../../decisions.md),
+[Project manifesto](../../../../CLAUDE.md), [Wave 10 specification](../../wave-10/specs/wave-10-ui-primitives.md),
+[Wave 10 remediation handoff](../../wave-10/handoffs/wave-10-remediation-handoff.md),
+[Hybrid ownership ADR](../../../adr/0001-hybrid-ownership-for-shared-reference-tables.md), and
+[Content storage ADR](../../../adr/0002-protocol-content-jsonb.md).

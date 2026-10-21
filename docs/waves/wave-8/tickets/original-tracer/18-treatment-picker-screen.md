@@ -8,7 +8,7 @@ starts a `PlayerEngine` session on selection.
 
 **Status:** ready-for-agent
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §F, User Stories 18–19, §G Out of Scope (flat list,
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §F, User Stories 18–19, §G Out of Scope (flat list,
 no diagnosis engine).
 
 ## Locked Engine Interface (Dumb Reflection Contract)

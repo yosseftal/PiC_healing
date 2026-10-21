@@ -9,7 +9,7 @@
 
 **Brief:** `.scratch/pic-tracer-bullet-8/briefs/09-happy-path-e2e-brief.md`
 
-**Source:** `.scratch/pic-tracer-bullet/issues/20-happy-path-e2e-integration.md` (orig. Ticket 20).
+**Source:** `docs/waves/wave-8/tickets/original-tracer/20-happy-path-e2e-integration.md` (orig. Ticket 20).
 
 ## Resolution
 

@@ -8,7 +8,7 @@ no rating UI ever appears anywhere in this subtree.
 
 **Status:** ready-for-agent
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §F (`UnifiedPlayerScreen` subtree), Testing Decisions
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §F (`UnifiedPlayerScreen` subtree), Testing Decisions
 ("One additional smoke test asserts `UnifiedPlayerScreen`'s rendered tree contains no `RatingControl`
 instance"), User Stories 20–33.
 

@@ -8,7 +8,7 @@ migration).
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §A, Testing Decisions ("Contract tests, run against
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §A, Testing Decisions ("Contract tests, run against
 both adapters" — "the latter against a local Supabase instance via `supabase start`, not a mocked client").
 
 ## Objective

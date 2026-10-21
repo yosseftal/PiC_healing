@@ -18,8 +18,10 @@ when a `pic-web` dependency changes.
 ## References
 
 - Read [CLAUDE.md](CLAUDE.md) for product language and domain invariants.
-- For Wave 10 work, read the [approved specification](.scratch/wave-10-ui-primitives.md)
-  and the active ticket in `.scratch/wave-10-ui-primitives/issues/`.
+- For Wave 10 work, read the [approved specification](docs/waves/wave-10/specs/wave-10-ui-primitives.md)
+  and the active ticket in `docs/waves/wave-10/tickets/`.
 
-The former `docs/specs/wave-10-ui-primitives.md` path in the handoff brief is
-stale; the tracked `.scratch` specification above is authoritative.
+For any wave, start at [the master wave index](docs/waves/INDEX.md), then read its specification and ticket index.
+Open and closed tickets share `docs/waves/wave-N/tickets/`; Status and Resolution determine their state.
+Historical paths can be resolved through [the relocation ledger](docs/waves/RELOCATION.md).
+Wave 13 documentation approval does not authorize implementation; wait for the user's ticket-suite green light.

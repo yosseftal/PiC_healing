@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-07 — Register and verify email while preserving the Guest inquiry
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/07-wave-12-registration-and-verification.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/07-wave-12-registration-and-verification.md`
 - Wave: 12. Dispatch authority covers all remaining Wave 12 tickets, 04 → 09 sequentially.
 - Authorized for implementation after all declared blockers are closed and the preceding ticket is committed.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -27,7 +27,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 
 > A non-null signup user alone is not verified identity.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -47,7 +47,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: registration and same-browser verification.
 - Consumer/downstream: 09 assembled journey.
 - Risk to verify: Email delivery/return URL are environment prerequisites.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 

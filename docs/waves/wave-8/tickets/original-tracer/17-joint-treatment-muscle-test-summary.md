@@ -7,7 +7,7 @@ confirmation screen — both pure reflections of `GroupEngine` state.
 
 **Status:** ready-for-agent
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §F, User Stories 12, 14–17, `decisions.md` DEC-002,
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §F, User Stories 12, 14–17, `decisions.md` DEC-002,
 README §4.
 
 ## Locked Engine Interface (Dumb Reflection Contract)

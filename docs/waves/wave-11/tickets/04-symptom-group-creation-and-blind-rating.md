@@ -10,7 +10,7 @@ draft values, and Blind-by-Default behavior throughout that complete flow.
 
 **Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 2, 3.3–3.5, 4, and 6.2.
 
 **Spec coverage:** AC-04–05, AC-08–09, AC-11–12, AC-17–18, AC-20–21, AC-24–25.
 
@@ -117,4 +117,4 @@ screen-reader pronunciation were not manually verified and remain follow-up evid
 Closed on 2026-10-12. Commits and separate review results: b25b55b; Standards 0; Spec 0.
 All reported corrective findings are closed; no blocking Standards or Spec finding remains.
 The original Resolution records slice verification at implementation time.
-Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
+Final assembled-wave gates and manual limitations are recorded in docs/waves/wave-11/handoffs/wave-11-handoff.md.

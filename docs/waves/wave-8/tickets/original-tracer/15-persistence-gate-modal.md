@@ -8,7 +8,7 @@ gate-triggered, offers Social Auth / Magic Link, and shows a retry affordance on
 
 **Status:** ready-for-agent
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §F, User Stories 34–39, `CONTEXT.md` Persistence Gate
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §F, User Stories 34–39, `CONTEXT.md` Persistence Gate
 entry, `decisions.md` DEC-017 §3 (auth mechanism).
 
 ## Objective

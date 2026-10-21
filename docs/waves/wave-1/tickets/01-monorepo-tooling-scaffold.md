@@ -7,7 +7,7 @@ other tracer-bullet ticket builds on top of, with zero business logic.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` (whole spec — "no application code exists yet" per the
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` (whole spec — "no application code exists yet" per the
 Seam section), `CLAUDE.md` §3 Technical Standards (line-length hook, React/Supabase/TypeScript stack).
 
 ## Objective

@@ -4,7 +4,7 @@
 
 - Ticket: 11.8 — i18n E2E and Quality Gates
 - Wave: 11
-- Frozen ticket: .scratch/wave-11/issues/08-i18n-e2e-and-quality-gates.md
+- Frozen ticket: docs/waves/wave-11/tickets/08-i18n-e2e-and-quality-gates.md
 - Orchestrator escalation: report conflicts or missing approval; do not guess.
 
 ## Permissions
@@ -48,7 +48,7 @@ _Avoid_: Failed, error, incomplete, stuck, "In-Process, Not Yet Complete" as a s
 
 ## Seam map excerpt
 
-- See docs/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
+- See docs/waves/wave-11/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
 - Test the approved public provider/screen/action/content seams. No new test seam needs to be invented.
 - Existing engines own healing state, stable identities, ratings, Finish authority, and persistence.
 - Other tickets may be independent in the graph, but shared-file edits are serialized by the orchestrator.
@@ -111,4 +111,3 @@ Wave handoff documents and execution briefs are outside this ticket-persistence 
 - [ ] TB-12: Every Wave 11 AC is covered by explicit evidence; manual/device and remote-service limitations are
       reported honestly. All copy/content release prerequisites are closed before claiming the bilingual wave complete.
       Courses, account synchronization, extra locales, and broader content versioning remain outside scope.
-

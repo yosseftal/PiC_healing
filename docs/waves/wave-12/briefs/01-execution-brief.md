@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-01 — Official brand palette and accessible inquiry surfaces
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/01-wave-12-brand-palette.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/01-wave-12-brand-palette.md`
 - Wave: 12. Dispatch authority for this run covers 01 → 02 → 03 sequentially only.
 - Authorized frontier ticket; wait for previous ticket verification and commit.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -28,7 +28,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 > Palette implementation changes only Tailwind v4/CSS token definitions and aliases in the web package. Updating
 > web test expectations for the new contract is permitted; per-component hardcoded replacements are not the strategy.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -48,7 +48,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: visual-foundation CSS and color verification.
 - Consumer/downstream: all existing token consumers.
 - Risk to verify: White on official primary fails normal-text AA; use approved dark derivative.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -81,4 +81,3 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
   preserve the single viewport, internal scrolling, and reduced-motion behavior.
 - [ ] AC-07: Update frozen palette expectations for the intentional new contract while retaining existing behavioral and
   contrast coverage. Component-specific hardcoded color substitutions are absent.
-

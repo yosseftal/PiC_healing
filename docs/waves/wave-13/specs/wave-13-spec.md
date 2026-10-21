@@ -4,7 +4,7 @@
 
 **Date:** 2026-10-20, Asia/Jerusalem.
 
-**Status:** Proposed specification; no implementation authorized by this document.
+**Status:** APPROVED specification (2026-10-20); generated tickets await human review before implementation.
 
 **Repository baseline inspected:** `853a696` — Gate development artifacts from production web builds.
 
@@ -38,7 +38,7 @@ The user-facing questionnaire is a presentation/workflow name. It does not intro
 container alongside Symptom Group / Work Session. The application organizes the Event Manager's own input;
 it does not infer urgency, diagnose a condition, assign polarity, or select treatment on their behalf.
 
-### Decisions explicitly confirmed by the user in this specification session
+### Decisions explicitly confirmed by the user
 
 | ID | Confirmed decision | Boundary |
 | --- | --- | --- |
@@ -46,7 +46,8 @@ it does not infer urgency, diagnose a condition, assign polarity, or select trea
 | W13-D2 | Initial questionnaire intensity is 1–10. | Re-rating, history, and existing 0–10 data remain unchanged. |
 | W13-D3 | Manual order is default; optional polarity view is available. | Polarity view is summary-only, never blind input. |
 | W13-D4 | Adding a topic after a joint answer requires a fresh answer for the full updated list. | Never reuse the old answer. |
-| W13-D5 | Propose a text adaptation of the official demonstration for approval. | Source choice is resolved; copy is pending. |
+| W13-D5 | Propose a text adaptation of the official demonstration for approval. | Source resolved; actual copy needs review. |
+| W13-D6 | Include the official YouTube video container in W13-07. | Online, click-to-load; no autoplay or offline video. |
 
 The applicable AGENTS instruction restricts earlier UI-wave changes to the web package.
 W13-D1 explicitly authorizes proposing the named cross-package order extension for this wave.
@@ -159,7 +160,7 @@ list without an empty heading; navigation may use a localized generic label with
 The repository schema permits a non-null string; explicit contract tests must cover empty title in promotion too.
 
 Create no empty group merely for visiting the questionnaire. Materialize the draft through GroupEngine on the first
-successful topic submission, or commit a staged topic batch on continuation. Choose one approach in W13-04 and keep
+successful topic submission, or commit a staged topic batch on continuation. Choose one approach in W13-01 and keep
 its operation ledger stable across retries; it must not duplicate IDs. Optional title editing after materialization
 requires a public group command if included; direct repository patching from a component is prohibited.
 Later group-management/rename functionality is not a prerequisite for optional initial naming.
@@ -286,7 +287,7 @@ or authorize continuation with the expanded list. Back retains the pending revis
 
 Proposed technical realization: a public GroupEngine action commits revised membership and the fresh actual answer
 atomically, with owner/revision checks and stable IDs. Include the matching RepositoryPort/adapter contract in
-W13-02/03 rather than implementing component-owned database writes. A save failure retains the pending revision and
+W13-03 rather than implementing component-owned database writes. A save failure retains the pending revision and
 answer for exact retry; a stale revision requires reconciliation rather than overwriting the saved list.
 This implements the confirmed behavior; exact method names and schema details remain ticket design work.
 
@@ -370,7 +371,7 @@ of the official demonstration, to be reviewed before product integration. The me
 [איך להתחבר למאגר המידע האישי דרך מבחן שרירים](https://www.youtube.com/watch?v=txSeLG4kJ6Y).
 The official-page link and the YouTube title were verified on 2026-10-20. Transcript export returned no available
 transcript. The procedure has not been transcribed or verified in this specification task.
-W13-01 must produce a faithful, source-checked draft with timestamp references for the physical steps and obtain
+W13-07 must produce a faithful, source-checked draft with timestamp references for the physical steps and obtain
 approval before inclusion. Do not invent finger positions, calibration, force instructions or medical interpretation.
 A generic link alone does not satisfy the practical text-guide requirement; W13-07 cannot close without approved text.
 
@@ -382,8 +383,8 @@ Proposed introductory adaptation, pending editorial approval (not a transcript o
 Guide structure: purpose and vocabulary; approved physical steps; how the method frames yes/no questions;
 an example relevant to this questionnaire; return to the exact prior step; official source attribution.
 Use a small typed content section structure with stable IDs, locale, provenance, and optional future media references.
-Ship text only; no audio/video player, CMS, autoplay, completion tracking, or new treatment protocol generated from it.
-Video remains a proposed optional scope addition below; the user's feasibility question does not itself approve shipping it.
+Ship approved text and the approved W13-07V online video container described below.
+No CMS, autoplay, completion tracking, custom media infrastructure or new treatment protocol is introduced.
 Bundle approved educational text for the same loaded-assets offline experience as the app.
 Do not promise first-ever offline loading where assets have not been installed.
 
@@ -391,9 +392,9 @@ Use the existing Hebrew/English locale provider, typed message keys, fallback-la
 and literal personal text handling. New screens receive English scaffolding and meaningful fallback copy;
 unapproved English therapeutic text is identified as pending editorial review rather than silently machine translated.
 
-#### Optional W13-07V — Official video alongside the text
+#### Approved W13-07V — Official video alongside the text (part of W13-07)
 
-**Status:** feasibility assessed; proposed for inclusion, not approved implementation scope.
+**Status:** approved in the preflight charter; included in W13-07. No implementation starts during preflight.
 
 The official source is an existing YouTube video, so a small educational embed can live wholly in pic-web.
 It is not a Unified Player treatment, produces no Timeline/library entry, and does not affect questionnaire progress.
@@ -410,7 +411,7 @@ These are preliminary engineering estimates, not a delivery commitment. They exc
 caption authoring, content approval, and any provider restriction discovered during an actual embed playback check.
 Watch-page access was verified; embed playback permission has not yet been tested.
 
-Recommended optional increment: an explicitly activated video below the text, with native playback controls,
+Approved video increment: an explicitly activated video below the text, with native playback controls,
 no autoplay, a localized frame title, and an external source link if playback is unavailable.
 Load it only after the Event Manager chooses to watch; stop playback on closing/leaving the guide.
 Preserve the exact questionnaire draft/return target. Keep text available independently when offline.
@@ -489,114 +490,20 @@ the established stable workflow. Do not claim the historical counts as current e
 Physical keyboard/viewport, safe-area, zoom and native Hebrew screen-reader checks need explicit manual evidence;
 automated geometry or ARIA checks are not equivalent.
 
-## Proposed Ticket Breakdown
+## Detailed Ticket Suite
 
-All entries are **proposed**, not dispatched. Shared composition, dictionaries, and persistence contracts have one
-writer at a time. Each eventual ticket needs explicit AC resolution, relevant tests, scope review, and an atomic commit.
-This specification task does not create implementation branches, issue assignments, or commits.
+The [ticket index](../tickets/INDEX.md) is authoritative for the nine generated ticket IDs and their explicit DAG.
+The approved behavior is unchanged; the earlier layer-oriented proposal is now organized as end-to-end slices.
+W13-02 includes controls, engine, adapters, schema and promotion for durable priority.
+W13-03 includes UI and atomic persistence for revised membership with a fresh joint answer.
+W13-07 includes the now-approved W13-07V video container; no tenth ticket is created.
 
-### W13-01 — Freeze questionnaire semantics and the official copy package
+Every generated ticket contains objective/context, exact scope, blocked-by and blocking edges, demonstration,
+acceptance criteria, testing requirements, Definition of Done, exclusions and a pending Resolution section.
+The full [earlier specification](../archive/wave-13-spec-before-ticket-generation.md) preserves the original proposal.
 
-**Depends on:** none. **Owner:** product specification / Hebrew copy.
-
-- Record W13-D1–D5, the initial-rating pass, untitled representation, and polarity-view semantics.
-- Specify the renewed full-list answer behavior after additions, including No, Back and retry.
-- Draft the source-checked adaptation selected in Q2 for approval and review positive-polarity initial wording.
-- Prepare Hebrew-first copy with provenance, English keys/fallbacks, and exact supplied preparation text.
-- AC: every user-visible phrase has an owner/source; no invented procedure or unresolved decision marked approved.
-
-### W13-02 — Public group-priority contract
-
-**Depends on:** W13-01 semantics; approved W13-D1.
-**Owner:** pic-engine GroupEngine / RepositoryPort.
-
-- Specify reorder validation, concurrency, ordered read projection and append interaction.
-- Define atomic revised-membership plus fresh-joint-answer commit for W13-D4; keep old and pending versions distinct.
-- Add the bounded command and port contract; keep ratings/Player/Library independent.
-- AC: arbitrary permutations work; stale/foreign/incomplete permutations reject without mutation;
-  no name, score, timestamp, answer, or history changes from reorder.
-- No general engine hydration, questionnaire navigation, or therapeutic content edits.
-
-### W13-03 — Durable order, legacy compatibility, and Guest promotion
-
-**Depends on:** W13-02. **Owner:** adapters / schema / promotion contract.
-
-- Implement atomic persisted positions and revision, deterministic legacy handling, and ordered reads.
-- Preserve positions on append/rating writes and local recovery.
-- Persist revised membership and its actual fresh answer together; reject stale revisions without partial writes.
-- Extend new promotion payloads while preserving frozen legacy retries and DEC-018 idempotency.
-- AC: both adapters and real database contract tests round-trip order; concurrency is safe; no delete/reinsert;
-  legacy pending Finish replay still increments exactly once.
-- Deliver additive migration/recovery notes. This ticket does not authorize live deployment.
-
-### W13-04 — Organic questionnaire and progressive topic list
-
-**Depends on:** W13-01, W13-03. **Owner:** pic-web questionnaire / composition.
-
-- Remove the required name-confirmation screen; embed supplied instructions; optional title and immediate topic input.
-- Add list and persistent move controls; keep next input below it and two clear actions.
-- Reuse operation tracking and retain stable topic IDs during failed add/rate/order operations.
-- AC: untitled Guest/account flows work; no empty group on visit; pending final topic not lost;
-  no total counters; no score-based automatic reorder; keyboard ordering works.
-
-### W13-05 — Initial ratings, Back navigation, and clean summary
-
-**Depends on:** W13-04 and the W13-D4 public commit contract from W13-02/03.
-**Owner:** pic-web flow / rating / summary.
-
-- Implement the initial 1–10 pass and preserve generic 0–10 re-rating.
-- Lift drafts above screen mounts; add Back transitions without using reset or Player navigation shortcuts.
-- Render manual priority and optional polarity view; prohibit that view during blind input.
-- After adding to an answered list, collect the fresh full-list joint answer; retain pending work on Back or failure.
-- AC: each backward transition preserves draft state; no implicit prior reveal, duplicate rating, or fake joint answer;
-  No remains non-blocking; summary has no item totals; existing zero history is unchanged.
-
-### W13-06 — Personal greeting and truthful identity in the drawer
-
-**Depends on:** W13-01. **Owner:** pic-web shared Frame / identity composition.
-
-- Add verified own-name projection, fallback greeting and state-specific identity labels.
-- Keep account identity distinct from unsaved/pending/recovery state and preserve Sheet focus behavior.
-- AC: no literal name placeholder, no stale name across accounts, no identity inferred from therapeutic mode,
-  no profile fetch from a presentation component.
-
-### W13-07 — Welcome surface and text muscle-testing guide
-
-**Depends on:** W13-01 approved adaptation selected in Q2; integrate with W13-05 navigation.
-**Owner:** pic-web introduction / educational content / i18n.
-
-- Add welcome, method background, and approved text instructions with source attribution.
-- Keep entry skippable and help revisitable; reserve optional future media references without shipping media.
-- W13-07V is a separately proposed small online-video increment; include only if the user adds it to wave scope.
-- AC: guide contains an approved practical procedure; free Guest access; return preserves work;
-  active/pending-recovery routes are not displaced; Hebrew and English layout/fallbacks work.
-
-### W13-08 — Confirm content provenance and remedy the post-Finish presentation
-
-**Depends on:** static audit available now; implementation remedy after reproduced evidence.
-**Owner:** pic-web catalog/router audit.
-
-- Reproduce the reported experience in Guest and authenticated contexts; trace catalog IDs and exact route.
-- Confirm whether the visible items are seeds, translation overlays, personal rows, stale UI, or another source.
-- Implement only an evidenced, approved presentation/routing fix; report candidates with reference impact.
-- AC: correct post-completion destination, no unintended Player launch, no hidden source substitution;
-  zero treatment-file or database-row deletion without separate exact-target human permission.
-- A confirmed “expected catalog behavior” finding is valid; inventing a cleanup is not.
-
-### W13-09 — Integrated wave verification and handoff
-
-**Depends on:** W13-02–08 complete, including W13-D4 and approved source-based guide copy.
-**Owner:** assembled application verification.
-
-- Verify full anonymous entry → topics/order → initial ratings → joint test → Player → persistence → return journey.
-- Verify authenticated draft path, recovery, backward navigation, identity changes, and all order round-trips.
-- Run final gates and independent Standards/Spec reviews using the established review workflow at implementation time.
-- AC: every requirement maps to passing evidence or an explicitly accepted limitation;
-  no unresolved blocker hidden by a ready label; include content preservation and manual-QA status in handoff.
-
-**Recommended sequence:** 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09.
-The read-only reproduction portion of 08 can occur earlier; 06 is independent of durable priority.
-These dependencies do not authorize spawning agents in this specification task.
+The user has approved specification and content-audit scope, and authorized local ticket generation and commit only.
+Ticket status remains awaiting-human-review until a separate implementation green light.
 
 ## Architectural Questions and Objections
 
@@ -616,11 +523,10 @@ These dependencies do not authorize spawning agents in this specification task.
 
 **Clarifications resolved; remaining delivery dependencies:**
 
-- **Q1 resolved:** adding a topic requires answering again for the entire updated list. W13-02/03 own the atomic contract.
+- **Q1 resolved:** adding a topic requires answering again for the entire updated list. W13-03 owns the atomic revision.
 - **Q2 source resolved:** propose an adaptation of the official demonstration. A verified transcript/draft and
   editorial approval are still required; the unavailable source transcript is recorded rather than filled with guesses.
-- **Video option:** online embedding is recommended as optional W13-07V, with low estimated implementation complexity.
-  Its inclusion in wave scope has not yet been requested.
+- **Video approved:** W13-07V is included in W13-07 by the preflight charter; verify actual embedding during that ticket.
 
 The proposed principal test seam is the existing App/composition → GroupEngine → RepositoryPort path,
 with database/promotion contract tests where persistence cannot be proved through the browser alone.
@@ -636,7 +542,7 @@ The user's durable-order answer confirms expanding that existing boundary; no in
 - General authenticated engine hydration, cross-device draft sync, or offline conflict-resolution redesign.
 - New auth mechanisms, entitlement changes, profile editing, or account deletion.
 - New course/player semantics, snapshotting, treatment authoring, or a new library management product.
-- Audio/video playback unless optional W13-07V is selected; custom transcription tooling, a CMS or invented procedures.
+- Offline/bundled video and custom media/transcription infrastructure; a CMS or invented therapeutic procedures.
 
 ## Further Notes
 
@@ -673,8 +579,8 @@ Paths here are evidence pointers at the inspected baseline, not a mandatory futu
 | Shared utility drawer | `packages/pic-web/src/therapeutic-frame/TherapeuticScreenFrame.tsx` |
 | Successful Finish clears Player pointer | `packages/pic-web/src/composition-root.ts` |
 | Catalog and content selection | `packages/pic-web/src/TreatmentPickerScreen.tsx` |
-| Content findings and exact candidate IDs | [Wave 13 content audit](wave-13-content-audit.md) |
-| Closed baseline and retained limitations | `docs/audits/wave-12-handoff.md` |
+| Content findings and exact candidate IDs | [Wave 13 content audit](../audits/wave-13-content-audit.md) |
+| Closed baseline and retained limitations | `docs/waves/wave-12/handoffs/wave-12-handoff.md` |
 
 ### Publication and readiness
 
@@ -683,8 +589,8 @@ Repository instructions identify GitHub Issues on `yosseftal/PiC_healing` throug
 `gh` is unavailable on PATH and was not found in the checked standard install locations in this environment.
 No issue was created and no external publication is claimed.
 
-This local draft is complete for architectural review. Q1 and the Q2 source choice are resolved by the user's replies.
+This specification is approved for ticket generation. Q1 and the Q2 source choice are resolved by the user's replies.
 The practical guide adaptation still needs source verification and approval before integration.
 No implementation ticket should be advertised as fully ready while its stated content or contract blocker is unresolved.
-The original task specifically requests a proposed charter and clarification before conflicting implementation.
-Publication, when tooling is available, should retain this proposed status and the exact blocker list.
+The later preflight charter explicitly approves this specification and requests local ticket files plus commits.
+Those local files are the publication target for this turn; no GitHub publication or implementation is requested.

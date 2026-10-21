@@ -1,10 +1,10 @@
 # Wave 11 execution seam map
 
-Date: 2026-10-11. Baseline: `dddd56d`. Frozen source: `docs/specs/wave-11-i18n-spec.md`.
+Date: 2026-10-11. Baseline: `dddd56d`. Frozen source: `docs/waves/wave-11/specs/wave-11-i18n-spec.md`.
 
-The approved tickets are at `.scratch/wave-11/issues/`; the latest dispatch request's
-`.scratch/pic-tracer-bullet/issues/` reference is stale. Reuse the existing eight ticket files.
-Eight pre-dispatch briefs are at `.scratch/wave-11/briefs/`. No duplicate ticket set is created.
+The approved tickets are at `docs/waves/wave-11/tickets/`; the latest dispatch request's
+`docs/waves/` reference is stale. Reuse the existing eight ticket files.
+Eight pre-dispatch briefs are at `docs/waves/wave-11/briefs/`. No duplicate ticket set is created.
 
 | Ticket | Owned presentation seam | Depends on | Main risk |
 | --- | --- | --- | --- |

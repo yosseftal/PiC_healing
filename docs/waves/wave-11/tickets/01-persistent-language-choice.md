@@ -10,7 +10,7 @@ the current healing work. This is a working UI-to-preference tracer bullet, not 
 
 **Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.2–3.4 and 6.2.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 3.2–3.4 and 6.2.
 
 **Spec coverage:** AC-01–03, AC-05–10, AC-22–25; later tickets extend this behavior to remaining screens.
 
@@ -173,4 +173,4 @@ The corrective diff is limited to `messages.ts`, its resolver tests and this Res
 Closed on 2026-10-12. Commits and separate review results: b617a0e, 2e69889; Standards 0; Spec runtime-locale finding closed.
 All reported corrective findings are closed; no blocking Standards or Spec finding remains.
 The original Resolution records slice verification at implementation time.
-Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
+Final assembled-wave gates and manual limitations are recorded in docs/waves/wave-11/handoffs/wave-11-handoff.md.

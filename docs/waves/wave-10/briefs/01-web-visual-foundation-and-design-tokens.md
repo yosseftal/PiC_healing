@@ -18,10 +18,10 @@
 ## Frozen Requirements
 
 Implement the ticket at:
-`.scratch/wave-10-ui-primitives/issues/01-web-visual-foundation-and-design-tokens.md`.
+`docs/waves/wave-10/tickets/01-web-visual-foundation-and-design-tokens.md`.
 
 Use the approved source specification at:
-`.scratch/wave-10-ui-primitives.md`.
+`docs/waves/wave-10/specs/wave-10-ui-primitives.md`.
 
 Verbatim requirements:
 

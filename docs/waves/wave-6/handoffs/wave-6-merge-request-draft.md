@@ -106,7 +106,7 @@ for migrations. Documented in `docs/testing/supabase-remote-testing.md`.
 
 ## Related docs
 
-- `docs/audits/wave-6-handoff.md` — Wave 6 close-out
-- `docs/audits/wave-6.5-handoff.md` — Wave 6.5 close-out
-- `.scratch/pic-tracer-bullet/issues/12-*.md`, `13-*.md` — adapter + RPC resolutions
+- `docs/waves/wave-6/handoffs/wave-6-handoff.md` — Wave 6 close-out
+- `docs/waves/wave-6.5/handoffs/wave-6.5-handoff.md` — Wave 6.5 close-out
+- `docs/waves/12-*.md`, `13-*.md` — adapter + RPC resolutions
 - `.scratch/pic-tracer-bullet-6.5/issues/` — hardening tickets 01–06

@@ -8,8 +8,8 @@ working around since Wave 4/5 (audit finding SF-1, carried through ticket 12 unr
 
 **Status:** done
 
-**Source:** `docs/audits/wave-6-handoff.md` "Should-fix carry-forward" item 2; ticket 12's Deviation #2
-(`.scratch/pic-tracer-bullet/issues/12-adapter-supabase-crud.md`); `packages/pic-engine/src/types.ts`'s
+**Source:** `docs/waves/wave-6/handoffs/wave-6-handoff.md` "Should-fix carry-forward" item 2; ticket 12's Deviation #2
+(`docs/waves/wave-6/tickets/12-adapter-supabase-crud.md`); `packages/pic-engine/src/types.ts`'s
 `Symptom.rated_at` doc comment (ticket 07 — the domain field this column must finally back).
 
 ## Objective

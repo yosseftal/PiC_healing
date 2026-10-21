@@ -38,7 +38,7 @@ durable handoff.
       pass.
 - [x] Changed-path verification finds no source/config change outside `pic-web` except root lockfile.
 - [x] Every Wave 10 ticket contains a complete `## Resolution` and `Status: done`.
-- [x] Closed ticket records and `docs/audits/wave-10-handoff.md` preserve the completed wave and open
+- [x] Closed ticket records and `docs/waves/wave-10/handoffs/wave-10-handoff.md` preserve the completed wave and open
       Should-fix items.
 
 ## Resolution
@@ -86,5 +86,5 @@ both returned exit 0; no listener remained after the single case. No Player runt
    The latter two are required closure documents, not source/config exceptions; the lockfile did
    not change in 10.9.
 9. Tickets 10.1–10.9 each have `Status: done` and `## Resolution` at this commit.
-10. `docs/audits/wave-10-handoff.md` records the closed chain, passing scoped gates, seam state,
+10. `docs/waves/wave-10/handoffs/wave-10-handoff.md` records the closed chain, passing scoped gates, seam state,
     baseline exceptions, and Should-fix carry-forward.

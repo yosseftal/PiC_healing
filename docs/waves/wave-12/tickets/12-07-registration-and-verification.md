@@ -11,7 +11,7 @@ including after reloading the original browser during verification.
 
 **Blocked by:** W12-06 — Recover interrupted promotion without loss or duplicate success.
 
-**Source:** [Approved Wave 12 specification](../wave-12-spec.md), Implementation Decisions D (Auth and Verification continuity);
+**Source:** [Approved Wave 12 specification][relocation-link-1], Implementation Decisions D (Auth and Verification continuity);
 User Stories 20, 22-25 and 28-30.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
@@ -190,3 +190,5 @@ frontend behavior and signup assertions are unchanged. Repeat live gates remain 
   SMTP delivery/allowed return settings remain deployment evidence. Original-browser password sign-in is the selected
   continuity mechanism; custom callback-driven promotion is unnecessary and not implemented.
 - No ticket commit is made by the implementation agent; parent owns independent reviews, final gates and closure.
+
+[relocation-link-1]: ../specs/wave-12-spec.md

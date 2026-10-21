@@ -17,9 +17,9 @@
 ## Frozen Requirements
 
 Implement Ticket 10.3 from:
-`.scratch/wave-10-ui-primitives/issues/03-atomic-action-layout-and-banner.md`.
+`docs/waves/wave-10/tickets/03-atomic-action-layout-and-banner.md`.
 
-Use the approved specification at `.scratch/wave-10-ui-primitives.md`, especially Layer 3.3,
+Use the approved specification at `docs/waves/wave-10/specs/wave-10-ui-primitives.md`, especially Layer 3.3,
 TherapeuticBanner, action/banner budgets, focus/state tokens, and recovery language.
 
 ## Seam Map

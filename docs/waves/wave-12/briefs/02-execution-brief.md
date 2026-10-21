@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-02 — Explicit Hebrew terminology and dynamic NEMAR alias
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/02-wave-12-explicit-terminology.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/02-wave-12-explicit-terminology.md`
 - Wave: 12. Dispatch authority for this run covers 01 → 02 → 03 sequentially only.
 - Authorized frontier ticket; wait for previous ticket verification and commit.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -27,7 +27,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 
 > A supplied alias is literal user wording and is not translated.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -47,7 +47,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: i18n and affected presentation callers/tests.
 - Consumer/downstream: current inquiry state.
 - Risk to verify: Resolve default per fallback language; render alias as literal bidi-isolated data.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -83,4 +83,3 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
   seeds, and server language preferences unchanged. Route any affected hardcoded UI wording through the dictionary.
 - [ ] AC-08: Tests cover default/custom/blank/mixed-direction/special-character aliases, fallback, accessible names, and a
   live locale/alias change in an active inquiry.
-

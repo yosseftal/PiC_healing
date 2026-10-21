@@ -1,18 +1,18 @@
 # Structured Markdown Content Integration — Implementation Spec
 
 **Status:** Wave 9 core finalized and closed (commits `099b861`–`fab5faa`, see
-`docs/audits/wave-9-handoff.md`). **Wave 9.1 Resilience Hardening Amendment finalized by Executive
+`docs/waves/wave-9/handoffs/wave-9-handoff.md`). **Wave 9.1 Resilience Hardening Amendment finalized by Executive
 Command, 2026-08-26** — see that section below; it resolves the three Must-Fix gaps the Sovereign Domain
-Audit surfaced post-closure (`docs/audits/wave-9-detailed-audit.md`) and adds two further build-time
+Audit surfaced post-closure (`docs/waves/wave-9/audits/wave-9-detailed-audit.md`) and adds two further build-time
 integrity requirements. Tickets generated under `.scratch/md_content_integration/issues/` per
-`docs/agents/wave-orchestrator.md`'s open-ticket convention (`docs/specs/tickets/` is reserved for
+`docs/agents/wave-orchestrator.md`'s open-ticket convention (`docs/waves/` is reserved for
 already-closed tickets — see that file's "Pre-flight" §3). Not yet filed as a GitHub issue (`gh` CLI
 unavailable in the drafting environment — see `docs/agents/issue-tracker.md` for the intended publish
 path). **This amendment is a documentation-only planning pass — no production code, schema, or test was
 changed to produce it; implementation is a separate, EM-approved follow-up wave.**
 
 **Context:** Builds directly on the "Executive Review" Current Truth audit and the follow-up Gap
-Analysis (see chat history / `docs/audits/` if archived). The Tracer Bullet's Unified Player state
+Analysis (see chat history / `docs/waves/` if archived). The Tracer Bullet's Unified Player state
 machine (Navigation Tree, Terminal NEMAR, Finish sovereignty) is fully verified end-to-end, but no code
 path anywhere reads `treatments.structured_markdown` — `RepositoryPort` exposes only `{id, title}`,
 `TreatmentPickerScreen` starts every session against two hardcoded stub unit ids, and `AtomicUnitView`
@@ -271,7 +271,7 @@ marked `[FINALIZED]`:
 
 ### Problem Statement
 
-`docs/audits/wave-9-detailed-audit.md`'s Sovereign Domain Audit (run after Wave 9 core closed) found the
+`docs/waves/wave-9/audits/wave-9-detailed-audit.md`'s Sovereign Domain Audit (run after Wave 9 core closed) found the
 Player's Safe Container guarantee still has a hole an Event Manager can fall into after the wave's own
 "complete" state: a restored or resumed session can mount a blank or Terminal-NEMAR-only Player instead of
 the sovereign Zero-H3 copy (Must-Fix A), the offline GFM promise is unproven against real Guest content
@@ -427,7 +427,7 @@ promotion RPC — Path B holds unchanged:
   `.scratch/md_content_integration/issues/` — reconstructing the six that were never written (02, 03, 04,
   05, 07, 08) from the already-shipped commits and tests, per the audit's own Appendix A reconstruction —
   is compiled and permanently archived as **"Appendix A — Ticket Resolution Log"** inside
-  `docs/audits/wave-9-handoff.md`, which is git-tracked, unlike `.scratch/` (`.gitignore:4`).
+  `docs/waves/wave-9/handoffs/wave-9-handoff.md`, which is git-tracked, unlike `.scratch/` (`.gitignore:4`).
 - This is the durable record from this point forward; `.scratch/` remains the working/ephemeral copy for
   active ticket iteration, exactly as `wave-orchestrator.md` intends, but is no longer the *only* place
   these resolutions exist.
@@ -517,21 +517,21 @@ decisions):
    every treatment's parseability.
 4. An un-mocked GFM proof against real Guest content (Decision D), plus lockstep seed/migration/parser
    fixture updates to carry a real table.
-5. A durable Appendix A of every ticket's Resolution log inside `docs/audits/wave-9-handoff.md` (Decision
+5. A durable Appendix A of every ticket's Resolution log inside `docs/waves/wave-9/handoffs/wave-9-handoff.md` (Decision
    E), closing the audit's Must-Fix C.
 
 ## Testing & TDD Standards (applies to every ticket in this wave)
 
 - **Strict TDD in `pic-engine`**: no Content Parser business logic lands without a prior failing unit
   test — matching this codebase's existing "every transition gets its own test before implementation"
-  convention (see `docs/specs/tickets/08-player-engine.md`'s Testing Requirement section for the house
+  convention (see `docs/waves/wave-4/tickets/08-player-engine.md`'s Testing Requirement section for the house
   style to follow).
 - **Module isolation**: `npm run depcruise` plus a dedicated source-scan assertion that `player-engine`
   has zero import of the new Content Parser module — the identical pattern already enforcing
   `player-engine` ⇎ `group-engine` isolation.
 - **Adversarial Promotion regression**: the promotion RPC's existing adversarial matrix (mid-transaction
   failure, retry idempotency, cross-identity mismatch — already implemented and passing per
-  `supabase-repository.test.ts` and `docs/audits/wave-8-handoff.md`'s User Story 37) must still pass
+  `supabase-repository.test.ts` and `docs/waves/wave-8/handoffs/wave-8-handoff.md`'s User Story 37) must still pass
   unchanged after `RepositoryPort` gains `getTreatment` — this wave re-runs it as a regression gate, it
   does not rewrite it.
 - **Sovereign Success regression**: `finishAnyway()` unconditionally setting `success_declared: true`

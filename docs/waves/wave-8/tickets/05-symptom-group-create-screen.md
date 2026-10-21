@@ -6,7 +6,7 @@
 
 **Status:** done
 
-**Source:** `.scratch/pic-tracer-bullet/issues/16-symptom-group-create-screen.md` (orig. Ticket 16).
+**Source:** `docs/waves/wave-8/tickets/original-tracer/16-symptom-group-create-screen.md` (orig. Ticket 16).
 
 ## Ethical guard — Blind-by-Default (DEC-010, DEC-011)
 

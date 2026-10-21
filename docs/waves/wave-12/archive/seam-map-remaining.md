@@ -26,7 +26,7 @@ Functional blockers remain exactly the approved graph. Every remaining brief was
 - One implementation writer, fresh isolated agent per ticket; parent conducts independent Standards/Spec reviews.
 - Sequential final tests: scoped typecheck, full web tests, depcruise/lint, then browser checks (two workers).
   Avoid full Vitest and Chromium concurrently; this host previously hit unchanged default test timeouts under load.
-- Commit each verified ticket immediately; update .scratch/pic-tracer-bullet/wave-12-status.md with full hash and next.
+- Commit each verified ticket immediately; update docs/waves/wave-12/archive/wave-12-status.md with full hash and next.
 - Before a graceful context/quota halt, preserve any unverified web-only work in a named recoverable Git stash,
   record the stash identity and resume instructions, and leave HEAD at the last verified ticket.
   Never label an unverified implementation commit as a completed ticket, and never discard user changes.

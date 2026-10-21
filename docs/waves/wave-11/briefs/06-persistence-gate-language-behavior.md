@@ -4,7 +4,7 @@
 
 - Ticket: 11.6 — Persistence Gate Language Behavior
 - Wave: 11
-- Frozen ticket: .scratch/wave-11/issues/06-persistence-gate-language-behavior.md
+- Frozen ticket: docs/waves/wave-11/tickets/06-persistence-gate-language-behavior.md
 - Orchestrator escalation: report conflicts or missing approval; do not guess.
 
 ## Permissions
@@ -44,7 +44,7 @@ _Avoid_: Failed, error, incomplete, stuck, "In-Process, Not Yet Complete" as a s
 
 ## Seam map excerpt
 
-- See docs/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
+- See docs/waves/wave-11/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
 - Test the approved public provider/screen/action/content seams. No new test seam needs to be invented.
 - Existing engines own healing state, stable identities, ratings, Finish authority, and persistence.
 - Other tickets may be independent in the graph, but shared-file edits are serialized by the orchestrator.
@@ -92,4 +92,3 @@ Do not implement auth providers, alter atomic promotion/idempotency, add account
 - [ ] TB-09: All approved gate keys/parameters have parity; no raw key, placeholder, or unintended fallback ships.
       Existing auth stubs stay factually identified rather than being presented as completed production capabilities.
 - [ ] TB-10: Scoped tests/checks pass, existing gate/domain behavior remains intact, and implementation is web-only.
-

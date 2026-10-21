@@ -10,7 +10,7 @@ unchanged, and saving or discarding guest work preserves the independent languag
 
 **Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 2, 3.2–3.5, 4, and 6.2.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 2, 3.2–3.5, 4, and 6.2.
 
 **Spec coverage:** AC-02, AC-05, AC-08, AC-11, AC-17, AC-20–21, AC-23–25.
 
@@ -129,4 +129,4 @@ pronunciation. Chromium evidence does not substitute for those checks. Existing 
 Closed on 2026-10-12. Commits and separate review results: 31161c2; Standards 0; Spec 0.
 All reported corrective findings are closed; no blocking Standards or Spec finding remains.
 The original Resolution records slice verification at implementation time.
-Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
+Final assembled-wave gates and manual limitations are recorded in docs/waves/wave-11/handoffs/wave-11-handoff.md.

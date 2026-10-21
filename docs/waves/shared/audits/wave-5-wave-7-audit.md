@@ -21,7 +21,7 @@ composition-root.ts — ticket 14 DoD says reach tree “via context”
 GuestModeShell comment says it “mounts SessionEngine” — wiring is in composition-root
 Mysterious Name
 GuestModeShell.tsx
-Grandfather list grew by one entry (docs/audits/wave-4-audit.md)
+Grandfather list grew by one entry (docs/waves/wave-4/audits/wave-4-audit.md)
 CI hygiene drift
 scripts/ci-linelength-grandfather.txt header says list “must never grow”
 Passes: Single module-level singleton construction; zero useState/useEffect in pic-web; dependency-cruiser enforces adapter-import firewall; test carve-out for app-shell.test.tsx is deliberate.
@@ -129,7 +129,7 @@ composition-root.ts — notify on promotionStatus: 'pending' before awaiting pro
 Persist or re-derive gate + pending Finish across page refresh — either persist gateTriggered/pendingFinishRequest alongside guest blob, or document an explicit re-derivation rule (e.g. re-open gate when guest session has terminal_nemar answered but success_declared === false and no auth).
 Define adapter rebind strategy before ticket 15 lands — readonly RepositoryPort in all engines requires a concrete swap mechanism (delegating port, factory rebind, or post-promote engine reconstruction); stub alone is insufficient for E2E.
 Should-fix (documentation / testing gaps)
-Revert or reflow docs/audits/wave-4-audit.md to shrink grandfather list (do not grandfather audit docs).
+Revert or reflow docs/waves/wave-4/audits/wave-4-audit.md to shrink grandfather list (do not grandfather audit docs).
 Wire discardGuestState() to a LocalGuestRepository.clear() API at composition root.
 Consolidate in_view normalization into one shared helper (adapter + SessionEngine).
 Expose repositoryPort via Context or remove export to match ticket 14 convention.

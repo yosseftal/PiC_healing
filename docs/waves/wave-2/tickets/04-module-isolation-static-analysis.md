@@ -8,7 +8,7 @@ real logic, so it is a guardrail from day one rather than a check bolted on afte
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md`, "Seam" section and Testing Decisions.
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md`, "Seam" section and Testing Decisions.
 
 ## Objective
 

@@ -15,12 +15,13 @@ Orchestrator fills this template per ticket spawn. Sub-agent treats it as the fu
 | Zone | Paths |
 |------|-------|
 | Read-Write | `{ticket .md}`, `{owned src + test globs}` |
-| Read-Only | `docs/docs/specs/tracer-bullet-happy-path.md`, `{interfaces}`, `{sibling engines listed in Do Not Touch}` |
+| Read-Only | `docs/waves/shared/specs/tracer-bullet-happy-path.md`, `{interfaces}`, `{sibling engines listed in Do Not Touch}` |
 | Off limits | `{verbatim from ticket Do Not Touch / Out of Scope}` |
 
 ## Frozen requirements (verbatim)
 
-Paste the ticket's **Context Injection** block or the orchestrator's quoted tracer-bullet excerpt here. Implement exactly this text — no reinterpretation.
+Paste the ticket's **Context Injection** block or the orchestrator's quoted tracer-bullet excerpt here. Implement exactly this
+text — no reinterpretation.
 
 ## Glossary injection
 

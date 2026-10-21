@@ -9,7 +9,7 @@ event — into a newly authenticated account, all-or-nothing. Then wire it into 
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §E in full, Testing Decisions
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §E in full, Testing Decisions
 ("Guest→Promotion is the highest-risk integration point"), User Stories 34–39.
 
 ## Why this ticket gets the most scrutiny

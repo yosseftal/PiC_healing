@@ -2,7 +2,7 @@
 
 This repo's `pic-adapter-supabase` suite runs against the Event Manager's **real remote Supabase
 project**, not a local `supabase start` instance. That substitution is orchestrator-approved (see
-`docs/audits/wave-6-handoff.md` and Wave 6.5 tickets 01/05).
+`docs/waves/wave-6/handoffs/wave-6-handoff.md` and Wave 6.5 tickets 01/05).
 
 ## Why remote?
 

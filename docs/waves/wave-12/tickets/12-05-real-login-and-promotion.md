@@ -11,7 +11,7 @@ verified identity without losing therapeutic continuity.
 
 **Blocked by:** W12-04 — Start anew from the Player and Persistence Gate.
 
-**Source:** [Approved Wave 12 specification](../wave-12-spec.md), Implementation Decisions D (Form, Profile,
+**Source:** [Approved Wave 12 specification](../specs/wave-12-spec.md), Implementation Decisions D (Form, Profile,
 Promotion contracts); User Stories 19, 21, 24-30.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 

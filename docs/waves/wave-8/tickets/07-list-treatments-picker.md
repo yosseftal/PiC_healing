@@ -7,7 +7,7 @@ then dumb-reflection picker screen.
 
 **Status:** done
 
-**Source:** `.scratch/pic-tracer-bullet/issues/18-treatment-picker-screen.md` (orig. Ticket 18).
+**Source:** `docs/waves/wave-8/tickets/original-tracer/18-treatment-picker-screen.md` (orig. Ticket 18).
 
 ## Definition of Done
 

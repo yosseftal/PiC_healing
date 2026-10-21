@@ -19,7 +19,7 @@ Earlier entries below are historical checkpoints, superseded by this header and 
 - Post-refactor signup repeats on both approved addresses failed over_email_send_rate_limit; not skipped/green.
 - Read-only admin verification confirmed both test addresses absent after cleanup. No hosted settings were changed.
 - Final08/09 gates MUST retry real signup once provider quota permits; no waiver or claim of SMTP delivery.
-- Closed record: docs/specs/tickets/12-07-registration-and-verification.md.
+- Closed record: docs/waves/wave-12/tickets/12-07-registration-and-verification.md.
 - W12-06 checkpoint49800f1:305web/24Chromium/typecheck/lint/depc/reviews0-0 passed.
 
 ## Approved facility
@@ -33,12 +33,12 @@ Earlier entries below are historical checkpoints, superseded by this header and 
 
 - Old WIP stash86e88ae0b8629b350e81cd0d6d43d7457814f3c0 remains only as superseded safety backup.
   DO NOT APPLY it on current07 HEAD; it predates verified final07 corrections. Current source is authoritative.
-- Fresh08 brief: .scratch/wave-12/briefs/08-execution-brief.md; active ticket in pic-tracer-bullet/issues/08-*.md.
+- Fresh08 brief: docs/waves/wave-12/briefs/08-execution-brief.md; active ticket in pic-tracer-bullet/issues/08-*.md.
 - Runtime/tests/config web-only; engine/adapters/schema/migrations/seeds/dependencies/root tooling read-only.
 - Per-ticket reviews/atomiccommit/checkpoint required. Neverbuffer08/09 together or commitunverifiedWIP asdone.
 - Quota refreshed primary0%/weekly0% at07 resume; continue08 then09 with reserved lossless-checkpoint headroom.
-- Final09 root/browser/real/manualgates outstanding; physicalchecklist .scratch/wave-12/manual-release-checklist.md.
-- Wave12 NOT complete; final docs/audits/wave-12-handoff.md not written.
+- Final09 root/browser/real/manualgates outstanding; physicalchecklist docs/waves/wave-12/archive/manual-release-checklist.md.
+- Wave12 NOT complete; final docs/waves/wave-12/handoffs/wave-12-handoff.md not written.
 
 ## Active W12-08 dispatch
 
@@ -51,7 +51,7 @@ Earlier entries below are historical checkpoints, superseded by this header and 
 - Actual isolated Auth/profile + public GroupEngine(actual SupabaseRepository).createDraftGroup failed with SQL23502.
 - Negative remote test1/1 passed4.91s and owned fixture cleanup succeeded; this proves the inherited schema limitation,
   not successful authenticated new-group behavior. No signup email or hosted/schema change was involved.
-- Proposal: .scratch/wave-12/authenticated-draft-seam-decision.md.
+- Proposal: docs/waves/wave-12/archive/authenticated-draft-seam-decision.md.
 - Event Manager APPROVED owner-bound web draft staging until the real answer; see resolved decision below.
 - Never fake an answer, widen backend/schema, or mark mocked new-group proof real.
 - Independent08 identity/expiry/reauthentication work continues under fresh writer /root/w12_08_implement.
@@ -60,7 +60,7 @@ Earlier entries below are historical checkpoints, superseded by this header and 
 ## Decisions resolved: resume08 then09 (2026-10-15)
 
 - User withdrew accidental blocker-only answer and APPROVED owner-bound web draft staging explicitly.
-- Approved design: .scratch/wave-12/authenticated-draft-seam-decision.md; hard engine/adapter/schema boundary unchanged.
+- Approved design: docs/waves/wave-12/archive/authenticated-draft-seam-decision.md; hard engine/adapter/schema boundary unchanged.
 - User authorizes09 automated Playwright + ARIA checks and handoff with "Pending Manual QA Verification" for
   physical keyboard/safe-area/zoom/Hebrew screen reader, following Wave11. Do not claim manual checks passed.
 - Current HEAD05bad952703626cb5bbb2d42682848c4c8adb66d; unverified08 WIP is now stashed, not committed as complete.
@@ -79,7 +79,7 @@ Earlier entries below are historical checkpoints, superseded by this header and 
 - Restore with git stash apply ac51f52dd23fbeb5589be1117b663a3ffa965db4 onto verified07 after checking status/base.
   Use apply, not pop, to retain safety backup until verified closure. Do NOT apply old07 stash86e88ae.
 - Active ticket Resolution contains perAC evidence, red/sensitivity chronology, gates and bounded resume fixes.
-- Independent review checkpoint: .scratch/wave-12/08-review-checkpoint.md.
+- Independent review checkpoint: docs/waves/wave-12/archive/08-review-checkpoint.md.
 - Reviews: Standards1P2; Spec1P1+1P2. All3 accepted, not yet fixed: suspended-save reauth form deadlock,
   uncertain Timeline safe focus detachment, subsequent authenticated focus markers before reload.
 - Focused65/65 passed; real returning5/5 passed; Chromium16/16 passed; typecheck/lint/depc passed.
@@ -119,21 +119,21 @@ Earlier entries below are historical checkpoints, superseded by this header and 
 
 - Commit:bf1ecf26848aa9ca0eeeeda255c00d4c11079295.
 - Title: Restore identity and handle expiry without losing work.
-- Closed record:docs/specs/tickets/12-08-restored-identity-and-expiry.md; all10ACs addressed.
+- Closed record:docs/waves/wave-12/tickets/12-08-restored-identity-and-expiry.md; all10ACs addressed.
 - Final scoped web:39files/347tests,70.38s; actual signup/confirmation/profile/promotion/cleanup passed normalTLS.
 - Focused72/72 including Node regression; actual returning5/5; Chromium16/16,28.5s, sequential after full Vitest.
 - Typecheck/lint passed; depcruise766modules/1670dependencies,zero violations. Final Standards0 / Spec0.
 - All17webpaths remained unchanged after freeze; closedrecord +web scope18files passed130character/diff checks.
 - All5 accepted review findings resolved with red/green proof and final narrow re-review.
 - Working tree verified clean. Safety stashac51f52 and superseded86e88ae remain; DO NOT APPLY on current08HEAD.
-- Next dispatch:fresh09 agent. Parent owns final handoff docs/audits/wave-12-handoff.md after automated gates.
+- Next dispatch:fresh09 agent. Parent owns final handoff docs/waves/wave-12/handoffs/wave-12-handoff.md after automated gates.
 - Signup sends passed at13:46UTC and13:51UTC; avoid probes. Required final runs must retain actual signup checks.
 - Manual physical keyboard/safe-area/zoom/Hebrew screen reader remains Pending Manual QA Verification by user instruction.
 
 ## Active W12-09 dispatch
 
 - Fresh sole writer:/root/w12_09_final_journey; basebf1ecf26848aa9ca0eeeeda255c00d4c11079295.
-- Brief:.scratch/wave-12/briefs/09-execution-brief.md; all functional blockers closed.
+- Brief:docs/waves/wave-12/briefs/09-execution-brief.md; all functional blockers closed.
 - Owns assembled web journey/ARIA regression additions and final required automated quality gates.
 - Parent owns independent reviews, final closedrecord/handoff, atomic09commit and checkpoint.
 - No final Wave12 completion claim until required automated gates pass; physical/manual checks retain approved pending status.
@@ -164,9 +164,9 @@ expectation was corrected to reflect actual banner/region semantics. Final focus
   Standards0/Spec0. They were NOT rerun at quota halt. Required targeted20 + full179 remain pending.
 - Scoped web347/39files final08 pass is exact unchanged runtime/unit/script/config source;09changes browser tests only.
   Final root run includes all web cases. No new source/unit/config changes or duplicate signup probes are needed.
-- Detailed13ACmap/current evidence in active09 Resolution; resume notes .scratch/wave-12/09-review-checkpoint.md.
-- Final docs/audits/wave-12-handoff.md is NOT created; no09commit/closure/Wave12completion claim.
-  Prepared approved commits/decisions are .scratch/wave-12/final-handoff-notes.md.
+- Detailed13ACmap/current evidence in active09 Resolution; resume notes docs/waves/wave-12/archive/09-review-checkpoint.md.
+- Final docs/waves/wave-12/handoffs/wave-12-handoff.md is NOT created; no09commit/closure/Wave12completion claim.
+  Prepared approved commits/decisions are docs/waves/wave-12/archive/final-handoff-notes.md.
 - Physical keyboard/safe-area/zoom/Hebrew screen reader remains Pending Manual QA Verification, already approved.
 
 ## Final09 resume — 2026-10-18
@@ -184,21 +184,22 @@ expectation was corrected to reflect actual banner/region semantics. Final focus
 
 - Last completed:W12-09 — Verify the complete bilingual journey and quality gates.
 - Commit:f8887fa0c14ef37e6d1fd7f977ee3a59d7ed78a6.
-- Closed record:docs/specs/tickets/12-09-e2e-journey-and-quality-gates.md;13ACs explicitly addressed.
+- Closed record:docs/waves/wave-12/tickets/12-09-e2e-journey-and-quality-gates.md;13ACs explicitly addressed.
 - Final root npm test560/560,54files,107.23s; chainedengine72/199 andweb766/1670dependencies,zero violations.
 - Final scopedweb347/347,39files,76.51s; actual isolated signup/confirmation/profile/promotion/cleanup passed normalTLS.
 - FullChromium179/179,4.5m; focused22/22,1.5m. No new failures waived or retry/timeout changes.
 - Root typecheck/lint, webdepc/build PASS. Standards0/Spec0 remain valid on unchanged six-file freeze.
 - Only6webtest paths + closedrecord committed; no engine/adapter/schema/root-tooling/dependency changes.
 - Tree verified CLEAN; no test/build runners or writers remain. Stashes retained only as superseded safety backups.
-- Next queued:final docs/audits/wave-12-handoff.md and its separate documentation commit; no implementation remains.
+-  Next queued:final docs/waves/wave-12/handoffs/wave-12-handoff.md and its separate documentation commit; no implementation
+  remains.
 - Physicalkeyboard/safe-area/zoom/Hebrewreader Pending Manual QA Verification by explicit user authorization.
 
 ## WAVE12 COMPLETE — final documentation checkpoint
 
 - Final handoff commit:00eef19137729d83f47cad9ec913df6d04a41474.
 - Ticket09 implementation/closedrecord commit:f8887fa0c14ef37e6d1fd7f977ee3a59d7ed78a6.
-- Handoff:docs/audits/wave-12-handoff.md; all9ticket hashes, finalgate metrics, approvals and limits recorded.
+- Handoff:docs/waves/wave-12/handoffs/wave-12-handoff.md; all9ticket hashes, finalgate metrics, approvals and limits recorded.
 - Next ticket queued:NONE. All9closed records verified Status:done. No implementation remains to dispatch.
 - Final audit80webpaths +13approveddocs,zero forbidden; tested six-file digest unchanged after commits.
 - All automated gates PASS:root560/54files,web347/39files,Chromium179/179; root typecheck/lint,webbuild,depc.

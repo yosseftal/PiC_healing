@@ -1,9 +1,9 @@
 # Wave 9 Handoff — Structured Markdown Content Integration
 
-**Date:** 2026-08-21 (Wave 9 core); amended 2026-08-26 (Wave 9.1 Resilience Hardening, planning only)  
+**Date:** 2026-08-21 (Wave 9 core); amended 2026-08-26 (Wave 9.1 Resilience Hardening, planning only)
 **Status:** Wave 9 core CLOSED — Real treatment content wired through Port → Guest bundle → pic-web seam →
 Unified Player. **Wave 9.1 amendment: specified, not yet implemented** — see "Post-closure amendment"
-below and `docs/specs/structured-markdown-content-integration.md`.
+below and `docs/waves/wave-9/specs/structured-markdown-content-integration.md`.
 
 ## Closed tickets
 
@@ -61,12 +61,12 @@ in `happy-path-e2e.test.tsx` target `unit-2` accordingly.
 
 ## Post-closure amendment: Wave 9.1 Resilience Hardening (2026-08-26)
 
-A Sovereign Domain Audit run after this wave closed (`docs/audits/wave-9-detailed-audit.md`) found three
+A Sovereign Domain Audit run after this wave closed (`docs/waves/wave-9/audits/wave-9-detailed-audit.md`) found three
 Must-Fix gaps — a Safe Container restore/mount leak, an unproven offline GFM claim, and six ticket files
 missing their `## Resolution` (this appendix exists to close that third gap durably). Executive Command
 additionally directed a Heuristic Fallback correction and a build-time Bootstrap Integration Test. All five
 are specified as the **Wave 9.1 amendment** in
-`docs/specs/structured-markdown-content-integration.md` and staged as rewritten tickets under
+`docs/waves/wave-9/specs/structured-markdown-content-integration.md` and staged as rewritten tickets under
 `.scratch/md_content_integration/issues/`. **Not yet implemented** — this is the documentation/planning
 record; implementation is a separate, EM-approved follow-up pass.
 
@@ -164,7 +164,7 @@ back into their own ticket files under `.scratch/`.
 
 ## Wave 9.1 Closure — Resilience Hardening Amendment
 
-**Date:** 2026-08-30  
+**Date:** 2026-08-30
 **Status:** CLOSED — Heuristic Fallback, GFM lockstep, All-or-Nothing Player gate, narrowed Zero-H3
 picker trigger, and Bootstrap Integration Test have all landed; this closing ticket proved the E2E
 `<table>` assertion, unit-0 full-spine playability, and the `npm test` / depcruise gate.
@@ -349,7 +349,7 @@ more robustly; no new domain terms or decisions were introduced.
 **Status:** CLOSED — both P0 tickets landed. Triggered by an Event Manager remediation request quoting a
 `Verdict: REFACTOR` audit finding: stale session pointers on completion/promotion and no visual transition
 on Terminal NEMAR response submission. Tickets and briefs staged under `.scratch/pic-wave-9-2/`
-(force-committed alongside their code, not left to `.gitignore` evaporation — see `docs/audits/
+(force-committed alongside their code, not left to `.gitignore` evaporation — see `docs/waves/
 wave-9-detailed-audit.md` §C for why that matters).
 
 ### Closed tickets

@@ -120,11 +120,11 @@ ticket closed only when Resolution cites every AC.
 | 07 | `07-regression-guards.md` | **MISSING** |
 | 08 | `08-e2e-and-wave-closure.md` | **MISSING** (and its own AC unmet) |
 
-`docs/audits/wave-9-handoff.md` has no Resolution appendix. Durable record is the handoff
+`docs/waves/wave-9/handoffs/wave-9-handoff.md` has no Resolution appendix. Durable record is the handoff
 table plus this audit until the appendix is appended.
 
 **Approved refinement (not executed):** append a structured appendix to
-`docs/audits/wave-9-handoff.md` with all eight Resolution summaries (reconstruct 02–05, 07,
+`docs/waves/wave-9/handoffs/wave-9-handoff.md` with all eight Resolution summaries (reconstruct 02–05, 07,
 08 from commits/tests; copy 01 and 06). See Appendix A below for the reconstructed text.
 
 ### D. Code Hygiene & Line Length — PASS
@@ -135,7 +135,7 @@ new files, reported **0** lines over 130 characters.
 Wave 9 commits did not touch `scripts/ci-linelength-grandfather.txt`. Ticket 08's "zero
 grandfather-list growth" holds for this wave.
 
-Working-tree addition of `docs/visuals/architecture_blueprint.md` to the grandfather list is
+Working-tree addition of `docs/waves/shared/architecture/architecture_blueprint.md` to the grandfather list is
 **out of scope** (uncommitted, not a Wave 9 commit). Flagged only so it is not mistaken for
 Wave 9 debt.
 
@@ -238,7 +238,7 @@ existing row and keep SQL in lockstep.
 - `packages/pic-web/src/atomic-unit-view.test.tsx:44-71` — GFM table via mock, not Guest seed
 - `packages/pic-web/src/happy-path-e2e.test.tsx:197-199` — no table assertion
 - `.scratch/md_content_integration/issues/02–05, 07, 08` — no `## Resolution`
-- `docs/audits/wave-9-handoff.md` — no Resolution appendix
+- `docs/waves/wave-9/handoffs/wave-9-handoff.md` — no Resolution appendix
 - `packages/pic-engine/package.json` — engine has no UI/adapter runtime deps
 - `packages/pic-engine/.dependency-cruiser.cjs:16-20` — Path B isolation rule
 - `packages/pic-web/src/FinishBar.tsx:24-31` — Finish Anyway always present
@@ -256,7 +256,7 @@ Single clean sweep, no grandfather exceptions for new files:
 2. Add a simple GFM table to one existing seed treatment; keep SQL + parser fixtures in
    lockstep; assert `<table>` via real Guest `getParsedTreatmentContent` (un-mocked) in
    `atomic-unit-view.test.tsx`.
-3. Append Appendix A (below) to `docs/audits/wave-9-handoff.md`.
+3. Append Appendix A (below) to `docs/waves/wave-9/handoffs/wave-9-handoff.md`.
 4. Re-run `python3 scripts/check-max-line-length.py` on every touched file.
 
 ---
@@ -350,5 +350,5 @@ Reconstructed.
 
 - `happy-path-e2e.test.tsx` Player phase uses `unit-2` / Terminal NEMAR, not `intro` /
   `practice` (`:183-201`).
-- Handoff: `docs/audits/wave-9-handoff.md`.
+- Handoff: `docs/waves/wave-9/handoffs/wave-9-handoff.md`.
 - **Unmet AC:** every scratch issue file did **not** gain `## Resolution` (C).

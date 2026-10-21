@@ -10,7 +10,7 @@ tracer bullet.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §E, User Stories 34–39; DEC-017 Persistence Gate;
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §E, User Stories 34–39; DEC-017 Persistence Gate;
 Ticket 13 Atomic Promotion RPC.
 
 ## Objective

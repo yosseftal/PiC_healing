@@ -4,7 +4,7 @@
 
 - Ticket: 11.1 — Persistent Language Choice in the Player Drawer
 - Wave: 11
-- Frozen ticket: .scratch/wave-11/issues/01-persistent-language-choice.md
+- Frozen ticket: docs/waves/wave-11/tickets/01-persistent-language-choice.md
 - Orchestrator escalation: report conflicts or missing approval; do not guess.
 
 ## Permissions
@@ -47,7 +47,7 @@ _Avoid_: Failed, error, incomplete, stuck, "In-Process, Not Yet Complete" as a s
 
 ## Seam map excerpt
 
-- See docs/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
+- See docs/waves/wave-11/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
 - Test the approved public provider/screen/action/content seams. No new test seam needs to be invented.
 - Existing engines own healing state, stable identities, ratings, Finish authority, and persistence.
 - Other tickets may be independent in the graph, but shared-file edits are serialized by the orchestrator.
@@ -98,4 +98,3 @@ The approved spec and sibling tickets are read-only. Shared composition edits re
       promotion, or other therapeutic actions; current unit/session IDs and source-content cache remain stable.
 - [ ] TB-10: Unit/integration tests exercise storage failures and resolution contracts; a browser test uses the
       real selector to prove switch, focus, metadata, and reload behavior. Scoped checks pass and scope is verified.
-

@@ -10,7 +10,7 @@ the session's meaning or authority. Language access remains available in every P
 
 **Dispatch state:** Done; committed and independent Standards/Spec reviews closed.
 
-**Source:** [Approved Wave 11 specification](../../../docs/specs/wave-11-i18n-spec.md), sections 3.3–3.4, 4, and 6.2.
+**Source:** [Approved Wave 11 specification](../specs/wave-11-i18n-spec.md), sections 3.3–3.4, 4, and 6.2.
 
 **Spec coverage:** AC-03–05, AC-08–10, AC-13–14, AC-24–25.
 
@@ -82,7 +82,7 @@ All implementation, dictionary and test edits are within `packages/pic-web`; thi
 documentation exception. No staging or commit was performed by the implementing agent.
 
 The user approved drafting and using Hebrew UI controls, banners and assistive copy on 2026-10-11,
-as recorded in the execution brief and `docs/audits/wave-11-seam-map.md`. Newly authored Hebrew/English
+as recorded in the execution brief and `docs/waves/wave-11/audits/wave-11-seam-map.md`. Newly authored Hebrew/English
 Player copy is product-approved copy grounded in PIC terminology, not a quotation or publication from the website.
 
 ### Criteria
@@ -228,4 +228,4 @@ Parent review of the committed correction remains pending.
 Closed on 2026-10-12. Commits and separate review results: d6d73a7, fb1af26; Standards action-identity finding closed; Spec 0.
 All reported corrective findings are closed; no blocking Standards or Spec finding remains.
 The original Resolution records slice verification at implementation time.
-Final assembled-wave gates and manual limitations are recorded in docs/handoffs/wave-11-handoff.md.
+Final assembled-wave gates and manual limitations are recorded in docs/waves/wave-11/handoffs/wave-11-handoff.md.

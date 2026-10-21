@@ -9,7 +9,7 @@ Gate.
 
 **Brief:** `.scratch/pic-tracer-bullet-8/briefs/08-unified-player-screen-brief.md`
 
-**Source:** `.scratch/pic-tracer-bullet/issues/19-unified-player-screen.md` (orig. Ticket 19).
+**Source:** `docs/waves/wave-8/tickets/original-tracer/19-unified-player-screen.md` (orig. Ticket 19).
 
 ## Definition of Done
 

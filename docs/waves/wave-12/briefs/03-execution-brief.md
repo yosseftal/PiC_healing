@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-03 — Start a new Symptom Group during creation and inquiry
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/03-wave-12-inquiry-session-reset.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/03-wave-12-inquiry-session-reset.md`
 - Wave: 12. Dispatch authority for this run covers 01 → 02 → 03 sequentially only.
 - Authorized frontier ticket; wait for previous ticket verification and commit.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -28,7 +28,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 > A fresh group is created through
 > GroupEngine only when the Event Manager submits the new name; reset itself creates no empty persisted group.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -48,7 +48,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: non-Player reset and web composition/draft lifecycle.
 - Consumer/downstream: 04 Player/Gate reset.
 - Risk to verify: Wait for writes, suppress stale reads, clear storage last; preserve recoverable draft on failure.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -85,4 +85,3 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
   restores the trigger, and success closes the Sheet and focuses/announces the initial heading or name field in both locales.
 - [ ] AC-09: Introduce a production action through existing web contexts/composition, not a test-reset helper or
   engine-internal mutation. New group creation still uses the public GroupEngine contract after the next name submission.
-

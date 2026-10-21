@@ -230,6 +230,12 @@ It uses a flat 4-state machine with exclusive Navigation Tree navigation (**DEC-
 
 ## Agent skills
 
+### Wave documentation
+
+For wave specifications, tickets, audits and handoffs, start at [docs/waves/INDEX.md](docs/waves/INDEX.md).
+Open and closed tickets share the wave's tickets directory; Status and Resolution identify their actual state.
+Historical paths resolve through [the relocation ledger](docs/waves/RELOCATION.md).
+
 ### Issue tracker
 
 GitHub Issues on `yosseftal/PiC_healing` via the `gh` CLI. See `docs/agents/issue-tracker.md`.

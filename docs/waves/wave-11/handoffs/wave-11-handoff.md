@@ -36,7 +36,7 @@ translation reuse. Courses, account synchronization, additional locales and wide
 
 ## Ticket delivery and review
 
-Existing tickets live in `.scratch/wave-11/issues/`; the later `pic-tracer-bullet/issues` reference was stale.
+Existing tickets live in `docs/waves/wave-11/tickets/`; the later `pic-tracer-bullet/issues` reference was stale.
 All eight briefs were persisted before implementation. Shared dictionaries/composition required serialized writers:
 11.1 → 11.2 → 11.3 → 11.6 → 11.4 → 11.5 → 11.7 → 11.8.
 Each ticket has a per-criterion Resolution, scoped verification and a separate Standards/Spec review of a pinned commit.

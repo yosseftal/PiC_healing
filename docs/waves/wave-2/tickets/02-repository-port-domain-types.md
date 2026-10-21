@@ -7,7 +7,7 @@ speaks in. Types and an interface only — zero implementation.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §A "Modules", §B "Data Schema" (Guest store shapes).
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §A "Modules", §B "Data Schema" (Guest store shapes).
 
 ## Objective
 

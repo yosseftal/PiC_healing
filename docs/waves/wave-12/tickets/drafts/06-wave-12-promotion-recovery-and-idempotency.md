@@ -6,11 +6,13 @@
 
 **Status:** done
 
-**What to build:** After a dropped response, interrupted bookkeeping, or refresh during saving, the Event Manager can safely recover the same work with the correct owner and no duplicate timeline/use increment.
+**What to build:** After a dropped response, interrupted bookkeeping, or refresh during saving, the Event Manager can safely
+recover the same work with the correct owner and no duplicate timeline/use increment.
 
 **Blocked by:** W12-05 — Real Email/Password login and Guest promotion.
 
-**Source:** [Approved Wave 12 specification](../../../docs/specs/wave-12-spec.md), Implementation Decisions D (Promotion contract and cleanup); User Stories 24-26 and 30; DEC-018.
+**Source:** [Approved Wave 12 specification][relocation-link-1], Implementation Decisions D (Promotion contract and cleanup); User
+Stories 24-26 and 30; DEC-018.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
 ## Context Injection (verbatim)
@@ -19,28 +21,43 @@ The nine-ticket breakdown and dependencies were approved without changes on 2026
 
 ## Owned vertical slice
 
-Own web promotion serialization, recovery envelope, cleanup ordering, and fault recovery through existing public contracts. Atomic transactions, normalization, idempotency rules, and Finish semantics remain owned by the unchanged engine/adapter/RPC.
+Own web promotion serialization, recovery envelope, cleanup ordering, and fault recovery through existing public contracts. Atomic
+transactions, normalization, idempotency rules, and Finish semantics remain owned by the unchanged engine/adapter/RPC.
 
 ## Acceptance criteria
 
-- [x] AC-01: Freeze the exact Guest snapshot and stable idempotency key for one operation, bound to verified owner and flow generation; repeated clicks/callbacks reuse the operation and cannot change its payload.
-- [x] AC-02: Retain a web-owned recovery envelope containing snapshot, owner, pending Finish kind, and generation through interruption/reload, without credentials. Storage failure before safe recovery preparation must not silently discard the only draft.
-- [x] AC-03: Defer web-owned Guest cleanup until promotion and required completion reconciliation settle; remove the current early cleanup behavior without modifying SessionEngine internals.
-- [x] AC-04: RPC rejection restores the appropriate prior provider and keeps local recovery data. Retry under the same valid identity does not require another password submission.
-- [x] AC-05: A committed RPC with a lost response is retried with identical key/payload; it produces one row-set and one use increment. Never infer that an uncertain response means nothing was saved.
-- [x] AC-06: A post-promotion completion failure reconciles through existing idempotent public completion contracts without a second success effect; the UI reports pending/recovery until completion is known.
-- [x] AC-07: Refresh restores enough pending intent to recover for the same owner; stale callbacks after reset and callbacks for another owner cannot claim, delete, or promote the old snapshot.
-- [x] AC-08: Delete Guest/recovery residue only after confirmed completion or explicit applicable local discard. Discard never deletes already-anchored server data or lets flow persistence recreate the cleared Guest blob.
-- [x] AC-09: Reset and therapeutic writes cannot race the provider swap/recovery. Canceling a discard retains the operation and draft, and no false saved or reset-success announcement is emitted.
-- [x] AC-10: Prove the matrix: duplicate submission, pre-RPC rejection, RPC rejection, lost committed response, post-RPC completion failure, cleanup failure, reload, and owner/generation mismatch, for linked and unlinked sessions where applicable.
+- [x]  AC-01: Freeze the exact Guest snapshot and stable idempotency key for one operation, bound to verified owner and flow
+      generation; repeated clicks/callbacks reuse the operation and cannot change its payload.
+- [x]  AC-02: Retain a web-owned recovery envelope containing snapshot, owner, pending Finish kind, and generation through
+      interruption/reload, without credentials. Storage failure before safe recovery preparation must not silently discard the
+      only draft.
+- [x]  AC-03: Defer web-owned Guest cleanup until promotion and required completion reconciliation settle; remove the current
+      early cleanup behavior without modifying SessionEngine internals.
+- [x]  AC-04: RPC rejection restores the appropriate prior provider and keeps local recovery data. Retry under the same valid
+      identity does not require another password submission.
+- [x]  AC-05: A committed RPC with a lost response is retried with identical key/payload; it produces one row-set and one use
+      increment. Never infer that an uncertain response means nothing was saved.
+- [x]  AC-06: A post-promotion completion failure reconciles through existing idempotent public completion contracts without a
+      second success effect; the UI reports pending/recovery until completion is known.
+- [x]  AC-07: Refresh restores enough pending intent to recover for the same owner; stale callbacks after reset and callbacks for
+      another owner cannot claim, delete, or promote the old snapshot.
+- [x]  AC-08: Delete Guest/recovery residue only after confirmed completion or explicit applicable local discard. Discard never
+      deletes already-anchored server data or lets flow persistence recreate the cleared Guest blob.
+- [x]  AC-09: Reset and therapeutic writes cannot race the provider swap/recovery. Canceling a discard retains the operation and
+      draft, and no false saved or reset-success announcement is emitted.
+- [x]  AC-10: Prove the matrix: duplicate submission, pre-RPC rejection, RPC rejection, lost committed response, post-RPC
+      completion failure, cleanup failure, reload, and owner/generation mismatch, for linked and unlinked sessions where
+      applicable.
 
 ## Verification and prior art
 
-Use one failing behavioral test per adversarial matrix row before implementation, per the orchestrator contract. Extend web promotion and assembled-Gate tests; retain existing real RPC idempotency regressions unchanged.
+Use one failing behavioral test per adversarial matrix row before implementation, per the orchestrator contract. Extend web
+promotion and assembled-Gate tests; retain existing real RPC idempotency regressions unchanged.
 
 ## Dependencies and exclusions
 
-Do not weaken or rewrite fingerprint/normalization behavior to make a retry pass. If a required recovery cannot use public contracts, report the exact seam blocker instead of crossing into engine or SQL.
+Do not weaken or rewrite fingerprint/normalization behavior to make a retry pass. If a required recovery cannot use public
+contracts, report the exact seam blocker instead of crossing into engine or SQL.
 
 ## Isolation bounds
 
@@ -158,3 +175,4 @@ The orchestrator verified web-only paths and changed-line limits before this ato
   exception; all runtime/tests stay in the web package. Registration/verification remains07 and expiry remains08.
 - Independent Standards/Spec review and final changed-line/path checks passed; the ticket is closed.
 
+[relocation-link-1]: ../../specs/wave-12-spec.md

@@ -1,0 +1,1043 @@
+{
+  "date": "2026-10-20",
+  "baseline": "853a69651547b9aab0ae03a317fe84414efe19c8",
+  "purpose": "One-to-one documentation relocation; no source file discarded; tracked sources moved with git mv.",
+  "entries": [
+    {
+      "from": ".scratch/pic-tracer-bullet-6.5/issues/01-schema-symptoms-rated-at.md",
+      "to": "docs/waves/wave-6.5/tickets/01-schema-symptoms-rated-at.md",
+      "tracked": true,
+      "bytes": 4317,
+      "originalSha256": "d464879628a04a94e6777dfa22e749e2b1ddb77d15e8bff73086db1b09be4c5d"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-6.5/issues/02-adapter-supabase-rated-at.md",
+      "to": "docs/waves/wave-6.5/tickets/02-adapter-supabase-rated-at.md",
+      "tracked": true,
+      "bytes": 3781,
+      "originalSha256": "800348b2c70830588278fababf14be337c279bce7f56aaa4e2655f9416f1347f"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-6.5/issues/03-local-guest-repository-clear.md",
+      "to": "docs/waves/wave-6.5/tickets/03-local-guest-repository-clear.md",
+      "tracked": true,
+      "bytes": 1028,
+      "originalSha256": "d5fcb120fa73b7521fda5e586e82ca5f2566bb616a04eddac98ca210ac2a3309"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-6.5/issues/04-shared-in-view-normalization-helper.md",
+      "to": "docs/waves/wave-6.5/tickets/04-shared-in-view-normalization-helper.md",
+      "tracked": true,
+      "bytes": 971,
+      "originalSha256": "376f417474f057547f807b3e4ca54b6baffb9d2b1f3cad2e1fc2c82b9247e310"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-6.5/issues/05-idempotency-key-unification.md",
+      "to": "docs/waves/wave-6.5/tickets/05-idempotency-key-unification.md",
+      "tracked": true,
+      "bytes": 1135,
+      "originalSha256": "3af1a9b8aa150f4d98651869dd050cd3e27ef56d1a31f0953fdc74ba9e458f84"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-6.5/issues/06-tooling-cleanup-remote-connectivity-docs.md",
+      "to": "docs/waves/wave-6.5/tickets/06-tooling-cleanup-remote-connectivity-docs.md",
+      "tracked": true,
+      "bytes": 882,
+      "originalSha256": "bfd5c18a09b3b7574d4b226cd5bdb3dd2d1f7c764645081faec1f8f87bd5fad7"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/01-promote-path-wiring.md",
+      "to": "docs/waves/wave-8/tickets/01-promote-path-wiring.md",
+      "tracked": true,
+      "bytes": 4505,
+      "originalSha256": "a673eb83742c304d8508acdd1954dada0f18c0e2e9b713e66b5fac73472af1f0"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/03-engine-context-expansion.md",
+      "to": "docs/waves/wave-8/tickets/03-engine-context-expansion.md",
+      "tracked": true,
+      "bytes": 2482,
+      "originalSha256": "8e3282cd98c0e6e06cfc9641b2ee9bae893312a6f079a878fc885813a97f4bc5"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/04-guest-flow-router.md",
+      "to": "docs/waves/wave-8/tickets/04-guest-flow-router.md",
+      "tracked": true,
+      "bytes": 2829,
+      "originalSha256": "196db48039b11dfb4dbcc6bea9e9039cff93975d6c996a581c76c7b6fe65bb64"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/05-symptom-group-create-screen.md",
+      "to": "docs/waves/wave-8/tickets/05-symptom-group-create-screen.md",
+      "tracked": true,
+      "bytes": 2109,
+      "originalSha256": "06812f355790d84721194c8b28d8835ebd97e31d3d4511f835be59d15b5cf5ac"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/06-joint-treatment-summary.md",
+      "to": "docs/waves/wave-8/tickets/06-joint-treatment-summary.md",
+      "tracked": true,
+      "bytes": 2271,
+      "originalSha256": "15a677c161197a420e8d0cd58c4f927a3d52cf3ccb206a5d3ce928873411f132"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/07-list-treatments-picker.md",
+      "to": "docs/waves/wave-8/tickets/07-list-treatments-picker.md",
+      "tracked": true,
+      "bytes": 2039,
+      "originalSha256": "a54450f87bd6c0b67897226aea32eadc69389f90edd82431d045344dedbace58"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/08-unified-player-screen.md",
+      "to": "docs/waves/wave-8/tickets/08-unified-player-screen.md",
+      "tracked": true,
+      "bytes": 1711,
+      "originalSha256": "e4f636fb7c17c079d3a1d2e18adb2fdbbfa870440d8ec9311a58f2bb343905fd"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/issues/09-happy-path-e2e.md",
+      "to": "docs/waves/wave-8/tickets/09-happy-path-e2e.md",
+      "tracked": true,
+      "bytes": 1846,
+      "originalSha256": "df4d55b3ef68b76fa4d50b285578900f10895b51abce5a22a5f2dbdb9c0b401f"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet-8/README.md",
+      "to": "docs/waves/wave-8/archive/original-tracker.md",
+      "tracked": true,
+      "bytes": 1124,
+      "originalSha256": "e4ee81046db7e7bb1384cc89eaceaf19a6d742b0d144c7380faad88144b1eb9a"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/01-wave-12-brand-palette.md",
+      "to": "docs/waves/wave-12/tickets/drafts/01-wave-12-brand-palette.md",
+      "tracked": false,
+      "bytes": 11242,
+      "originalSha256": "7162e00abff6939efe6b13ccf5077f2238c5f8b4a3606595296d9fa5a296e3be"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/02-wave-12-explicit-terminology.md",
+      "to": "docs/waves/wave-12/tickets/drafts/02-wave-12-explicit-terminology.md",
+      "tracked": false,
+      "bytes": 11086,
+      "originalSha256": "660d1efffe6b9da7cd649c31f7d78ded0f1ef8915629685becee65cd3c3349ea"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/03-wave-12-inquiry-session-reset.md",
+      "to": "docs/waves/wave-12/tickets/drafts/03-wave-12-inquiry-session-reset.md",
+      "tracked": false,
+      "bytes": 11324,
+      "originalSha256": "f20439952dc54e1d7aa5cb43cc5f124683bd0ca57745067ea7ba6cf673051c14"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/04-wave-12-player-and-gate-reset.md",
+      "to": "docs/waves/wave-12/tickets/drafts/04-wave-12-player-and-gate-reset.md",
+      "tracked": false,
+      "bytes": 10748,
+      "originalSha256": "b8cd4e45487b071108e7cd287387d8bdfe0f0516d923323d78899045ae852041"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/05-wave-12-real-login-and-promotion.md",
+      "to": "docs/waves/wave-12/tickets/drafts/05-wave-12-real-login-and-promotion.md",
+      "tracked": false,
+      "bytes": 12384,
+      "originalSha256": "395c0a87a63686d85e4298e72e3b94cd9e386bfb7c12cec9410b0f02bb404178"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/06-wave-12-promotion-recovery-and-idempotency.md",
+      "to": "docs/waves/wave-12/tickets/drafts/06-wave-12-promotion-recovery-and-idempotency.md",
+      "tracked": false,
+      "bytes": 14176,
+      "originalSha256": "fd4f96b52d1e5d016410c71774c2350345619d59b5851985ba54be0c2848c580"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/07-wave-12-registration-and-verification.md",
+      "to": "docs/waves/wave-12/tickets/drafts/07-wave-12-registration-and-verification.md",
+      "tracked": false,
+      "bytes": 18058,
+      "originalSha256": "da46b9629a22a5efd92f22c63b9add200bde099a99b290d19424300fc9571e66"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/08-wave-12-restored-identity-and-expiry.md",
+      "to": "docs/waves/wave-12/tickets/drafts/08-wave-12-restored-identity-and-expiry.md",
+      "tracked": false,
+      "bytes": 20109,
+      "originalSha256": "912b5c13e82872609a1bef1c835cf4ef5fbd60089c2850f3e4ab6f1e1d3ff039"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/09-wave-12-e2e-journey-and-quality-gates.md",
+      "to": "docs/waves/wave-12/tickets/drafts/09-wave-12-e2e-journey-and-quality-gates.md",
+      "tracked": false,
+      "bytes": 21413,
+      "originalSha256": "0169216ea2b0a5d1dc2f3a6014afde73fc60613316a243bcac9c943b12937924"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/12-adapter-supabase-crud.md",
+      "to": "docs/waves/wave-6/tickets/12-adapter-supabase-crud.md",
+      "tracked": true,
+      "bytes": 17555,
+      "originalSha256": "15bbafd05e777fdd7d342cb2d7cea65c80831bdc74a3f947ff908503a88337c0"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/13-atomic-promotion-rpc.md",
+      "to": "docs/waves/wave-6/tickets/13-atomic-promotion-rpc.md",
+      "tracked": true,
+      "bytes": 37426,
+      "originalSha256": "15f4086c23f2d44534cd682cd2cd49763bbd3593879e542eb95b4de0a3fb1c10"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/15-persistence-gate-modal.md",
+      "to": "docs/waves/wave-8/tickets/original-tracer/15-persistence-gate-modal.md",
+      "tracked": true,
+      "bytes": 3877,
+      "originalSha256": "826460c4a6a3e249dec49f9b0263a537f24bc8ea739610b7b33346f73aa60625"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/16-symptom-group-create-screen.md",
+      "to": "docs/waves/wave-8/tickets/original-tracer/16-symptom-group-create-screen.md",
+      "tracked": true,
+      "bytes": 4050,
+      "originalSha256": "929658cc834f0506db0a07f19db3647f8cc607da1850775e4844bed738c3b8b6"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/17-joint-treatment-muscle-test-summary.md",
+      "to": "docs/waves/wave-8/tickets/original-tracer/17-joint-treatment-muscle-test-summary.md",
+      "tracked": true,
+      "bytes": 3127,
+      "originalSha256": "c9ccafc3200c1ea4c3ce313a196ebb45acf57338ef80d617a15373c20842a2bf"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/18-treatment-picker-screen.md",
+      "to": "docs/waves/wave-8/tickets/original-tracer/18-treatment-picker-screen.md",
+      "tracked": true,
+      "bytes": 2977,
+      "originalSha256": "9397298c3637a9ac7fcbe7b5a6f0a645a0fad395658d1dd1ebf856e918a67a79"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/19-unified-player-screen.md",
+      "to": "docs/waves/wave-8/tickets/original-tracer/19-unified-player-screen.md",
+      "tracked": true,
+      "bytes": 5290,
+      "originalSha256": "7d5b3c6e890fa51ff3875c66a204ea2b84373de29261678eaccb29b1486b5e05"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/issues/20-happy-path-e2e-integration.md",
+      "to": "docs/waves/wave-8/tickets/original-tracer/20-happy-path-e2e-integration.md",
+      "tracked": true,
+      "bytes": 4204,
+      "originalSha256": "ad1cf93417606399d047a844ef98c15f7afdbf31fabbf2a2540216112c2a3cd1"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/wave-12-status.md",
+      "to": "docs/waves/wave-12/archive/wave-12-status.md",
+      "tracked": false,
+      "bytes": 17014,
+      "originalSha256": "9f14da2db693219fc98d810fa88a7bde078fb1f8a10eb34c1d3e96b551c79d77"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/wave-13-content-audit.md",
+      "to": "docs/waves/wave-13/audits/wave-13-content-audit.md",
+      "tracked": false,
+      "bytes": 7448,
+      "originalSha256": "e3605e3175476d87182f7c7404cf64c0ad0b88aee8cda9bb0e41ec00dab2eb38"
+    },
+    {
+      "from": ".scratch/pic-tracer-bullet/wave-13-spec.md",
+      "to": "docs/waves/wave-13/specs/wave-13-spec.md",
+      "tracked": false,
+      "bytes": 52513,
+      "originalSha256": "8e92b3edd79d318937619c81373317b1be1cc8545c044f10b01443f49e625c29"
+    },
+    {
+      "from": ".scratch/pic-wave-9-2/issues/21-clear-stale-session-pointers.md",
+      "to": "docs/waves/wave-9.2/tickets/21-clear-stale-session-pointers.md",
+      "tracked": true,
+      "bytes": 15042,
+      "originalSha256": "45e769be0118131759d3a316d679e8cf45d652e6d1dbf2bdad41cd566ca729df"
+    },
+    {
+      "from": ".scratch/pic-wave-9-2/issues/22-terminal-nemar-response-feedback.md",
+      "to": "docs/waves/wave-9.2/tickets/22-terminal-nemar-response-feedback.md",
+      "tracked": true,
+      "bytes": 12109,
+      "originalSha256": "c13e3c8b48459b8915eda3ef90294f0ee39f6e55544ad432e6f76351f79c9b59"
+    },
+    {
+      "from": ".scratch/wave-10-remediation/10.R1-brief.md",
+      "to": "docs/waves/wave-10/remediation/archive/10.R1-brief.md",
+      "tracked": false,
+      "bytes": 710,
+      "originalSha256": "7b9a5fd8eff2c84c376f9e48311d40e97470a2131442e3e5c79b94c4cbdfd34e"
+    },
+    {
+      "from": ".scratch/wave-10-remediation/10.R1.md",
+      "to": "docs/waves/wave-10/remediation/archive/10.R1.md",
+      "tracked": false,
+      "bytes": 7453,
+      "originalSha256": "9f5a06dc7dc180c835e1008abff320e72ed2db6173cb650d9c88a1d7fa4dcd8f"
+    },
+    {
+      "from": ".scratch/wave-10-remediation/10.R2-brief.md",
+      "to": "docs/waves/wave-10/remediation/archive/10.R2-brief.md",
+      "tracked": false,
+      "bytes": 710,
+      "originalSha256": "c760af54b70e90a36a92c50978c9fa82dddf1dc7df037eec671101ef25d33dab"
+    },
+    {
+      "from": ".scratch/wave-10-remediation/10.R2.md",
+      "to": "docs/waves/wave-10/remediation/archive/10.R2.md",
+      "tracked": false,
+      "bytes": 2619,
+      "originalSha256": "5eabfe58aee4ec4381e6f6e9f87a1e1ebc4e390dfe9923359ff3c73ab994905b"
+    },
+    {
+      "from": ".scratch/wave-10-remediation/10.R3-brief.md",
+      "to": "docs/waves/wave-10/remediation/archive/10.R3-brief.md",
+      "tracked": false,
+      "bytes": 710,
+      "originalSha256": "c878dc94c1fdb5be4efbb496fa9b5c7241fbb3f60107a3fd5863c2ff46f7fdc0"
+    },
+    {
+      "from": ".scratch/wave-10-remediation/10.R3.md",
+      "to": "docs/waves/wave-10/remediation/archive/10.R3.md",
+      "tracked": false,
+      "bytes": 5845,
+      "originalSha256": "eabbf6c2f10e460c4b8311b3679b03bc82ba0330be12afb4657922e7a7ac9fac"
+    },
+    {
+      "from": ".scratch/wave-10-remediation/seam-map.md",
+      "to": "docs/waves/wave-10/remediation/archive/seam-map.md",
+      "tracked": false,
+      "bytes": 1240,
+      "originalSha256": "308e7de10ea08216b26431fb61e0c30e39f1ad6b398d0f92384d273e495f33bb"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives.md",
+      "to": "docs/waves/wave-10/specs/wave-10-ui-primitives.md",
+      "tracked": true,
+      "bytes": 41213,
+      "originalSha256": "43d4bb8dedb1b18613851644b4cb7e891e4c0aacf1b96045c4ada564936650cb"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/01-web-visual-foundation-and-design-tokens.md",
+      "to": "docs/waves/wave-10/briefs/01-web-visual-foundation-and-design-tokens.md",
+      "tracked": true,
+      "bytes": 4437,
+      "originalSha256": "350025b87de5a9aba0ea83f3bc821c9f8ab9592d2ffb41feed5f40a22d649bdf"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/02-therapeutic-frame-and-content-scrolling.md",
+      "to": "docs/waves/wave-10/briefs/02-therapeutic-frame-and-content-scrolling.md",
+      "tracked": true,
+      "bytes": 2190,
+      "originalSha256": "43cc525fffdcd3dd1003010bd40d85846209afff85e8c8ab77cea5bb1d72e52b"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/03-atomic-action-layout-and-banner.md",
+      "to": "docs/waves/wave-10/briefs/03-atomic-action-layout-and-banner.md",
+      "tracked": true,
+      "bytes": 2164,
+      "originalSha256": "f2bdb2b0003e72a5ee324959e96b74be9db90619129754915f8e3f6c0143c28f"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/04-horizontal-slide-container.md",
+      "to": "docs/waves/wave-10/briefs/04-horizontal-slide-container.md",
+      "tracked": true,
+      "bytes": 2179,
+      "originalSha256": "ad55ad81bee05929ab17bbb6a22cc3531ab649fb271a12f3ce600b901b667236"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/05-therapeutic-utility-sheet.md",
+      "to": "docs/waves/wave-10/briefs/05-therapeutic-utility-sheet.md",
+      "tracked": true,
+      "bytes": 2278,
+      "originalSha256": "e9f0d6b79329c8b96c06f0cc4b49c9f4041d1e453d0712ec31083a584e257400"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/06-unified-player-atomic-guidance-frame.md",
+      "to": "docs/waves/wave-10/briefs/06-unified-player-atomic-guidance-frame.md",
+      "tracked": true,
+      "bytes": 3130,
+      "originalSha256": "62a16ef4c5c1291da930ea3cd75a2013d40c53d9e7cebd61e6a54afeeed00a7e"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/07-sovereign-player-utility-drawer.md",
+      "to": "docs/waves/wave-10/briefs/07-sovereign-player-utility-drawer.md",
+      "tracked": true,
+      "bytes": 1288,
+      "originalSha256": "573c1b8de905876cf949a8b0c429aa7526708aa3f2c7e6f7dc1166fa54302971"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/08-terminal-nemar-progressive-actions.md",
+      "to": "docs/waves/wave-10/briefs/08-terminal-nemar-progressive-actions.md",
+      "tracked": true,
+      "bytes": 1250,
+      "originalSha256": "8e785d74b0d24261aa04d697713d08eb093b2ddd4973e53863d7f905eefb4467"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/briefs/09-responsive-hardening-and-wave-closure.md",
+      "to": "docs/waves/wave-10/briefs/09-responsive-hardening-and-wave-closure.md",
+      "tracked": true,
+      "bytes": 1112,
+      "originalSha256": "16c0990a3d4c5232928b8611dabd0934bd13fa669e128117046a9159576839f1"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/01-web-visual-foundation-and-design-tokens.md",
+      "to": "docs/waves/wave-10/tickets/01-web-visual-foundation-and-design-tokens.md",
+      "tracked": true,
+      "bytes": 7332,
+      "originalSha256": "e1c6ada1e6a39e9be919b68e6f4a8647f3a738c0810e741e15ff55e601e6d2b7"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/02-therapeutic-frame-and-content-scrolling.md",
+      "to": "docs/waves/wave-10/tickets/02-therapeutic-frame-and-content-scrolling.md",
+      "tracked": true,
+      "bytes": 3245,
+      "originalSha256": "a6ad5dd867fb58cf31348d5d2f0b8fa1129b21645862fe83e88da27c54ac5b50"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/03-atomic-action-layout-and-banner.md",
+      "to": "docs/waves/wave-10/tickets/03-atomic-action-layout-and-banner.md",
+      "tracked": true,
+      "bytes": 3219,
+      "originalSha256": "bd7029b08c4b4b19b03c1963ba738dba7d122937f8f49368a713dadb5190b816"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/04-horizontal-slide-container.md",
+      "to": "docs/waves/wave-10/tickets/04-horizontal-slide-container.md",
+      "tracked": true,
+      "bytes": 3004,
+      "originalSha256": "dd001f6d886bb0d67a44407f3811ee91c6d6ab2dae48589a7cb38affe04ce8bb"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/05-therapeutic-utility-sheet.md",
+      "to": "docs/waves/wave-10/tickets/05-therapeutic-utility-sheet.md",
+      "tracked": true,
+      "bytes": 3096,
+      "originalSha256": "17b2b6c326e1eb164bc8057e5af28398158bf06c72ce4e56715e461d0e055134"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/06-unified-player-atomic-guidance-frame.md",
+      "to": "docs/waves/wave-10/tickets/06-unified-player-atomic-guidance-frame.md",
+      "tracked": true,
+      "bytes": 5258,
+      "originalSha256": "debd38ea31632965e96c7d069ce36ee3809a2e02979003586e9fc3f766354072"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/07-sovereign-player-utility-drawer.md",
+      "to": "docs/waves/wave-10/tickets/07-sovereign-player-utility-drawer.md",
+      "tracked": true,
+      "bytes": 6518,
+      "originalSha256": "9709163fb1d8e11b341b96e42e9ade4ba982a347912462d77334683fd652b518"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/08-terminal-nemar-progressive-actions.md",
+      "to": "docs/waves/wave-10/tickets/08-terminal-nemar-progressive-actions.md",
+      "tracked": true,
+      "bytes": 4831,
+      "originalSha256": "4080fcd374bf6e159f8a9ca16a9f39d26a5d4644342637d90cb72fb6de1cc456"
+    },
+    {
+      "from": ".scratch/wave-10-ui-primitives/issues/09-responsive-hardening-and-wave-closure.md",
+      "to": "docs/waves/wave-10/tickets/09-responsive-hardening-and-wave-closure.md",
+      "tracked": true,
+      "bytes": 5984,
+      "originalSha256": "ea54a15232ffdeb0fc1bd15568f30897560b3af71f8d5189f3a21cf25951da23"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/01-persistent-language-choice.md",
+      "to": "docs/waves/wave-11/briefs/01-persistent-language-choice.md",
+      "tracked": true,
+      "bytes": 7320,
+      "originalSha256": "a5e30d05a244208d395ac0439718e4981833504ba7cf5e7208d588c6e187c686"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/02-dynamic-rtl-layout-and-motion.md",
+      "to": "docs/waves/wave-11/briefs/02-dynamic-rtl-layout-and-motion.md",
+      "tracked": true,
+      "bytes": 7285,
+      "originalSha256": "117f011aec19f3297276097302cafc50d94d3b650b30bf267ec06de2da40f6c5"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/03-localized-unified-player-controls.md",
+      "to": "docs/waves/wave-11/briefs/03-localized-unified-player-controls.md",
+      "tracked": true,
+      "bytes": 7418,
+      "originalSha256": "fb8158d254f0ebc54ac84040d1eef82b297bfc969cd502ed70d033b39e1d7999"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/04-symptom-group-creation-and-blind-rating.md",
+      "to": "docs/waves/wave-11/briefs/04-symptom-group-creation-and-blind-rating.md",
+      "tracked": true,
+      "bytes": 7233,
+      "originalSha256": "3f78dfdf74bd5b37b6e1a7c45dc37de8344a7362d119642164ae8b3d0d82e6c0"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/05-shared-inquiry-summary-and-treatment.md",
+      "to": "docs/waves/wave-11/briefs/05-shared-inquiry-summary-and-treatment.md",
+      "tracked": true,
+      "bytes": 7309,
+      "originalSha256": "dd2e1e7181fbcd4e1b0e0c17d96280c102bd2361a28902aa07ed3de9c1dcada3"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/06-persistence-gate-language-behavior.md",
+      "to": "docs/waves/wave-11/briefs/06-persistence-gate-language-behavior.md",
+      "tracked": true,
+      "bytes": 6845,
+      "originalSha256": "0b01855b4b14b37249a6717ff1c698bb3f10677427987b469ba580a92d77a802"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/07-approved-content-localization-overlay.md",
+      "to": "docs/waves/wave-11/briefs/07-approved-content-localization-overlay.md",
+      "tracked": true,
+      "bytes": 8313,
+      "originalSha256": "38f1b366b7787824614702bf95346c627477dea9315ca63232f2fec8a92a2973"
+    },
+    {
+      "from": ".scratch/wave-11/briefs/08-i18n-e2e-and-quality-gates.md",
+      "to": "docs/waves/wave-11/briefs/08-i18n-e2e-and-quality-gates.md",
+      "tracked": true,
+      "bytes": 8746,
+      "originalSha256": "897c32bddd53132102fa5ddd64ff5011b4c9344488f6abdf282dae305906a43e"
+    },
+    {
+      "from": ".scratch/wave-11/issues/01-persistent-language-choice.md",
+      "to": "docs/waves/wave-11/tickets/01-persistent-language-choice.md",
+      "tracked": true,
+      "bytes": 14512,
+      "originalSha256": "f88b13be3566a9293e039c195b6746cb40fae49171619caa52c1cb7f8583cde5"
+    },
+    {
+      "from": ".scratch/wave-11/issues/02-dynamic-rtl-layout-and-motion.md",
+      "to": "docs/waves/wave-11/tickets/02-dynamic-rtl-layout-and-motion.md",
+      "tracked": true,
+      "bytes": 17436,
+      "originalSha256": "960a702a5f7a223dc183ed6d71cd4f85b302118fc539a3a1d2651996bcdd87e9"
+    },
+    {
+      "from": ".scratch/wave-11/issues/03-localized-unified-player-controls.md",
+      "to": "docs/waves/wave-11/tickets/03-localized-unified-player-controls.md",
+      "tracked": true,
+      "bytes": 16911,
+      "originalSha256": "f61139b7290cbcdc30e14913f4ec46d730dec90c99383b81f46894b735da1608"
+    },
+    {
+      "from": ".scratch/wave-11/issues/04-symptom-group-creation-and-blind-rating.md",
+      "to": "docs/waves/wave-11/tickets/04-symptom-group-creation-and-blind-rating.md",
+      "tracked": true,
+      "bytes": 9302,
+      "originalSha256": "787666028a6e4a3e9763396ebf1b26cfdc7242d708250a739cbdb5433ba0b314"
+    },
+    {
+      "from": ".scratch/wave-11/issues/05-shared-inquiry-summary-and-treatment.md",
+      "to": "docs/waves/wave-11/tickets/05-shared-inquiry-summary-and-treatment.md",
+      "tracked": true,
+      "bytes": 11029,
+      "originalSha256": "1bbe5f38b9970bbf89b59fe351608aba4fe8147973afdf03245a3e463758df30"
+    },
+    {
+      "from": ".scratch/wave-11/issues/06-persistence-gate-language-behavior.md",
+      "to": "docs/waves/wave-11/tickets/06-persistence-gate-language-behavior.md",
+      "tracked": true,
+      "bytes": 10461,
+      "originalSha256": "13e6fe91345e31fb868a60b01ad837591c7f81f27ead5b2d6e28c993b0c8bfbb"
+    },
+    {
+      "from": ".scratch/wave-11/issues/07-approved-content-localization-overlay.md",
+      "to": "docs/waves/wave-11/tickets/07-approved-content-localization-overlay.md",
+      "tracked": true,
+      "bytes": 14083,
+      "originalSha256": "780bacee60946a5a8bc6479ef237ca1731f9db9ad8c4ea095e2fc6f05aa1dac9"
+    },
+    {
+      "from": ".scratch/wave-11/issues/08-i18n-e2e-and-quality-gates.md",
+      "to": "docs/waves/wave-11/tickets/08-i18n-e2e-and-quality-gates.md",
+      "tracked": true,
+      "bytes": 20150,
+      "originalSha256": "bb102252cda02f156403ca95ca25564582c2aafc94fe79b51d4b5df1a3d098df"
+    },
+    {
+      "from": ".scratch/wave-12/08-review-checkpoint.md",
+      "to": "docs/waves/wave-12/archive/08-review-checkpoint.md",
+      "tracked": false,
+      "bytes": 5627,
+      "originalSha256": "1a3496cf95d102785bf36791b0226bbe01fec47de3167df2cac5ae435d19b94f"
+    },
+    {
+      "from": ".scratch/wave-12/09-review-checkpoint.md",
+      "to": "docs/waves/wave-12/archive/09-review-checkpoint.md",
+      "tracked": false,
+      "bytes": 4343,
+      "originalSha256": "565d07a12d0e23d5dffa335f68e92253964cce9949463153415476e70770d549"
+    },
+    {
+      "from": ".scratch/wave-12/authenticated-draft-seam-decision.md",
+      "to": "docs/waves/wave-12/archive/authenticated-draft-seam-decision.md",
+      "tracked": false,
+      "bytes": 3511,
+      "originalSha256": "0c52f84f5889df75ba728fd926599af832a9ea0b572db9e04d94c2dae41a2def"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/01-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/01-execution-brief.md",
+      "tracked": false,
+      "bytes": 5740,
+      "originalSha256": "b8a893db6aa348dd7110351371475a9cfd7c1d7fbff0bbd2452d9a2535057255"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/02-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/02-execution-brief.md",
+      "tracked": false,
+      "bytes": 5855,
+      "originalSha256": "9c1cf9dc2fc1855bffa37684c9dd31690420f925f0855e83997148801674a399"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/03-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/03-execution-brief.md",
+      "tracked": false,
+      "bytes": 6291,
+      "originalSha256": "f51f2ef04f4d16d5192606e51fd5c1f9b69a9dec28d303aa491c14f31bcf8d53"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/04-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/04-execution-brief.md",
+      "tracked": false,
+      "bytes": 5609,
+      "originalSha256": "4aa167f980c35979653d7084cbb3ef549d944e86b99f619ec1f09576496bca47"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/05-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/05-execution-brief.md",
+      "tracked": false,
+      "bytes": 7490,
+      "originalSha256": "719eb9bb5fc6a0ebb8fcf93f7ebb625f046288c501300a46d682a73328f766fd"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/06-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/06-execution-brief.md",
+      "tracked": false,
+      "bytes": 6922,
+      "originalSha256": "a9aebc74734ea491859878c75b393d455628ab816138f51ae3b9c82f7b33a54a"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/07-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/07-execution-brief.md",
+      "tracked": false,
+      "bytes": 8099,
+      "originalSha256": "fb099ed33148d766f9d0d6f0b9b664a5ac7bc0268571c99ae36ec90d28532aaf"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/08-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/08-execution-brief.md",
+      "tracked": false,
+      "bytes": 12361,
+      "originalSha256": "5714c03fd855d6c8df481483ece62087941cf9ad8329be3004d935d1de3f4f9b"
+    },
+    {
+      "from": ".scratch/wave-12/briefs/09-execution-brief.md",
+      "to": "docs/waves/wave-12/briefs/09-execution-brief.md",
+      "tracked": false,
+      "bytes": 12715,
+      "originalSha256": "1d1ebbf218863ffc6354dabf86677619c0a13de09f6cdc126e1eabda21f60db9"
+    },
+    {
+      "from": ".scratch/wave-12/connectivity-preflight.md",
+      "to": "docs/waves/wave-12/archive/connectivity-preflight.md",
+      "tracked": false,
+      "bytes": 1350,
+      "originalSha256": "5a177cbe62e8ff0329d12c0acfa6984b7bca39752b0b59a4b09c88397a9af2b1"
+    },
+    {
+      "from": ".scratch/wave-12/final-handoff-notes.md",
+      "to": "docs/waves/wave-12/archive/final-handoff-notes.md",
+      "tracked": false,
+      "bytes": 4322,
+      "originalSha256": "ac604c6b6564675ddf4375be757d0eac9a4ba772ea0cfe80c2a43eee01c53600"
+    },
+    {
+      "from": ".scratch/wave-12/manual-release-checklist.md",
+      "to": "docs/waves/wave-12/archive/manual-release-checklist.md",
+      "tracked": false,
+      "bytes": 1992,
+      "originalSha256": "2e29a45ebca0e7e43e3d4eae94154df7b1ff8b332a2a462eae3f33fecb8c6793"
+    },
+    {
+      "from": ".scratch/wave-12/read-only-boundary-audit.md",
+      "to": "docs/waves/wave-12/archive/read-only-boundary-audit.md",
+      "tracked": false,
+      "bytes": 4868,
+      "originalSha256": "66d911ca579e09db8c0aae422782c619de68a24de9ce76ec50fd7b2e8978eba1"
+    },
+    {
+      "from": ".scratch/wave-12/seam-map-remaining.md",
+      "to": "docs/waves/wave-12/archive/seam-map-remaining.md",
+      "tracked": false,
+      "bytes": 3240,
+      "originalSha256": "2d84187d1955318d2d9e35dc14f2c8f550c126f297b16a1bd465897d047bba2e"
+    },
+    {
+      "from": "docs/audits/wave-10-handoff.md",
+      "to": "docs/waves/wave-10/handoffs/wave-10-handoff.md",
+      "tracked": true,
+      "bytes": 5051,
+      "originalSha256": "09482e622d76a1b9dde3e415759a8e257d13cf8555da53a974a5b41ba0b99bdf"
+    },
+    {
+      "from": "docs/audits/wave-10-in-progress-handoff.md",
+      "to": "docs/waves/wave-10/handoffs/wave-10-in-progress-handoff.md",
+      "tracked": true,
+      "bytes": 3959,
+      "originalSha256": "a8dc288907649e996faf15dc22454817d340711268d7490f84f7596669a3844e"
+    },
+    {
+      "from": "docs/audits/wave-10-remediation-handoff.md",
+      "to": "docs/waves/wave-10/handoffs/wave-10-remediation-handoff.md",
+      "tracked": true,
+      "bytes": 4847,
+      "originalSha256": "322c504b00a94595ee3abbee7ce32df65904b74982a79bad0ea8107c382ef820"
+    },
+    {
+      "from": "docs/audits/wave-10-remediation-seam-map.md",
+      "to": "docs/waves/wave-10/audits/wave-10-remediation-seam-map.md",
+      "tracked": true,
+      "bytes": 1515,
+      "originalSha256": "737ecccb3ee1672e96a44921eb60f68f65edd951222b653f6dcd55e21e337302"
+    },
+    {
+      "from": "docs/audits/wave-10-seam-map.md",
+      "to": "docs/waves/wave-10/audits/wave-10-seam-map.md",
+      "tracked": true,
+      "bytes": 1490,
+      "originalSha256": "b99945b014eefd244d632f67b53e3f95d625368be4c51665b7ca2880b4460d21"
+    },
+    {
+      "from": "docs/audits/wave-11-seam-map.md",
+      "to": "docs/waves/wave-11/audits/wave-11-seam-map.md",
+      "tracked": true,
+      "bytes": 4399,
+      "originalSha256": "42b396c4fb755917bc0aa631b8cef9b27b0f5f913d447e6f98551aecf30368ab"
+    },
+    {
+      "from": "docs/audits/wave-12-frontier-handoff.md",
+      "to": "docs/waves/wave-12/handoffs/wave-12-frontier-handoff.md",
+      "tracked": true,
+      "bytes": 5130,
+      "originalSha256": "1a974dfbe2d8c19c113fa843adc909ef63b6139dd46bdb7f12d2b96ff006e86c"
+    },
+    {
+      "from": "docs/audits/wave-12-handoff.md",
+      "to": "docs/waves/wave-12/handoffs/wave-12-handoff.md",
+      "tracked": true,
+      "bytes": 10283,
+      "originalSha256": "da3efce240373308b9a131cb70e6474da7ca3ec1ea157da360cc746fb3bc1a99"
+    },
+    {
+      "from": "docs/audits/wave-12-seam-map.md",
+      "to": "docs/waves/wave-12/audits/wave-12-seam-map.md",
+      "tracked": true,
+      "bytes": 4772,
+      "originalSha256": "7310bbfcb13515df14bbb28a998b886e8e6458ed880337047726a95d27ce51fa"
+    },
+    {
+      "from": "docs/audits/wave-4-audit.md",
+      "to": "docs/waves/wave-4/audits/wave-4-audit.md",
+      "tracked": true,
+      "bytes": 9256,
+      "originalSha256": "266e35d8ffec51e4ea7f8f7d660ba7a3f8fb9e8b67aac216934f56de13c621c9"
+    },
+    {
+      "from": "docs/audits/wave-5-wave-7-audit.md",
+      "to": "docs/waves/shared/audits/wave-5-wave-7-audit.md",
+      "tracked": true,
+      "bytes": 9318,
+      "originalSha256": "726e825069bfa9813de7ff8464ee74443ef7f59ab358d889db90acfaa7ef8c1b"
+    },
+    {
+      "from": "docs/audits/wave-6-handoff.md",
+      "to": "docs/waves/wave-6/handoffs/wave-6-handoff.md",
+      "tracked": true,
+      "bytes": 6342,
+      "originalSha256": "b167fd1448cf0e2520e99e4150ce6e4105172e8ddcb08302eac0f59aae474f95"
+    },
+    {
+      "from": "docs/audits/wave-6-merge-request-draft.md",
+      "to": "docs/waves/wave-6/handoffs/wave-6-merge-request-draft.md",
+      "tracked": true,
+      "bytes": 5029,
+      "originalSha256": "23206e9e9ccdfaff2a6f469c3a276778683e4045997c57281d656a5f17aba14c"
+    },
+    {
+      "from": "docs/audits/wave-6.5-handoff.md",
+      "to": "docs/waves/wave-6.5/handoffs/wave-6.5-handoff.md",
+      "tracked": true,
+      "bytes": 1514,
+      "originalSha256": "d3ee2bf0dc4f35b6d894368608add7b25d797b512dbada9a89d4dc646eaefb9e"
+    },
+    {
+      "from": "docs/audits/wave-8-handoff.md",
+      "to": "docs/waves/wave-8/handoffs/wave-8-handoff.md",
+      "tracked": true,
+      "bytes": 8815,
+      "originalSha256": "2aeb22f87950a1a89c35b47d3c138f1d49496f6124378a0ea9751a73c458df97"
+    },
+    {
+      "from": "docs/audits/wave-9-detailed-audit.md",
+      "to": "docs/waves/wave-9/audits/wave-9-detailed-audit.md",
+      "tracked": true,
+      "bytes": 18059,
+      "originalSha256": "497fc781374af3fd248d032205a402549afb5ef36d584b289a71f05f9a7a685e"
+    },
+    {
+      "from": "docs/audits/wave-9-handoff.md",
+      "to": "docs/waves/wave-9/handoffs/wave-9-handoff.md",
+      "tracked": true,
+      "bytes": 26440,
+      "originalSha256": "ab28b853ba8c79a538ee0016d336c718aaa1b1aeb3796cda676376584a4537d8"
+    },
+    {
+      "from": "docs/docs/inquiry-session-flow-diagram.md",
+      "to": "docs/waves/shared/architecture/inquiry-session-flow-diagram.md",
+      "tracked": true,
+      "bytes": 19837,
+      "originalSha256": "a23aee72f4fdfba0dff83f18333260d63de340024ef9ee4e94f893dc6e7d7c31"
+    },
+    {
+      "from": "docs/docs/specs/tracer-bullet-happy-path.md",
+      "to": "docs/waves/shared/specs/tracer-bullet-happy-path.md",
+      "tracked": true,
+      "bytes": 45895,
+      "originalSha256": "6e6a583e93d4c6d15d13185ad73f3afbc17eae59844fe878fa31e1c28e0af819"
+    },
+    {
+      "from": "docs/handoffs/wave-11-handoff.md",
+      "to": "docs/waves/wave-11/handoffs/wave-11-handoff.md",
+      "tracked": true,
+      "bytes": 8768,
+      "originalSha256": "01d0c1c51f4320306104e552b31ccd63c9b6224494ecc8f0843716dc9806ac0e"
+    },
+    {
+      "from": "docs/specs/structured-markdown-content-integration.md",
+      "to": "docs/waves/wave-9/specs/structured-markdown-content-integration.md",
+      "tracked": true,
+      "bytes": 43279,
+      "originalSha256": "eafc21a09c3f0604bd847d8f1a7bdea7c3c1ce0a65f4e8082a79b047aa56e769"
+    },
+    {
+      "from": "docs/specs/tickets/01-monorepo-tooling-scaffold.md",
+      "to": "docs/waves/wave-1/tickets/01-monorepo-tooling-scaffold.md",
+      "tracked": true,
+      "bytes": 4542,
+      "originalSha256": "137d76fd8d0269994cbcb40bafaa92f2f2e4e890a3e1608e65627d3e4508622a"
+    },
+    {
+      "from": "docs/specs/tickets/02-repository-port-domain-types.md",
+      "to": "docs/waves/wave-2/tickets/02-repository-port-domain-types.md",
+      "tracked": true,
+      "bytes": 6671,
+      "originalSha256": "9aa80c7568a68c55e5c1eaa507f397f4aa31ee453b7e6128e45c908379d1284d"
+    },
+    {
+      "from": "docs/specs/tickets/03-fake-repository-port-contract-suite.md",
+      "to": "docs/waves/wave-2/tickets/03-fake-repository-port-contract-suite.md",
+      "tracked": true,
+      "bytes": 5316,
+      "originalSha256": "133c7e203f2e5cd9026234adbce946ea788e23bccfe4ef31d77e1b71ea28fccf"
+    },
+    {
+      "from": "docs/specs/tickets/04-module-isolation-static-analysis.md",
+      "to": "docs/waves/wave-2/tickets/04-module-isolation-static-analysis.md",
+      "tracked": true,
+      "bytes": 5732,
+      "originalSha256": "fd70c62d361590616d3b13d3bcdfaf995607e05f366d4f81080abf1463f6f229"
+    },
+    {
+      "from": "docs/specs/tickets/05-library-engine.md",
+      "to": "docs/waves/wave-3/tickets/05-library-engine.md",
+      "tracked": true,
+      "bytes": 6955,
+      "originalSha256": "22d828594e6f512b4c6655aa345be54ef7f39e30c40fac750bc8d0876a443626"
+    },
+    {
+      "from": "docs/specs/tickets/06-timeline-engine.md",
+      "to": "docs/waves/wave-3/tickets/06-timeline-engine.md",
+      "tracked": true,
+      "bytes": 6449,
+      "originalSha256": "66e8a9c4fb10c2cac7bf451073dde081315cd7a4fb910fa22f004385dcd46f4a"
+    },
+    {
+      "from": "docs/specs/tickets/07-group-engine.md",
+      "to": "docs/waves/wave-4/tickets/07-group-engine.md",
+      "tracked": true,
+      "bytes": 12408,
+      "originalSha256": "9b0af9e7371388f26a845a7e53f8ce99269286d35d228ed7a344ac06c2d869c7"
+    },
+    {
+      "from": "docs/specs/tickets/08-player-engine.md",
+      "to": "docs/waves/wave-4/tickets/08-player-engine.md",
+      "tracked": true,
+      "bytes": 15078,
+      "originalSha256": "ecbedd83eb5c2713d752891d52100f98b922aab4cc3de7e630ead0d57b7091dc"
+    },
+    {
+      "from": "docs/specs/tickets/09-session-engine.md",
+      "to": "docs/waves/wave-5/tickets/09-session-engine.md",
+      "tracked": true,
+      "bytes": 9140,
+      "originalSha256": "650a3d74f9a7571980a43811d4e827953516024e439e6a580ed12ba3ec87aed0"
+    },
+    {
+      "from": "docs/specs/tickets/10-adapter-local-guest.md",
+      "to": "docs/waves/wave-5/tickets/10-adapter-local-guest.md",
+      "tracked": true,
+      "bytes": 5899,
+      "originalSha256": "797bd5df924d2e64036945a203d793656e3fc3d23da17b5ef08705c995fb6084"
+    },
+    {
+      "from": "docs/specs/tickets/10.R1-brief.md",
+      "to": "docs/waves/wave-10/remediation/briefs/10.R1-brief.md",
+      "tracked": true,
+      "bytes": 741,
+      "originalSha256": "425125da62d6fbddda78a05e1788e385d79599035aaf973c8753f50e8279e1e6"
+    },
+    {
+      "from": "docs/specs/tickets/10.R1.md",
+      "to": "docs/waves/wave-10/remediation/tickets/10.R1.md",
+      "tracked": true,
+      "bytes": 7453,
+      "originalSha256": "9f5a06dc7dc180c835e1008abff320e72ed2db6173cb650d9c88a1d7fa4dcd8f"
+    },
+    {
+      "from": "docs/specs/tickets/10.R2-brief.md",
+      "to": "docs/waves/wave-10/remediation/briefs/10.R2-brief.md",
+      "tracked": true,
+      "bytes": 741,
+      "originalSha256": "f981845a977435726bcaa7371439783081b6fc389591848094ce440f86d1bfb7"
+    },
+    {
+      "from": "docs/specs/tickets/10.R2.md",
+      "to": "docs/waves/wave-10/remediation/tickets/10.R2.md",
+      "tracked": true,
+      "bytes": 2619,
+      "originalSha256": "5eabfe58aee4ec4381e6f6e9f87a1e1ebc4e390dfe9923359ff3c73ab994905b"
+    },
+    {
+      "from": "docs/specs/tickets/10.R3-brief.md",
+      "to": "docs/waves/wave-10/remediation/briefs/10.R3-brief.md",
+      "tracked": true,
+      "bytes": 949,
+      "originalSha256": "0c7539849a1dfcacf6a1320d32d241e00b70887ef0bafe30041876085de80c32"
+    },
+    {
+      "from": "docs/specs/tickets/10.R3.md",
+      "to": "docs/waves/wave-10/remediation/tickets/10.R3.md",
+      "tracked": true,
+      "bytes": 5845,
+      "originalSha256": "eabbf6c2f10e460c4b8311b3679b03bc82ba0330be12afb4657922e7a7ac9fac"
+    },
+    {
+      "from": "docs/specs/tickets/11-supabase-schema-migration.md",
+      "to": "docs/waves/wave-2.5/tickets/11-supabase-schema-migration.md",
+      "tracked": true,
+      "bytes": 10838,
+      "originalSha256": "8a303e3932293af284304a268602ace3a1e56ae2ca4be8171f94455d35f973a5"
+    },
+    {
+      "from": "docs/specs/tickets/12-01-brand-palette.md",
+      "to": "docs/waves/wave-12/tickets/12-01-brand-palette.md",
+      "tracked": true,
+      "bytes": 11225,
+      "originalSha256": "ce3bc2607a4d79072e4c6b580e7addfe2375b8212873c0745ee0ca911f256ed8"
+    },
+    {
+      "from": "docs/specs/tickets/12-02-explicit-terminology.md",
+      "to": "docs/waves/wave-12/tickets/12-02-explicit-terminology.md",
+      "tracked": true,
+      "bytes": 11069,
+      "originalSha256": "ab460738474cfb7b114dc017c740f2531e35905453dde7e22ea78b2f251874f7"
+    },
+    {
+      "from": "docs/specs/tickets/12-03-inquiry-session-reset.md",
+      "to": "docs/waves/wave-12/tickets/12-03-inquiry-session-reset.md",
+      "tracked": true,
+      "bytes": 11307,
+      "originalSha256": "59823a8e1e08a78ac213dee56b30dc1164bd67c02fe12591b58d78006eb90f9b"
+    },
+    {
+      "from": "docs/specs/tickets/12-04-player-and-gate-reset.md",
+      "to": "docs/waves/wave-12/tickets/12-04-player-and-gate-reset.md",
+      "tracked": true,
+      "bytes": 10731,
+      "originalSha256": "d67d62ac16d407c92f409744fdc4907aad3a3d4cc5ab848088103632d24e2fca"
+    },
+    {
+      "from": "docs/specs/tickets/12-05-real-login-and-promotion.md",
+      "to": "docs/waves/wave-12/tickets/12-05-real-login-and-promotion.md",
+      "tracked": true,
+      "bytes": 12367,
+      "originalSha256": "ef31ac93422c8335a3bd57bdf31cb556cfe5894bbb10d5b757a610f674865055"
+    },
+    {
+      "from": "docs/specs/tickets/12-06-promotion-recovery-and-idempotency.md",
+      "to": "docs/waves/wave-12/tickets/12-06-promotion-recovery-and-idempotency.md",
+      "tracked": true,
+      "bytes": 14180,
+      "originalSha256": "daf3392b9a34c28ab34c7a4e6c365c6fb44d394cb592e92f257cc644f984e066"
+    },
+    {
+      "from": "docs/specs/tickets/12-07-registration-and-verification.md",
+      "to": "docs/waves/wave-12/tickets/12-07-registration-and-verification.md",
+      "tracked": true,
+      "bytes": 16137,
+      "originalSha256": "c88fe200e2c9e078fc93314be7816adc83cd5ebc33f34bcfab8fde3d1b8e1c5e"
+    },
+    {
+      "from": "docs/specs/tickets/12-08-restored-identity-and-expiry.md",
+      "to": "docs/waves/wave-12/tickets/12-08-restored-identity-and-expiry.md",
+      "tracked": true,
+      "bytes": 11703,
+      "originalSha256": "68876bec6352abd3479eef6a273cd139bf800065dc77b4505942d77644b4e933"
+    },
+    {
+      "from": "docs/specs/tickets/12-09-e2e-journey-and-quality-gates.md",
+      "to": "docs/waves/wave-12/tickets/12-09-e2e-journey-and-quality-gates.md",
+      "tracked": true,
+      "bytes": 19957,
+      "originalSha256": "7e51e7997a924f0f275cd52e7ee0d40d418696822c8374937ceabf19605684ff"
+    },
+    {
+      "from": "docs/specs/tickets/14-web-app-shell.md",
+      "to": "docs/waves/wave-7/tickets/14-web-app-shell.md",
+      "tracked": true,
+      "bytes": 6450,
+      "originalSha256": "7a896f6a0672210e492ef285c86dd2becdb1e66cb8791b571915303d53efafc8"
+    },
+    {
+      "from": "docs/specs/wave-11-i18n-spec.md",
+      "to": "docs/waves/wave-11/specs/wave-11-i18n-spec.md",
+      "tracked": true,
+      "bytes": 48734,
+      "originalSha256": "65adf8ee312088f624436a095def6d24c8db010faf9e8202ef4830cf8d5ee549"
+    },
+    {
+      "from": "docs/specs/wave-12-spec.md",
+      "to": "docs/waves/wave-12/specs/wave-12-spec.md",
+      "tracked": true,
+      "bytes": 36271,
+      "originalSha256": "33fa548027451491db0d81668807565ae87119d626e4b26883b233168b02d008"
+    },
+    {
+      "from": "docs/visuals/architecture_blueprint.md",
+      "to": "docs/waves/shared/architecture/architecture_blueprint.md",
+      "tracked": true,
+      "bytes": 12400,
+      "originalSha256": "eb381233dedbe2c13c3bb95a03f018d06f825bc05125400ff18c26cd201f8a76"
+    },
+    {
+      "from": "packages/pic-web/docs/production-route-audit-2026-10-18.md",
+      "to": "docs/waves/wave-12/audits/production-route-audit-2026-10-18.md",
+      "tracked": true,
+      "bytes": 7848,
+      "originalSha256": "94f466a2b4bee2a1dfe73487e798f43064e4054e5892667ec2df878de29f8211"
+    }
+  ]
+}

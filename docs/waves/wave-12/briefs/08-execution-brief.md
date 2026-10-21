@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-08 — Restore identity and handle expiry without losing work
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/08-wave-12-restored-identity-and-expiry.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/08-wave-12-restored-identity-and-expiry.md`
 - Wave: 12. Dispatch authority covers all remaining Wave 12 tickets, 04 → 09 sequentially.
 - Authorized for implementation after all declared blockers are closed and the preceding ticket is committed.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -28,7 +28,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 > Supabase identity can be restored independently of therapeutic
 > SessionEngine mode.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -48,7 +48,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: web auth lifecycle and owner caches.
 - Consumer/downstream: 09 assembled journey.
 - Risk to verify: Engine has no authenticated-bootstrap setter; preserve scope limits.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -124,7 +124,7 @@ reset and owner-change cancellation without deadlock, and no stale continuation 
 ## Event Manager approval: authenticated draft staging (2026-10-15)
 
 The user withdrew the accidental blocker-only response, reviewed the standalone question, and explicitly approved
-owner-bound web draft staging. The approved design is .scratch/wave-12/authenticated-draft-seam-decision.md.
+owner-bound web draft staging. The approved design is docs/waves/wave-12/archive/authenticated-draft-seam-decision.md.
 Only new unanswered groups may stage as unsaved local work under owner/generation. Retain authenticated provider
 and engine mode, use existing GroupEngine/public port contracts, save the exact group after its real answer,
 and preserve reset/expiry/partial-save/cleanup/reload safeguards. No fake answers or backend/schema/core changes.
@@ -146,7 +146,7 @@ User explicitly requested applying stashac51f52 and finishing08 then09. Parent v
 All15 restored web paths are unverified WIP; retain both safety stashes until verified closure.
 Primary quota refreshed to1%, weekly16%; continue continuously with lossless per-ticket checkpoints.
 
-Read .scratch/wave-12/08-review-checkpoint.md and this ticket's existing detailed Resolution before editing.
+Read docs/waves/wave-12/archive/08-review-checkpoint.md and this ticket's existing detailed Resolution before editing.
 Resolve the three accepted review findings with focused red/green evidence:
 
 1. Separate reauth submission state/ref from the original suspended Gate save, allowing same-dialog same-owner

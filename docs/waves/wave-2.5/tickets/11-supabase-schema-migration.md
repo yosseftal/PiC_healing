@@ -9,7 +9,7 @@ engine work.
 
 **Status:** done
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md` §B in full, `decisions.md` DEC-017 §5 (Consequences →
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md` §B in full, `decisions.md` DEC-017 §5 (Consequences →
 Schema), existing `supabase/migrations/20260308164004_initial_schema.sql`.
 
 ## Objective

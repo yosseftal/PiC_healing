@@ -27,12 +27,22 @@ muscle-test wording must be understandable, and choosing to save must preserve t
 
 ## Solution and Feature Objectives
 
-| Capability | User outcome | Architectural commitment |
-| --- | --- | --- |
-| New Symptom Group | Start a fresh inquiry, with confirmation when local work would be discarded. | One web composition action resets flow and drafts through existing public contracts. |
-| Brand alignment | Recognizable official colors with accessible controls and readable surfaces. | Tailwind v4/CSS token changes only for the palette capability. |
-| Explicit terminology | Read `נכון ומדויק` and support a future personal phrase. | Typed presentation interpolation through the existing i18n context. |
-| Real authentication | Register or sign in at the Persistence Gate and retain session continuity. | Supabase Auth plus the existing atomic promotion path; verified identity before persistence. |
+- **Capability:** New Symptom Group
+  **User outcome:** Start a fresh inquiry, with confirmation when local work would be discarded.
+  **Architectural commitment:** One web composition action resets flow and drafts through existing public contracts.
+
+- **Capability:** Brand alignment
+  **User outcome:** Recognizable official colors with accessible controls and readable surfaces.
+  **Architectural commitment:** Tailwind v4/CSS token changes only for the palette capability.
+
+- **Capability:** Explicit terminology
+  **User outcome:** Read `נכון ומדויק` and support a future personal phrase.
+  **Architectural commitment:** Typed presentation interpolation through the existing i18n context.
+
+- **Capability:** Real authentication
+  **User outcome:** Register or sign in at the Persistence Gate and retain session continuity.
+  **Architectural commitment:** Supabase Auth plus the existing atomic promotion path; verified identity before persistence.
+
 
 The main frame retains at most two direct choices. Reset and account utilities remain secondary surfaces.
 The Event Manager owns therapeutic decisions; UI copy, authentication, and colors never decide treatment success,
@@ -75,18 +85,46 @@ reveal prior ratings, select a path, or increment use counts.
 
 ### Architectural and Component Impact Analysis
 
-| Existing module or boundary | Current behavior | Wave 12 responsibility |
-| --- | --- | --- |
-| TherapeuticScreenFrame / TherapeuticSheet | Shared accessible drawer; language selector and screen utilities. | Common new-group entry and controlled confirmation/focus handoff. |
-| GuestFlowRouter and flow facts | Derive one of five screens from active IDs and completion flags. | Production reset action and a flow generation for stale-work protection. |
-| Composition root and engine contexts | Own adapters, engine instances, wrapped actions, and reflected stores. | Coordinate reset, auth, profile preparation, promotion, and cache invalidation. |
-| Creation/rating screen drafts | Some input exists only in React state before any group ID exists. | Expose whether a draft would be lost; clear only after confirmed reset. |
-| PersistenceGateModal | Uses test credentials; disabled social placeholders; incomplete modal lifecycle. | Accessible register/login/verification/recovery states using real credentials. |
-| Promote path | Assembles a pending Finish snapshot and swaps repository for atomic promotion. | Replace production stub entry, ensure own profile, serialize promotion, recover safely. |
-| LocaleProvider and typed dictionaries | Hebrew/English, typed placeholders, truthful fallback metadata. | `customNemarAlias`, default phrase resolution, and terminology-bearing templates. |
-| Visual foundation | Tailwind v4 static tokens consumed by existing controls and CSS. | Official base colors and traceable accessible derivatives. |
-| SessionEngine / PlayerEngine / RepositoryPort | Own gate, promotion, Finish, and therapeutic rules. | Consume existing public contracts unchanged. |
-| Local Guest and Supabase adapters | Local storage and atomic server persistence. | Reuse unchanged; no new client-side multi-insert therapeutic persistence. |
+- **Existing module or boundary:** TherapeuticScreenFrame / TherapeuticSheet
+  **Current behavior:** Shared accessible drawer; language selector and screen utilities.
+  **Wave 12 responsibility:** Common new-group entry and controlled confirmation/focus handoff.
+
+- **Existing module or boundary:** GuestFlowRouter and flow facts
+  **Current behavior:** Derive one of five screens from active IDs and completion flags.
+  **Wave 12 responsibility:** Production reset action and a flow generation for stale-work protection.
+
+- **Existing module or boundary:** Composition root and engine contexts
+  **Current behavior:** Own adapters, engine instances, wrapped actions, and reflected stores.
+  **Wave 12 responsibility:** Coordinate reset, auth, profile preparation, promotion, and cache invalidation.
+
+- **Existing module or boundary:** Creation/rating screen drafts
+  **Current behavior:** Some input exists only in React state before any group ID exists.
+  **Wave 12 responsibility:** Expose whether a draft would be lost; clear only after confirmed reset.
+
+- **Existing module or boundary:** PersistenceGateModal
+  **Current behavior:** Uses test credentials; disabled social placeholders; incomplete modal lifecycle.
+  **Wave 12 responsibility:** Accessible register/login/verification/recovery states using real credentials.
+
+- **Existing module or boundary:** Promote path
+  **Current behavior:** Assembles a pending Finish snapshot and swaps repository for atomic promotion.
+  **Wave 12 responsibility:** Replace production stub entry, ensure own profile, serialize promotion, recover safely.
+
+- **Existing module or boundary:** LocaleProvider and typed dictionaries
+  **Current behavior:** Hebrew/English, typed placeholders, truthful fallback metadata.
+  **Wave 12 responsibility:** `customNemarAlias`, default phrase resolution, and terminology-bearing templates.
+
+- **Existing module or boundary:** Visual foundation
+  **Current behavior:** Tailwind v4 static tokens consumed by existing controls and CSS.
+  **Wave 12 responsibility:** Official base colors and traceable accessible derivatives.
+
+- **Existing module or boundary:** SessionEngine / PlayerEngine / RepositoryPort
+  **Current behavior:** Own gate, promotion, Finish, and therapeutic rules.
+  **Wave 12 responsibility:** Consume existing public contracts unchanged.
+
+- **Existing module or boundary:** Local Guest and Supabase adapters
+  **Current behavior:** Local storage and atomic server persistence.
+  **Wave 12 responsibility:** Reuse unchanged; no new client-side multi-insert therapeutic persistence.
+
 
 Only the composition root and existing promote-path boundary may import adapters. Components use contexts/actions.
 New auth coordination lives within the web package and returns UI state; it does not become a parallel therapeutic
@@ -158,18 +196,46 @@ eliminate unrelated provisional green casts from surfaces, borders, shadows, and
 reading surface, and official neutral ink can supply readable text. Preserve dimensions, typography, spacing,
 motion, radii, and action semantics.
 
-| Token role | Proposed mapping or derivation | Purpose |
-| --- | --- | --- |
-| Brand primary / sage-500 | Exact `#5B9C85` | Official identity; not ordinary white-text button fill. |
-| Brand accent | Exact `#81C7AF` | Accent/decorative surfaces. |
-| Brand secondary / lavender-500 | Exact `#9B89A3` | Official secondary identity. |
-| Surface | Exact `#FFFFFF` | Reading cards, Sheet, forms. |
-| Ink / readable neutral | Observed `#454545` | Body text on white and sufficiently light tints. |
-| Primary button / sage-700 | 75% primary + 25% black in sRGB: `#447564` | Accessible fill for existing white text. |
-| Focus / lavender-700 | 65% secondary + 35% black in sRGB: `#65596A` | Dark accessible focus/border role. |
-| Sage-50/100/200 | 8% / 16% / 30% accent mixed with white | Readable green surface hierarchy. |
-| Lavender-50/100/200 | 6% / 12% / 25% secondary mixed with white | Readable secondary surface hierarchy. |
-| Sterile, line, quiet, gradients, shadows | Semantic aliases from the same bases/neutral colors | Remove independent, untraceable hues. |
+- **Token role:** Brand primary / sage-500
+  **Proposed mapping or derivation:** Exact `#5B9C85`
+  **Purpose:** Official identity; not ordinary white-text button fill.
+
+- **Token role:** Brand accent
+  **Proposed mapping or derivation:** Exact `#81C7AF`
+  **Purpose:** Accent/decorative surfaces.
+
+- **Token role:** Brand secondary / lavender-500
+  **Proposed mapping or derivation:** Exact `#9B89A3`
+  **Purpose:** Official secondary identity.
+
+- **Token role:** Surface
+  **Proposed mapping or derivation:** Exact `#FFFFFF`
+  **Purpose:** Reading cards, Sheet, forms.
+
+- **Token role:** Ink / readable neutral
+  **Proposed mapping or derivation:** Observed `#454545`
+  **Purpose:** Body text on white and sufficiently light tints.
+
+- **Token role:** Primary button / sage-700
+  **Proposed mapping or derivation:** 75% primary + 25% black in sRGB: `#447564`
+  **Purpose:** Accessible fill for existing white text.
+
+- **Token role:** Focus / lavender-700
+  **Proposed mapping or derivation:** 65% secondary + 35% black in sRGB: `#65596A`
+  **Purpose:** Dark accessible focus/border role.
+
+- **Token role:** Sage-50/100/200
+  **Proposed mapping or derivation:** 8% / 16% / 30% accent mixed with white
+  **Purpose:** Readable green surface hierarchy.
+
+- **Token role:** Lavender-50/100/200
+  **Proposed mapping or derivation:** 6% / 12% / 25% secondary mixed with white
+  **Purpose:** Readable secondary surface hierarchy.
+
+- **Token role:** Sterile, line, quiet, gradients, shadows
+  **Proposed mapping or derivation:** Semantic aliases from the same bases/neutral colors
+  **Purpose:** Remove independent, untraceable hues.
+
 
 The derived mixes are application accessibility decisions, not official website swatches. Record the base,
 mixing space, proportion, resolved value, and contrast for every derivative adopted in implementation.
@@ -327,15 +393,34 @@ sequenceDiagram
     end
 ```
 
-| State/data | Owner and lifetime | Must not contain or cause |
-| --- | --- | --- |
-| Name/email/password form | Web form; password transient only | Therapeutic data in Auth metadata; password persistence. |
-| Auth identity/session | Supabase SDK with web context reflection | Fabricated SessionEngine authenticated state. |
-| Own profile | Existing Supabase profile under RLS | Overwrite of existing preferences during login. |
-| Guest group, Player, pending Finish | Existing Guest repository until anchoring/discard | Anonymous server therapeutic records. |
-| Promotion recovery envelope | Web-only, owner-bound, removed after completion/discard | New server transaction or altered RPC schema. |
-| Locale and `customNemarAlias` | Existing i18n context; alias in-memory | Inclusion in therapeutic promotion payloads. |
-| Reset generation and draft dirty facts | Web composition/presentation | Duplicated ratings, treatment state, or business rules. |
+- **State/data:** Name/email/password form
+  **Owner and lifetime:** Web form; password transient only
+  **Must not contain or cause:** Therapeutic data in Auth metadata; password persistence.
+
+- **State/data:** Auth identity/session
+  **Owner and lifetime:** Supabase SDK with web context reflection
+  **Must not contain or cause:** Fabricated SessionEngine authenticated state.
+
+- **State/data:** Own profile
+  **Owner and lifetime:** Existing Supabase profile under RLS
+  **Must not contain or cause:** Overwrite of existing preferences during login.
+
+- **State/data:** Guest group, Player, pending Finish
+  **Owner and lifetime:** Existing Guest repository until anchoring/discard
+  **Must not contain or cause:** Anonymous server therapeutic records.
+
+- **State/data:** Promotion recovery envelope
+  **Owner and lifetime:** Web-only, owner-bound, removed after completion/discard
+  **Must not contain or cause:** New server transaction or altered RPC schema.
+
+- **State/data:** Locale and `customNemarAlias`
+  **Owner and lifetime:** Existing i18n context; alias in-memory
+  **Must not contain or cause:** Inclusion in therapeutic promotion payloads.
+
+- **State/data:** Reset generation and draft dirty facts
+  **Owner and lifetime:** Web composition/presentation
+  **Must not contain or cause:** Duplicated ratings, treatment state, or business rules.
+
 
 The existing gate implements Finish/Finish Anyway. Journal sync and explicit Persist Group are DEC-017 concepts
 but do not have equivalent pending-action contracts in the inspected flow. Do not invent them as hidden Wave 12
@@ -375,16 +460,38 @@ documentation-only turn. Preserve all existing behavioral coverage and add Wave 
 copy, and development-auth assertions may be updated for the intentional new contract; never delete scenarios,
 skip failing tests, weaken contrast thresholds, or increase retries to claim green.
 
-| Gate | Command / scope | Acceptance |
-| --- | --- | --- |
-| Typecheck | Root `npm run typecheck` | All four workspaces pass; typed i18n/action contracts remain intact. |
-| Lint | Root `npm run lint` | No new violations. |
-| Unit/integration and dependency boundaries | Root `npm test` | Full baseline plus added cases pass; all-workspace depcruise passes. |
-| Focused web checks | Web workspace `npm test` and `npm run depcruise` | Relevant components and new flows pass without boundary exceptions. |
-| Browser regression | From web workspace: `npx playwright test --workers=2` | All inherited 161 cases and added cases pass with unchanged retry policy. |
-| Production build | Web workspace `npm run build` | Build succeeds; production auth does not depend on tracer credentials. |
-| Scope audit | Diff against wave implementation baseline | Runtime/tests/CSS remain in web; no engine, adapter, or schema edits. |
-| Real auth validation | Isolated Supabase accounts using actual signup/login and confirmation | Own profile and promotion succeed; no manual profile seeding hides the dependency. |
+- **Gate:** Typecheck
+  **Command / scope:** Root `npm run typecheck`
+  **Acceptance:** All four workspaces pass; typed i18n/action contracts remain intact.
+
+- **Gate:** Lint
+  **Command / scope:** Root `npm run lint`
+  **Acceptance:** No new violations.
+
+- **Gate:** Unit/integration and dependency boundaries
+  **Command / scope:** Root `npm test`
+  **Acceptance:** Full baseline plus added cases pass; all-workspace depcruise passes.
+
+- **Gate:** Focused web checks
+  **Command / scope:** Web workspace `npm test` and `npm run depcruise`
+  **Acceptance:** Relevant components and new flows pass without boundary exceptions.
+
+- **Gate:** Browser regression
+  **Command / scope:** From web workspace: `npx playwright test --workers=2`
+  **Acceptance:** All inherited 161 cases and added cases pass with unchanged retry policy.
+
+- **Gate:** Production build
+  **Command / scope:** Web workspace `npm run build`
+  **Acceptance:** Build succeeds; production auth does not depend on tracer credentials.
+
+- **Gate:** Scope audit
+  **Command / scope:** Diff against wave implementation baseline
+  **Acceptance:** Runtime/tests/CSS remain in web; no engine, adapter, or schema edits.
+
+- **Gate:** Real auth validation
+  **Command / scope:** Isolated Supabase accounts using actual signup/login and confirmation
+  **Acceptance:** Own profile and promotion succeed; no manual profile seeding hides the dependency.
+
 
 Use both locales at 320x568, 390x844, 768x1024, and 1440x900 CSS pixels. Keep the main viewport at `100dvh`, with
 long content and auth forms scrolling internally. Manually verify mobile keyboard/visual viewport, physical-device
@@ -422,10 +529,10 @@ this specification turn.
 
 ## Further Notes and Evidence
 
-Repository evidence: [project instructions](../../AGENTS.md), [manifesto](../../CLAUDE.md),
-[canonical domain vocabulary](../../CONTEXT.md), [DEC-017 and DEC-018](../../decisions.md),
-[Wave 11 specification](wave-11-i18n-spec.md), [Wave 11 handoff](../handoffs/wave-11-handoff.md),
-and [remote testing contract](../testing/supabase-remote-testing.md).
+Repository evidence: [project instructions](../../../../AGENTS.md), [manifesto](../../../../CLAUDE.md),
+[canonical domain vocabulary](../../../../CONTEXT.md), [DEC-017 and DEC-018](../../../../decisions.md),
+[Wave 11 specification](../../wave-11/specs/wave-11-i18n-spec.md), [Wave 11 handoff](../../wave-11/handoffs/wave-11-handoff.md),
+and [remote testing contract](../../../testing/supabase-remote-testing.md).
 
 Source inspection established the current reset omissions, production auth stub, missing profile trigger,
 promotion cleanup ordering, and lack of an authenticated engine-bootstrap interface. The designs above address

@@ -3,7 +3,7 @@
 ## Identity
 
 - Ticket: W12-04 — Start anew from the Player and Persistence Gate
-- Ticket specification: `.scratch/pic-tracer-bullet/issues/04-wave-12-player-and-gate-reset.md`
+- Ticket specification: `docs/waves/wave-12/tickets/drafts/04-wave-12-player-and-gate-reset.md`
 - Wave: 12. Dispatch authority covers all remaining Wave 12 tickets, 04 → 09 sequentially.
 - Authorized for implementation after all declared blockers are closed and the preceding ticket is committed.
 - Escalation: report concrete spec/contract conflicts to the orchestrator; do not widen scope.
@@ -28,7 +28,7 @@ and sibling tickets. Orchestrator owns seam map, handoff, tracking documents, an
 > Do not equate overlay dismissal, switching
 > register/login forms, or opening email with the Event Manager's explicit choice to discard.
 
-Read the full approved `docs/specs/wave-12-spec.md` section cited in the ticket before implementation.
+Read the full approved `docs/waves/wave-12/specs/wave-12-spec.md` section cited in the ticket before implementation.
 Prior tracer-bullet/skill paths are historical references, not replacements for this Wave 12 specification.
 
 ## Glossary injection
@@ -48,7 +48,7 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
 - Owns: Player and Gate reset integration.
 - Consumer/downstream: 05 Auth.
 - Risk to verify: No Finish side effects on reset; one focus owner.
-- Full map: `docs/audits/wave-12-seam-map.md`.
+- Full map: `docs/waves/wave-12/audits/wave-12-seam-map.md`.
 
 ## Execution contract
 
@@ -82,4 +82,3 @@ Canonical identifiers remain unchanged; the approved Wave 12 UI terminology take
   without announcing a completed reset.
 - [ ] AC-08: Exercise linked and unlinked Players, terminal Yes/No, Finish Anyway, and pending Gate cases in both directions.
   Confirmation and success announcements remain keyboard/screen-reader accessible.
-

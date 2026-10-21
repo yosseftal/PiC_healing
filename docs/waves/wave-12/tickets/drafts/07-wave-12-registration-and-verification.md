@@ -6,11 +6,13 @@
 
 **Status:** done
 
-**What to build:** A new user registers with Name, Email, and Password, verifies the email address, and saves the same inquiry, including after reloading the original browser during verification.
+**What to build:** A new user registers with Name, Email, and Password, verifies the email address, and saves the same inquiry,
+including after reloading the original browser during verification.
 
 **Blocked by:** W12-06 — Recover interrupted promotion without loss or duplicate success.
 
-**Source:** [Approved Wave 12 specification](../../../docs/specs/wave-12-spec.md), Implementation Decisions D (Auth and Verification continuity); User Stories 20, 22-25 and 28-30.
+**Source:** [Approved Wave 12 specification][relocation-link-1], Implementation Decisions D (Auth and Verification continuity);
+User Stories 20, 22-25 and 28-30.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
 ## Context Injection (verbatim)
@@ -19,28 +21,42 @@ The nine-ticket breakdown and dependencies were approved without changes on 2026
 
 ## Owned vertical slice
 
-Own registration and verification UI/messages, signUp and verification/resend coordination, and their web integration tests. Reuse 05's profile/promotion path and 06's recovery behavior.
+Own registration and verification UI/messages, signUp and verification/resend coordination, and their web integration tests. Reuse
+05's profile/promotion path and 06's recovery behavior.
 
 ## Acceptance criteria
 
-- [x] AC-01: Provide Name/Email/Password registration and login-mode switching with correct labels/autocomplete. Trim name, store full_name in Auth metadata, retain non-secret input/focus between modes, and keep passwords transient and untrimmed.
-- [x] AC-02: Use installed Supabase signUp. Require email verification before anchoring; a user without session enters verification pending, makes no therapeutic server writes, and retains the Guest draft and pending gate.
-- [x] AC-03: Preserve group/session IDs, terminal answer, pending Finish kind, and existing locally persisted work across opening email and same-browser reload while verification is pending.
-- [x] AC-04: After verification, establish a verified session via sign-in on the original browser or an allowed return callback, then reuse own-profile preparation and safe promotion without a second inquiry or duplicate success.
-- [x] AC-05: Provide neutral delivery/resend guidance and recoverable states for expired links, rate limits, rejected credentials, offline status, and missing configuration. These states never discard the draft.
-- [x] AC-06: Explain that another-device verification does not transfer the original local draft; direct the Event Manager back to the original browser without claiming cross-device Guest synchronization.
-- [x] AC-07: Ordinary dismissal and switching forms preserve work. Explicit abandonment uses the existing discard confirmation; cancellation restores the same pending verification/Gate state.
-- [x] AC-08: Ignore duplicate/stale verification callbacks and enforce owner/generation binding before promotion. Pending operations participate in the shared reset serialization.
-- [x] AC-09: Verify a truly new signup with no manually seeded profile, actual email confirmation, own-profile initialization, and exactly one linked/unlinked promotion outcome through the existing pipeline.
-- [x] AC-10: Verify RTL/LTR keyboard operation, live messages without focus theft, internal scrolling on small screens, and continuity through reload and retry.
+- [x]  AC-01: Provide Name/Email/Password registration and login-mode switching with correct labels/autocomplete. Trim name, store
+      full_name in Auth metadata, retain non-secret input/focus between modes, and keep passwords transient and untrimmed.
+- [x]  AC-02: Use installed Supabase signUp. Require email verification before anchoring; a user without session enters
+      verification pending, makes no therapeutic server writes, and retains the Guest draft and pending gate.
+- [x]  AC-03: Preserve group/session IDs, terminal answer, pending Finish kind, and existing locally persisted work across opening
+      email and same-browser reload while verification is pending.
+- [x]  AC-04: After verification, establish a verified session via sign-in on the original browser or an allowed return callback,
+      then reuse own-profile preparation and safe promotion without a second inquiry or duplicate success.
+- [x]  AC-05: Provide neutral delivery/resend guidance and recoverable states for expired links, rate limits, rejected
+      credentials, offline status, and missing configuration. These states never discard the draft.
+- [x]  AC-06: Explain that another-device verification does not transfer the original local draft; direct the Event Manager back
+      to the original browser without claiming cross-device Guest synchronization.
+- [x]  AC-07: Ordinary dismissal and switching forms preserve work. Explicit abandonment uses the existing discard confirmation;
+      cancellation restores the same pending verification/Gate state.
+- [x]  AC-08: Ignore duplicate/stale verification callbacks and enforce owner/generation binding before promotion. Pending
+      operations participate in the shared reset serialization.
+- [x]  AC-09: Verify a truly new signup with no manually seeded profile, actual email confirmation, own-profile initialization,
+      and exactly one linked/unlinked promotion outcome through the existing pipeline.
+- [x]  AC-10: Verify RTL/LTR keyboard operation, live messages without focus theft, internal scrolling on small screens, and
+      continuity through reload and retry.
 
 ## Verification and prior art
 
-Use deterministic Auth responses for UI branches and real signup/verification evidence with a controlled test mailbox or approved verification facility. Keep confirmation enabled and clean up isolated fixtures.
+Use deterministic Auth responses for UI branches and real signup/verification evidence with a controlled test mailbox or approved
+verification facility. Keep confirmation enabled and clean up isolated fixtures.
 
 ## Dependencies and exclusions
 
-Environment prerequisites: email confirmation, working delivery, allowed return URL, and deployed own-profile RLS. Missing settings are reported as external blockers; no hosted configuration or schema changes are part of this ticket. Coordinate shared Auth writers with 08; no extra dependency edge is implied.
+Environment prerequisites: email confirmation, working delivery, allowed return URL, and deployed own-profile RLS. Missing
+settings are reported as external blockers; no hosted configuration or schema changes are part of this ticket. Coordinate shared
+Auth writers with 08; no extra dependency edge is implied.
 
 ## Isolation bounds
 
@@ -194,3 +210,5 @@ frontend behavior and signup assertions are unchanged. Repeat live gates remain 
 - Final depcruise, eslint, full web and combined browser checks remain pending; do not reuse earlier passes as final.
 - Resume by applying the exact stash (keep it until verified commit), supplying the controlled unused test-only email,
   rerunning required gates, and re-reviewing final fixes. Only then close/commit07 and dispatch08 followed by09.
+
+[relocation-link-1]: ../../specs/wave-12-spec.md

@@ -17,9 +17,9 @@
 ## Frozen Requirements
 
 Implement Ticket 10.2 from:
-`.scratch/wave-10-ui-primitives/issues/02-therapeutic-frame-and-content-scrolling.md`.
+`docs/waves/wave-10/tickets/02-therapeutic-frame-and-content-scrolling.md`.
 
-Use the approved specification at `.scratch/wave-10-ui-primitives.md`, especially Layer 3.1 and
+Use the approved specification at `docs/waves/wave-10/specs/wave-10-ui-primitives.md`, especially Layer 3.1 and
 Interaction Rule 5.1. Preserve the exact viewport, internal-scroll, accessibility, safe-area, logical
 direction, wide-table, and zoom contracts.
 

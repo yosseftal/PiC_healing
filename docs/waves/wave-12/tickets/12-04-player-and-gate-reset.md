@@ -11,7 +11,7 @@ loss-confirmation flow, while keeping saved history and control over the decisio
 
 **Blocked by:** W12-03 — Start a new Symptom Group during creation and inquiry.
 
-**Source:** [Approved Wave 12 specification](../wave-12-spec.md), Implementation Decisions A and D (Verification
+**Source:** [Approved Wave 12 specification](../specs/wave-12-spec.md), Implementation Decisions A and D (Verification
 continuity); User Stories 3-10 and 27.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 

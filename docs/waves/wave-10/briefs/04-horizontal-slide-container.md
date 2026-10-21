@@ -17,9 +17,9 @@
 ## Frozen Requirements
 
 Implement Ticket 10.4 from:
-`.scratch/wave-10-ui-primitives/issues/04-horizontal-slide-container.md`.
+`docs/waves/wave-10/tickets/04-horizontal-slide-container.md`.
 
-Use the approved specification at `.scratch/wave-10-ui-primitives.md`, especially Layer 3.2 and
+Use the approved specification at `docs/waves/wave-10/specs/wave-10-ui-primitives.md`, especially Layer 3.2 and
 Interaction Rules 5.2, 5.4, 5.5, and 5.6. Motion represents reflected navigation but never performs it.
 
 ## Seam Map

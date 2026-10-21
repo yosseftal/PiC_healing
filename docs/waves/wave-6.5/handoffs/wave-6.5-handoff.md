@@ -1,6 +1,6 @@
 # Wave 6.5 Handoff — Hardening
 
-**Closed tickets:** 01–06 (all Wave 6.5 carry-forward items from `docs/audits/wave-6-handoff.md`).
+**Closed tickets:** 01–06 (all Wave 6.5 carry-forward items from `docs/waves/wave-6/handoffs/wave-6-handoff.md`).
 
 **Fixed point:** `main` after Wave 6.5 close-out commits.
 

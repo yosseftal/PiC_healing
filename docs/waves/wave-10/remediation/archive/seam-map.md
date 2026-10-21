@@ -17,4 +17,3 @@ Pre-agreed verification seams: rendered Player/forms and browser geometry; exist
 assertions; real Supabase HTTPS/RPC. These seams come from the approved audit and remediation request.
 
 Should-fix carry-forward: repository-wide legacy documentation line lengths; true device cutout coverage.
-

@@ -4,7 +4,7 @@
 
 - Ticket: 11.5 — Shared Inquiry, Summary, and Treatment Selection
 - Wave: 11
-- Frozen ticket: .scratch/wave-11/issues/05-shared-inquiry-summary-and-treatment.md
+- Frozen ticket: docs/waves/wave-11/tickets/05-shared-inquiry-summary-and-treatment.md
 - Orchestrator escalation: report conflicts or missing approval; do not guess.
 
 ## Permissions
@@ -47,7 +47,7 @@ _Avoid_: Failed, error, incomplete, stuck, "In-Process, Not Yet Complete" as a s
 
 ## Seam map excerpt
 
-- See docs/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
+- See docs/waves/wave-11/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
 - Test the approved public provider/screen/action/content seams. No new test seam needs to be invented.
 - Existing engines own healing state, stable identities, ratings, Finish authority, and persistence.
 - Other tickets may be independent in the graph, but shared-file edits are serialized by the orchestrator.
@@ -97,4 +97,3 @@ Shared layout is owned by 11.2; localized content overlays belong to 11.7.
       session using existing fixtures; switching alone invokes no therapeutic actions. Browser tests cover each adopted screen.
 - [ ] TB-10: Approved dictionary coverage and scoped tests/checks pass, with a web-only implementation diff.
       The slice is complete without claiming translated treatment guidance before 11.7 lands.
-

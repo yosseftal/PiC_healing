@@ -11,7 +11,7 @@ explicitly start a fresh group and cancel without losing the current draft.
 
 **Blocked by:** None (can start immediately).
 
-**Source:** [Approved Wave 12 specification](../wave-12-spec.md), Implementation Decisions A; User Stories 1-10.
+**Source:** [Approved Wave 12 specification](../specs/wave-12-spec.md), Implementation Decisions A; User Stories 1-10.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
 ## Context Injection (verbatim)

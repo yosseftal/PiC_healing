@@ -9,7 +9,7 @@ Test + Summary), 18 (`TreatmentPickerScreen`), 19 (`UnifiedPlayerScreen`).
 
 **Status:** ready-for-agent
 
-**Source:** `docs/specs/tracer-bullet-happy-path.md`, "Solution" section (1–5), full User Stories list.
+**Source:** `docs/waves/shared/specs/tracer-bullet-happy-path.md`, "Solution" section (1–5), full User Stories list.
 
 ## Objective
 

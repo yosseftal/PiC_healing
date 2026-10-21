@@ -4,7 +4,7 @@
 
 - Ticket: 11.3 — Localized Unified Player Controls
 - Wave: 11
-- Frozen ticket: .scratch/wave-11/issues/03-localized-unified-player-controls.md
+- Frozen ticket: docs/waves/wave-11/tickets/03-localized-unified-player-controls.md
 - Orchestrator escalation: report conflicts or missing approval; do not guess.
 
 ## Permissions
@@ -47,7 +47,7 @@ _Avoid_: Failed, error, incomplete, stuck, "In-Process, Not Yet Complete" as a s
 
 ## Seam map excerpt
 
-- See docs/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
+- See docs/waves/wave-11/audits/wave-11-seam-map.md for owned boundaries, upstream/downstream dependencies, and risks.
 - Test the approved public provider/screen/action/content seams. No new test seam needs to be invented.
 - Existing engines own healing state, stable identities, ratings, Finish authority, and persistence.
 - Other tickets may be independent in the graph, but shared-file edits are serialized by the orchestrator.
@@ -97,4 +97,3 @@ Do not change Player rules, rating behavior, auth, content parsing/caching, clin
       Terminal NEMAR Yes/No, Finish Anyway, resolving/recovery/empty phases, keyboard access and truthful metadata.
 - [ ] TB-10: A demonstrable bilingual Player control flow passes scoped tests, root typecheck, web depcruise/build,
       lint, line-length and scope checks. Treatment-body localization remains explicitly deferred to 11.7.
-

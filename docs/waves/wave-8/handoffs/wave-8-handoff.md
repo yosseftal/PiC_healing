@@ -1,6 +1,6 @@
 # Wave 8 Handoff — UI Landing (Tracer Bullet)
 
-**Date:** 2026-08-15  
+**Date:** 2026-08-15
 **Status:** CLOSED — Tracer Bullet vertical slice complete
 
 ## Closed tickets
@@ -51,7 +51,7 @@ Remote treatment IDs (FK-aligned):
 
 ## User Story traceability (spec § User Stories 1–45)
 
-Source: `docs/docs/specs/tracer-bullet-happy-path.md`. **PASS** = automated test or landed implementation
+Source: `docs/waves/shared/specs/tracer-bullet-happy-path.md`. **PASS** = automated test or landed implementation
 with cited evidence.
 
 ### Guest Mode Bootstrap (1–5)

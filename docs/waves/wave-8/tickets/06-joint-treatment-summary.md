@@ -8,7 +8,7 @@
 
 **Brief:** `.scratch/pic-tracer-bullet-8/briefs/06-joint-treatment-summary-brief.md`
 
-**Source:** `.scratch/pic-tracer-bullet/issues/17-joint-treatment-muscle-test-summary.md` (orig. Ticket 17).
+**Source:** `docs/waves/wave-8/tickets/original-tracer/17-joint-treatment-muscle-test-summary.md` (orig. Ticket 17).
 
 ## Definition of Done
 

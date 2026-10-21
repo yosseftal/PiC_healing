@@ -13,7 +13,7 @@
   dynamic NEMAR alias; W12-07 — Register and verify email while preserving the Guest inquiry; W12-08 — Restore identity and
   handle expiry without losing work.
 
-**Source:** [Approved Wave 12 specification](../wave-12-spec.md), Testing Decisions and Quality Gates; High-Level Work Plan
+**Source:** [Approved Wave 12 specification](../specs/wave-12-spec.md), Testing Decisions and Quality Gates; High-Level Work Plan
   phase 5; all User Stories.
 The nine-ticket breakdown and dependencies were approved without changes on 2026-10-13.
 
@@ -153,10 +153,10 @@ AC evidence map (paths below are relative to `packages/pic-web`):
   Required final root/scoped reruns are assigned to the orchestrator after the completed browser/build gates;
   normal TLS stays enabled. No extra signup probes were performed during the 2026-10-18 verification resume.
   The generated-link facility proves Auth confirmation, not mailbox delivery. Prior actual W12-08 evidence is in
-  `docs/specs/tickets/12-08-restored-identity-and-expiry.md` and is not relabeled as a W12-09 rerun.
+  `docs/waves/wave-12/tickets/12-08-restored-identity-and-expiry.md` and is not relabeled as a W12-09 rerun.
 - AC-11: Automated Chromium E2E and ARIA-tree evidence is recorded distinctly. Per the user's explicit instruction,
   physical mobile keyboard/visual viewport, physical safe-area, zoom, and Hebrew native screen-reader checks are
-  **Pending Manual QA Verification**, to be carried into `docs/audits/wave-12-handoff.md` by the orchestrator.
+  **Pending Manual QA Verification**, to be carried into `docs/waves/wave-12/handoffs/wave-12-handoff.md` by the orchestrator.
   Those unavailable checks are not claimed as passed and do not block automated closure under that instruction.
 - AC-12: Read-only full-wave path audit against `772df65` found all runtime/test/CSS/config changes confined to web;
   other tracked changes are approved specification/ticket/audit documentation. W12-09 adds four web test files,

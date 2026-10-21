@@ -21,4 +21,4 @@
 - [x] `depcruise` pic-web + pic-engine — 0 violations
 - [x] FK alignment — `TRACER_BULLET_SEED_TREATMENTS` matches remote Supabase IDs
 - [x] Wave 8 E2E (08-09)
-- [x] `docs/audits/wave-8-handoff.md`
+- [x] `docs/waves/wave-8/handoffs/wave-8-handoff.md`
