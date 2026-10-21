@@ -1,11 +1,11 @@
 # W13-09 — Prove the complete Wave 13 journeys and deliver the reviewed handoff
 
-**Status:** awaiting-human-review — implementation is not authorized.
+**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04][relocation-link-1], [W13-05][relocation-link-2], [W13-06][relocation-link-3],
 [W13-07][relocation-link-4], [W13-08][relocation-link-5].
 **Blocking:** None.
-**Execution gate:** Human green light for the ticket suite, then completed prerequisites.
+**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-010–DEC-018; all approved Wave 13 decisions.
 
 ## Objective & Context
@@ -69,8 +69,8 @@ Provide an evidence index that a reviewer can follow from each AC to test/manual
 Run typecheck, lint, dependency isolation and affected unit/integration/browser checks for the owned slice.
 Use the scripts actually present in the repository; record commands and outcomes in Resolution.
 Changes crossing persistence require both public-contract tests and real authorized database evidence.
-No treatment-content file or database-row deletion is permitted without explicit target-specific human approval,
-including fixture cleanup. Use an agreed isolated environment and retain fixtures if cleanup is not authorized.
+The user permits cleanup only of fixture rows and Auth users created in the same test run, by that run's UUIDs.
+No existing content, unrelated database rows or treatment-content files may be deleted.
 
 ## Definition of Done
 
@@ -88,8 +88,7 @@ No unrelated optimization, broad refactor, new features, invented test passes, c
 data deletion, production deployment, automatic merge/push or implementation beyond the approved tickets.
 Any newly discovered behavior gap is resolved in its owning ticket before final closure.
 
-The current preflight creates this document only. Do not execute its implementation steps until the user
-approves the generated suite. Approval of the specification is not an instruction to start coding in this turn.
+Implementation is authorized by the user; wait for prerequisites and serial dispatch.
 
 ## Resolution
 

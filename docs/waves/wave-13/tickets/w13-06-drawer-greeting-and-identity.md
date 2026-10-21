@@ -1,10 +1,10 @@
 # W13-06 — Show a personal greeting and accurate account state in the drawer
 
-**Status:** awaiting-human-review — implementation is not authorized.
+**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** None.
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
-**Execution gate:** Human green light for the ticket suite, then completed prerequisites.
+**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-017; Wave 12 owner-bound identity and recovery contracts.
 
 ## Objective & Context
@@ -55,8 +55,8 @@ Expire identity while work remains unsaved and simulate a late prior-owner name 
 Run typecheck, lint, dependency isolation and affected unit/integration/browser checks for the owned slice.
 Use the scripts actually present in the repository; record commands and outcomes in Resolution.
 Changes crossing persistence require both public-contract tests and real authorized database evidence.
-No treatment-content file or database-row deletion is permitted without explicit target-specific human approval,
-including fixture cleanup. Use an agreed isolated environment and retain fixtures if cleanup is not authorized.
+The user permits cleanup only of fixture rows and Auth users created in the same test run, by that run's UUIDs.
+No existing content, unrelated database rows or treatment-content files may be deleted.
 
 ## Definition of Done
 
@@ -73,8 +73,7 @@ including fixture cleanup. Use an agreed isolated environment and retain fixture
 No auth mechanism changes, profile editing, identity entitlement inference, new storage tables,
 therapy state changes, sign-out side effects on opening the drawer, or deletion of personal data.
 
-The current preflight creates this document only. Do not execute its implementation steps until the user
-approves the generated suite. Approval of the specification is not an instruction to start coding in this turn.
+Implementation is authorized by the user; wait for prerequisites and serial dispatch.
 
 ## Resolution
 

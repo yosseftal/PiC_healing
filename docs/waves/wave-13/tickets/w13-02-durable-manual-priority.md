@@ -1,10 +1,10 @@
 # W13-02 — Reorder topics and preserve priority through storage and promotion
 
-**Status:** awaiting-human-review — implementation is not authorized.
+**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md).
 **Blocking:** [W13-03](w13-03-renewed-joint-answer-after-addition.md), [W13-05](w13-05-clean-summary-and-polarity-view.md).
-**Execution gate:** Human green light for the ticket suite, then completed prerequisites.
+**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-010, DEC-011, DEC-017, DEC-018; W13-D1.
 
 ## Objective & Context
@@ -13,6 +13,9 @@ The Event Manager moves topics into the desired priority and sees that same orde
 round-trip and Guest-to-account promotion. This is one vertical slice across controls, GroupEngine, the port,
 both adapters, schema and promotion; do not land an engine-only feature as the completed ticket.
 
+The approved W13-01 refinement already supplies move controls for local, uncommitted draft rows.
+This ticket extends priority to committed groups and cloud storage; retain W13-01's local atomic draft submission.
+
 Approved W13-D1 requires durable manual priority. Guest arrays currently preserve insertion order,
 but the Supabase read has no explicit order and the GroupEngine has no reorder operation.
 The existing Supabase aggregate save can delete omitted symptoms; that is not an acceptable reorder strategy.
@@ -20,7 +23,7 @@ DEC-018 requires exact frozen-payload replay, including when older clients have 
 
 ## What to Build / Exact Scope
 
-1. Add accessible move-up/down controls to the topic list, with visible one-based **סדר עדיפות**.
+1. Extend the draft's accessible move-up/down pattern to committed topics, with one-based **סדר עדיפות**.
    Keep focus on the moved topic; announce its new position without a total. Disable impossible boundary moves.
 2. Route the complete requested ID permutation through a public GroupEngine command and RepositoryPort.
    Validate exact group membership, uniqueness, owner and a concurrency precondition. Single-item moves are harmless.
@@ -71,8 +74,8 @@ The visible priority and stable IDs match, all ratings are unchanged, and one re
 Run typecheck, lint, dependency isolation and affected unit/integration/browser checks for the owned slice.
 Use the scripts actually present in the repository; record commands and outcomes in Resolution.
 Changes crossing persistence require both public-contract tests and real authorized database evidence.
-No treatment-content file or database-row deletion is permitted without explicit target-specific human approval,
-including fixture cleanup. Use an agreed isolated environment and retain fixtures if cleanup is not authorized.
+The user permits cleanup only of fixture rows and Auth users created in the same test run, by that run's UUIDs.
+No existing content, unrelated database rows or treatment-content files may be deleted.
 
 ## Definition of Done
 
@@ -90,8 +93,7 @@ No polarity/intensity-based priority inference, therapeutic recommendation, Play
 generic authenticated engine hydration, cross-device sync framework, content deletion, ID regeneration,
 or private engine-field mutation. Do not weaken frozen retry equality to accommodate the new metadata.
 
-The current preflight creates this document only. Do not execute its implementation steps until the user
-approves the generated suite. Approval of the specification is not an instruction to start coding in this turn.
+Implementation is authorized by the user; wait for prerequisites and serial dispatch.
 
 ## Resolution
 

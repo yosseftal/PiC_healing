@@ -1,10 +1,10 @@
 # W13-05 — Review a clean priority list with an optional polarity view
 
-**Status:** awaiting-human-review — implementation is not authorized.
+**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md), [W13-02](w13-02-durable-manual-priority.md).
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
-**Execution gate:** Human green light for the ticket suite, then completed prerequisites.
+**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-010, DEC-011, DEC-012, DEC-013; W13-D2, W13-D3.
 
 ## Objective & Context
@@ -59,8 +59,8 @@ order; storage is unchanged. Start re-rating a topic and inspect visible and acc
 Run typecheck, lint, dependency isolation and affected unit/integration/browser checks for the owned slice.
 Use the scripts actually present in the repository; record commands and outcomes in Resolution.
 Changes crossing persistence require both public-contract tests and real authorized database evidence.
-No treatment-content file or database-row deletion is permitted without explicit target-specific human approval,
-including fixture cleanup. Use an agreed isolated environment and retain fixtures if cleanup is not authorized.
+The user permits cleanup only of fixture rows and Auth users created in the same test run, by that run's UUIDs.
+No existing content, unrelated database rows or treatment-content files may be deleted.
 
 ## Definition of Done
 
@@ -77,8 +77,7 @@ including fixture cleanup. Use an agreed isolated environment and retain fixture
 No automatic sorting of persisted priority, score-derived urgency, bulk rating, analytics, rewriting
 history, removing library use counts, group archival, treatment editing or database changes.
 
-The current preflight creates this document only. Do not execute its implementation steps until the user
-approves the generated suite. Approval of the specification is not an instruction to start coding in this turn.
+Implementation is authorized by the user; wait for prerequisites and serial dispatch.
 
 ## Resolution
 

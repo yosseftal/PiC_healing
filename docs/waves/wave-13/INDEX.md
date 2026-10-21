@@ -2,7 +2,7 @@
 
 [All waves](../INDEX.md)
 
-Specification approved; ticket suite awaiting human review. Implementation has not started.
+Implementation authorized. W13-01 is in progress with the approved unified-row refinement.
 
 ## Specifications
 
@@ -15,14 +15,18 @@ Specification approved; ticket suite awaiting human review. Implementation has n
 ## Audits
 
 - [wave-13-content-audit.md](audits/wave-13-content-audit.md)
+- [Execution seam map](audits/wave-13-execution-seam-map.md)
 
 ## Handoffs
 
-No implementation handoff yet. Preflight is documentation-only.
+Execution in progress; checkpoint handoffs will be linked here after verified atomic work.
 
 ## Briefs and preserved checkpoints
 
 - [wave-13-spec-before-ticket-generation.md](archive/wave-13-spec-before-ticket-generation.md)
+- [Specification before unified-row refinement](archive/wave-13-spec-before-unified-row-refinement.md)
+- [W13-01 before unified-row refinement](archive/w13-01-before-unified-row-refinement.md)
+- Execution briefs: one file per ticket under `briefs/`, named after the corresponding ticket file.
 
 Historical text keeps its original status and time context. Directory placement is navigation, not new authority.
 Use the [relocation ledger](../RELOCATION.md) to resolve old paths from code comments or historical citations.

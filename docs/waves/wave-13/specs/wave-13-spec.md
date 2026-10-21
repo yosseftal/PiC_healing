@@ -4,7 +4,7 @@
 
 **Date:** 2026-10-20, Asia/Jerusalem.
 
-**Status:** APPROVED specification (2026-10-20); generated tickets await human review before implementation.
+**Status:** APPROVED specification (2026-10-20); implementation authorized; W13-01 unified-row refinement approved 2026-10-21.
 
 **Repository baseline inspected:** `853a696` — Gate development artifacts from production web builds.
 
@@ -26,13 +26,12 @@ Unexpected catalog content must be investigated without destroying treatment mat
 ## Solution
 
 Present a Hebrew-first **שאלון אבחון עצמי**. Show the supplied preparation text, then an optional title and
-the first topic input immediately beneath it. Grow an ordered list with an inline next-topic input and exactly
+the first topic input immediately beneath it. Grow an ordered list of unified editable topic/rating/priority rows with exactly
 two primary actions: **הוספת נושא נוסף** and **סיום והמשך**. Support keyboard-accessible move controls;
 dragging is optional enhancement. Keep a separate, non-destructive Back control in the screen chrome.
 
-On the recommended path, collect topics, refine priority, rate one topic at a time, and continue to the joint
-treatment question. The Event Manager can revisit earlier questionnaire work without resetting it.
-The introduction and muscle-testing guide remain freely accessible and skippable.
+Use unified local draft rows for topic name, explicit initial rating and manual priority.
+Finish commits the complete local snapshot and goes directly to the joint-treatment question.
 
 The user-facing questionnaire is a presentation/workflow name. It does not introduce a second persistent
 container alongside Symptom Group / Work Session. The application organizes the Event Manager's own input;
@@ -75,7 +74,7 @@ or any content/database deletion.
 16. As an Event Manager, I want priority numbers distinct from scores, so that urgency and intensity are not confused.
 17. As an Event Manager, I want initial scores of 1–10, so that I can use the supplied interference scale.
 18. As an Event Manager, I want independent polarity, so that changing framing does not change priority or intensity.
-19. As an Event Manager, I want to rate one topic at a time, so that I can focus on my present experience.
+19. As an Event Manager, I want to name, rate and prioritize each topic in its row, so that I can review my draft together.
 20. As an Event Manager, I want previous ratings hidden during re-rating, so that they do not anchor my response.
 21. As an Event Manager, I want an explicit reveal control, so that I can consult my history when I choose.
 22. As an Event Manager, I want existing zero ratings preserved, so that this wave does not rewrite my history.
@@ -131,7 +130,7 @@ Screen order inside the existing content card:
 1. Questionnaire heading and preparation guidance, expanded on first presentation.
 2. Optional title labeled **שם לרשימה (לא חובה)**.
 3. Added topics in manual priority order, when any exist.
-4. Inline next-topic input. With an empty list this sits immediately below the optional title.
+4. Unified rows with name, explicit 1–10 selector and priority buttons; the first sits below the optional title.
 5. The two primary actions. Back and service access belong to screen chrome.
 
 Keep the guidance within the screen's scrollable content region, not in a compulsory modal or hidden in the drawer.
@@ -159,33 +158,19 @@ title becomes an empty string, not a fabricated title or a new nullable schema r
 list without an empty heading; navigation may use a localized generic label without writing it as the person's title.
 The repository schema permits a non-null string; explicit contract tests must cover empty title in promotion too.
 
-Create no empty group merely for visiting the questionnaire. Materialize the draft through GroupEngine on the first
-successful topic submission, or commit a staged topic batch on continuation. Choose one approach in W13-01 and keep
-its operation ledger stable across retries; it must not duplicate IDs. Optional title editing after materialization
-requires a public group command if included; direct repository patching from a component is prohibited.
-Later group-management/rename functionality is not a prerequisite for optional initial naming.
+Create no group while opening, typing or reordering. Finish stages existing GroupEngine operations in pic-web
+and flushes the complete title, names, ratings and ordered rows once. Retain stable IDs for retry and publish
+the active group only after the complete local commit. Authenticated drafts remain locally unsaved until an actual
+joint answer. Durable cloud order and its schema belong to W13-02. Later group renaming is outside W13-01.
 
 ### 3. Progressive input, priority, and initial rating
 
-The recommended preparation sequence is **list → prioritize → rate**. Do not require a score before a topic can be
-added. Topic rows may initially be unrated. A single active row opens the cohesive polarity/intensity control.
-All rows must not expose simultaneous sliders. Topic entry remains usable while the list is being refined.
-
-| Action / condition | Observable result |
-| --- | --- |
-| Add another topic, nonblank input | Append once at the end; clear only after acceptance; focus the next-topic input. |
-| Add another topic, blank input | No record; focus the input with a localized validation message. |
-| Finish & Continue, pending nonblank topic | Accept that topic once before continuing; never silently drop it. |
-| Finish & Continue, empty list | Stay at input; explain that a topic is needed for this symptom-led questionnaire. |
-| Finish & Continue, unrated topics | Enter the one-topic initial rating pass in manual order. |
-| Finish & Continue, all topics rated | Show the joint-treatment question. |
-| Initial rating pass completes | Show the joint-treatment question; do not ask the person to repeat Finish. |
-| Duplicate topic text | Preserve separate IDs; do not infer that the Event Manager meant the same topic. |
-| Write fails / double click | Keep input, IDs, score drafts and pending intent; retry only the unfinished operation. |
-
-Thus Finish & Continue has one destination: the joint-treatment question, with the necessary initial rating pass
-inside the same questionnaire when ratings are missing. This resolves the supplied preparation order without
-quietly assigning scores or inserting an unrelated wizard.
+**Approved refinement (2026-10-21):** each local draft row contains its topic-name input, explicit initial 1–10
+selector and move-up/down controls. Keep polarity independently editable and no automatic score.
+Add another topic appends a blank row and focuses it. Neither Add, editing nor reorder persists a domain group.
+Finish validates every row, retains incomplete rows with guidance, commits the full local snapshot atomically,
+then proceeds directly to the joint question. There is no separate initial-rating pass.
+Duplicate names retain separate IDs; failed submission retains the frozen IDs, ratings and order for retry.
 
 Manual priority is an explicit ordered sequence of topic IDs. Its displayed number is **סדר עדיפות**, not a score.
 In Hebrew, priority belongs at the right/start side of a row; the intensity value belongs at the left/end side
@@ -262,7 +247,7 @@ path, successful disposition of the draft, or an identity transition handled by 
 | --- | --- | --- |
 | Introduction or help opened during work | Exact invoking screen | No therapeutic mutation. |
 | Questionnaire entry | Introduction / prior app entry | Draft retained. |
-| Initial rating pass | Previous questionnaire step or previous topic | Input retained; no rating inferred. |
+| Unified draft rows | Previous questionnaire screen | All names, ratings and order retained; no rating inferred. |
 | Joint-treatment question | Questionnaire list | Topics and unsubmitted input retained. |
 | No-answer advisory | Joint question, then questionnaire | Answer is not fabricated or erased by navigation. |
 | Summary | Joint question / list review | No unfinalize side effect merely for viewing. |
@@ -494,7 +479,7 @@ automated geometry or ARIA checks are not equivalent.
 
 The [ticket index](../tickets/INDEX.md) is authoritative for the nine generated ticket IDs and their explicit DAG.
 The approved behavior is unchanged; the earlier layer-oriented proposal is now organized as end-to-end slices.
-W13-02 includes controls, engine, adapters, schema and promotion for durable priority.
+W13-01 owns local draft reorder controls; W13-02 extends durable priority through engine, adapters, schema and promotion.
 W13-03 includes UI and atomic persistence for revised membership with a fresh joint answer.
 W13-07 includes the now-approved W13-07V video container; no tenth ticket is created.
 
@@ -502,8 +487,7 @@ Every generated ticket contains objective/context, exact scope, blocked-by and b
 acceptance criteria, testing requirements, Definition of Done, exclusions and a pending Resolution section.
 The full [earlier specification](../archive/wave-13-spec-before-ticket-generation.md) preserves the original proposal.
 
-The user has approved specification and content-audit scope, and authorized local ticket generation and commit only.
-Ticket status remains awaiting-human-review until a separate implementation green light.
+The user authorized serial implementation W13-01 through W13-09. Active ticket status and Resolution record execution.
 
 ## Architectural Questions and Objections
 

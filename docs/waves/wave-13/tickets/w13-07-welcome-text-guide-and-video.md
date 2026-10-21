@@ -1,10 +1,10 @@
 # W13-07 — Learn PIC through a welcome page, text guide and official video
 
-**Status:** awaiting-human-review — implementation is not authorized.
+**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04](w13-04-reversible-questionnaire-and-recovery.md).
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
-**Execution gate:** Human green light for the ticket suite, then completed prerequisites.
+**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-001, DEC-015, DEC-017; W13-D5 and approved W13-07V.
 
 ## Objective & Context
@@ -71,8 +71,8 @@ authentication return, which must retain routing precedence.
 Run typecheck, lint, dependency isolation and affected unit/integration/browser checks for the owned slice.
 Use the scripts actually present in the repository; record commands and outcomes in Resolution.
 Changes crossing persistence require both public-contract tests and real authorized database evidence.
-No treatment-content file or database-row deletion is permitted without explicit target-specific human approval,
-including fixture cleanup. Use an agreed isolated environment and retain fixtures if cleanup is not authorized.
+The user permits cleanup only of fixture rows and Auth users created in the same test run, by that run's UUIDs.
+No existing content, unrelated database rows or treatment-content files may be deleted.
 
 ## Definition of Done
 
@@ -90,8 +90,7 @@ No custom streaming stack, video download/redistribution, offline media cache, a
 view tracking, Unified Player instance, therapeutic completion marker, new clinical claims or invented instructions.
 Do not weaken the production output allowlist to admit an arbitrary media asset.
 
-The current preflight creates this document only. Do not execute its implementation steps until the user
-approves the generated suite. Approval of the specification is not an instruction to start coding in this turn.
+Implementation is authorized by the user; wait for prerequisites and serial dispatch.
 
 ## Resolution
 

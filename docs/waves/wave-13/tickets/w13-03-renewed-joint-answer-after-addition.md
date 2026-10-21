@@ -1,10 +1,10 @@
 # W13-03 — Add to an answered list and confirm the full revised list again
 
-**Status:** awaiting-human-review — implementation is not authorized.
+**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-02](w13-02-durable-manual-priority.md).
 **Blocking:** [W13-04](w13-04-reversible-questionnaire-and-recovery.md).
-**Execution gate:** Human green light for the ticket suite, then completed prerequisites.
+**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-002, DEC-010, DEC-013, DEC-014, DEC-017, DEC-018; W13-D4.
 
 ## Objective & Context
@@ -67,8 +67,8 @@ Inject a save failure: the previously committed group remains intact and retry c
 Run typecheck, lint, dependency isolation and affected unit/integration/browser checks for the owned slice.
 Use the scripts actually present in the repository; record commands and outcomes in Resolution.
 Changes crossing persistence require both public-contract tests and real authorized database evidence.
-No treatment-content file or database-row deletion is permitted without explicit target-specific human approval,
-including fixture cleanup. Use an agreed isolated environment and retain fixtures if cleanup is not authorized.
+The user permits cleanup only of fixture rows and Auth users created in the same test run, by that run's UUIDs.
+No existing content, unrelated database rows or treatment-content files may be deleted.
 
 ## Definition of Done
 
@@ -86,8 +86,7 @@ No topic removal, arbitrary group administration, required positive answer, full
 cross-device editing product, generic event sourcing or modification of historical ratings.
 No data deletion or workaround that bypasses the public engine seam.
 
-The current preflight creates this document only. Do not execute its implementation steps until the user
-approves the generated suite. Approval of the specification is not an instruction to start coding in this turn.
+Implementation is authorized by the user; wait for prerequisites and serial dispatch.
 
 ## Resolution
 

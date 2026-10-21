@@ -1,19 +1,19 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** specification approved; generated ticket suite awaiting human review and implementation green light.
+**Status:** implementation authorized; W13-01 in progress, W13-02–09 await serial dispatch.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
 
-This local suite is the requested publication target. No GitHub issues, implementation branches or agents are dispatched.
+This local suite is the requested publication target. Implementation is now authorized in serial ticket order.
 The user explicitly requested generation and commit before review, so no additional pre-generation interview is required.
 There are exactly nine tickets; approved W13-07V is included inside W13-07.
 
 ## Dependency DAG
 
 - **Ticket:** [W13-01][W13-01]
-  **End-to-end delivery:** Enter an untitled questionnaire and reach the joint test
+  **End-to-end delivery:** Enter, rate and prioritize unified draft rows; commit once and reach the joint test
   **Blocked by:** None
 
 - **Ticket:** [W13-02][W13-02]
@@ -77,17 +77,18 @@ flowchart LR
 
 W13-04 lists W13-01 explicitly for its draft contract even though W13-03 also depends on it.
 W13-05 needs entry/rating and order, not the renewed-answer implementation.
-W13-06 and W13-08 have no functional ticket prerequisites; they still wait for the human execution green light.
+W13-06 and W13-08 have no functional ticket prerequisites; they still wait for the authorized serial dispatch.
 W13-07 depends on reversible navigation, not on account greeting or polarity presentation.
 W13-09 lists the final dependency frontier; W13-01/02/03 are transitively required.
 
 Suggested serial order is 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09.
-This is a scheduling recommendation, not additional DAG edges or permission to execute.
+The user authorized this serial execution order; the dependency DAG remains unchanged.
 Shared composition, dictionary and storage owners must not receive simultaneous conflicting edits.
 
 ## Vertical slicing and mapping from the earlier proposed breakdown
 
-The approved product scope is unchanged. The earlier layer-based proposal is repackaged under the requested
+The original proposal was repackaged as vertical slices. The approved unified-row refinement now updates W13-01.
+Use the current ticket scope with the requested
 to-tickets methodology: each numbered ticket demonstrates user-visible behavior across all layers it touches.
 
 | Earlier proposed area | Owning generated ticket |
@@ -110,7 +111,7 @@ Use this ticket index for current ticket IDs and blocking edges.
 | --- | --- |
 | Supplied introduction, optional title, immediate input, progressive loop | 01 |
 | Initial 1–10 versus historical/re-rating 0–10 | 01, 05 |
-| Manual priority; durable Guest/account and promotion continuity | 02 |
+| Local draft priority; durable Guest/account and promotion continuity | 01, 02 |
 | Fresh full-list joint answer after an addition; sovereign No | 03 |
 | Universal questionnaire Back and draft preservation | 04 |
 | Clean list; no totals; optional polarity view; blind integrity | 05 |
@@ -124,12 +125,13 @@ Use this ticket index for current ticket IDs and blocking edges.
 - W13-07 must produce and obtain approval of actual source-verified procedural text. The feature is approved;
   nonexistent/unwritten text is not treated as already reviewed. A missing transcript remains an evidence dependency.
 - W13-07 must verify actual YouTube embedding; the known watch URL alone is not proof of embed permission.
-- W13-02/03 require an authorized isolated database test environment, with no unapproved row cleanup.
+- W13-02/03 require authorized isolated database evidence. The user permits cleanup only of same-run fixture UUIDs.
 - Physical/native checks remain explicitly visible in W13-09. A prior-wave manual-QA waiver is not automatically inherited.
-- Every ticket remains awaiting-human-review; no automated queue should interpret this suite as ready-for-agent.
+- W13-01 is active; all other tickets wait for their prerequisites and serial dispatch.
 
-## Review and stop condition
+## Execution checkpoint protocol
 
-Review the granularity, actual blocking edges, and any desired merge/split before execution.
-Preflight completion means consolidated docs, validated links/preservation/DAG, nine detailed files, indexes and commits.
-Stop there. No implementation, remote writes, migrations, deployment, ticket closure or treatment deletion in this turn.
+Preflight and the suite were approved. The user's unified-row refinement supersedes W13-01's separate rating pass.
+Complete each atomic ticket, run the specified gates, record every AC in Resolution and commit before proceeding.
+At context capacity, stop with a clean verified checkpoint and state the exact next ticket and remaining gates.
+Content deletion and existing-row deletion remain prohibited without target-specific approval.

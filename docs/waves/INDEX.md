@@ -2,7 +2,7 @@
 
 Canonical wave documentation lives under **docs/waves/**.
 Start with a wave index, then its specification, tickets, audits and final handoff.
-Wave 13 is approved for planning; its generated ticket suite awaits a separate implementation green light.
+Wave 13 implementation is authorized; follow its ticket index for the current execution checkpoint.
 
 ## Waves
 
