@@ -156,7 +156,7 @@ Nonempty legacy lists continue without rating/timestamp rewrites; no private Gro
 Physical-device/native-screen-reader evidence remains a W13-09 manual gate, not an automated claim here.
 Initial draft order is local; durable cross-adapter order and promotion compatibility remain W13-02.
 Same-run remote fixtures were cleaned under explicit user permission; no preexisting content deletion was authorized.
-The scoped [W13-01] implementation commit and exact resume point are recorded in the wave checkpoint handoff.
+Implementation commit: `8443a35`. See the [checkpoint handoff](../handoffs/w13-01-checkpoint.md) for the exact resume point.
 
 [relocation-link-1]: w13-02-durable-manual-priority.md
 [relocation-link-2]: w13-04-reversible-questionnaire-and-recovery.md

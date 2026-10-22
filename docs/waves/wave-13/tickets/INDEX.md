@@ -1,7 +1,7 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** implementation authorized; W13-01 in progress, W13-02–09 await serial dispatch.
+**Status:** W13-01 closed and committed; W13-02 next. W13-03–09 await prerequisites and serial dispatch.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -13,6 +13,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
 ## Dependency DAG
 
 - **Ticket:** [W13-01][W13-01]
+  **Status:** closed; implementation commit 8443a35.
   **End-to-end delivery:** Enter, rate and prioritize unified draft rows; commit once and reach the joint test
   **Blocked by:** None
 
@@ -127,7 +128,7 @@ Use this ticket index for current ticket IDs and blocking edges.
 - W13-07 must verify actual YouTube embedding; the known watch URL alone is not proof of embed permission.
 - W13-02/03 require authorized isolated database evidence. The user permits cleanup only of same-run fixture UUIDs.
 - Physical/native checks remain explicitly visible in W13-09. A prior-wave manual-QA waiver is not automatically inherited.
-- W13-01 is active; all other tickets wait for their prerequisites and serial dispatch.
+- W13-01 is closed; resume W13-02 from the [verified checkpoint](../handoffs/w13-01-checkpoint.md).
 
 ## Execution checkpoint protocol
 
