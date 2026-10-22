@@ -1,0 +1,26 @@
+import { describe, expect, it } from "vitest";
+import type { RepositoryPort, SymptomGroup } from "../../src/repository-port";
+import { GroupEngine } from "../../src/group-engine";
+
+export function runGroupOrderContract(makePorts: () => { port: RepositoryPort; fresh: () => RepositoryPort }) {
+  describe("durable manual priority", () => {
+    it("reorders through GroupEngine and reads unchanged identities and ratings from a fresh port", async () => {
+      const { port, fresh } = makePorts();
+      const engine = new GroupEngine(port);
+      const groupId = await engine.createDraftGroup("");
+      const first = await engine.addSymptom(groupId, "First");
+      const second = await engine.addSymptom(groupId, "Second");
+      const third = await engine.addSymptom(groupId, "Third");
+      await engine.rate(first, { intensity: 0, polarity: "positive" });
+      await engine.rate(second, { intensity: 5 });
+      await engine.rate(third, { intensity: 9 });
+      await engine.setJointTreatmentMuscleTest(groupId, "together");
+      const before = (await port.getGroup(groupId)) as SymptomGroup;
+      const committed = await engine.reorderSymptoms(groupId, [third, first, second], before.revision!);
+      expect(committed.symptoms).toEqual([before.symptoms[2], before.symptoms[0], before.symptoms[1]]);
+      expect(committed.joint_treatment_test_at).toBe(before.joint_treatment_test_at);
+      expect(committed.revision).toBe(before.revision! + 1);
+      expect(await fresh().getGroup(groupId)).toEqual(committed);
+    });
+  });
+}

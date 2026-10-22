@@ -1,6 +1,6 @@
 # W13-02 — Reorder topics and preserve priority through storage and promotion
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** in progress — atomic persistence contract agreed; SQL/red-test preparation reviewed; runtime work next.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md).
 **Blocking:** [W13-03](w13-03-renewed-joint-answer-after-addition.md), [W13-05](w13-05-clean-summary-and-polarity-view.md).
