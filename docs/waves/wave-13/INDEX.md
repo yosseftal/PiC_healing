@@ -25,6 +25,7 @@ Implementation authorized. W13-01 and W13-06 are closed; W13-02 is the active pe
 ## Handoffs
 
 - [Verified W13-01 checkpoint and exact resume instructions](handoffs/w13-01-checkpoint.md)
+- [Verified W13-06 checkpoint and active W13-02 entry](handoffs/w13-06-checkpoint.md)
 
 ## Briefs and preserved checkpoints
 
