@@ -21,7 +21,7 @@ export function GuestFlowRouter() {
   useEffect(() => {
     if (generation === 0) return;
     const timer = setTimeout(() => {
-      document.querySelector<HTMLElement>('[data-testid="create-group-form"] input')?.focus();
+      document.querySelector<HTMLElement>('[data-testid="symptom-add-step"] input')?.focus();
     }, 0);
     return () => clearTimeout(timer);
   }, [generation]);

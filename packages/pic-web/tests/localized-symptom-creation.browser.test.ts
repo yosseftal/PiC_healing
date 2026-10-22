@@ -2,14 +2,16 @@ import { expect, test, type Page } from "@playwright/test";
 
 const copy = {
   he: {
-    open: "פתיחת הכלים", close: "סגירת הכלים", name: "שם הקבוצה", symptom: "שם הסימפטום",
-    polarity: "קוטביות", intensity: "עוצמה", card: "שם הקבוצה והסימפטומים", actions: "פעולות זמינות",
-    prior: "קודם: חיובית, 8/10", placeholder: "שם לקבוצת הסימפטומים",
+    open: "פתיחת הכלים", close: "סגירת הכלים", name: "שם לרשימה (לא חובה)", symptom: "שם הסימפטום",
+    polarity: "קוטביות", intensity: "עוצמה", card: "נושאים לשאלון", actions: "פעולות זמינות",
+    initial: "עוצמת החוויה החיובית", negative: "עוצמת הפרעה / סבל",
+    prior: "קודם: חיובית, 8/10", placeholder: "שם לרשימה שלך",
   },
   en: {
-    open: "Open utilities", close: "Close utilities", name: "Group name", symptom: "Symptom name",
-    polarity: "Polarity", intensity: "Intensity", card: "Group name and symptoms", actions: "Available actions",
-    prior: "Prior: Positive, 8/10", placeholder: "Name this Symptom Group",
+    open: "Open utilities", close: "Close utilities", name: "List name (optional)", symptom: "Symptom name",
+    polarity: "Polarity", intensity: "Intensity", card: "Questionnaire topics", actions: "Available actions",
+    initial: "Strength of the positive experience", negative: "Interference / suffering intensity",
+    prior: "Prior: Positive, 8/10", placeholder: "Name your list",
   },
 } as const;
 type Locale = keyof typeof copy;
@@ -64,11 +66,10 @@ for (const locale of ["he", "en"] as const) {
       await expect(changedName).toHaveValue("גב Back 123 ".repeat(10));
       await expect(changedName).toHaveAttribute("lang", "");
       await expect(changedName).toHaveAttribute("dir", "auto");
-      await changedName.press("Enter");
       const symptom = page.getByRole("textbox", { name: copy[other].symptom });
       await symptom.fill("Neck צוואר");
       await page.getByLabel(copy[other].polarity).selectOption("positive");
-      const slider = page.getByLabel(copy[other].intensity);
+      const slider = page.getByLabel(copy[other].initial);
       await slider.focus();
       await page.keyboard.press("End");
       await expect(slider).toHaveValue("10");
@@ -82,15 +83,17 @@ for (const locale of ["he", "en"] as const) {
       expect(await changedSymptom.evaluate((node, original) => node === original, symptomNode)).toBe(true);
       await expect(changedSymptom).toHaveValue("Neck צוואר");
       await expect(page.getByLabel(copy[locale].polarity)).toHaveValue("positive");
-      await expect(page.getByLabel(copy[locale].intensity)).toHaveValue("10");
+      await expect(page.getByLabel(copy[locale].initial)).toHaveValue("10");
       expect(await page.getByRole("region", { name: copy[locale].card }).evaluate((node) => node.scrollTop)).toBe(scroll);
       await checkContainment(page, viewport.width, viewport.height);
-      await changedSymptom.press("Enter");
+      await expect(page.locator("#root")).toHaveAttribute("data-action-calls", "0");
       await expect(page.getByTestId("finish-symptom-addition")).toBeVisible();
-      await expect(page.getByTestId("symptom-count")).toHaveText(locale === "he"
-        ? "סימפטום 1 בקבוצה" : "1 symptom in this group");
+      await expect(page.getByTestId("symptom-count")).toHaveCount(0);
       await expect(page.getByRole("group", { name: copy[locale].actions }).getByRole("button")).toHaveCount(2);
       await checkContainment(page, viewport.width, viewport.height);
+      await page.getByTestId("finish-symptom-addition").click();
+      await expect(page.getByTestId("muscle-test-yes")).toBeVisible();
+      await expect(page.locator("#root")).toHaveAttribute("data-action-calls", "1");
     });
 
     test(`${locale} blind prior history retains explicit reveal and draft through phone selection at ${viewport.width}px`,

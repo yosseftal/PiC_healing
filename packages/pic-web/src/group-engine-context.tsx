@@ -2,7 +2,8 @@
  * React Context boundary (Ticket 08-03) for `GroupEngine`: screens reach the composition-root-constructed
  * engine's actions and optional flow facts via hooks — never via a direct adapter import.
  */
-import { createContext, useContext, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { inquiryGenerationStore } from "./inquiry-lifecycle";
 import { compositionRoot } from "./composition-root";
 
 type GroupEngineActions = typeof compositionRoot.groupEngineActions;
@@ -40,4 +41,13 @@ export function useGroupEngineState(): GroupEngineFlowState {
 /** The only way any component may trigger a `GroupEngine` mutation. */
 export function useGroupEngineActions(): GroupEngineActions {
   return useGroupEngineContext().actions;
+}
+
+export function useQuestionnaire() {
+  useGroupEngineContext();
+  const { questionnaire } = compositionRoot;
+  const state = useSyncExternalStore(questionnaire.store.subscribe, questionnaire.store.getSnapshot);
+  const generation = useSyncExternalStore(inquiryGenerationStore.subscribe, inquiryGenerationStore.getSnapshot);
+  const actions = useMemo(() => questionnaire.actionsFor(generation), [generation, questionnaire]);
+  return { state, actions };
 }

@@ -28,10 +28,10 @@ async function expectInputAffordance(control: Locator) {
 test("form inputs expose boundaries and focus while native rating controls remain usable", async ({ page }) => {
   await page.goto("/tests/control-affordance.fixture.html");
   await page.keyboard.press("Tab");
-  const groupName = page.getByRole("textbox", { name: "Group name" });
+  const groupName = page.getByRole("textbox", { name: "List name (optional)" });
   await expectInputAffordance(groupName);
   await groupName.fill("Grounding");
-  const confirm = page.getByRole("button", { name: "Confirm group name" });
+  const confirm = page.getByRole("button", { name: "Finish and continue" });
   await expectReadable(confirm, true);
   await confirm.hover();
   await expectReadable(confirm, true);
@@ -44,11 +44,10 @@ test("form inputs expose boundaries and focus while native rating controls remai
   await expectInputAffordance(page.getByRole("textbox", { name: "Symptom name" }));
   await expectInputAffordance(page.getByRole("combobox", { name: "Polarity" }));
 
-  const slider = page.getByRole("slider", { name: "Intensity" });
-  await slider.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(slider).toHaveValue("6");
-  expect(await slider.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  const score = page.getByRole("combobox", { name: "Interference / suffering intensity" });
+  await expectInputAffordance(score);
+  await score.selectOption("6");
+  await expect(score).toHaveValue("6");
 
   await page.goto("/tests/control-affordance.fixture.html?stage=picker");
   await page.getByRole("button", { name: "Open utilities" }).click();

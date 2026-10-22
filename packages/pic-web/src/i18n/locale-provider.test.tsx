@@ -20,7 +20,7 @@ function AliasScreen() {
     <button onClick={() => setCustomNemarAlias(null)}>Clear alias fixture</button>
     <div key={generation}>
       <input aria-label="Inquiry draft" defaultValue="" />
-      <p data-testid="question"><LocalizedMessage message={message("joint.question")} /></p>
+      <p data-testid="question"><LocalizedMessage message={message("player.terminalQuestion")} /></p>
     </div>
   </>;
 }
@@ -51,19 +51,19 @@ describe("locale authority", () => {
     fireEvent.change(draft, { target: { value: "My NEMAR נמ״ר wording" } });
     const alias = 'שלי Right <b>{nemar}</b> & "quoted"';
     fireEvent.change(screen.getByLabelText("Alias fixture"), { target: { value: alias } });
-    expect(screen.getByTestId("question").textContent).toBe(`האם ${alias} לטפל בסימפטומים האלה יחד?`);
+    expect(screen.getByTestId("question").textContent).toBe(`האם ${alias} שטיפול זה הסתיים בהצלחה?`);
     expect(screen.getByTestId("question").querySelector("b")).toBeNull();
     expect(screen.getByTestId("question").querySelector("bdi")?.textContent).toBe(alias);
     expect(localStorage.length).toBe(0);
     fireEvent.click(screen.getByRole("button", { name: "English" }));
-    expect(screen.getByTestId("question").textContent).toBe(`Is it ${alias} to treat these symptoms together?`);
+    expect(screen.getByTestId("question").textContent).toBe(`Is it ${alias} that this treatment ended successfully?`);
     expect(screen.getByLabelText("Inquiry draft")).toBe(draft);
     expect((draft as HTMLInputElement).value).toBe("My NEMAR נמ״ר wording");
     fireEvent.click(screen.getByRole("button", { name: "Reset inquiry fixture" }));
     expect(screen.getByLabelText("Inquiry draft")).not.toBe(draft);
     expect(screen.getByTestId("alias-value").textContent).toBe(JSON.stringify(alias));
     fireEvent.change(screen.getByLabelText("Alias fixture"), { target: { value: " \t " } });
-    expect(screen.getByTestId("question").textContent).toBe("Is it NEMAR to treat these symptoms together?");
+    expect(screen.getByTestId("question").textContent).toBe("Is it NEMAR that this treatment ended successfully?");
     fireEvent.click(screen.getByRole("button", { name: "Clear alias fixture" }));
     expect(screen.getByTestId("alias-value").textContent).toBe("null");
     expect(localStorage.length).toBe(1);

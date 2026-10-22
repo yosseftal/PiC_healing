@@ -3,12 +3,13 @@ import type { GuestSessionGateState, PlayerSession, SymptomGroup } from "pic-eng
 import { installJourneyTransport } from "./wave12-transport";
 
 const copy = {
-  en: { group: "Group name", symptom: "Symptom name", polarity: "Polarity", intensity: "Intensity",
+  en: { group: "List name (optional)", symptom: "Symptom name", polarity: "Polarity",
+    intensity: "Strength of the positive experience",
     open: "Open utilities", player: "Open Player utilities", reset: "New symptom group", keep: "Keep current inquiry",
     discard: "Discard draft and start new", gate: "Keep your session", create: "Create an account", name: "Name",
     email: "Email address", password: "Password", register: "Register", save: "Sign in and save", retry: "Try again",
     verification: "Check your email for a verification message.", integrating: "This session is Integrating" },
-  he: { group: "שם הקבוצה", symptom: "שם הסימפטום", polarity: "קוטביות", intensity: "עוצמה",
+  he: { group: "שם לרשימה (לא חובה)", symptom: "שם הסימפטום", polarity: "קוטביות", intensity: "עוצמת החוויה החיובית",
     open: "פתיחת הכלים", player: "פתיחת כלי הנגן", reset: "קבוצת סימפטומים חדשה", keep: "להמשיך בבירור הנוכחי",
     discard: "למחוק את הטיוטה ולהתחיל מחדש", gate: "שמירת הסשן שלך", create: "יצירת חשבון", name: "שם",
     email: "כתובת אימייל", password: "סיסמה", register: "הרשמה", save: "התחברות ושמירה", retry: "ניסיון נוסף",
@@ -40,13 +41,12 @@ async function presentation(page: Page, locale: Locale, alias?: string) {
 async function createInquiry(page: Page, locale: Locale, groupName: string, symptomName: string) {
   const text = copy[locale];
   await page.getByLabel(text.group, { exact: true }).fill(groupName);
-  await page.getByTestId("confirm-group-name").click();
   await page.getByLabel(text.symptom, { exact: true }).fill(symptomName);
   await page.getByLabel(text.polarity, { exact: true }).selectOption("positive");
-  await page.getByLabel(text.intensity, { exact: true }).fill("8");
+  await page.getByLabel(text.intensity, { exact: true }).selectOption("8");
   await expect(page.getByTestId("revealed-prior-rating")).toHaveCount(0);
-  await page.getByTestId("add-symptom-action").click();
-  await expect(page.getByTestId("symptom-count")).toContainText("1");
+  await expect(page.getByTestId("questionnaire-row")).toHaveCount(1);
+  await expect(page.getByTestId("symptom-count")).toHaveCount(0);
   await page.getByTestId("finish-symptom-addition").click();
   await page.getByTestId("muscle-test-yes").click();
   await page.getByTestId("confirm-group-summary").click();

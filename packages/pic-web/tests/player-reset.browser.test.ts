@@ -47,9 +47,10 @@ for (const locale of ["en", "he"] as const) {
       await expect(keep).toBeFocused();
       await discard.click();
       await expect(page.getByRole("dialog")).toHaveCount(0);
-      const input = page.getByRole("textbox", { name: en ? "Group name" : "שם הקבוצה", exact: true });
+      const input = page.getByRole("textbox", { name: en ? "List name (optional)" : "שם לרשימה (לא חובה)", exact: true });
       await expect(input).toBeFocused();
-      await expect(page.getByRole("status")).toContainText(en ? "A new inquiry is ready." : "בירור חדש מוכן.");
+      await expect(page.getByRole("status").filter({ hasText: en ? "A new inquiry is ready." : "בירור חדש מוכן." }))
+        .toHaveCount(1);
       expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).toBeNull();
       await page.goto("/");
       await expect(input).toHaveValue("");

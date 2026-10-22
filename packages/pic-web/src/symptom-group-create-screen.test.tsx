@@ -24,106 +24,28 @@ function renderCreateScreen() {
 }
 
 describe("SymptomGroupCreateScreen", () => {
-  it("renders SymptomGroupCreateScreen without throwing given an empty draft group", () => {
-    expect(() => renderCreateScreen()).not.toThrow();
-    expect(screen.getByTestId("guest-flow-create-group")).toBeTruthy();
-    expect(screen.getByLabelText("Group name")).toBeTruthy();
-  });
-
-  it("calls groupEngine.addSymptom with the entered name when the add-symptom action is triggered", async () => {
-    const addSymptom = vi
-      .spyOn(compositionRoot.groupEngineActions, "addSymptom")
-      .mockResolvedValue("symptom-1");
-    const rate = vi.spyOn(compositionRoot.groupEngineActions, "rate").mockResolvedValue();
-
-    await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
-
+  it("keeps unified editable rows local until a complete atomic Finish", async () => {
     renderCreateScreen();
-
+    expect(screen.getByLabelText("List name (optional)")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Neck Pain" } });
+    fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "1" } });
     fireEvent.click(screen.getByTestId("add-symptom-action"));
-
-    await waitFor(() => {
-      expect(addSymptom).toHaveBeenCalledWith(expect.any(String), "Neck Pain");
-      expect(rate).toHaveBeenCalledWith("symptom-1", { polarity: "negative", intensity: 5 });
-    });
-  });
-
-  it("shows Done adding symptoms when the engine group has symptoms, including after remount", async () => {
-    const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
-    await compositionRoot.groupEngineActions.addSymptom(groupId, "Neck Pain");
-    await compositionRoot.groupEngineActions.rate(
-      (await compositionRoot.groupEngineActions.getGroup(groupId))!.symptoms[0]!.id,
-      { polarity: "negative", intensity: 6 },
+    expect(screen.getAllByLabelText("Symptom name")).toHaveLength(2);
+    expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+    expect(screen.queryByTestId("symptom-count")).toBeNull();
+    fireEvent.change(screen.getAllByLabelText("Symptom name")[1]!, { target: { value: "Strength" } });
+    fireEvent.change(screen.getAllByLabelText("Polarity")[1]!, { target: { value: "positive" } });
+    fireEvent.change(screen.getByLabelText("Strength of the positive experience"), { target: { value: "10" } });
+    fireEvent.click(screen.getByTestId("finish-symptom-addition"));
+    await waitFor(() => expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).not.toBeNull());
+    const group = await compositionRoot.groupEngineActions.getGroup(
+      compositionRoot.groupEngineStore.getSnapshot().activeGroupId!,
     );
-
-    const { unmount } = renderCreateScreen();
-
-    await waitFor(() => {
-      expect(screen.getByTestId("finish-symptom-addition")).toBeTruthy();
-    });
-
-    unmount();
-    renderCreateScreen();
-
-    await waitFor(() => {
-      expect(screen.getByTestId("finish-symptom-addition")).toBeTruthy();
-    });
-  });
-
-  it("offers a visible retry when creating the Symptom Group needs another moment", async () => {
-    const createDraftGroup = vi
-      .spyOn(compositionRoot.groupEngineActions, "createDraftGroup")
-      .mockRejectedValueOnce(new Error("temporarily unavailable"))
-      .mockResolvedValueOnce("group-1");
-
-    renderCreateScreen();
-    fireEvent.change(screen.getByLabelText("Group name"), { target: { value: "Lower Back" } });
-    fireEvent.click(screen.getByTestId("confirm-group-name"));
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Try creating this group again" })).toBeTruthy();
-    });
-    expect(screen.getByTestId("guest-flow-create-group").textContent).not.toMatch(/error|failed|invalid/i);
-
-    fireEvent.click(screen.getByRole("button", { name: "Try creating this group again" }));
-
-    await waitFor(() => {
-      expect(createDraftGroup).toHaveBeenCalledTimes(2);
-      expect(createDraftGroup).toHaveBeenNthCalledWith(2, "Lower Back");
-    });
-  });
-
-  it("offers a visible retry for rating without adding the symptom twice", async () => {
-    await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
-    const addSymptom = vi
-      .spyOn(compositionRoot.groupEngineActions, "addSymptom")
-      .mockResolvedValue("symptom-1");
-    const rate = vi
-      .spyOn(compositionRoot.groupEngineActions, "rate")
-      .mockRejectedValueOnce(new Error("temporarily unavailable"))
-      .mockResolvedValueOnce();
-
-    renderCreateScreen();
-    fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Neck Pain" } });
-    fireEvent.click(screen.getByTestId("add-symptom-action"));
-
-    await waitFor(() => {
-      expect(screen.getByText("Open utilities to try again.")).toBeTruthy();
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Try saving this symptom again" })).toBeTruthy();
-    });
-    expect(screen.getByTestId("symptom-add-step").textContent).not.toMatch(/error|failed|invalid/i);
-
-    fireEvent.click(screen.getByRole("button", { name: "Try saving this symptom again" }));
-
-    await waitFor(() => {
-      expect(addSymptom).toHaveBeenCalledTimes(1);
-      expect(rate).toHaveBeenCalledTimes(2);
-      expect(rate).toHaveBeenNthCalledWith(2, "symptom-1", { polarity: "negative", intensity: 5 });
-    });
+    expect(group?.name).toBe("");
+    expect(group?.symptoms.map((item) => [item.name, item.polarity, item.intensity])).toEqual([
+      ["Neck Pain", "negative", 1], ["Strength", "positive", 10],
+    ]);
+    expect(group?.symptoms.every((item) => item.rated_at !== null)).toBe(true);
   });
 });
 

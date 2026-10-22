@@ -1,4 +1,6 @@
 import * as guestFlowFacts from "./guest-flow-facts";
+import { createGroupStaging } from "./group-staging";
+import { createQuestionnaireDraft } from "./questionnaire-draft";
 import {
   createAuthenticatedDraft, readAuthenticatedDraft, hasAuthenticatedFocus, clearAuthenticatedFocus,
   markAuthenticatedFocus,
@@ -9,7 +11,7 @@ import {
 } from "./promotion-recovery";
 import { readVerificationPending, saveVerificationPending } from "./verification-pending";
 import {
-  advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore, reopenFlowOperations,
+  advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore, reopenFlowOperations, InquiryOperationCancelled,
   prepareFlowSettlement, restoreInquiryGeneration, trackExclusiveFlowOperation, trackFlowOperation, trackIdentityOperation,
 } from "./inquiry-lifecycle";
 import {
@@ -43,7 +45,7 @@ import {
   TimelineEngine,
 } from "pic-engine";
 import type { AtomicUnitContent, Intensity, JointTreatmentMuscleTestResult, Polarity, Treatment } from "pic-engine";
-import type { GuestSnapshot, RepositoryPort } from "pic-engine";
+import type { GuestSnapshot, RepositoryPort, SymptomGroup } from "pic-engine";
 import type { PlayerSession } from "pic-engine";
 import {
   assembleGuestSnapshotForPendingGate,
@@ -88,7 +90,8 @@ let pendingGuestFinishRequest = persistedGuestGate.pendingFinishRequest;
 const libraryEngine = new LibraryEngine(repositoryPort);
 const timelineEngine = new TimelineEngine(repositoryPort);
 const playerEngine = new PlayerEngine(repositoryPort, libraryEngine, timelineEngine);
-const groupEngine = new GroupEngine(repositoryPort);
+const groupStaging = createGroupStaging(repositoryPort);
+const groupEngine = new GroupEngine(groupStaging.port);
 
 let authenticatedPort: RepositoryPort | null = null;
 let authenticatedOwner: string | null = null;
@@ -320,6 +323,53 @@ function trackedActions<T extends Record<string, (...args: never[]) => Promise<u
   ])) as T;
 }
 const groupEngineActions = trackedActions(untrackedGroupEngineActions);
+const questionnaire = createQuestionnaireDraft({
+  activeGroup: () => activeGroupId,
+  getGroup: (id) => groupEngineActions.getGroup(id),
+  continueExisting: () => guestFlowFacts.setGuestFlowSymptomAdditionComplete(true),
+  createSubmission(draft) {
+    const generation = inquiryGenerationStore.getSnapshot();
+    const provider = repositoryPort.getProvider();
+    const owner = authenticatedOwner;
+    let prepared: SymptomGroup | null = null;
+    let saved = false;
+    const current = () => {
+      if (generation !== inquiryGenerationStore.getSnapshot() || provider !== repositoryPort.getProvider() ||
+        owner !== authenticatedOwner) throw new InquiryOperationCancelled();
+      if (authenticatedDraft.store.getSnapshot()?.restored || promotionSwitching || promotionRecovery !== null) {
+        throw new Error("Recover the pending save first");
+      }
+    };
+    return () => trackExclusiveFlowOperation(async () => {
+      current();
+      if (activeGroupId !== null && activeGroupId !== prepared?.id) throw new Error("An inquiry is already active");
+      await prepareNewFocus();
+      current();
+      if (prepared === null) {
+        prepared = await groupStaging.build(async () => {
+          const id = await groupEngine.createDraftGroup(draft.title);
+          current();
+          for (const row of draft.rows) {
+            const symptomId = await groupEngine.addSymptom(id, row.name);
+            current();
+            await groupEngine.rate(symptomId, { polarity: row.polarity, intensity: row.intensity });
+            current();
+          }
+          return id;
+        });
+      }
+      current();
+      if (!saved) {
+        await provider.saveGroup(structuredClone(prepared));
+        current();
+        saved = true;
+      }
+      activeGroupId = prepared.id;
+      groupEngineStore.notify();
+      guestFlowFacts.setGuestFlowSymptomAdditionComplete(true);
+    });
+  },
+});
 const playerEngineActions = trackedActions(untrackedPlayerEngineActions);
 const sessionEngineActions = {
   ...trackedActions({ onFinishRequested: untrackedSessionEngineActions.onFinishRequested }),
@@ -706,6 +756,7 @@ const promotePathActions = {
 
 /** Resets composition-layer group flow pointer between tests. */
 export function resetGroupFlowFactsForTest(): void {
+  questionnaire.reset();
   activeGroupId = null;
   groupEngineStore.notify();
 }
@@ -787,6 +838,7 @@ export function resetTreatmentContentCacheForTest(): void {
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
+  questionnaire,
   authLifecycle,
   authStore,
   authenticatedDraft,

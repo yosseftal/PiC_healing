@@ -4,10 +4,10 @@ import { validateMessages } from "./messages";
 
 describe("required approved shared utility messages", () => {
   it("uses explicit Hebrew terminology and retains the English default throughout interface copy", () => {
-    expect(resolveMessage("he", "joint.question").text).toBe("האם נכון ומדויק לטפל בסימפטומים האלה יחד?");
+    expect(resolveMessage("he", "joint.question").text).toBe("האם נכון ומדויק לטפל בכל הרשימה ביחד?");
     expect(resolveMessage("he", "player.terminalQuestion").text)
       .toBe("האם נכון ומדויק שטיפול זה הסתיים בהצלחה?");
-    expect(resolveMessage("en", "joint.question").text).toBe("Is it NEMAR to treat these symptoms together?");
+    expect(resolveMessage("en", "joint.question").text).toBe("Is it right and accurate to treat the whole list together?");
     expect(JSON.stringify(dictionaries.he)).not.toMatch(/נמ["״“”„‟'׳‘’]*ר/);
   });
 
@@ -22,6 +22,8 @@ describe("required approved shared utility messages", () => {
           ? resolveMessage(locale, key, { polarity: "Positive", intensity: 8, maximum: 10 })
           : key === "symptom.count" || key === "summary.count"
           ? resolveMessage(locale, key, { count: 2 })
+          : key === "questionnaire.priority" || key === "questionnaire.moved"
+          ? resolveMessage(locale, key, { position: 2 })
           : resolveMessage(locale, key);
         expect(resolved.fallback).toBe(false);
         expect(resolved.locale).toBe(locale);

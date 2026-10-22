@@ -91,11 +91,25 @@ it("reuses a restored identity at its real Gate and keeps authenticated new grou
   expect(saved.rpc).toHaveBeenCalledOnce();
   expect(f.root.sessionEngineStore.getSnapshot().mode).toBe("authenticated");
   await f.root.inquiryResetActions.resetInquiry(true);
-  const group = await f.root.groupEngineActions.createDraftGroup("Next saved group");
+  const { inquiryGenerationStore } = await import("./inquiry-lifecycle");
+  const draft = f.root.questionnaire.actionsFor(inquiryGenerationStore.getSnapshot());
+  draft.setTitle("   ");
+  const first = f.root.questionnaire.store.getSnapshot().rows[0]!;
+  draft.edit(first.id, { name: "Shoulder", polarity: "positive", intensity: 7 });
+  const second = draft.add()!;
+  draft.edit(second, { name: "Neck", intensity: 2 });
+  draft.move(second, -1);
   expect(saved.saveGroup).not.toHaveBeenCalled();
-  const symptom = await f.root.groupEngineActions.addSymptom(group, "Shoulder");
-  await f.root.groupEngineActions.rate(symptom, { polarity: "positive", intensity: 7 });
+  expect(f.root.authenticatedDraft.store.getSnapshot()).toBeNull();
+  expect(f.root.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
+  expect(await draft.finish()).toBe(true);
+  const group = f.root.groupEngineStore.getSnapshot().activeGroupId!;
   const local = await f.root.groupEngineActions.getGroup(group);
+  expect(local?.name).toBe("");
+  expect(local?.symptoms.map(({ name, polarity, intensity }) => [name, polarity, intensity])).toEqual([
+    ["Neck", "negative", 2], ["Shoulder", "positive", 7],
+  ]);
+  expect(local?.symptoms.every((row) => row.rated_at !== null)).toBe(true);
   expect(local?.joint_treatment_muscle_test).toBeNull();
   expect(saved.saveGroup).not.toHaveBeenCalled();
   expect(f.root.authenticatedDraft.store.getSnapshot()?.group).toEqual(local);

@@ -4,7 +4,7 @@ import type { Intensity, Polarity } from "pic-engine";
 import { AppProviders } from "../src/app-providers";
 import { compositionRoot } from "../src/composition-root";
 import { RatingControl } from "../src/RatingControl";
-import { SymptomGroupCreateScreen } from "../src/SymptomGroupCreateScreen";
+import { GuestFlowRouter } from "../src/guest-flow-router";
 import { useLocale } from "../src/i18n/locale-provider";
 import { TherapeuticContentCard } from "../src/therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "../src/therapeutic-frame/TherapeuticScreenFrame";
@@ -21,17 +21,24 @@ if (params.get("stage") === "prior") {
   await compositionRoot.groupEngineActions.rate(symptomId, { polarity: "positive", intensity: 8 });
 }
 
-// Observe the existing public action boundary after fixture setup, without replacing engine behavior.
+// Observe actual persistence at the existing provider boundary, including staged questionnaire commits.
 let calls = 0;
 rootElement.dataset.actionCalls = "0";
-for (const key of ["createDraftGroup", "addSymptom", "rate", "revealPriorRating"] as const) {
-  const original = compositionRoot.groupEngineActions[key];
-  const observed = (...args: never[]) => {
-    rootElement.dataset.actionCalls = String(++calls);
-    return (original as (...values: never[]) => unknown)(...args);
-  };
-  Object.assign(compositionRoot.groupEngineActions, { [key]: observed });
-}
+const provider = compositionRoot.repositoryPort.getProvider();
+const originalSave = provider.saveGroup.bind(provider);
+let failOnce = params.get("retry") === "1";
+provider.saveGroup = async (group) => {
+  rootElement.dataset.actionCalls = String(++calls);
+  rootElement.dataset.submittedGroup = JSON.stringify(group);
+  if (failOnce) { failOnce = false; throw new Error("Fixture storage temporarily unavailable"); }
+  await originalSave(group);
+  rootElement.dataset.savedGroup = JSON.stringify(group);
+};
+const originalReveal = compositionRoot.groupEngineActions.revealPriorRating;
+compositionRoot.groupEngineActions.revealPriorRating = (id) => {
+  rootElement.dataset.actionCalls = String(++calls);
+  return originalReveal(id);
+};
 
 function PriorScreen({ id }: { id: string }) {
   const { message } = useLocale();
@@ -48,5 +55,5 @@ function PriorScreen({ id }: { id: string }) {
 }
 
 createRoot(rootElement).render(<AppProviders>
-  {symptomId === null ? <SymptomGroupCreateScreen /> : <PriorScreen id={symptomId} />}
+  {symptomId === null ? <GuestFlowRouter /> : <PriorScreen id={symptomId} />}
 </AppProviders>);

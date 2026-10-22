@@ -39,3 +39,21 @@
   min-block-size: 0;
   min-inline-size: 0;
 }
+.pic-questionnaire-preparation p { margin-block: var(--spacing-pic-calm-2); }
+.pic-questionnaire-preparation summary { cursor: pointer; min-block-size: 2.75rem; }
+.pic-questionnaire-topics { display: grid; gap: var(--spacing-pic-calm-3); }
+.pic-symptom-form .pic-questionnaire-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--spacing-pic-calm-2);
+  border: 1px solid var(--color-pic-quiet);
+  border-radius: var(--radius-pic-button);
+}
+.pic-questionnaire-row__name,
+.pic-questionnaire-row__endpoints,
+.pic-questionnaire-row__moves { grid-column: 1 / -1; }
+.pic-questionnaire-row__moves { display: flex; gap: var(--spacing-pic-calm-2); }
+.pic-questionnaire-row__moves button { inline-size: auto; }
+.pic-questionnaire-existing { list-style: decimal; padding-inline-start: 1.5rem; }
+@media (max-width: 480px) {
+  .pic-symptom-form .pic-questionnaire-row { grid-template-columns: minmax(0, 1fr); }
+}

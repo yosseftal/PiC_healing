@@ -38,7 +38,7 @@ for (const locale of ["en", "he"] as const) {
       }));
       await waitFor(() => expect(screen.queryByTestId("guest-flow-player")).toBeNull());
       await act(async () => { await Promise.resolve(); });
-      expect(screen.getByRole("textbox")).toBeTruthy();
+      expect(screen.getByLabelText(en ? "List name (optional)" : "שם לרשימה (לא חובה)")).toBeTruthy();
       expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
       expect(root.sessionEngineStore.getSnapshot().gateTriggered).toBe(false);
     });

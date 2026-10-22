@@ -136,15 +136,14 @@ describe("happy path E2E (Ticket 08-09)", () => {
       renderHappyPathApp();
 
       // Step 1–2: Guest bootstrap + symptom group creation (blind-rated)
-      fireEvent.change(screen.getByLabelText("Group name"), { target: { value: "E2E Group" } });
-      fireEvent.click(screen.getByTestId("confirm-group-name"));
+      fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "   " } });
 
       await waitFor(() => {
         expect(screen.getByLabelText("Symptom name")).toBeTruthy();
       });
 
       fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Back Pain" } });
-      fireEvent.click(screen.getByTestId("add-symptom-action"));
+      fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "5" } });
 
       await waitFor(() => {
         expect(screen.getByTestId("finish-symptom-addition")).toBeTruthy();
@@ -259,11 +258,12 @@ describe("happy path E2E (Ticket 08-09)", () => {
 
       const { data: remoteGroup, error: groupError } = await serviceClient
         .from("symptom_groups")
-        .select("id, user_id")
+        .select("id, user_id, name")
         .eq("id", activeGroupId!)
         .maybeSingle();
       expect(groupError).toBeNull();
       expect(remoteGroup?.user_id).toBe(testUserId);
+      expect(remoteGroup?.name).toBe("");
 
       const { data: libraryRows, error: libraryError } = await serviceClient
         .from("personal_treatment_library")

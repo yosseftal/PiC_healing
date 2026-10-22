@@ -6,11 +6,11 @@ const viewports = [
   { width: 768, height: 1024 }, { width: 1440, height: 900 },
 ];
 const copy = {
-  he: { open: "פתיחת הכלים", player: "פתיחת כלי הנגן", group: "שם הקבוצה", symptom: "שם הסימפטום",
-    polarity: "קוטביות", intensity: "עוצמה", gate: "שמירת הסשן שלך", yes: "כן", no: "לא",
+  he: { open: "פתיחת הכלים", player: "פתיחת כלי הנגן", group: "שם לרשימה (לא חובה)", symptom: "שם הסימפטום",
+    polarity: "קוטביות", intensity: "עוצמת החוויה החיובית", gate: "שמירת הסשן שלך", yes: "כן", no: "לא",
     integrating: "הסשן בהטמעה", finish: "סיום" },
-  en: { open: "Open utilities", player: "Open Player utilities", group: "Group name", symptom: "Symptom name",
-    polarity: "Polarity", intensity: "Intensity", gate: "Keep your session", yes: "Yes", no: "No",
+  en: { open: "Open utilities", player: "Open Player utilities", group: "List name (optional)", symptom: "Symptom name",
+    polarity: "Polarity", intensity: "Strength of the positive experience", gate: "Keep your session", yes: "Yes", no: "No",
     integrating: "This session is Integrating", finish: "Finish" },
 } as const;
 type Locale = keyof typeof copy;
@@ -102,7 +102,6 @@ for (const locale of ["he", "en"] as const) {
         await choose(page, locale, other);
         await choose(page, other, locale);
         await expect(page.getByRole("textbox", { name: copy[locale].group })).toHaveValue("גב <Back> 123");
-        await act(page, page.getByTestId("confirm-group-name"));
         const symptom = page.getByRole("textbox", { name: copy[locale].symptom });
         await symptom.fill("צוואר Neck 7/10");
         await page.getByLabel(copy[locale].polarity).selectOption("positive");
@@ -113,8 +112,8 @@ for (const locale of ["he", "en"] as const) {
         await expect(symptom).toHaveValue("צוואר Neck 7/10");
         await expect(page.getByLabel(copy[locale].intensity)).toHaveValue("10");
         await expect(page.getByTestId("revealed-prior-rating")).toHaveCount(0);
-        await act(page, page.getByTestId("add-symptom-action"));
-        await expect(page.getByTestId("symptom-count")).toContainText("1");
+        await expect(page.getByTestId("questionnaire-row")).toHaveCount(1);
+        await expect(page.getByTestId("symptom-count")).toHaveCount(0);
         await page.locator(".pic-therapeutic-content-card").evaluate((node) => { node.scrollTop = 0; });
         await contained(page, page.getByTestId("add-symptom-action"));
         await contained(page, page.getByTestId("finish-symptom-addition"));

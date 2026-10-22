@@ -11,7 +11,7 @@ for (const locale of ["en", "he"] as const) {
       const resetName = en ? "New symptom group" : "קבוצת סימפטומים חדשה";
       const keepName = en ? "Keep current inquiry" : "להמשיך בבירור הנוכחי";
       const discardName = en ? "Discard draft and start new" : "למחוק את הטיוטה ולהתחיל מחדש";
-      const input = page.getByRole("textbox", { name: en ? "Group name" : "שם הקבוצה", exact: true });
+      const input = page.getByRole("textbox", { name: en ? "List name (optional)" : "שם לרשימה (לא חובה)", exact: true });
       await input.fill("Draft טיוטה");
       await open.click();
       const reset = page.getByRole("button", { name: resetName, exact: true });
@@ -32,7 +32,8 @@ for (const locale of ["en", "he"] as const) {
       await expect(page.getByRole("dialog")).toHaveCount(0);
       await expect(input).toHaveValue("");
       await expect(input).toBeFocused();
-      await expect(page.getByRole("status")).toContainText(en ? "A new inquiry is ready." : "בירור חדש מוכן.");
+      await expect(page.getByRole("status").filter({ hasText: en ? "A new inquiry is ready." : "בירור חדש מוכן." }))
+        .toHaveCount(1);
       expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).toBeNull();
       await expect(page.locator("html")).toHaveAttribute("lang", locale);
       const documentSize = await page.evaluate(() => ({
@@ -40,10 +41,12 @@ for (const locale of ["en", "he"] as const) {
       }));
       expect(documentSize.width).toBeLessThanOrEqual(width);
       expect(documentSize.height).toBeLessThanOrEqual(width === 320 ? 568 : 900);
-      // The next record exists only after an explicit name submission through GroupEngine.
+      // A complete questionnaire snapshot is the first domain write.
       await input.fill("Next inquiry");
-      await page.getByTestId("confirm-group-name").click();
-      await expect(page.getByTestId("symptom-add-step")).toBeVisible();
+      await page.getByLabel(en ? "Symptom name" : "שם הסימפטום", { exact: true }).fill("Neck");
+      await page.getByLabel(en ? "Interference / suffering intensity" : "עוצמת הפרעה / סבל").selectOption("5");
+      await page.getByTestId("finish-symptom-addition").click();
+      await expect(page.getByTestId("muscle-test-yes")).toBeVisible();
       expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).not.toBeNull();
     });
   }

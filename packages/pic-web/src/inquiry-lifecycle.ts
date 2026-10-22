@@ -77,6 +77,12 @@ export function hasInquiryDraft(): boolean {
   return [...drafts.values()].some(Boolean);
 }
 
+/** A composition-owned draft survives temporary screen unmounts until its inquiry is reset. */
+export function setInquiryDraft(id: string, dirty: boolean): void {
+  if (dirty) drafts.set(id, true);
+  else drafts.delete(id);
+}
+
 export const inquiryGenerationStore = {
   getSnapshot: () => generation,
   subscribe(listener: () => void) {

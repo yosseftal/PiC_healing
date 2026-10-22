@@ -1,13 +1,7 @@
-import { useInquiryDraft } from "./inquiry-lifecycle";
-/**
- * Repeatable single-symptom add + rate step (Ticket 08-05). One symptom per pass; `RatingControl` lives here
- * only.
- */
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { Intensity, Polarity } from "pic-engine";
-import { useGroupEngineActions } from "./group-engine-context";
-import { RatingControl } from "./RatingControl";
-import { useAsyncAction } from "./use-async-action";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import { useGroupEngineState, useQuestionnaire } from "./group-engine-context";
 import { INPUT_CONTROL, UTILITY_CONTROL } from "./control-affordance";
 import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
@@ -15,122 +9,131 @@ import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
 import "./symptom-creation.css";
 
-export interface SymptomAddStepProps {
-  groupId: string;
-  onSymptomAdded?: () => void;
-  symptomCount?: number;
-  groupName?: string;
-  onDone?: () => void;
-  utilities?: ReactNode;
-  recoveryStatus?: string;
-}
-
-export function SymptomAddStep({
-  groupId, onSymptomAdded, symptomCount = 0, groupName, onDone, utilities, recoveryStatus,
-}: SymptomAddStepProps): ReactNode {
+export function SymptomAddStep(): ReactNode {
   const { message } = useLocale();
-  const { addSymptom, rate } = useGroupEngineActions();
-  const [symptomName, setSymptomName] = useState("");
-  const [polarity, setPolarity] = useState<Polarity>("negative");
-  const [intensity, setIntensity] = useState<Intensity>(5);
-  useInquiryDraft(symptomName.length > 0 || polarity !== "negative" || intensity !== 5);
-  const [stepKey, setStepKey] = useState(0);
-  const {
-    status: ratingStatus,
-    run: saveRating,
-    retry: retryRating,
-  } = useAsyncAction(
-    async (symptomId: string, rating: { polarity: Polarity; intensity: Intensity }) => {
-      await rate(symptomId, rating);
-      setSymptomName("");
-      setPolarity("negative");
-      setIntensity(5);
-      setStepKey((current) => current + 1);
-      onSymptomAdded?.();
-    },
-  );
-  const {
-    status: additionStatus,
-    run: addAndRateSymptom,
-    retry: retryAddition,
-  } = useAsyncAction(
-    async (
-      requestedGroupId: string,
-      name: string,
-      rating: { polarity: Polarity; intensity: Intensity },
-    ) => {
-      const symptomId = await addSymptom(requestedGroupId, name);
-      await saveRating(symptomId, rating);
-    },
-  );
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  const { activeGroupId } = useGroupEngineState();
+  const { state, actions } = useQuestionnaire();
+  const names = useRef(new Map<string, HTMLInputElement>());
+  const form = useRef<HTMLFormElement>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const [moveFocus, setMoveFocus] = useState<{ id: string; offset: -1 | 1 } | null>(null);
+  useEffect(() => {
+    if (focusId !== null) { names.current.get(focusId)?.focus(); setFocusId(null); }
+  }, [focusId, state.rows]);
+  useEffect(() => {
+    if (moveFocus === null) return;
+    const row = names.current.get(moveFocus.id)?.closest("fieldset");
+    const requested = row?.querySelector<HTMLButtonElement>(`[data-move="${moveFocus.offset}"]`);
+    const target = requested && !requested.disabled ? requested : row?.querySelector<HTMLButtonElement>("button:enabled");
+    target?.focus();
+    setMoveFocus(null);
+  }, [moveFocus, state.rows]);
+  const locked = state.busy || state.recovery || activeGroupId !== null;
+  function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const trimmedName = symptomName.trim();
-    if (trimmedName.length === 0) {
-      return;
-    }
-
-    void addAndRateSymptom(groupId, trimmedName, { polarity, intensity });
+    setFocusId(actions.add());
+  }
+  async function finish() {
+    if (!await actions.finish()) form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }
 
-  const needsRetry = additionStatus === "recovery" || ratingStatus === "recovery";
-  return (
-    <TherapeuticScreenFrame allowInquiryReset
-      title={message("group.title").text} stageLabel={message("group.stage").text}
-      progress={<span data-testid="symptom-count"><LocalizedMessage
-        message={message("symptom.count", { count: symptomCount })} /></span>}
-      utilities={<>{utilities}{needsRetry ? (
-        <div role="status">
-          <p><LocalizedMessage message={message("symptom.recovery")} /></p>
-          <button className={UTILITY_CONTROL} type="button"
-            onClick={() => void (ratingStatus === "recovery" ? retryRating() : retryAddition())}>
-            <LocalizedMessage message={message("symptom.retry")} />
-          </button>
-        </div>
-      ) : null}</>}
-    >
-      <form className="pic-symptom-step" data-testid="symptom-add-step" onSubmit={handleSubmit}>
-        <TherapeuticContentCard aria-label={message("group.card").text}>
-          {groupName === undefined ? null : <p><bdi lang="" dir="auto">{groupName}</bdi></p>}
-          {recoveryStatus === undefined ? null : <p role="status">{recoveryStatus}</p>}
-          <div className="pic-symptom-form">
-            <label>
-              <LocalizedMessage message={message("symptom.name")} />
-              <input
-                className={INPUT_CONTROL}
-                aria-label={message("symptom.name").text}
-                placeholder={message("symptom.placeholder").text}
-                lang="" dir="auto"
-                value={symptomName}
-                onChange={(event) => setSymptomName(event.target.value)}
-              />
+  return <TherapeuticScreenFrame allowInquiryReset
+    title={message("group.title").text} stageLabel={message("group.stage").text}
+    utilities={state.recovery ? <div role="status">
+      <p><LocalizedMessage message={message("symptom.recovery")} /></p>
+      <button className={UTILITY_CONTROL} type="button" disabled={state.busy} onClick={() => void actions.retry()}>
+        <LocalizedMessage message={message("symptom.retry")} />
+      </button>
+    </div> : null}
+  >
+    <form ref={form} className="pic-symptom-step" data-testid="symptom-add-step" onSubmit={add}>
+      <TherapeuticContentCard aria-label={message("group.card").text}>
+        <div className="pic-symptom-form">
+          <details open className="pic-questionnaire-preparation">
+            <summary><LocalizedMessage message={message("questionnaire.preparationTitle")} /></summary>
+            <p><LocalizedMessage message={message("questionnaire.preparationList")} /></p>
+            <p><LocalizedMessage message={message("questionnaire.preparationPriority")} /></p>
+            <p><LocalizedMessage message={message("questionnaire.preparationRating")} /></p>
+          </details>
+          {state.existing !== null ? <>
+            {state.existing.name ? <h2><bdi dir="auto" lang="">{state.existing.name}</bdi></h2> : null}
+            <ol className="pic-questionnaire-existing">
+              {state.existing.symptoms.map((row) => <li key={row.id}><bdi dir="auto" lang="">{row.name}</bdi></li>)}
+            </ol>
+            {state.existing.symptoms.some((row) => row.rated_at === null) || !state.existing.symptoms.length
+              ? <p role="status"><LocalizedMessage message={message("questionnaire.legacyRecovery")} /></p> : null}
+          </> : <>
+            <label><LocalizedMessage message={message("group.name")} />
+              <input className={INPUT_CONTROL} aria-label={message("group.name").text}
+                placeholder={message("group.placeholder").text} dir="auto" lang="" value={state.title}
+                disabled={locked} onChange={(event) => actions.setTitle(event.target.value)} />
             </label>
-
-            <RatingControl
-              key={stepKey}
-              symptomId={null}
-              polarity={polarity}
-              intensity={intensity}
-              onPolarityChange={setPolarity}
-              onIntensityChange={setIntensity}
-            />
-
-            {needsRetry ? <p role="status"><LocalizedMessage message={message("symptom.recovery")} />{" "}
-              <LocalizedMessage message={message("symptom.recoveryHint")} /></p> : null}
-          </div>
-        </TherapeuticContentCard>
-        <div className="pic-symptom-form__actions" role="group" aria-label={message("player.availableActions").text}>
-          <button className={UTILITY_CONTROL} type="submit" data-testid="add-symptom-action">
-            <LocalizedMessage message={message("symptom.add")} />
-          </button>
-          {symptomCount > 0 && onDone !== undefined ? (
-            <button className={UTILITY_CONTROL} type="button" data-testid="finish-symptom-addition" onClick={onDone}>
-              <LocalizedMessage message={message("symptom.done")} />
-            </button>
-          ) : null}
+            <div data-testid="questionnaire-topics" className="pic-questionnaire-topics">
+              {state.rows.map((row, index) => {
+                const label = row.polarity === "negative" ? "initial.negativeIntensity" : "initial.positiveIntensity";
+                return <fieldset className="pic-questionnaire-row" data-testid="questionnaire-row" key={row.id}
+                  disabled={locked} data-topic-id={row.id}>
+                  <legend><LocalizedMessage message={message("questionnaire.priority", { position: index + 1 })} /></legend>
+                  <label className="pic-questionnaire-row__name"><LocalizedMessage message={message("symptom.name")} />
+                    <input ref={(node) => { if (node) names.current.set(row.id, node); else names.current.delete(row.id); }}
+                      className={INPUT_CONTROL} aria-label={message("symptom.name").text}
+                      aria-invalid={state.invalid && !row.name.trim() || undefined}
+                      placeholder={message("symptom.placeholder").text} dir="auto" lang="" value={row.name}
+                      onChange={(event) => actions.edit(row.id, { name: event.target.value })} />
+                  </label>
+                  <label><LocalizedMessage message={message("rating.polarity")} />
+                    <select className={INPUT_CONTROL} aria-label={message("rating.polarity").text}
+                      value={row.polarity}
+                      onChange={(event) => actions.edit(row.id, { polarity: event.target.value as Polarity })}>
+                      <option value="negative">{message("rating.negative").text}</option>
+                      <option value="positive">{message("rating.positive").text}</option>
+                    </select>
+                  </label>
+                  <label><LocalizedMessage message={message(label)} />
+                    <select className={INPUT_CONTROL} aria-label={message(label).text}
+                      aria-invalid={state.invalid && row.intensity === null || undefined}
+                      aria-describedby={row.id + "-endpoints"} value={row.intensity ?? ""}
+                      onChange={(event) => actions.edit(row.id, { intensity: event.target.value === "" ? null :
+                        Number(event.target.value) as Intensity })}>
+                      <option value="">{message("initial.choose").text}</option>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </label>
+                  <p id={row.id + "-endpoints"} className="pic-questionnaire-row__endpoints">
+                    <LocalizedMessage message={message(row.polarity === "negative"
+                      ? "initial.negativeEndpoints" : "initial.positiveEndpoints")} />
+                  </p>
+                  <div className="pic-questionnaire-row__moves">
+                    {([-1, 1] as const).map((offset) => <button className={UTILITY_CONTROL} type="button" key={offset}
+                      aria-label={message(offset === -1 ? "questionnaire.moveUp" : "questionnaire.moveDown").text}
+                      data-move={offset}
+                      disabled={locked || (offset === -1 ? index === 0 : index === state.rows.length - 1)}
+                      onClick={() => { actions.move(row.id, offset); setMoveFocus({ id: row.id, offset }); }}>
+                      {offset === -1 ? <ArrowUp aria-hidden="true" size={20} /> : <ArrowDown aria-hidden="true" size={20} />}
+                    </button>)}
+                  </div>
+                </fieldset>;
+              })}
+            </div>
+          </>}
+          <span className="sr-only" role="status">{state.moved === null ? "" :
+            <LocalizedMessage message={message("questionnaire.moved", { position: state.moved.position })} />}</span>
+          {state.invalid && state.existing === null ? <p role="status">
+            <LocalizedMessage message={message("questionnaire.completeRows")} /></p> : null}
+          {state.recovery ? <p role="status"><LocalizedMessage message={message("symptom.recovery")} />{" "}
+            <LocalizedMessage message={message("symptom.recoveryHint")} /></p> : null}
         </div>
-      </form>
-    </TherapeuticScreenFrame>
-  );
+      </TherapeuticContentCard>
+      <div className="pic-symptom-form__actions" role="group" aria-label={message("player.availableActions").text}>
+        {state.existing === null ? <button className={UTILITY_CONTROL} type="submit"
+          data-testid="add-symptom-action" disabled={locked}>
+          <LocalizedMessage message={message("symptom.add")} />
+        </button> : null}
+        <button className={UTILITY_CONTROL} type="button" data-testid="finish-symptom-addition"
+          disabled={state.busy} onClick={() => void finish()}>
+          <LocalizedMessage message={message("symptom.done")} />
+        </button>
+      </div>
+    </form>
+  </TherapeuticScreenFrame>;
 }

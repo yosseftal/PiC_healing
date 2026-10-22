@@ -1,6 +1,6 @@
 # W13-01 — Enter, rate and prioritize topics in unified draft rows
 
-**Status:** in-progress — implementation authorized; unified-row refinement approved 2026-10-21.
+**Status:** closed — unified-row implementation verified 2026-10-22.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** None.
 **Blocking:** [W13-02][relocation-link-1], [W13-04][relocation-link-2], [W13-05][relocation-link-3].
@@ -48,17 +48,17 @@ and the actual joint question appears immediately. Repeat with an account and fa
 
 ## Acceptance Criteria
 
-- [ ] **AC-01:** Opening shows optional title and the first unified row without creating any group or server row.
-- [ ] **AC-02:** Omitted/whitespace-only titles survive entry, finalization and existing promotion as an empty string.
-- [ ] **AC-03:** Full supplied Hebrew preparation is readable in the content card with exact wording and emoji.
-- [ ] **AC-04:** Add appends a blank editable row with stable identity; duplicate names remain distinct; focus follows Add.
-- [ ] **AC-05:** Finish validates all rows, commits their complete snapshot and goes directly to the actual joint question.
-- [ ] **AC-06:** Every initial score is explicit 1–10; polarity stays independent; generic re-rating/history retain true0–10.
-- [ ] **AC-07:** Failed staging/flush, retry, double-submit and reset preserve IDs or reject stale work
+- [x] **AC-01:** Opening shows optional title and the first unified row without creating any group or server row.
+- [x] **AC-02:** Omitted/whitespace-only titles survive entry, finalization and existing promotion as an empty string.
+- [x] **AC-03:** Full supplied Hebrew preparation is readable in the content card with exact wording and emoji.
+- [x] **AC-04:** Add appends a blank editable row with stable identity; duplicate names remain distinct; focus follows Add.
+- [x] **AC-05:** Finish validates all rows, commits their complete snapshot and goes directly to the actual joint question.
+- [x] **AC-06:** Every initial score is explicit 1–10; polarity stays independent; generic re-rating/history retain true0–10.
+- [x] **AC-07:** Failed staging/flush, retry, double-submit and reset preserve IDs or reject stale work
   without partial publication.
-- [ ] **AC-08:** Draft reorder preserves names/scores/IDs/focus, announces priority and exposes no total counters.
-- [ ] **AC-09:** Hebrew/English, RTL/LTR, keyboard and narrow screens support unified rows and the two main actions.
-- [ ] **AC-10:** Guest/account paths keep owner/generation checks, local unanswered staging, actual Yes/No and save semantics.
+- [x] **AC-08:** Draft reorder preserves names/scores/IDs/focus, announces priority and exposes no total counters.
+- [x] **AC-09:** Hebrew/English, RTL/LTR, keyboard and narrow screens support unified rows and the two main actions.
+- [x] **AC-10:** Guest/account paths keep owner/generation checks, local unanswered staging, actual Yes/No and save semantics.
 
 ## Testing Requirements
 
@@ -95,8 +95,68 @@ Implementation is authorized by the user; execute only this ticket before its do
 
 ## Resolution
 
-Not implemented. To complete after authorization: solution path, decisions, deviations, test evidence,
-review outcome, commit, and explicit resolution for every AC above.
+### Solution path and architectural decisions
+
+The approved unified-row refinement replaces the archived list-then-rating pass.
+Questionnaire drafting lives in the web composition layer and survives transient screen mounts.
+Each stable row contains its name, explicit score, independent polarity and accessible priority controls.
+Finish validates every row, freezes the request and runs the existing GroupEngine against a web-only staging decorator.
+Intermediate writes are buffered under the existing exclusive-operation barrier. One complete snapshot is flushed
+before publishing an active group or moving directly to the actual joint question.
+Failed flush retries retain group/symptom IDs and values; owner/provider/generation guards reject stale continuations.
+Authenticated unanswered work uses the existing local envelope and only anchors after a real joint Yes/No.
+No engine, adapter, schema, Player or treatment-content changes were made.
+
+### Acceptance evidence
+
+Source/test paths below are relative to packages/pic-web.
+
+- AC-01: src/questionnaire-submission.test.tsx validates untouched/blank rows with zero provider saves and no active group.
+- AC-02: src/symptom-group-create-screen.test.tsx covers omitted title; whitespace title is covered in submission tests.
+  src/happy-path-e2e.test.tsx verifies actual cloud promotion returns name=""; src/returning-identity.test.ts
+  verifies a blank-title authenticated questionnaire stays local, then saves once with the actual joint answer.
+- AC-03: Exact supplied Hebrew preparation is in src/i18n/core-messages.ts and was checked in independent Spec review.
+  tests/questionnaire.browser.test.ts and localized creation cases exercise the scrollable bilingual screen.
+- AC-04: Submission tests cover Add focus, blank-row retention, duplicate names, distinct IDs and transient remounts.
+- AC-05: Submission/browser cases validate all rows, observe one complete provider write and immediate joint continuation.
+  New browser fixtures observe the real provider-save boundary rather than only counting old UI action wrappers.
+- AC-06: Selectors have no default score or zero option. Positive and negative framing have distinct endpoint copy.
+  Existing RatingControl tests retain 0–10 and explicit Reveal; retained zero/timestamp preservation is tested.
+- AC-07: Submission tests inject staging failure, rejected flush, lost response, duplicate Finish, generation replacement
+  and provider switching. Retry writes the same full snapshot; no partial active group is published.
+- AC-08: Submission and browser tests verify stable row identity/data, priority announcements and disabled boundaries.
+  Move focus remains on the activated button, with an enabled opposite-button fallback at a boundary. No entry totals.
+- AC-09: Bilingual browser cases exercise 320px geometry, input/keyboard focus, independent polarity and two main actions.
+  Hebrew 320px screenshot inspected; existing document viewport and internal-scroll boundaries remain intact.
+- AC-10: Actual remote happy path covers Guest through promotion. Returning-identity tests cover authenticated local
+  staging and real-answer anchoring. Existing ownership, auth, reset and promotion tests pass in the full root gate.
+
+### Quality gates
+
+- npm run typecheck: all workspaces pass.
+- npm run depcruise -w packages/pic-web: zero violations, 769 modules / 1672 dependencies.
+- npm test with VITEST_MAX_WORKERS=2 and the previously approved controlled signup address:
+  56 files / 578 tests pass in 92.74s, followed by zero dependency violations in engine and web.
+- npm run lint: passes. Temporary documentation helpers were preserved in workspace cache outside application lint inputs.
+- Focused final submission/composition run: 39/39 pass; retained Player reset matrix: 8/8 pass.
+- Targeted Chromium: 43 cases pass across the final 32-case rerun and 11 unaffected cases from the preceding run.
+  The runner builds production assets before executing. No browser retries or application assertions were weakened.
+- Changed files pass 130-character and git whitespace checks.
+
+The first full gate had 568/578 passes: nine old test assumptions needed migration to optional-title/unified rows,
+and the registration process lacked its required test-only address. These were corrected, then the exact full gate passed.
+The first browser run similarly exposed stale labels/status selectors and a real retained-dirty-marker regression.
+The marker now clears after local materialization; the final authenticated-reset cases pass without waiving confirmation.
+
+### Reviews, boundaries and carry-forward
+
+Independent Standards review passed. Spec review's legacy-unrated continuation and move-focus findings were fixed
+and re-reviewed with no new blocker. See [review record](../audits/w13-01-implementation-review.md).
+Nonempty legacy lists continue without rating/timestamp rewrites; no private GroupEngine hydration was added.
+Physical-device/native-screen-reader evidence remains a W13-09 manual gate, not an automated claim here.
+Initial draft order is local; durable cross-adapter order and promotion compatibility remain W13-02.
+Same-run remote fixtures were cleaned under explicit user permission; no preexisting content deletion was authorized.
+The scoped [W13-01] implementation commit and exact resume point are recorded in the wave checkpoint handoff.
 
 [relocation-link-1]: w13-02-durable-manual-priority.md
 [relocation-link-2]: w13-04-reversible-questionnaire-and-recovery.md

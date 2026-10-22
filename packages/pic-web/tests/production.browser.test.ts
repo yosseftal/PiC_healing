@@ -21,13 +21,12 @@ test("shipped app completes Guest Group → Player → sovereign Persistence Gat
   await page.addInitScript(() => localStorage.setItem("pic-web.locale.v1", "en"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await expect(page.getByLabel("Group name", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("List name (optional)", { exact: true })).toBeVisible();
   await context.setOffline(true);
-  await page.getByLabel("Group name", { exact: true }).fill("Production journey");
-  await page.getByTestId("confirm-group-name").click();
+  await page.getByLabel("List name (optional)", { exact: true }).fill("Production journey");
   await page.getByLabel("Symptom name", { exact: true }).fill("Shoulder");
   await expect(page.getByTestId("revealed-prior-rating")).toHaveCount(0);
-  await page.getByTestId("add-symptom-action").click();
+  await page.getByLabel("Interference / suffering intensity", { exact: true }).selectOption("5");
   await page.getByTestId("finish-symptom-addition").click();
   await page.getByTestId("muscle-test-yes").click();
   await page.getByTestId("confirm-group-summary").click();
