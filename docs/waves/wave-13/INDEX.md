@@ -2,7 +2,7 @@
 
 [All waves](../INDEX.md)
 
-Implementation authorized. W13-01 is closed; W13-02 is the next serial ticket.
+Implementation authorized. W13-01 and W13-06 are closed; W13-02 is the active persistence frontier.
 
 ## Specifications
 
@@ -16,7 +16,11 @@ Implementation authorized. W13-01 is closed; W13-02 is the next serial ticket.
 
 - [wave-13-content-audit.md](audits/wave-13-content-audit.md)
 - [Execution seam map](audits/wave-13-execution-seam-map.md)
+- [Remaining execution and model-selection plan](audits/w13-remaining-execution-plan.md)
 - [W13-01 implementation review](audits/w13-01-implementation-review.md)
+- [W13-06 implementation review](audits/w13-06-implementation-review.md)
+- [W13-02 persistence contract](audits/w13-02-contract-proposal.md)
+- [W13-02 SQL preparation and coordinated rollout](audits/w13-02-sql-rollout-review.md)
 
 ## Handoffs
 

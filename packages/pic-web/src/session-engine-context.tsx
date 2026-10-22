@@ -6,6 +6,7 @@
 import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import type { SessionState } from "pic-engine";
 import { compositionRoot } from "./composition-root";
+import { inquiryDraftStore } from "./inquiry-lifecycle";
 
 type SessionEngineActions = typeof compositionRoot.sessionEngineActions;
 type PromotePathActions = typeof compositionRoot.promotePathActions;
@@ -72,10 +73,17 @@ export function usePromotePathActions(): PromotePathActions {
 /** Restored identity is not a claim that local therapeutic work is saved. */
 export function useAuthIdentity() {
   useSessionEngineContext();
-  return useSyncExternalStore(compositionRoot.authStore.subscribe, compositionRoot.authStore.getSnapshot);
+  return useSyncExternalStore(compositionRoot.authPresentationStore.subscribe,
+    compositionRoot.authPresentationStore.getSnapshot);
 }
 
 export function useAuthenticatedDraft() {
   const { subscribe, getSnapshot } = compositionRoot.authenticatedDraft.store;
   return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+/** Whether any current screen has an edited local inquiry draft that has not been anchored. */
+export function useInquiryDraftState(): boolean {
+  useSessionEngineContext();
+  return useSyncExternalStore(inquiryDraftStore.subscribe, inquiryDraftStore.getSnapshot);
 }

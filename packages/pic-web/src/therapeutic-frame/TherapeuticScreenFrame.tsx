@@ -8,6 +8,7 @@ import { useLocale } from "../i18n/locale-provider";
 import { LocalizedMessage } from "../i18n/localized-message";
 import { TherapeuticSheet } from "../therapeutic-sheet";
 import { TherapeuticFrame, type TherapeuticFrameProps } from "./TherapeuticFrame";
+import { IdentityDrawerStatus } from "../identity-drawer-status";
 
 export type TherapeuticScreenFrameProps = TherapeuticFrameProps & {
   utilityTrigger?: never;
@@ -49,6 +50,7 @@ export function TherapeuticScreenFrame({
           trigger={<><Menu aria-hidden="true" size={20} /><LocalizedMessage message={message("utilities.trigger")} /></>}
         >
           <div className="grid gap-6" aria-busy={busy}>
+            <IdentityDrawerStatus />
             <InquiryResetControls controls={controls} />
             {confirmation ? null : <>
               <LanguageSelector />

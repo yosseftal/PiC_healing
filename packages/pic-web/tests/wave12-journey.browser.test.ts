@@ -8,12 +8,18 @@ const copy = {
     open: "Open utilities", player: "Open Player utilities", reset: "New symptom group", keep: "Keep current inquiry",
     discard: "Discard draft and start new", gate: "Keep your session", create: "Create an account", name: "Name",
     email: "Email address", password: "Password", register: "Register", save: "Sign in and save", retry: "Try again",
-    verification: "Check your email for a verification message.", integrating: "This session is Integrating" },
+    verification: "Check your email for a verification message.", integrating: "This session is Integrating",
+    greeting: "Hello", guest: "Guest mode", verified: "Connected to account",
+    personalGreeting: "Hello Journey Event Manager",
+    unsaved: "Your current work is held on this device; saving it to your account has not been confirmed." },
   he: { group: "שם לרשימה (לא חובה)", symptom: "שם הסימפטום", polarity: "קוטביות", intensity: "עוצמת החוויה החיובית",
     open: "פתיחת הכלים", player: "פתיחת כלי הנגן", reset: "קבוצת סימפטומים חדשה", keep: "להמשיך בבירור הנוכחי",
     discard: "למחוק את הטיוטה ולהתחיל מחדש", gate: "שמירת הסשן שלך", create: "יצירת חשבון", name: "שם",
     email: "כתובת אימייל", password: "סיסמה", register: "הרשמה", save: "התחברות ושמירה", retry: "ניסיון נוסף",
-    verification: "יש לבדוק באימייל אם התקבלה הודעת אימות.", integrating: "הסשן בהטמעה" },
+    verification: "יש לבדוק באימייל אם התקבלה הודעת אימות.", integrating: "הסשן בהטמעה",
+    greeting: "שלום", guest: "מצב אורח", verified: "מחוברת לחשבון",
+    personalGreeting: "שלום Journey Event Manager",
+    unsaved: "העבודה הנוכחית נשארת במכשיר; עדיין לא אישרנו את שמירתה בחשבון." },
 } as const;
 type Locale = keyof typeof copy;
 interface GuestStorage {
@@ -66,6 +72,10 @@ for (const locale of ["he", "en"] as const) {
         const groupInput = page.getByLabel(text.group, { exact: true });
         await groupInput.fill("Discarded draft טיוטה");
         await page.getByRole("button", { name: text.open, exact: true }).click();
+        const drawer = page.getByRole("dialog");
+        await expect(drawer).toContainText(text.guest);
+        await expect(drawer).toContainText(text.greeting);
+        await expect(drawer).toContainText(text.unsaved);
         await page.getByRole("button", { name: text.reset, exact: true }).click();
         const keep = page.getByRole("button", { name: text.keep, exact: true });
         await expect(keep).toBeFocused();
@@ -97,6 +107,7 @@ for (const locale of ["he", "en"] as const) {
         const initialGroup = Object.values((await guest(page)).groups)[0]!;
         expect(initialGroup.symptoms[0]).toMatchObject({ name: "Shoulder כתף", polarity: "positive", intensity: 8 });
         await page.getByRole("button", { name: text.open, exact: true }).click();
+        await expect(page.getByRole("dialog")).toContainText(text.unsaved);
         if (linked) await page.getByTestId("link-to-group-toggle").check();
         else await expect(page.getByTestId("link-to-group-toggle")).not.toBeChecked();
         const treatmentId = await page.locator("#root").getAttribute("data-treatment-id");
@@ -104,6 +115,13 @@ for (const locale of ["he", "en"] as const) {
         await expect(page.getByTestId("atomic-unit-title")).toBeVisible();
         await presentation(page, other, "My <muscle> phrase");
         await presentation(page, locale);
+        await page.getByRole("button", { name: text.player, exact: true }).click();
+        const playerDrawer = page.getByRole("dialog");
+        await expect(playerDrawer).toContainText(text.guest);
+        await expect(playerDrawer).toContainText(text.unsaved);
+        await expect(playerDrawer).toContainText(text.greeting);
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("button", { name: text.player, exact: true })).toBeFocused();
         await page.getByRole("button", { name: text.player, exact: true }).click();
         await page.getByTestId("navigation-tree-jump-__terminal_nemar__").click();
         const terminal = page.getByTestId("terminal-nemar-unit");
@@ -182,6 +200,12 @@ for (const locale of ["he", "en"] as const) {
           mode: "authenticated", gateTriggered: false, promotionStatus: "succeeded",
         }));
         await expect(gate).toHaveCount(0);
+        await page.getByRole("button", { name: text.open, exact: true }).click();
+        const identityDrawer = page.getByRole("dialog");
+        await expect(identityDrawer).toContainText(text.verified);
+        await expect(identityDrawer).toContainText(text.personalGreeting);
+        await expect(identityDrawer).not.toContainText(text.unsaved);
+        await page.keyboard.press("Escape");
         const successful = network.promotions.at(-1)!;
         expect(successful.p_guest_group).toEqual(linked ? expect.objectContaining({ id: initialGroup.id }) : null);
         expect(successful.p_symptoms).toEqual(linked ? initialGroup.symptoms : []);

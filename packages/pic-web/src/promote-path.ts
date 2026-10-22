@@ -57,6 +57,24 @@ export async function getVerifiedUser(client: SupabaseClient): Promise<User> {
   return data.user;
 }
 
+/** Reads only the verified owner's existing profile; metadata is a read-only fallback. */
+export async function readVerifiedProfileName(client: SupabaseClient, owner: string): Promise<string | null> {
+  const user = await getVerifiedUser(client);
+  if (user.id !== owner) throw new Error("The verified identity changed during profile read");
+  const displayName = (value: unknown) => typeof value === "string" && value.trim() !== "" &&
+    value.trim() !== "השם שלך" ? value.trim() : null;
+  const metadataName: unknown = user.user_metadata.full_name;
+  const fallback = displayName(metadataName);
+  try {
+    const { data, error } = await client.from("profiles").select("full_name").eq("id", owner).maybeSingle();
+    if (error !== null) return fallback;
+    const name: unknown = data?.full_name;
+    return displayName(name) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function signInWithCredentials(client: SupabaseClient, credentials: LoginCredentials) {
   const { error } = await client.auth.signInWithPassword(credentials);
   if (error !== null) throw error;

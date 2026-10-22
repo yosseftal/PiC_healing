@@ -25,6 +25,7 @@ import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
 import { isolatedMessageText } from "./i18n/messages";
 import { InquiryResetControls, useInquiryResetControls } from "./inquiry-reset-controls";
+import { IdentityDrawerStatus } from "./identity-drawer-status";
 import "./unified-player-screen.css";
 
 type PlayerContentPhase = "resolving" | "ready" | "empty";
@@ -162,6 +163,7 @@ export function UnifiedPlayerScreen() {
             }}
           >
             <div className="pic-player-utilities" aria-busy={busy}>
+              <IdentityDrawerStatus />
               <InquiryResetControls controls={resetControls} />
               {confirmation ? null : <>
               <LanguageSelector />

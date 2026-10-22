@@ -1,12 +1,13 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** W13-01 closed and committed; W13-02 next. W13-03–09 await prerequisites and serial dispatch.
+**Status:** W13-01 and W13-06 closed; W13-02 active. Other tickets await their prerequisites and dispatch.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
 
-This local suite is the requested publication target. Implementation is now authorized in serial ticket order.
+This local suite is the requested publication target. Implementation is authorized according to the DAG.
+The later continuous-orchestration charter permits independent W13-06 and W13-08 branches in parallel.
 The user explicitly requested generation and commit before review, so no additional pre-generation interview is required.
 There are exactly nine tickets; approved W13-07V is included inside W13-07.
 
@@ -18,6 +19,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** None
 
 - **Ticket:** [W13-02][W13-02]
+  **Status:** in progress; persistence contract and unapplied SQL prepared, runtime implementation next.
   **End-to-end delivery:** Reorder topics and preserve priority through storage and promotion
   **Blocked by:** W13-01
 
@@ -34,6 +36,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** W13-01, W13-02
 
 - **Ticket:** [W13-06][W13-06]
+  **Status:** closed; 587 root tests and 11 targeted browser cases pass; see ticket Resolution.
   **End-to-end delivery:** Show a personal greeting and accurate account state in the drawer
   **Blocked by:** None
 
@@ -78,12 +81,12 @@ flowchart LR
 
 W13-04 lists W13-01 explicitly for its draft contract even though W13-03 also depends on it.
 W13-05 needs entry/rating and order, not the renewed-answer implementation.
-W13-06 and W13-08 have no functional ticket prerequisites; they still wait for the authorized serial dispatch.
+W13-06 and W13-08 have no functional ticket prerequisites; independent dispatch is authorized by the later charter.
 W13-07 depends on reversible navigation, not on account greeting or polarity presentation.
 W13-09 lists the final dependency frontier; W13-01/02/03 are transitively required.
 
 Suggested serial order is 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09.
-The user authorized this serial execution order; the dependency DAG remains unchanged.
+The later continuous-orchestration charter permits independent branches; the dependency DAG remains unchanged.
 Shared composition, dictionary and storage owners must not receive simultaneous conflicting edits.
 
 ## Vertical slicing and mapping from the earlier proposed breakdown

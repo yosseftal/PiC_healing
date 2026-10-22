@@ -14,7 +14,19 @@ for (const locale of ["he", "en"] as const) {
       localStorage.setItem("pic-web.authenticated-draft.v1", JSON.stringify(value));
     }, draft);
     let therapeuticRequests = 0;
-    await page.route("**/rest/v1/**", async (route) => { therapeuticRequests++; await route.abort(); });
+    let identityReads = 0;
+    await page.route("**/rest/v1/**", async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (request.method() === "GET" && url.pathname.endsWith("/profiles") &&
+        url.searchParams.get("select") === "full_name" && url.searchParams.get("id") === `eq.${user.id}`) {
+        identityReads++;
+        await route.fulfill({ json: [] });
+        return;
+      }
+      therapeuticRequests++;
+      await route.abort();
+    });
     await page.route("**/auth/v1/**", async (route) => {
       const path = new URL(route.request().url()).pathname;
       if (path.endsWith("/token")) {
@@ -47,6 +59,7 @@ for (const locale of ["he", "en"] as const) {
       bottom: element.getBoundingClientRect().bottom, overflow: getComputedStyle(element).overflowY }));
     expect(geometry.top).toBeGreaterThanOrEqual(0); expect(geometry.bottom).toBeLessThanOrEqual(568);
     expect(geometry.overflow).toBe("auto");
+    expect(identityReads).toBe(1);
     expect(therapeuticRequests).toBe(0);
   });
 }

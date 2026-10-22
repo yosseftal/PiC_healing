@@ -3,7 +3,12 @@ import type { RepositoryPort } from "pic-engine";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { getVerifiedUser } from "./promote-path";
 
-export type IdentityState = { status: "guest" | "checking" | "verified" | "reauthenticate" | "uncertain"; owner: string | null };
+export type IdentityState = {
+  status: "guest" | "checking" | "verified" | "reauthenticate" | "uncertain";
+  owner: string | null;
+  /** Changes whenever the current authentication authority is suspended or detached. */
+  revision: number;
+};
 const UNCERTAIN_KEY = "pic-web.uncertain-completions.v1";
 
 function readUncertainCompletions(): unknown[] {
@@ -26,18 +31,18 @@ export function createAuthLifecycle(getClient: () => SupabaseClient | null, inva
   const partialCompletions = new Set<string>();
   const cancelled = new Set<() => void>();
   const listeners = new Set<() => void>();
-  let state: IdentityState = { status: "guest", owner: null };
+  let revision = 0;
+  let state: IdentityState = { status: "guest", owner: null, revision };
   let owner: string | null = null;
   let uncertain = false;
   let uncertainAppend: { owner: string; generation: number; sessionIds: string[]; event: unknown } | null = null;
   let verified = false;
-  let revision = 0;
   let consumers = 0;
   let unsubscribe: (() => void) | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let sessionKey: string | null = null;
   const publish = (status: IdentityState["status"], identity = owner) => {
-    state = { status: uncertain ? "uncertain" : status, owner: identity };
+    state = { status: uncertain ? "uncertain" : status, owner: identity, revision };
     for (const listener of listeners) listener();
   };
   const suspend = (status?: IdentityState["status"]) => {
@@ -111,12 +116,13 @@ export function createAuthLifecycle(getClient: () => SupabaseClient | null, inva
       for (const cancel of [...cancelled]) cancel();
     },
     completeDetachment() {
+      revision++;
       if (uncertain) {
         partialCompletions.clear();
         uncertainAppend = null;
         uncertain = false;
-        publish(verified ? "verified" : "reauthenticate");
       }
+      publish(verified ? "verified" : owner === null ? "guest" : "reauthenticate");
     },
     guard(port: RepositoryPort, expected: string, isPromotion = () => false): RepositoryPort {
       // Every call retains its own continuation. Resume does not restart a multi-write Finish.
@@ -193,6 +199,7 @@ export function createAuthLifecycle(getClient: () => SupabaseClient | null, inva
       if (unsubscribe === null) {
         const client = getClient();
         if (client !== null) {
+          publish("checking");
           const { data } = client.auth.onAuthStateChange((_event, session) => {
             const nextKey = session === null ? null : `${session.user.id}:${session.access_token}`;
             if (nextKey !== null && nextKey === sessionKey && state.status === "verified") return;

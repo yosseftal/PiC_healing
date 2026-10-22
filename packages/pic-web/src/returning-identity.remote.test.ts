@@ -68,7 +68,10 @@ async () => {
   lifecycle.bind(userId!);
   const release = lifecycle.start();
   try {
-    await vi.waitFor(() => expect(lifecycle.store.getSnapshot()).toEqual({ status: "verified", owner: userId }));
+    await vi.waitFor(() => expect(lifecycle.store.getSnapshot()).toEqual({
+      status: "verified", owner: userId, revision: expect.any(Number),
+    }));
+    const originalRevision = lifecycle.store.getSnapshot().revision;
     const signedOut = await restored.auth.signOut();
     if (signedOut.error) throw new Error("Returning fixture sign-out failed");
     await vi.waitFor(() => expect(lifecycle.store.getSnapshot().status).toBe("reauthenticate"));
@@ -76,7 +79,8 @@ async () => {
     const again = await restored.auth.signInWithPassword({ email, password });
     if (again.error) throw new Error("Returning fixture reauthentication failed");
     await lifecycle.verify();
-    expect(lifecycle.store.getSnapshot()).toEqual({ status: "verified", owner: userId });
+    expect(lifecycle.store.getSnapshot()).toEqual({ status: "verified", owner: userId, revision: expect.any(Number) });
+    expect(lifecycle.store.getSnapshot().revision).toBeGreaterThan(originalRevision);
     const loginAgain = await client.auth.signInWithPassword({ email, password });
     if (loginAgain.error) throw new Error("Returning original fixture reauthentication failed");
   } finally { release(); }

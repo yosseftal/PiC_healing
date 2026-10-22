@@ -5,6 +5,8 @@ export class InquiryOperationCancelled extends Error {}
 
 const pending = new Set<Promise<boolean>>();
 const drafts = new Map<string, boolean>();
+const draftListeners = new Set<() => void>();
+let cachedHasDraft = false;
 const listeners = new Set<() => void>();
 let generation = 0;
 let admissionClosed = false;
@@ -69,18 +71,32 @@ export function useInquiryDraft(dirty: boolean): void {
   const id = useId();
   useEffect(() => {
     drafts.set(id, dirty);
-    return () => { drafts.delete(id); };
+    notifyDrafts();
+    return () => { drafts.delete(id); notifyDrafts(); };
   }, [dirty, id]);
 }
 
 export function hasInquiryDraft(): boolean {
-  return [...drafts.values()].some(Boolean);
+  return cachedHasDraft;
 }
+
+function notifyDrafts(): void {
+  const next = [...drafts.values()].some(Boolean);
+  if (next === cachedHasDraft) return;
+  cachedHasDraft = next;
+  for (const listener of draftListeners) listener();
+}
+
+export const inquiryDraftStore = {
+  getSnapshot: () => cachedHasDraft,
+  subscribe(listener: () => void) { draftListeners.add(listener); return () => { draftListeners.delete(listener); }; },
+};
 
 /** A composition-owned draft survives temporary screen unmounts until its inquiry is reset. */
 export function setInquiryDraft(id: string, dirty: boolean): void {
   if (dirty) drafts.set(id, true);
   else drafts.delete(id);
+  notifyDrafts();
 }
 
 export const inquiryGenerationStore = {
@@ -94,6 +110,7 @@ export const inquiryGenerationStore = {
 export function advanceInquiryGeneration(): void {
   generation += 1;
   drafts.clear();
+  notifyDrafts();
   for (const listener of listeners) listener();
 }
 

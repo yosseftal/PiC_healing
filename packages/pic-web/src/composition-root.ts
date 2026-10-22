@@ -55,6 +55,7 @@ import {
   readSupabasePublicConfigFromEnv,
   ensureOwnProfile,
   getVerifiedUser,
+  readVerifiedProfileName,
   signInWithCredentials,
 } from "./promote-path";
 import type { LoginCredentials } from "./promote-path";
@@ -528,6 +529,33 @@ else if (retainedDraft !== null) authLifecycle.bind(retainedDraft.owner);
 const authenticatedDraft = createAuthenticatedDraft(retainedDraft, authLifecycle);
 const authStore = authLifecycle.store;
 let verifiedIdentity = false;
+type AuthPresentation = ReturnType<typeof authStore.getSnapshot> & { fullName: string | null };
+let authPresentation: AuthPresentation = { ...authStore.getSnapshot(), fullName: null };
+const authPresentationStore = createExternalStore(() => authPresentation);
+let profileReadKey: string | null = null;
+authStore.subscribe(() => {
+  const identity = authStore.getSnapshot();
+  const key = identity.status === "verified" && identity.owner !== null ?
+    `${identity.owner}:${identity.revision}` : null;
+  if (key === null) {
+    profileReadKey = null;
+    authPresentation = { ...identity, fullName: null };
+    authPresentationStore.notify();
+    return;
+  }
+  if (profileReadKey === key) return;
+  profileReadKey = key;
+  authPresentation = { ...identity, fullName: null };
+  authPresentationStore.notify();
+  const client = getBrowserClient();
+  if (client === null) return;
+  void readVerifiedProfileName(client, identity.owner!).then((fullName) => {
+    const current = authStore.getSnapshot();
+    if (current.status !== "verified" || current.owner !== identity.owner || current.revision !== identity.revision) return;
+    authPresentation = { ...current, fullName };
+    authPresentationStore.notify();
+  }).catch(() => undefined);
+});
 let recoveryIdentityRejected = false;
 let loginPromotion: Promise<void> | null = null;
 let reauthentication: Promise<void> | null = null;
@@ -841,6 +869,7 @@ export const compositionRoot = {
   questionnaire,
   authLifecycle,
   authStore,
+  authPresentationStore,
   authenticatedDraft,
   verificationStore,
   inquiryResetActions,

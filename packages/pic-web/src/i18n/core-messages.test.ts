@@ -24,6 +24,7 @@ describe("required approved shared utility messages", () => {
           ? resolveMessage(locale, key, { count: 2 })
           : key === "questionnaire.priority" || key === "questionnaire.moved"
           ? resolveMessage(locale, key, { position: 2 })
+          : key === "identity.greeting" ? resolveMessage(locale, key, { name: "Event Manager" })
           : resolveMessage(locale, key);
         expect(resolved.fallback).toBe(false);
         expect(resolved.locale).toBe(locale);

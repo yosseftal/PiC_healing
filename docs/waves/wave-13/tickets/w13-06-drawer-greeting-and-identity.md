@@ -1,10 +1,10 @@
 # W13-06 — Show a personal greeting and accurate account state in the drawer
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** closed — implemented, independently reviewed and verified on 2026-10-22.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** None.
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
-**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
+**Execution gate:** Authorized as an independent branch alongside W13-02 architecture preparation.
 **Domain decisions:** DEC-017; Wave 12 owner-bound identity and recovery contracts.
 
 ## Objective & Context
@@ -77,5 +77,49 @@ Implementation is authorized by the user; wait for prerequisites and serial disp
 
 ## Resolution
 
-Not implemented. To complete after authorization: solution path, decisions, deviations, test evidence,
-review outcome, commit, and explicit resolution for every AC above.
+### Solution path and decisions
+
+The shared `IdentityDrawerStatus` appears in both the Frame and Player service drawers.
+Composition reads the verified owner's profile, with verified Auth metadata as a fallback, and publishes
+a presentation store keyed by owner and auth revision. Name reads neither write profiles nor establish identity.
+The existing auth lifecycle publishes its revision; reset retains accurate Guest/verified status.
+Inquiry draft bookkeeping now exposes a reactive read store so an unsubmitted topic appears as local work.
+Identity, locally retained work, pending verification and promotion recovery are separate localized facts.
+Unconfirmed saving never asserts that an RPC could not already have committed.
+
+### Acceptance evidence
+
+- [x] **AC-01:** Provider tests cover profile success, blank/missing name and profile-fetch failure fallback.
+- [x] **AC-02:** Placeholder and email assertions pass; personal text is escaped and rendered with `bdi` isolation.
+- [x] **AC-03:** Guest, checking, verified, pending verification, reauthentication and uncertainty are covered.
+  A retained registration no longer masks checking, expiry or uncertain completion.
+- [x] **AC-04:** Verified identity with an unsubmitted questionnaire still shows local-work feedback.
+  A successful promotion followed by failed confirmation still exposes retained recovery separately.
+- [x] **AC-05:** Delayed reads from a prior revision and a different account cannot replace the current name.
+  The remote identity test also verifies revision advancement across sign-out and reauthentication.
+- [x] **AC-06:** Only composition and the existing profile adapter seam read the profile; components use context stores.
+  Browser transport permits only the verified owner's `GET profiles?select=full_name` and no therapeutic writes.
+- [x] **AC-07:** Eleven Chromium cases cover both locales, Player/Frame greetings, reset confirmation,
+  focus return, focus trap, inert background, small viewport, RTL direction and reduced motion.
+
+### Verification and review
+
+- `npm run typecheck`: pass across all workspaces.
+- `npm run depcruise -w packages/pic-web`: pass, 771 modules / 1688 dependencies, zero violations.
+- `npm run lint`: pass; changed-file 130-character and Git whitespace checks pass.
+- `npm test`: 57 files / 587 tests pass, followed by engine and web dependency checks.
+  Process-only worker cap 2 and the previously approved controlled registration address were supplied.
+- Focused identity/provider suite: 2 files / 31 tests pass; both review regressions were observed red before green.
+- `npm run test:browser -w packages/pic-web -- wave12-journey.browser.test.ts
+  therapeutic-sheet.browser.test.ts returning-identity.browser.test.ts --workers=2`: 11 pass.
+- Independent Standards and Spec reviews pass after corrections; see [review evidence](../audits/w13-06-implementation-review.md).
+- Normal TLS remained enabled. One transient network failure was diagnosed with a read-only connectivity check
+  before the successful full rerun. Final remote counts match the earlier baseline; no existing content was removed.
+
+### Deviations and commit
+
+The user's later orchestration charter explicitly permits this independent branch alongside W13-02 preparation.
+The shared header also covers the Player's direct Sheet, within the same approved web-only presentation scope.
+No engine, adapter, migration, auth mechanism or therapeutic behavior change belongs to this ticket.
+The scoped implementation commit uses `[W13-06]`; the following checkpoint records its exact hash.
+W13-02 remains in preparation; its unapplied SQL and red-test drafts are outside automatic discovery until its slice starts.
