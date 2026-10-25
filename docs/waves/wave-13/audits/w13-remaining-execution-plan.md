@@ -20,12 +20,16 @@ Independent reviews remain separate from implementation context.
 
 ## Active frontier
 
-- W13-02: public persistence contract agreed; additive SQL and red contract drafts prepared and statically reviewed.
+- W13-02: reviewed implementation committed at `5439a4f`; local gates pass; manual SQL and real verification remain.
 - W13-06: completed and verified as an independent branch during W13-02 architecture/SQL preparation.
-- W13-02 runtime source ownership starts only after the W13-06 scoped commit, preserving its green checkpoint.
+- W13-02 runtime source is frozen at its manual-apply checkpoint; no dependent implementation has started.
 - No simultaneous writers to composition-root, dictionaries, context hooks or tests.
 - W13-02 web controls follow the agreed contract and preserve the completed W13-06 identity presentation.
 - W13-08 may be dispatched independently when source ownership and verification runners are available.
+
+After quota interruptions, finishing/debug verification used gpt-6.1-sol with high reasoning in fresh owned contexts.
+The bounded Guest public-lock tests used gpt-6-luna with high reasoning; both final review axes used gpt-6.1-sol.
+Resume from `../handoffs/w13-02-manual-apply-checkpoint.md`; no new ticket starts before this context checkpoint is saved.
 
 ## W13-02 seam decisions to preserve
 

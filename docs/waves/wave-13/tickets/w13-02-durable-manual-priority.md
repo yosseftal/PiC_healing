@@ -146,5 +146,5 @@ Standards and Spec reviews both pass; see [the complete evidence](../audits/w13-
 
 The original draft documents remain intact. No treatment content or existing database row was deleted.
 The [manual-apply checkpoint](../handoffs/w13-02-manual-apply-checkpoint.md) is the exact next entry point.
-The implementation/preparation commit intentionally precedes schema application, as required by the remote-testing guide;
+Implementation commit `5439a4f` intentionally precedes schema application, as required by the remote-testing guide;
 it is not ticket closure. Resume W13-02 real verification after the human confirms `migration applied`, then proceed to W13-03.
