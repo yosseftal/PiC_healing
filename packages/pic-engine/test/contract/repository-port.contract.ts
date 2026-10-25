@@ -339,6 +339,55 @@ export function runRepositoryPortContractTests(
           port = identity.port;
           newUserId = identity.userId;
         });
+        it("rejects invalid ordered promotion metadata before creating any group or session", async () => {
+          for (const revision of [undefined, null, -1, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+            const group = makePromotionGroup();
+            const playerSession = makePromotionSession({ linked_group_id: group.id });
+            const input = JSON.parse(JSON.stringify({ idempotencyKey: group.id,
+              group: { ...group, revision }, playerSession, newUserId, promotionPayloadVersion: 2 }));
+            await expect(port.promoteGuestToAccount(input)).rejects.toThrow();
+            expect(await port.getGroup(group.id)).toBeNull();
+            expect(await port.getPlayerSession(playerSession.id)).toBeNull();
+          }
+          for (const promotionPayloadVersion of [null, 1, 3]) {
+            const group = makePromotionGroup({ revision: 0 });
+            const playerSession = makePromotionSession({ linked_group_id: group.id });
+            const input = JSON.parse(JSON.stringify({ idempotencyKey: group.id,
+              group, playerSession, newUserId, promotionPayloadVersion }));
+            await expect(port.promoteGuestToAccount(input)).rejects.toThrow();
+            expect(await port.getGroup(group.id)).toBeNull();
+            expect(await port.getPlayerSession(playerSession.id)).toBeNull();
+          }
+        });
+        it("replays a frozen ordered receipt using current committed data and rejects a changed version", async () => {
+          const group = makePromotionGroup({ revision: 4, created_at: "2026-10-20T00:00:00.000Z",
+            symptoms: [makePromotionSymptom({ name: "First" }), makePromotionSymptom({ name: "Second" })] });
+          const input = { idempotencyKey: group.id, group,
+            playerSession: makePromotionSession({ linked_group_id: group.id }), newUserId,
+            promotionPayloadVersion: 2 as const };
+          const frozen = JSON.parse(JSON.stringify(input)) as typeof input;
+          const first = await port.promoteGuestToAccount(input);
+          expect(first.group).toEqual(group);
+          const committed = await port.reorderSymptoms(group.id, group.symptoms.map((s) => s.id).reverse(), 4);
+          const rated = { ...committed, symptoms: committed.symptoms.map((s, i) => i === 0
+            ? { ...s, intensity: 0, rated_at: "2026-10-20T00:00:00.000Z" } : s) };
+          await port.saveGroup(rated);
+          const replay = await port.promoteGuestToAccount(frozen);
+          expect(replay.group).toEqual(await port.getGroup(group.id));
+          expect(replay.group?.symptoms[0]?.name).toBe("Second");
+          expect(replay.libraryRow.use_count).toBe(first.libraryRow.use_count);
+          expect(replay.timelineEvent.id).toBe(first.timelineEvent.id);
+          await expect(port.promoteGuestToAccount({ ...frozen, promotionPayloadVersion: undefined })).rejects.toThrow();
+          await expect(port.promoteGuestToAccount({ ...frozen,
+            group: { ...frozen.group, created_at: "2026-10-20T03:00:00+03:00" } })).rejects.toThrow();
+          await expect(port.promoteGuestToAccount({ ...frozen,
+            group: { ...frozen.group, revision: 5 } })).rejects.toThrow();
+          await expect(port.promoteGuestToAccount({ ...frozen,
+            group: { ...frozen.group, symptoms: [...frozen.group.symptoms].reverse() } })).rejects.toThrow();
+          input.group.name = "Changed caller object";
+          await expect(port.promoteGuestToAccount(input)).rejects.toThrow();
+          await expect(port.promoteGuestToAccount(frozen)).resolves.toMatchObject({ group: replay.group });
+        });
         const writesAllFivePromotedEntitiesTitle =
           "writes group (with its embedded symptoms), player session, library row, and timeline event, " +
           "all attached to input.newUserId";

@@ -97,7 +97,7 @@ describe("symptoms.rated_at column (ticket 01 — direct Supabase client)", () =
   beforeAll(async () => {
     user = await createAuthenticatedTestUser();
     groupId = randomUUID();
-    const { error } = await user.client.from("symptom_groups").insert({
+    const { error } = await serviceClient.from("symptom_groups").insert({
       id: groupId,
       user_id: user.userId,
       name: "Rated-at schema fixture group",
@@ -113,15 +113,17 @@ describe("symptoms.rated_at column (ticket 01 — direct Supabase client)", () =
     const symptomId = randomUUID();
     const ratedAt = "2026-08-14T10:30:00.000Z";
 
-    const { error: insertError } = await user.client.from("symptoms").insert({
-      id: symptomId,
-      group_id: groupId,
-      user_id: user.userId,
-      name: "Lower Back Pain",
-      polarity: "negative",
-      intensity: 6,
-      rated_at: ratedAt,
-    });
+    const { data: current, error: readError } = await user.client.rpc("get_symptom_group", { p_group_id: groupId });
+    expect(readError).toBeNull();
+    expect(current).not.toBeNull();
+    const { error: insertError } = await user.client.rpc("save_symptom_group", { p_group: {
+      ...current, symptoms: [...current.symptoms, {
+        id: symptomId,
+        name: "Lower Back Pain",
+        polarity: "negative",
+        intensity: 6,
+        rated_at: ratedAt,
+    }] } });
     expect(insertError).toBeNull();
 
     const { data, error: selectError } = await user.client
@@ -136,14 +138,16 @@ describe("symptoms.rated_at column (ticket 01 — direct Supabase client)", () =
   it("a symptoms row written with no rated_at reads back as null (existing rows unaffected)", async () => {
     const symptomId = randomUUID();
 
-    const { error: insertError } = await user.client.from("symptoms").insert({
-      id: symptomId,
-      group_id: groupId,
-      user_id: user.userId,
-      name: "Neck Tension",
-      polarity: "positive",
-      intensity: 3,
-    });
+    const { data: current, error: readError } = await user.client.rpc("get_symptom_group", { p_group_id: groupId });
+    expect(readError).toBeNull();
+    expect(current).not.toBeNull();
+    const { error: insertError } = await user.client.rpc("save_symptom_group", { p_group: {
+      ...current, symptoms: [...current.symptoms, {
+        id: symptomId,
+        name: "Neck Tension",
+        polarity: "positive",
+        intensity: 3,
+    }] } });
     expect(insertError).toBeNull();
 
     const { data, error: selectError } = await user.client

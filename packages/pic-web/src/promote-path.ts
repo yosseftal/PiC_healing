@@ -116,6 +116,8 @@ export async function assembleGuestSnapshotForPendingGate(
   guestRepository: LocalGuestRepository,
 ): Promise<GuestSnapshot | null> {
   const gate = guestRepository.getGuestSessionGateSync();
+  const version = gate.pendingFinishRequest?.promotionPayloadVersion;
+  const marker = version === undefined ? {} : { promotionPayloadVersion: version };
   const sessionId = gate.pendingFinishRequest?.sessionId;
   if (sessionId === undefined) {
     return null;
@@ -127,7 +129,7 @@ export async function assembleGuestSnapshotForPendingGate(
   }
 
   if (playerSession.linked_group_id === null) {
-    return { group: null, playerSession };
+    return { group: null, playerSession, ...marker };
   }
 
   const group = await guestRepository.getGroup(playerSession.linked_group_id);
@@ -135,7 +137,7 @@ export async function assembleGuestSnapshotForPendingGate(
     return null;
   }
 
-  return { group, playerSession };
+  return { group, playerSession, ...marker };
 }
 
 export interface PromoteWithAuthenticatedRepositoryOptions {

@@ -1,8 +1,9 @@
 # W13-02 additive SQL review and rollout
 
 Prepared migration destination: `supabase/migrations/20261022120000_durable_group_priority.sql`.
-Temporary draft: `docs/waves/wave-13/audits/w13-02-test-drafts/20261022120000_durable_group_priority.sql.txt`.
-Status: unapplied; static review only. Runtime implementation and real database verification remain outstanding.
+The original `.sql.txt` draft remains preserved verbatim under `audits/w13-02-test-drafts/` as historical evidence.
+The runtime migration at the destination above includes the final reviewed safeguards; use that file for application.
+Status: unapplied; static review passed. Runtime implementation is present; final review and database verification are open.
 Use the established manual-application checkpoint; this document grants no permission to apply SQL or change live privileges.
 
 ## Reviewed behavior
@@ -55,13 +56,12 @@ The migration has seven CREATE OR REPLACE functions, guarded constraints/columns
 No local PostgreSQL, psql or Docker executable was available; SQL compilation and database behavior have not been verified.
 No migration or live privilege change was executed. No remote fixture tests were run for this preparation phase.
 One public engine/repository regression was run red: `engine.reorderSymptoms is not a function` (1 failed test).
-Its two drafts are temporarily outside discovery under `audits/w13-02-test-drafts/` while W13-06 completes its green gates.
-The SQL is also temporarily outside migration discovery: the content-integrity scanner mistakes PL/pgSQL `FOR UPDATE;`
-for an UPDATE statement whose table identifier is `;`. W13-06 root evidence is `.scratch/w13-06-root-test.log`, lines 17-31.
-W13-02 must add a regression and repair that bounded SQL-extraction test helper after runtime ownership is released.
-Preserve the row locks and the content-integrity assertions; do not hide the migration or weaken the scanner in the final change.
+The contract implementations are under `packages/pic-engine/test/contract/`; original `.txt` drafts remain preserved.
+The original scanner mistook PL/pgSQL `FOR UPDATE;` for a standalone UPDATE statement;
+the bounded helper now handles locking clauses while retaining actual treatment writes. Its focused integrity batch passes.
+The SQL and contracts are included in automatic discovery again; no migration exclusion or scanner waiver was introduced.
 
-After runtime ownership release: implement core/adapter contracts, restore the regression, and grow the agreed test matrix.
+Runtime ownership is released; core/adapter contracts and their agreed test matrix are being verified.
 Before manual application: review the complete SQL/runtime diff and capture red remote contract evidence with isolated fixtures.
 After the user confirms application: verify owner rejection, coherent reads, rollback, stale/competing reorder/append/rating,
 new ordered promotion, exact/lost-response replay, old frozen and gate-only v1 recovery, and changed-payload rejection.

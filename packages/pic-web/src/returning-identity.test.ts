@@ -116,6 +116,7 @@ it("reuses a restored identity at its real Gate and keeps authenticated new grou
   await f.root.groupEngineActions.setJointTreatmentMuscleTest(group, "together");
   expect(saved.saveGroup).toHaveBeenCalledOnce();
   expect(await saved.port.getGroup(group)).toEqual({ ...local,
+    revision: local!.revision! + 1,
     joint_treatment_muscle_test: "together", joint_treatment_test_at: expect.any(String) });
   expect(f.root.authenticatedDraft.store.getSnapshot()).toBeNull();
   expect(f.root.promotePathActions.hasVerifiedIdentity()).toBe(true);

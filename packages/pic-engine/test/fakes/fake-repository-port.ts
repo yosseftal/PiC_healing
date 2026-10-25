@@ -1,4 +1,7 @@
-import type { LibraryRow, LibraryRowProvenance, PlayerSession, TimelineEvent } from "../../src/types";
+import type { FinalizedSymptomGroup, LibraryRow, LibraryRowProvenance, PlayerSession, TimelineEvent } from "../../src/types";
+import {
+  GroupRevisionConflictError, normalizeGroupRevision, prepareGroupSave, prepareSymptomReorder,
+} from "../../src/group-revision";
 import {
   PromoteGuestToAccountIdentityMismatchError,
   DEFAULT_GUEST_SESSION_GATE_STATE,
@@ -11,25 +14,26 @@ import {
   type TreatmentListItem,
 } from "../../src/repository-port";
 
-/**
- * Compares only the fields `promoteGuestToAccount` treats as this idempotencyKey's "payload"
- * (`newUserId`, `group`, `playerSession`) - deliberately not `idempotencyKey` itself, which is the lookup
- * key, not part of what must match. `JSON.stringify` equality is intentionally simple: every field these
- * domain types carry (per `src/types.ts`) is a plain, JSON-safe value (strings, numbers, arrays, plain
- * objects) with no functions or `Date` instances, so structural inequality here can only ever produce a
- * false *mismatch* (the safe failure mode - reject), never a false *match* that would silently let a real
- * mismatch slip through.
- */
-function promotionPayloadMatches(
-  recorded: PromoteGuestToAccountInput,
-  incoming: PromoteGuestToAccountInput,
-): boolean {
-  return (
-    recorded.newUserId === incoming.newUserId &&
-    JSON.stringify(recorded.group) === JSON.stringify(incoming.group) &&
-    JSON.stringify(recorded.playerSession) === JSON.stringify(incoming.playerSession)
-  );
+/** Mirror the versioned wire fields so read normalization cannot upgrade a legacy frozen receipt. */
+function promotionPayload(input: PromoteGuestToAccountInput): string {
+  const group = input.group;
+  const ordered = input.promotionPayloadVersion === 2;
+  return JSON.stringify({
+    newUserId: input.newUserId,
+    group: group === null ? null : {
+      id: group.id, name: group.name, created_at: group.created_at,
+      joint_treatment_muscle_test: group.joint_treatment_muscle_test,
+      joint_treatment_test_at: group.joint_treatment_test_at,
+      ...(ordered ? { revision: group.revision } : {}),
+      symptoms: group.symptoms.map((s, index) => ({ id: s.id, name: s.name, polarity: s.polarity, intensity: s.intensity,
+        ...(s.rated_at === null ? {} : { rated_at: s.rated_at }), ...(ordered ? { priority_position: index } : {}) })),
+    },
+    playerSession: input.playerSession,
+    ...(input.promotionPayloadVersion === undefined ? {} : { promotionPayloadVersion: input.promotionPayloadVersion }),
+  });
 }
+
+function detached<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
 
 /**
  * In-memory `RepositoryPort` test double (spec's "Primary seam, primary test target"; ticket 03). Every
@@ -65,11 +69,20 @@ export class FakeRepositoryPort implements RepositoryPort {
   }
 
   async getGroup(groupId: string): Promise<SymptomGroup | null> {
-    return this.groupsById.get(groupId) ?? null;
+    const group = this.groupsById.get(groupId);
+    return group ? normalizeGroupRevision(group) : null;
   }
 
   async saveGroup(group: SymptomGroup): Promise<void> {
-    this.groupsById.set(group.id, group);
+    this.groupsById.set(group.id, prepareGroupSave(this.groupsById.get(group.id) ?? null, group));
+  }
+
+  async reorderSymptoms(groupId: string, orderedIDs: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
+    const current = this.groupsById.get(groupId);
+    if (!current) throw new Error(`Missing group ${groupId}`);
+    const next = prepareSymptomReorder(current, orderedIDs, expectedRevision);
+    this.groupsById.set(groupId, next);
+    return normalizeGroupRevision(next);
   }
 
   async getPlayerSession(sessionId: string): Promise<PlayerSession | null> {
@@ -132,12 +145,25 @@ export class FakeRepositoryPort implements RepositoryPort {
   }
 
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
+    const ordered = input.promotionPayloadVersion === 2;
+    if (input.promotionPayloadVersion !== undefined && !ordered) {
+      throw new Error("Unsupported promotion payload version");
+    }
+    if (ordered && input.group !== null &&
+        (!Number.isSafeInteger(input.group.revision) || input.group.revision! < 0)) {
+      throw new GroupRevisionConflictError(input.group.id);
+    }
     const existingRecord = this.promotionRecordsByIdempotencyKey.get(input.idempotencyKey);
     if (existingRecord !== undefined) {
-      if (!promotionPayloadMatches(existingRecord.input, input)) {
+      if (promotionPayload(existingRecord.input) !== promotionPayload(input)) {
         throw new PromoteGuestToAccountIdentityMismatchError(input.idempotencyKey);
       }
-      return existingRecord.result;
+      const result = existingRecord.result;
+      return detached({ ...result,
+        group: result.group === null ? null : await this.getGroup(result.group.id),
+        playerSession: await this.getPlayerSession(result.playerSession.id),
+        libraryRow: this.libraryRowsById.get(result.libraryRow.id),
+      }) as PromoteGuestToAccountResult;
     }
 
     if (input.group !== null) {
@@ -159,14 +185,14 @@ export class FakeRepositoryPort implements RepositoryPort {
     });
 
     const result: PromoteGuestToAccountResult = {
-      group: input.group,
+      group: input.group === null ? null : await this.getGroup(input.group.id) as FinalizedSymptomGroup,
       playerSession: input.playerSession,
       libraryRow,
       timelineEvent,
     };
 
-    this.promotionRecordsByIdempotencyKey.set(input.idempotencyKey, { input, result });
-    return result;
+    this.promotionRecordsByIdempotencyKey.set(input.idempotencyKey, { input: detached(input), result: detached(result) });
+    return detached(result);
   }
 
   async getGuestSessionGate(): Promise<GuestSessionGateState> {

@@ -1,16 +1,15 @@
 /**
  * `pic-adapter-supabase` - the real Postgres/Auth-backed `RepositoryPort` implementation (ticket 12),
- * always scoped by `auth.uid()` via Row Level Security (RLS) rather than any client-side filter this
+ * always scoped by `auth.uid()` via RLS or owner-checked RPCs rather than any client-side filter this
  * adapter adds itself. See `SupabaseRepository`'s own doc comment for the full design.
  *
- * **Identity injection.** `RepositoryPort`'s seven non-promotion methods take no `userId` parameter -
+ * **Identity injection.** Ordinary `RepositoryPort` methods take no `userId` parameter -
  * per `pic-engine/src/types.ts`'s header comment, "ownership / RLS scoping is an adapter concern, never a
  * shape the engines reason about." This adapter's constructor is therefore where identity enters: it
  * takes an already-authenticated `SupabaseClient` and reads the current Event Manager's id lazily, via
  * `client.auth.getUser()`, only when building an insert payload that must satisfy an RLS `with check` on
- * `user_id` (`getOrCreateLibraryRow`, `savePlayerSession`, `saveGroup`). Every read relies solely on RLS
- * to scope results - this file never adds a manual `.eq("user_id", ...)` filter as a substitute for the
- * database policy (ticket 11's migration is the single enforcement point).
+ * `user_id` (`getOrCreateLibraryRow`, `savePlayerSession`). Group reads/writes use owner-checked RPCs.
+ * Other reads use RLS; this file never adds `.eq("user_id", ...)` as a substitute for database authorization.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
@@ -23,9 +22,7 @@ import type {
   PromoteGuestToAccountInput,
   PromoteGuestToAccountResult,
   RepositoryPort,
-  Symptom,
   SymptomGroup,
-  SymptomGroupDraft,
   TimelineEvent,
   Treatment,
   TreatmentListItem,
@@ -33,6 +30,9 @@ import type {
 import {
   DEFAULT_GUEST_SESSION_GATE_STATE,
   normalizeInViewUnit,
+  normalizeGroupRevision,
+  GroupRevisionConflictError,
+  InvalidSymptomOrderError,
   PromoteGuestToAccountIdentityMismatchError,
   rehydrateInViewUnit,
 } from "pic-engine";
@@ -64,32 +64,6 @@ export class SupabaseLibraryRowNotFoundError extends Error {
 /** Wraps a PostgREST/Supabase error with the failing operation's name, preserving the original as `cause`. */
 function wrapError(operation: string, error: { message: string; code?: string }): Error {
   return new Error(`SupabaseRepository.${operation}: ${error.message}`, { cause: error });
-}
-
-/**
- * Row shape of `public.symptom_groups` (`supabase/migrations/20260730194911_tracer_bullet_schema.sql`).
- * `joint_treatment_muscle_test` is `not null` at the column level (backfilled by that migration), so a
- * `SymptomGroupDraft` whose test is still unanswered (`null`) cannot currently be persisted here - see
- * `saveGroup`'s doc comment for this known, escalated schema gap.
- */
-interface SymptomGroupRow {
-  id: string;
-  user_id: string;
-  name: string;
-  created_at: string;
-  joint_treatment_muscle_test: string;
-  joint_treatment_test_at: string;
-}
-
-/** Row shape of `public.symptoms` (includes `rated_at` from ticket 01 / Wave 6.5). */
-interface SymptomRow {
-  id: string;
-  group_id: string;
-  user_id: string;
-  name: string;
-  polarity: string;
-  intensity: number;
-  rated_at: string | null;
 }
 
 interface PlayerSessionRow {
@@ -143,40 +117,6 @@ function toTimestamp(value: string): string {
 
 function toNullableTimestamp(value: string | null): string | null {
   return value === null ? null : toTimestamp(value);
-}
-
-function rowToSymptomGroup(row: SymptomGroupRow, symptoms: Symptom[]): SymptomGroup {
-  const draftOrFinalized: SymptomGroupDraft | FinalizedSymptomGroup = {
-    id: row.id,
-    name: row.name,
-    symptoms,
-    created_at: toTimestamp(row.created_at),
-    joint_treatment_muscle_test: row.joint_treatment_muscle_test as FinalizedSymptomGroup["joint_treatment_muscle_test"],
-    joint_treatment_test_at: toTimestamp(row.joint_treatment_test_at),
-  };
-  return draftOrFinalized;
-}
-
-function rowToSymptom(row: SymptomRow): Symptom {
-  return {
-    id: row.id,
-    name: row.name,
-    polarity: row.polarity as Symptom["polarity"],
-    intensity: row.intensity,
-    rated_at: toNullableTimestamp(row.rated_at),
-  };
-}
-
-function symptomToRow(symptom: Symptom, groupId: string, userId: string): SymptomRow {
-  return {
-    id: symptom.id,
-    group_id: groupId,
-    user_id: userId,
-    name: symptom.name,
-    polarity: symptom.polarity,
-    intensity: symptom.intensity,
-    rated_at: symptom.rated_at,
-  };
 }
 
 function rowToPlayerSession(row: PlayerSessionRow): PlayerSession {
@@ -234,15 +174,13 @@ function rowToTimelineEvent(row: TimelineEventRow): TimelineEvent {
 
 /**
  * The Supabase Postgres/Auth-backed `RepositoryPort` implementation (ticket 12). Every method below reads
- * or writes through a `SupabaseClient` whose queries are scoped entirely by RLS (`auth.uid() = user_id`,
+ * or writes through a `SupabaseClient` whose queries are scoped by RLS (`auth.uid() = user_id`,
  * ticket 11's migration) - none of them adds a `.eq("user_id", ...)` filter of its own, per this ticket's
  * "RLS is the enforcement layer, not a backup" requirement. The one place `user_id` is supplied at all is
  * on inserts that must satisfy the policy's `with check` clause, via `currentUserId()` below.
  *
- * `promoteGuestToAccount` (ticket 13) is the one exception to "RLS is the enforcement layer": it calls
- * the `promote_guest_to_account` Postgres RPC (`security definer`, one implicit transaction - see that
- * migration's own header comment for the full atomicity/idempotency design), which necessarily bypasses
- * RLS for its own internal inserts. See that method's own doc comment for why this is still safe.
+ * Group reads/writes and promotion use owner-checked `security definer` RPCs, with `auth.uid()` checks
+ * inside the database transaction. Group writes additionally enforce whole-group revision comparison.
  */
 export class SupabaseRepository implements RepositoryPort {
   constructor(private readonly client: SupabaseClient) {}
@@ -256,77 +194,24 @@ export class SupabaseRepository implements RepositoryPort {
   }
 
   async getGroup(groupId: string): Promise<SymptomGroup | null> {
-    const { data: groupRow, error: groupError } = await this.client
-      .from("symptom_groups")
-      .select("*")
-      .eq("id", groupId)
-      .maybeSingle();
-    if (groupError) {
-      throw wrapError("getGroup", groupError);
-    }
-    if (!groupRow) {
-      return null;
-    }
-
-    const { data: symptomRows, error: symptomsError } = await this.client
-      .from("symptoms")
-      .select("*")
-      .eq("group_id", groupId);
-    if (symptomsError) {
-      throw wrapError("getGroup", symptomsError);
-    }
-
-    return rowToSymptomGroup(groupRow as SymptomGroupRow, (symptomRows ?? []).map((row) => rowToSymptom(row as SymptomRow)));
+    const { data, error } = await this.client.rpc("get_symptom_group", { p_group_id: groupId });
+    if (error) throw groupWriteError("getGroup", groupId, error);
+    // RPC timestamps are already lossless canonical strings, including PostgreSQL microseconds.
+    return data === null ? null : normalizeGroupRevision(data as SymptomGroup);
   }
 
-  /**
-   * Full-replace semantics, matching `pic-adapter-local-guest`'s `saveGroup` and the domain type's own
-   * "complete list" contract for `symptoms`: every symptom in `group.symptoms` is upserted, and any
-   * previously-stored symptom row for this group that is no longer present in that list is deleted - the
-   * same "no orphaned data left behind on a full re-save" guarantee, applied to a real relational table
-   * instead of one JSON blob.
-   *
-   * **Known schema gap (see `SymptomGroupRow`'s doc comment):** `joint_treatment_muscle_test` is `not
-   * null` in the live schema, so saving a `SymptomGroupDraft` whose test is still unanswered
-   * (`joint_treatment_muscle_test: null`) fails with a Postgres not-null violation. This is a real
-   * limitation inherited from ticket 11's already-applied migration, not introduced by this method - the
-   * only Guest state promoted into Supabase today is always a `FinalizedSymptomGroup`
-   * (`PromoteGuestToAccountInput.group`'s own doc comment), so this path is not currently exercised by any
-   * shipped feature.
-   */
+  /** Checked append-only aggregate save; the database owns revision comparison and atomicity. */
   async saveGroup(group: SymptomGroup): Promise<void> {
-    const userId = await this.currentUserId();
+    const { error } = await this.client.rpc("save_symptom_group", { p_group: group });
+    if (error) throw groupWriteError("saveGroup", group.id, error);
+  }
 
-    const { error: groupError } = await this.client.from("symptom_groups").upsert({
-      id: group.id,
-      user_id: userId,
-      name: group.name,
-      created_at: group.created_at,
-      joint_treatment_muscle_test: group.joint_treatment_muscle_test,
-      joint_treatment_test_at: group.joint_treatment_test_at,
+  async reorderSymptoms(groupId: string, orderedIDs: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
+    const { data, error } = await this.client.rpc("reorder_group_symptoms", {
+      p_group_id: groupId, p_ordered_symptom_ids: [...orderedIDs], p_expected_revision: expectedRevision,
     });
-    if (groupError) {
-      throw wrapError("saveGroup", groupError);
-    }
-
-    if (group.symptoms.length > 0) {
-      const { error: symptomsUpsertError } = await this.client
-        .from("symptoms")
-        .upsert(group.symptoms.map((symptom) => symptomToRow(symptom, group.id, userId)));
-      if (symptomsUpsertError) {
-        throw wrapError("saveGroup", symptomsUpsertError);
-      }
-    }
-
-    const currentSymptomIds = group.symptoms.map((symptom) => symptom.id);
-    const deleteRemovedSymptoms = this.client.from("symptoms").delete().eq("group_id", group.id);
-    const { error: deleteError } =
-      currentSymptomIds.length > 0
-        ? await deleteRemovedSymptoms.not("id", "in", `(${currentSymptomIds.join(",")})`)
-        : await deleteRemovedSymptoms;
-    if (deleteError) {
-      throw wrapError("saveGroup", deleteError);
-    }
+    if (error) throw groupWriteError("reorderSymptoms", groupId, error);
+    return normalizeGroupRevision(data as SymptomGroup);
   }
 
   async getPlayerSession(sessionId: string): Promise<PlayerSession | null> {
@@ -526,6 +411,14 @@ export class SupabaseRepository implements RepositoryPort {
    * duplicating their row-to-domain-object mapping here.
    */
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
+    const ordered = input.promotionPayloadVersion === 2;
+    if (input.promotionPayloadVersion !== undefined && !ordered) {
+      throw new Error("Unsupported promotion payload version");
+    }
+    if (ordered && input.group !== null &&
+        (!Number.isSafeInteger(input.group.revision) || input.group.revision! < 0)) {
+      throw new GroupRevisionConflictError(input.group.id);
+    }
     const expectedIdempotencyKey = input.group?.id ?? input.playerSession.id;
     if (input.idempotencyKey !== expectedIdempotencyKey) {
       throw new Error(
@@ -545,11 +438,12 @@ export class SupabaseRepository implements RepositoryPort {
               joint_treatment_muscle_test: input.group.joint_treatment_muscle_test,
               joint_treatment_test_at: input.group.joint_treatment_test_at,
               created_at: input.group.created_at,
+              ...(ordered ? { revision: input.group.revision } : {}),
             },
       p_symptoms:
         input.group === null
           ? []
-          : input.group.symptoms.map((symptom) => ({
+          : input.group.symptoms.map((symptom, index) => ({
               id: symptom.id,
               name: symptom.name,
               polarity: symptom.polarity,
@@ -557,8 +451,10 @@ export class SupabaseRepository implements RepositoryPort {
               // Preserve the legacy wire shape for unrated snapshots and its existing fingerprint.
               // Every actual rating timestamp remains in the strict payload comparison.
               ...(symptom.rated_at === null ? {} : { rated_at: symptom.rated_at }),
+              ...(ordered ? { priority_position: index } : {}),
             })),
       p_player_session: {
+        ...(ordered ? { payload_version: 2 } : {}),
         id: input.playerSession.id,
         treatment_id: input.playerSession.treatment_id,
         linked_group_id: input.playerSession.linked_group_id,
@@ -659,4 +555,10 @@ export class SupabaseRepository implements RepositoryPort {
   async saveGuestSessionGate(state: GuestSessionGateState): Promise<void> {
     void state; // never persisted - see getGuestSessionGate's doc comment for why
   }
+}
+
+function groupWriteError(operation: string, groupId: string, error: { message: string; code?: string }): Error {
+  if (error.message.includes("GROUP_REVISION")) return new GroupRevisionConflictError(groupId);
+  if (error.message.includes("GROUP_MEMBERSHIP")) return new InvalidSymptomOrderError(error.message);
+  return wrapError(operation, error);
 }

@@ -1,6 +1,10 @@
 import { createMessageResolver, type MessageTemplate } from "./messages";
 
 export const messageDefinitions = {
+  "priority.retry": { params: [] },
+  "priority.review": { params: [] },
+  "priority.unsaved": { params: [] },
+  "priority.conflict": { params: [] },
   "questionnaire.completeRows": { params: [] },
   "questionnaire.legacyRecovery": { params: [] },
   "questionnaire.moveUp": { params: [] },
@@ -240,6 +244,10 @@ export const dictionaries = {
     "questionnaire.legacyRecovery":
       "הרשימה הקודמת שמורה. אפשר להמשיך איתה כפי שהיא או לפתוח שאלון חדש דרך הכלים. נושאים שלא דורגו נשארים ללא דירוג.",
     "questionnaire.moveUp": "העלאת הנושא בסדר העדיפות",
+    "priority.retry": "ניסיון נוסף לשינוי סדר העדיפות",
+    "priority.review": "ביטול הבקשה ובחירת סדר מחדש",
+    "priority.unsaved": "השינוי לא אושר. הבקשה נשמרה לניסיון נוסף.",
+    "priority.conflict": "הרשימה השתנתה. הסדר העדכני מוצג והבקשה נשמרה לניסיון נוסף.",
     "questionnaire.moveDown": "הורדת הנושא בסדר העדיפות",
     "questionnaire.priority": "סדר עדיפות {position}",
     "questionnaire.moved": "הנושא עבר לסדר עדיפות {position}",
@@ -428,6 +436,10 @@ export const dictionaries = {
       "Your previous list is retained. Continue with it as it is, or start a new questionnaire from utilities. " +
       "Unrated topics remain unrated.",
     "questionnaire.moveUp": "Move topic up",
+    "priority.retry": "Try this priority change again",
+    "priority.review": "Cancel this request and review the order",
+    "priority.unsaved": "The change is not confirmed. Your request is retained for retry.",
+    "priority.conflict": "The list changed. The current order is shown and your request is retained for retry.",
     "questionnaire.moveDown": "Move topic down",
     "questionnaire.priority": "Priority {position}",
     "questionnaire.moved": "Topic moved to priority {position}",

@@ -58,6 +58,8 @@ export interface Symptom {
 export type JointTreatmentMuscleTestResult = "together" | "split_suggested";
 
 interface SymptomGroupFields {
+  /** Whole-aggregate concurrency token; omission is accepted only for legacy input/first creation. */
+  revision?: number;
   id: string;
   name: string;
   symptoms: Symptom[];

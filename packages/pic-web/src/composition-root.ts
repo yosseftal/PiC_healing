@@ -81,6 +81,8 @@ const persistedGuestGate = promotionRecovery === null ?
     resetRecovery?.gate ?? guestRepository.getGuestSessionGateSync() : {
     gateTriggered: true, pendingFinishRequest: {
       sessionId: promotionRecovery.snapshot.playerSession.id, kind: promotionRecovery.kind,
+      ...(promotionRecovery.snapshot.promotionPayloadVersion === undefined ? {} :
+        { promotionPayloadVersion: promotionRecovery.snapshot.promotionPayloadVersion }),
     },
   };
 let verificationPending = readVerificationPending();
@@ -202,7 +204,9 @@ const untrackedSessionEngineActions = {
   async onFinishRequested(sessionId: string, kind: "finish" | "finishAnyway"): Promise<void> {
     authLifecycle.assertCompletionAllowed(sessionId);
     // Public call arguments retain the newest intent even when the engine's gate storage write rejects.
-    pendingGuestFinishRequest = sessionEngine.getState().mode === "guest" ? { sessionId, kind } : null;
+    pendingGuestFinishRequest = sessionEngine.getState().mode === "guest" ?
+      pendingGuestFinishRequest?.sessionId === sessionId ? { ...pendingGuestFinishRequest, kind } :
+        { sessionId, kind, promotionPayloadVersion: 2 } : null;
     await sessionEngine.onFinishRequested(sessionId, kind);
     await playerSessionStore.refresh(sessionId);
     if (playerSessionStore.getSnapshot(sessionId)?.success_declared === true) {
@@ -247,6 +251,15 @@ const untrackedGroupEngineActions = {
   },
   getGroup(groupId: string) {
     return repositoryPort.getGroup(groupId);
+  },
+  async reorderSymptoms(groupId: string, orderedIds: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
+    const identity = authStore.getSnapshot();
+    const generation = inquiryGenerationStore.getSnapshot();
+    const committed = await groupEngine.reorderSymptoms(groupId, orderedIds, expectedRevision);
+    const current = authStore.getSnapshot();
+    if (generation !== inquiryGenerationStore.getSnapshot() || identity.owner !== current.owner ||
+      identity.revision !== current.revision) throw new InquiryOperationCancelled();
+    return committed;
   },
   async finalizeGroup(groupId: string) {
     const result = await groupEngine.finalizeGroup(groupId);
@@ -391,7 +404,14 @@ async function restoreResetRecovery(recovery: InquiryResetRecovery): Promise<voi
   } finally {
     const pending = recovery.gate.pendingFinishRequest;
     pendingGuestFinishRequest = pending;
-    if (pending !== null) await sessionEngine.onFinishRequested(pending.sessionId, pending.kind);
+    if (pending !== null) {
+      unsubscribeSessionEngine();
+      sessionEngine = new SessionEngine(repositoryPort, playerEngine, {
+        ...sessionOptions, initialGateState: recovery.gate,
+      });
+      unsubscribeSessionEngine = subscribeSessionEngine();
+      await sessionEngine.onFinishRequested(pending.sessionId, pending.kind);
+    }
   }
 }
 async function recoverPendingReset(): Promise<void> {
@@ -602,7 +622,9 @@ const untrackedPromotePathActions = {
       unsubscribeSessionEngine();
       sessionEngine = new SessionEngine(repositoryPort, playerEngine, {
         ...sessionOptions, initialGateState: { gateTriggered: true,
-          pendingFinishRequest: { sessionId: request.snapshot.playerSession.id, kind: request.kind } },
+          pendingFinishRequest: { sessionId: request.snapshot.playerSession.id, kind: request.kind,
+            ...(request.snapshot.promotionPayloadVersion === undefined ? {} :
+              { promotionPayloadVersion: request.snapshot.promotionPayloadVersion }) } },
       });
       unsubscribeSessionEngine = subscribeSessionEngine();
     }

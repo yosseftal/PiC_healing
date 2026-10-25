@@ -45,6 +45,7 @@ export class PromoteGuestToAccountIdentityMismatchError extends Error {
 
 /** Input to `promoteGuestToAccount`: the full Guest state to move to the newly authenticated account. */
 export interface PromoteGuestToAccountInput {
+  promotionPayloadVersion?: 2;
   /**
    * Client-generated idempotency key. For a linked Symptom Group promotion this is the Guest Group's
    * client-side UUID (reused as the eventual `symptom_groups.id`). For an unlinked session (`group:
@@ -92,6 +93,7 @@ export interface GuestSessionGateState {
   pendingFinishRequest: {
     sessionId: string;
     kind: "finish" | "finishAnyway";
+    promotionPayloadVersion?: 2;
   } | null;
 }
 
@@ -131,6 +133,8 @@ export interface RepositoryPort {
   getGroup(groupId: string): Promise<SymptomGroup | null>;
 
   saveGroup(group: SymptomGroup): Promise<void>;
+
+  reorderSymptoms(groupId: string, orderedIDs: readonly string[], expectedRevision: number): Promise<SymptomGroup>;
 
   getPlayerSession(sessionId: string): Promise<PlayerSession | null>;
 

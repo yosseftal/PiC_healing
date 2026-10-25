@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import {
   TERMINAL_NEMAR_UNIT_ID,
+  GroupNotFoundError,
   TRACER_BULLET_SEED_TREATMENT_ROWS,
   type FinalizedSymptomGroup,
   type LibraryRow,
@@ -43,6 +44,7 @@ function createFakeAuthenticatedPort(): RepositoryPort {
       return null;
     },
     async saveGroup() {},
+    async reorderSymptoms(id) { throw new GroupNotFoundError(id); },
     async getPlayerSession(sessionId: string) {
       return sessions.get(sessionId) ?? null;
     },

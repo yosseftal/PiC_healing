@@ -1,6 +1,6 @@
 # W13-02 — Reorder topics and preserve priority through storage and promotion
 
-**Status:** in progress — atomic persistence contract agreed; SQL/red-test preparation reviewed; runtime work next.
+**Status:** in progress — implementation reviewed; local gates pass; awaiting manual SQL application and real verification.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md).
 **Blocking:** [W13-03](w13-03-renewed-joint-answer-after-addition.md), [W13-05](w13-05-clean-summary-and-polarity-view.md).
@@ -97,5 +97,54 @@ Implementation is authorized by the user; wait for prerequisites and serial disp
 
 ## Resolution
 
-Not implemented. To complete after authorization: solution path, decisions, deviations, test evidence,
-review outcome, commit, and explicit resolution for every AC above.
+Implementation is in progress; no closure or full-gate pass is claimed.
+The agreed [persistence contract](../audits/w13-02-contract-proposal.md) is implemented across engine,
+Guest storage, Supabase RPC mapping and web decorators; final review and integration verification remain open.
+The prepared runtime SQL is `supabase/migrations/20261022120000_durable_group_priority.sql`.
+The original three `.txt` drafts remain preserved verbatim in the audit directory, outside test/migration discovery.
+No live migration or privilege change has been applied.
+
+Reported focused evidence before the latest quota restart:
+
+- Core GroupEngine/reorder slice: 16 passing tests.
+- SQL extractor/bootstrap integrity: 15 passing tests, including row-lock clauses without hiding real treatment writes.
+- Expanded Fake/Guest permutation/CAS/overflow matrix: 6 passing tests.
+- Core Session/transport/replay focused batch: 4 files / 68 passing tests.
+- Guest storage-lock suite: 5 passing tests, including held-lock writers across separate ports,
+  legacy missing-revision reads without rewriting and unsupported persistent-lock failures with data retained.
+
+These batches overlap; their counts are not a combined test total. Exact final gates will replace this interim evidence.
+The first root typecheck/lint after the latest restart found a partial schema-test edit left by quota interruption;
+that syntax is corrected and final reruns remain required. W13-01 and W13-06's prior green checkpoints remain preserved.
+Real database owner/race/rollback/legacy-receipt evidence awaits the established manual SQL Editor checkpoint.
+All ACs remain unchecked until the complete slice, independent reviews and required database verification pass.
+
+### Final local checkpoint
+
+Root typecheck, lint and web depcruise pass; the web graph contains 774 modules / 1709 dependencies with zero violations.
+The final local-only Vitest command passes 58 files / 563 tests. It explicitly excludes remote files and filters the
+five remote cases in the mixed promote-path file; those five are reported skipped for this local command only.
+Root `npm test` has no such exclusions. Its latest pre-final-fixture run reports 587 passing / 45 failing tests;
+two remaining local test calls were then corrected to pass the actual assembled versioned snapshot, and the full local run passes.
+Remote red evidence includes PGRST202 missing RPCs and PGRST204 missing revision metadata; no full green gate is claimed.
+Six Chromium cases pass for Hebrew/English committed priority, keyboard focus, promotion loss/retry and existing journeys.
+Standards and Spec reviews both pass; see [the complete evidence](../audits/w13-02-implementation-review.md).
+
+| AC | Local evidence | Required real evidence before closure |
+| --- | --- | --- |
+| 01 | Rendered composition and keyboard browser moves use GroupEngine. | Final assembled gate after application. |
+| 02 | Fresh reads preserve identities, ratings, timestamps and actual answer. | Microsecond/order/ordinary-save contracts. |
+| 03 | Invalid permutation, stale, duplicate and overflow matrices pass. | Real membership and transaction rejection. |
+| 04 | Guest/fake fresh-instance round-trips and RPC transport pass. | Coherent ordered Supabase read-back. |
+| 05 | Shared CAS and held-lock all-writer tests pass. | Competing reorder/append/rating. |
+| 06 | Full intent retained, refreshed explicit retry, cancel/review and truthful status pass. | Final integrated verification. |
+| 07 | Legacy zero/order/missing-revision read without rewriting passes. | Additive legacy backfill verification. |
+| 08 | Ordered versioned replay and one-completion journeys pass locally. | Real promotion and lost-response replay. |
+| 09 | Literal v1 wire, frozen marker omission and strict replay tests pass. | Real old receipt and changed-payload rejection. |
+| 10 | SQL is additive, owner-checked and contains no deletion/reinsertion. | RLS/owner/grants/rollback execution. |
+| 11 | Hebrew/English priority labels, announcements and boundary focus pass. | Already browser-verified; retain in final gate. |
+
+The original draft documents remain intact. No treatment content or existing database row was deleted.
+The [manual-apply checkpoint](../handoffs/w13-02-manual-apply-checkpoint.md) is the exact next entry point.
+The implementation/preparation commit intentionally precedes schema application, as required by the remote-testing guide;
+it is not ticket closure. Resume W13-02 real verification after the human confirms `migration applied`, then proceed to W13-03.

@@ -52,6 +52,7 @@ export interface SessionState {
  * here from `group.id` when present, otherwise `playerSession.id` — see `promote()`) and `newUserId`.
  */
 export interface GuestSnapshot {
+  promotionPayloadVersion?: 2;
   group: FinalizedSymptomGroup | null;
   playerSession: PlayerSession;
 }
@@ -59,6 +60,7 @@ export interface GuestSnapshot {
 type PendingFinishKind = "finish" | "finishAnyway";
 
 interface PendingFinishRequest {
+  promotionPayloadVersion?: 2;
   sessionId: string;
   kind: PendingFinishKind;
 }
@@ -141,7 +143,9 @@ export class SessionEngine {
       return;
     }
     this.gateTriggered = true;
-    this.pendingFinishRequest = { sessionId, kind };
+    this.pendingFinishRequest = this.pendingFinishRequest?.sessionId === sessionId
+      ? { ...this.pendingFinishRequest, kind }
+      : { sessionId, kind, promotionPayloadVersion: 2 };
     await this.persistGateState();
     this.notify();
   }
@@ -169,6 +173,8 @@ export class SessionEngine {
         group: guestState.group,
         playerSession: normalizeForPermanentStore(guestState.playerSession),
         newUserId,
+        ...(guestState.promotionPayloadVersion === undefined
+          ? {} : { promotionPayloadVersion: guestState.promotionPayloadVersion }),
       });
     } catch {
       this.promotionStatus = "failed";

@@ -118,7 +118,7 @@ describe("LocalGuestRepository", () => {
 
       await repository.saveGroup(group);
 
-      await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+      await expect(repository.getGroup(group.id)).resolves.toEqual({ ...group, revision: group.revision ?? 0 });
     });
   });
 
@@ -244,7 +244,7 @@ describe("LocalGuestRepository", () => {
 
       const afterReload = new LocalGuestRepository({ storage, storageKey });
 
-      await expect(afterReload.getGroup(group.id)).resolves.toEqual(group);
+      await expect(afterReload.getGroup(group.id)).resolves.toEqual({ ...group, revision: group.revision ?? 0 });
     });
 
     it("reconnects via the fixed DEFAULT_GUEST_STORAGE_KEY when no storageKey is given", async () => {
@@ -254,7 +254,7 @@ describe("LocalGuestRepository", () => {
       await new LocalGuestRepository({ storage }).saveGroup(group);
       const afterReload = await new LocalGuestRepository({ storage }).getGroup(group.id);
 
-      expect(afterReload).toEqual(group);
+      expect(afterReload).toEqual({ ...group, revision: group.revision ?? 0 });
       // Confirms both instances actually agreed on the documented fixed key, not two coincidentally
       // matching values - a real browser reload never passes an explicit storageKey either.
       expect(storage.getItem(DEFAULT_GUEST_STORAGE_KEY)).not.toBeNull();

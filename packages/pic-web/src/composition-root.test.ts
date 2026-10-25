@@ -6,10 +6,11 @@ import type { FinalizedSymptomGroup, LibraryRow, PlayerSession, RepositoryPort, 
 import { DEFAULT_GUEST_STORAGE_KEY, LocalGuestRepository } from "pic-adapter-local-guest";
 import type { GuestSnapshot } from "pic-engine";
 import { DEFAULT_GUEST_SESSION_GATE_STATE } from "pic-engine";
+import { GroupNotFoundError, prepareGroupSave, prepareSymptomReorder, type SymptomGroup } from "pic-engine";
 import { compositionRoot, swapToSupabaseAdapter } from "./composition-root";
 
 function createInMemoryAuthenticatedPort(): RepositoryPort {
-  const groups = new Map<string, FinalizedSymptomGroup>();
+  const groups = new Map<string, SymptomGroup>();
   const sessions = new Map<string, PlayerSession>();
   const libraryRows = new Map<string, LibraryRow>();
   const libraryRowIdByTreatmentId = new Map<string, string>();
@@ -19,10 +20,17 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
 
   return {
     async getGroup(groupId) {
-      return groups.get(groupId) ?? null;
+      return structuredClone(groups.get(groupId) ?? null);
     },
     async saveGroup(group) {
-      groups.set(group.id, group as FinalizedSymptomGroup);
+      groups.set(group.id, prepareGroupSave(groups.get(group.id) ?? null, group));
+    },
+    async reorderSymptoms(id, ids, revision) {
+      const group = groups.get(id);
+      if (!group) throw new GroupNotFoundError(id);
+      const committed = prepareSymptomReorder(group, ids, revision);
+      groups.set(id, committed);
+      return structuredClone(committed);
     },
     async getPlayerSession(sessionId) {
       return sessions.get(sessionId) ?? null;
@@ -524,7 +532,7 @@ it.each([false, true])("recovers Gate after cleanup/rearming fail and reload, bo
   const { compositionRoot: restored } = await import("./composition-root");
   const facts = await import("./guest-flow-facts");
   await vi.waitFor(async () => expect(await restored.repositoryPort.getGuestSessionGate()).toEqual({
-    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway" },
+    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway", promotionPayloadVersion: 2 },
   }));
   expect(await restored.repositoryPort.getPlayerSession(sessionId)).toEqual(before);
   expect(facts.guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
@@ -573,7 +581,7 @@ it.each([false, true])("retains latest Finish kind after gate/cleanup failures, 
   vi.spyOn(provider, "clear").mockRejectedValueOnce(new Error("Cleanup unavailable"));
   await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow("Cleanup unavailable");
   expect(await fresh.repositoryPort.getGuestSessionGate()).toEqual({
-    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway" },
+    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway", promotionPayloadVersion: 2 },
   });
   expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
   await fresh.inquiryResetActions.resetInquiry(true);

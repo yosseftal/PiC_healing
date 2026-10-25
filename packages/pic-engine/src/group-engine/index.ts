@@ -42,6 +42,7 @@
  */
 import type { FinalizedSymptomGroup, Intensity, JointTreatmentMuscleTestResult, Polarity, Symptom } from "../types";
 import type { RepositoryPort, SymptomGroup } from "../repository-port";
+import { prepareSymptomReorder } from "../group-revision";
 
 /** `addSymptom`'s placeholder rating for a not-yet-rated symptom - see `Symptom.rated_at`'s doc comment. */
 const UNRATED_PLACEHOLDER_POLARITY: Polarity = "negative";
@@ -104,6 +105,11 @@ export class GroupEngine {
   private readonly groupIdBySymptomId = new Map<string, string>();
 
   constructor(private readonly repositoryPort: RepositoryPort) {}
+
+  async reorderSymptoms(groupId: string, orderedIDs: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
+    prepareSymptomReorder(await this.loadGroupOrThrow(groupId), orderedIDs, expectedRevision);
+    return this.repositoryPort.reorderSymptoms(groupId, orderedIDs, expectedRevision);
+  }
 
   /** Creates and persists a new, unfinalized Symptom Group with no symptoms yet. Returns its `groupId`. */
   async createDraftGroup(name: string): Promise<string> {
@@ -229,7 +235,15 @@ export class GroupEngine {
       joint_treatment_test_at: group.joint_treatment_test_at,
     };
     await this.repositoryPort.saveGroup(finalizedGroup);
-    return { group: finalizedGroup, splitAdvisory: finalizedGroup.joint_treatment_muscle_test === "split_suggested" };
+    const committed = await this.loadGroupOrThrow(groupId);
+    if (committed.joint_treatment_muscle_test === null || committed.joint_treatment_test_at === null) {
+      throw new JointTreatmentMuscleTestNotSetError(groupId);
+    }
+    return {
+      group: { ...committed, joint_treatment_muscle_test: committed.joint_treatment_muscle_test,
+        joint_treatment_test_at: committed.joint_treatment_test_at },
+      splitAdvisory: committed.joint_treatment_muscle_test === "split_suggested",
+    };
   }
 
   private async loadGroupOrThrow(groupId: string): Promise<SymptomGroup> {

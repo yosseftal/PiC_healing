@@ -19,7 +19,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** None
 
 - **Ticket:** [W13-02][W13-02]
-  **Status:** in progress; persistence contract and unapplied SQL prepared, runtime implementation next.
+  **Status:** in progress; implemented and reviewed, local gates pass; awaiting manual SQL application and real verification.
   **End-to-end delivery:** Reorder topics and preserve priority through storage and promotion
   **Blocked by:** W13-01
 

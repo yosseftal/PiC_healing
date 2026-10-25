@@ -60,6 +60,7 @@ compositionRoot.treatmentContentActions.getParsedTreatmentContent = async () => 
 if (new URLSearchParams(location.search).get("gateRequest") === "deferred") {
   const failingPort: RepositoryPort = {
     ...(compositionRoot.repositoryPort.getProvider() as RepositoryPort),
+    reorderSymptoms: compositionRoot.repositoryPort.reorderSymptoms.bind(compositionRoot.repositoryPort),
     async promoteGuestToAccount() {
       await new Promise<void>((resolve) => {
         window.addEventListener("fixture-reject-promotion", () => resolve(), { once: true });

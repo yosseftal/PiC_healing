@@ -20,9 +20,10 @@ async function setup(linked = true) {
   const path = await import("./promote-path");
   const user = { id: randomUUID(), email: credentials.email, email_confirmed_at: "2026-10-15",
     app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-10-15" };
+  const transport = vi.fn<typeof fetch>(async () => new Response(JSON.stringify([{ id: user.id }]), { status: 200 }));
   const client = createClient("https://recovery.invalid", "fixture-public", {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: { fetch: async () => new Response(JSON.stringify([{ id: user.id }]), { status: 200 }) },
+    global: { fetch: transport },
   });
   const signIn = vi.spyOn(client.auth, "signInWithPassword").mockResolvedValue({ data: { user, session: {
     user, access_token: "access-secret", refresh_token: "refresh-secret", expires_in: 3600, token_type: "bearer",
@@ -70,7 +71,8 @@ async function setup(linked = true) {
   const save = vi.spyOn(port, "savePlayerSession").mockImplementation(async (row) => { rows.set(row.id, row); });
   vi.spyOn(port, "saveGuestSessionGate").mockResolvedValue();
   const timeline = vi.spyOn(port, "appendTimelineEvent");
-  return { root, user, verify, signIn, rpc, save, timeline, rows, snapshot, commit, effects: () => effects, client, port, path };
+  return { root, user, verify, signIn, rpc, save, timeline, rows, snapshot, commit, effects: () => effects,
+    client, port, path, transport };
 }
 
 async function reload(f: Awaited<ReturnType<typeof setup>>) {
@@ -80,6 +82,102 @@ async function reload(f: Awaited<ReturnType<typeof setup>>) {
   vi.spyOn(path, "createSupabaseRepositoryFromClient").mockReturnValue(f.port);
   return (await import("./composition-root")).compositionRoot;
 }
+
+it("assembles a new Finish intent as v2 and retains its marker through cleanup recovery and constructor recreation", async () => {
+  const f = await setup();
+  const assembled = await f.root.promotePathActions.assembleGuestSnapshotForPendingGate();
+  expect(assembled?.promotionPayloadVersion).toBe(2);
+  f.save.mockRejectedValueOnce(new Error("Completion write lost"));
+  await expect(f.root.promotePathActions.signInAndPromote(credentials)).rejects.toThrow("Completion");
+  const frozen = JSON.parse(localStorage.getItem(RECOVERY_KEY)!);
+  expect(frozen.snapshot.promotionPayloadVersion).toBe(2);
+  await f.root.promotePathActions.signInAndPromote();
+  expect(f.rpc.mock.calls[1]![0]).toEqual(f.rpc.mock.calls[0]![0]);
+  expect(f.rpc.mock.calls[1]![0].promotionPayloadVersion).toBe(2);
+  expect(f.effects()).toBe(1);
+});
+
+it("replays an old gate-only v1 lost response after reload without upgrading the pending intent", async () => {
+  const f = await setup();
+  await f.root.repositoryPort.saveGuestSessionGate({ gateTriggered: true,
+    pendingFinishRequest: { sessionId: f.snapshot.playerSession.id, kind: "finish" } });
+  expect(localStorage.getItem(RECOVERY_KEY)).toBeNull();
+  const root = await reload(f);
+  const snapshot = (await root.promotePathActions.assembleGuestSnapshotForPendingGate())!;
+  expect(snapshot).not.toHaveProperty("promotionPayloadVersion");
+  // The old server already committed this operation; only its response was lost.
+  await f.commit({ idempotencyKey: snapshot.group!.id, group: snapshot.group,
+    playerSession: snapshot.playerSession, newUserId: f.user.id });
+  await root.sessionEngineActions.onFinishRequested(snapshot.playerSession.id, "finishAnyway");
+  expect(await root.promotePathActions.assembleGuestSnapshotForPendingGate()).not.toHaveProperty("promotionPayloadVersion");
+  await root.promotePathActions.signInAndPromote(credentials);
+  expect(f.rpc.mock.calls[0]![0]).not.toHaveProperty("promotionPayloadVersion");
+  expect(root.sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
+  expect(f.effects()).toBe(1);
+});
+
+it("matches an existing v1 gate-only wire receipt despite normalized revisions and actual zero ratings", async () => {
+  const f = await setup();
+  const oldGroup = { ...f.snapshot.group!, symptoms: [
+    { id: randomUUID(), name: "Historical zero", polarity: "negative" as const, intensity: 0 as const,
+      rated_at: "2026-10-15T01:02:03.123456Z" },
+    { id: randomUUID(), name: "Unrated", polarity: "positive" as const, intensity: 0 as const, rated_at: null },
+  ] };
+  const current = (await f.root.repositoryPort.getGroup(oldGroup.id))!;
+  await f.root.repositoryPort.saveGroup({ ...oldGroup, revision: current.revision });
+  await f.root.repositoryPort.saveGuestSessionGate({ gateTriggered: true,
+    pendingFinishRequest: { sessionId: f.snapshot.playerSession.id, kind: "finish" } });
+  const session = f.snapshot.playerSession;
+  // Literal old-client JSON shape: no revision, positions or version; actual rated_at only.
+  const receipt = {
+    p_guest_group: { id: oldGroup.id, name: oldGroup.name, joint_treatment_muscle_test: "together",
+      joint_treatment_test_at: "2026-10-15T00:00:00Z", created_at: "2026-10-15T00:00:00Z" },
+    p_symptoms: [oldGroup.symptoms[0], { id: oldGroup.symptoms[1]!.id, name: "Unrated", polarity: "positive", intensity: 0 }],
+    p_player_session: { id: session.id, treatment_id: session.treatment_id, linked_group_id: oldGroup.id,
+      units: [{ unit_id: "a", state: "completed" }], terminal_nemar_response: "yes", success_declared: false,
+      integrating_reason: null, finished_at: null },
+    p_new_user_id: f.user.id,
+  };
+  f.rpc.mockRestore();
+  f.rows.set(session.id, structuredClone(session));
+  let replies = 0;
+  const wire: unknown[] = [];
+  f.transport.mockImplementation(async (input, init) => {
+    const path = new URL(String(input)).pathname;
+    let body: unknown;
+    if (path.endsWith("/promote_guest_to_account")) {
+      const payload: unknown = JSON.parse(String(init?.body));
+      wire.push(payload);
+      expect(payload).toEqual(receipt);
+      if (++replies === 1) {
+        return new Response(JSON.stringify({ message: "Response lost after original commit" }), { status: 503 });
+      }
+      body = { group_id: oldGroup.id, session_id: session.id, library_row_id: "library", timeline_event_id: session.id };
+    } else if (path.endsWith("/get_symptom_group")) {
+      body = { ...oldGroup, revision: 1 };
+    } else if (path.endsWith("/personal_treatment_library")) {
+      body = [{ id: "library", treatment_id: session.treatment_id, use_count: 1, variant_type: "original",
+        global_reference_id: session.treatment_id, protocol_content: null, created_at: "2026-10-15",
+        provenance: { source: "guest_promotion", first_seen_at: "2026-10-15" } }];
+    } else if (path.endsWith("/timeline_events")) {
+      body = [{ id: session.id, log_type: "execution", treatment_id: session.treatment_id, library_row_id: "library",
+        linked_group_id: oldGroup.id, metadata: null, created_at: "2026-10-15" }];
+    } else body = [{ id: f.user.id }];
+    return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+  });
+  const first = await reload(f);
+  expect(localStorage.getItem(RECOVERY_KEY)).toBeNull();
+  await first.promotePathActions.signInAndPromote(credentials);
+  expect(first.sessionEngineStore.getSnapshot().promotionStatus).toBe("failed");
+  const frozen = localStorage.getItem(RECOVERY_KEY)!;
+  expect(JSON.parse(frozen).snapshot).not.toHaveProperty("promotionPayloadVersion");
+  const second = await reload(f);
+  await second.promotePathActions.signInAndPromote();
+  expect(wire).toEqual([receipt, receipt]);
+  expect(second.sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
+  expect(f.rows.get(session.id)?.success_declared).toBe(true);
+  expect(f.timeline).not.toHaveBeenCalled();
+});
 
 it("retains durable recovery when verification cleanup rejects, then retries the same operation after reload", async () => {
   const f = await setup(false);
@@ -389,7 +487,8 @@ it("preserves the frozen snapshot when storage rejects before a changed public r
 });
 it("restores an owner-bound split_suggested promotion without changing the Event Manager's answer", async () => {
   const f = await setup();
-  const group = { ...f.snapshot.group!, joint_treatment_muscle_test: "split_suggested" as const };
+  const stored = (await f.root.repositoryPort.getGroup(f.snapshot.group!.id))!;
+  const group = { ...stored, joint_treatment_muscle_test: "split_suggested" as const };
   await f.root.repositoryPort.saveGroup(group);
   f.rpc.mockImplementationOnce(async (input) => { await f.commit(input); throw new Error("Promotion response lost"); });
   await f.root.promotePathActions.signInAndPromote(credentials);

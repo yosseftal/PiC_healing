@@ -1,4 +1,4 @@
-import type { RepositoryPort, SymptomGroup } from "pic-engine";
+import { prepareGroupSave, prepareSymptomReorder, GroupNotFoundError, type RepositoryPort, type SymptomGroup } from "pic-engine";
 
 /** Only GroupEngine uses this decorator. An exclusive composition operation owns each staging window. */
 export function createGroupStaging(port: RepositoryPort) {
@@ -10,8 +10,16 @@ export function createGroupStaging(port: RepositoryPort) {
         return target.getGroup(id);
       };
       if (property === "saveGroup") return async (group: SymptomGroup) => {
-        if (staged !== null) { staged.set(group.id, structuredClone(group)); return; }
+        if (staged !== null) { staged.set(group.id, prepareGroupSave(staged.get(group.id) ?? null, group)); return; }
         return target.saveGroup(group);
+      };
+      if (property === "reorderSymptoms") return async (id: string, ids: readonly string[], revision: number) => {
+        if (staged === null) return target.reorderSymptoms(id, ids, revision);
+        const group = staged.get(id);
+        if (!group) throw new GroupNotFoundError(id);
+        const committed = prepareSymptomReorder(group, ids, revision);
+        staged.set(id, committed);
+        return structuredClone(committed);
       };
       const value: unknown = Reflect.get(target, property, receiver);
       return typeof value === "function" ? value.bind(target) : value;

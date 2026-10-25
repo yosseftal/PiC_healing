@@ -232,6 +232,7 @@ describe("PersistenceGateModal", () => {
 
     const failingPort: RepositoryPort = {
       ...(guestProvider as RepositoryPort),
+      reorderSymptoms: guestProvider.reorderSymptoms.bind(guestProvider),
       async promoteGuestToAccount() {
         throw new Error("network drop");
       },
@@ -344,6 +345,7 @@ describe("PersistenceGateModal", () => {
     let rejectPromotion!: (error: Error) => void;
     const failingPort: RepositoryPort = {
       ...(compositionRoot.repositoryPort.getProvider() as RepositoryPort),
+      reorderSymptoms: compositionRoot.repositoryPort.reorderSymptoms.bind(compositionRoot.repositoryPort),
       promoteGuestToAccount: () => new Promise((_, reject) => { rejectPromotion = reject; }),
     };
     const signIn = vi.spyOn(compositionRoot.promotePathActions, "signInAndPromote")
@@ -363,7 +365,7 @@ describe("PersistenceGateModal", () => {
     await act(async () => { await Promise.resolve(); });
     expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("pending");
     expect(await compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate())
-      .toEqual({ group, playerSession: session });
+      .toEqual({ group: { ...group, revision: 0 }, playerSession: session, promotionPayloadVersion: 2 });
     await act(async () => { rejectPromotion(new Error("connection dropped")); });
     expect(screen.getByText("עדיין לא הצלחנו לשמור את הסשן שלך. אפשר לנסות שוב כשמתאים לך.")).toBeTruthy();
     const retry = screen.getByRole("button", { name: "ניסיון נוסף" });
@@ -377,7 +379,7 @@ describe("PersistenceGateModal", () => {
     expect(compositionRoot.sessionEngineStore.getSnapshot().promotionStatus).toBe("pending");
     await act(async () => { rejectPromotion(new Error("still reconnecting")); });
     expect(await compositionRoot.promotePathActions.assembleGuestSnapshotForPendingGate())
-      .toEqual({ group, playerSession: session });
+      .toEqual({ group: { ...group, revision: 0 }, playerSession: session, promotionPayloadVersion: 2 });
     expect(localStorage.getItem("pic-web.locale.v1")).toBe("en");
   });
 

@@ -6,6 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_GUEST_STORAGE_KEY, LocalGuestRepository } from "pic-adapter-local-guest";
 import type { FinalizedSymptomGroup, PlayerSession, RepositoryPort } from "pic-engine";
+import { GroupNotFoundError, prepareGroupSave, prepareSymptomReorder, type SymptomGroup } from "pic-engine";
 import { compositionRoot } from "./composition-root";
 import {
   assembleGuestSnapshotForPendingGate,
@@ -96,7 +97,8 @@ describe("assembleGuestSnapshotForPendingGate", () => {
     });
 
     const snapshot = await assembleGuestSnapshotForPendingGate(guestRepository);
-    expect(snapshot).toEqual({ group, playerSession: session });
+    expect(snapshot).toEqual({ group: { ...group, revision: 0 }, playerSession: session });
+    expect(snapshot).not.toHaveProperty("promotionPayloadVersion");
   });
 
   it("returns group: null for a gated guest session with no linked Symptom Group (ticket 08)", async () => {
@@ -176,11 +178,14 @@ describe("promoteWithAuthenticatedRepository", () => {
     const promotion = vi.spyOn(authenticatedPort, "promoteGuestToAccount");
     const timeline = vi.spyOn(authenticatedPort, "appendTimelineEvent");
     await sessionEngineActions.onFinishRequested(session.id, "finish");
-    expect(await promotePathActions.assembleGuestSnapshotForPendingGate()).toEqual({ group, playerSession: session });
+    const pendingSnapshot = await promotePathActions.assembleGuestSnapshotForPendingGate();
+    expect(pendingSnapshot).toEqual({
+      group: { ...group, revision: 0 }, playerSession: session, promotionPayloadVersion: 2,
+    });
 
     await promotePathActions.promoteWithAuthenticatedRepository(
       authenticatedPort,
-      { group, playerSession: session },
+      pendingSnapshot!,
       "user-success",
     );
 
@@ -189,9 +194,10 @@ describe("promoteWithAuthenticatedRepository", () => {
     expect(sessionEngineStore.getSnapshot().promotionStatus).toBe("succeeded");
     expect(localStorage.getItem("pic-web.locale.v1")).toBe(locale);
     expect(promotion).toHaveBeenCalledWith({
-      idempotencyKey: group.id, group, playerSession: session, newUserId: "user-success",
+      idempotencyKey: group.id, group: { ...group, revision: 0 }, playerSession: session,
+      newUserId: "user-success", promotionPayloadVersion: 2,
     });
-    expect(await authenticatedPort.getGroup(group.id)).toEqual(group);
+    expect(await authenticatedPort.getGroup(group.id)).toEqual({ ...group, revision: 0 });
     expect(await authenticatedPort.getPlayerSession(session.id)).toEqual({
       ...session, success_declared: true, finished_at: expect.any(String),
     });
@@ -352,7 +358,7 @@ describe("real login promotion coordination", () => {
 });
 
 function createInMemoryAuthenticatedPort(): RepositoryPort {
-  const groups = new Map<string, FinalizedSymptomGroup>();
+  const groups = new Map<string, SymptomGroup>();
   const sessions = new Map<string, PlayerSession>();
   const libraryRows = new Map<string, { id: string; treatment_id: string; use_count: number }>();
   const libraryRowIdByTreatmentId = new Map<string, string>();
@@ -362,10 +368,17 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
 
   return {
     async getGroup(groupId) {
-      return groups.get(groupId) ?? null;
+      return structuredClone(groups.get(groupId) ?? null);
     },
     async saveGroup(group) {
-      groups.set(group.id, group as FinalizedSymptomGroup);
+      groups.set(group.id, prepareGroupSave(groups.get(group.id) ?? null, group));
+    },
+    async reorderSymptoms(id, ids, revision) {
+      const group = groups.get(id);
+      if (!group) throw new GroupNotFoundError(id);
+      const committed = prepareSymptomReorder(group, ids, revision);
+      groups.set(id, committed);
+      return structuredClone(committed);
     },
     async getPlayerSession(sessionId) {
       return sessions.get(sessionId) ?? null;
@@ -617,7 +630,9 @@ describe("promote path remote integration", () => {
     await sessionEngineActions.onFinishRequested(session.id, linked ? "finish" : "finishAnyway");
 
     const snapshot = await promotePathActions.assembleGuestSnapshotForPendingGate();
-    expect(snapshot).toEqual({ group: linked ? group : null, playerSession: session });
+    expect(snapshot).toEqual({
+      group: linked ? { ...group, revision: 0 } : null, playerSession: session, promotionPayloadVersion: 2,
+    });
 
     const supabaseRepository = createSupabaseRepositoryFromClient(testUser.client);
     await promotePathActions.promoteWithAuthenticatedRepository(supabaseRepository, snapshot!, testUser.userId);

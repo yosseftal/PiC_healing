@@ -98,10 +98,10 @@ it("settles a pending summary in the chosen locale with isolated personal wordin
   expect(personal.getAttribute("lang")).toBe("");
   expect(personal.getAttribute("dir")).toBe("auto");
   expect(personal.querySelector("b")).toBeNull();
-  expect(screen.getByTestId(`summary-symptom-${symptom}`).textContent).toBe("Neck צוואר — חיובית, 7/10");
+  expect(screen.getByTestId(`summary-symptom-${symptom}`).textContent).toBe("סדר עדיפות 1Neck צוואר — חיובית, 7/10");
   expect(screen.getByTestId("symptom-count").textContent).toBe("סימפטום 1 בקבוצה");
   switchLanguage("en");
-  expect(screen.getByTestId(`summary-symptom-${symptom}`).textContent).toBe("Neck צוואר — Positive, 7/10");
+  expect(screen.getByTestId(`summary-symptom-${symptom}`).textContent).toBe("Priority 1Neck צוואר — Positive, 7/10");
   expect(read).toHaveBeenCalledExactlyOnceWith(groupId);
   expect(screen.getByTestId("confirm-group-summary")).toBeTruthy();
 });

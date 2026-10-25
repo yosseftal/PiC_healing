@@ -526,6 +526,17 @@ export function extractTreatmentMarkdownFromSql(
     if (i >= sql.length) {
       break;
     }
+    if (matchWord(sql, i, "for")) {
+      let lock = skipTrivia(sql, i + 3);
+      if (matchWord(sql, lock, "no")) {
+        const key = skipTrivia(sql, lock + 2);
+        if (matchWord(sql, key, "key")) lock = skipTrivia(sql, key + 3);
+      }
+      if (matchWord(sql, lock, "update")) {
+        i = lock + 6;
+        continue;
+      }
+    }
     if (matchWord(sql, i, "insert")) {
       const parsed = parseInsert(sql, i, sourceFileName);
       rows.push(...parsed.rows);

@@ -1,4 +1,6 @@
-import type { RepositoryPort, SymptomGroup } from "pic-engine";
+import {
+  normalizeGroupRevision, prepareGroupSave, prepareSymptomReorder, type RepositoryPort, type SymptomGroup,
+} from "pic-engine";
 import { InquiryOperationCancelled, inquiryGenerationStore } from "./inquiry-lifecycle";
 import type { createAuthLifecycle } from "./auth-lifecycle";
 
@@ -9,6 +11,7 @@ export const markAuthenticatedFocus = (owner: string) => localStorage.setItem(FO
 
 const KEY = "pic-web.authenticated-draft.v1";
 export interface AuthenticatedDraft {
+  schemaVersion?: 2;
   owner: string;
   generation: number;
   phase: "draft" | "flushing" | "anchored";
@@ -23,7 +26,8 @@ export function readAuthenticatedDraft(): AuthenticatedDraft | null {
     const raw = localStorage.getItem(KEY);
     if (raw === null) return null;
     const value: unknown = JSON.parse(raw);
-    if (!record(value) || typeof value.owner !== "string" || !value.owner ||
+    if (!record(value) || (value.schemaVersion !== undefined && value.schemaVersion !== 2) ||
+      typeof value.owner !== "string" || !value.owner ||
       !Number.isSafeInteger(value.generation) || Number(value.generation) < 0 ||
       !["draft", "flushing", "anchored"].includes(String(value.phase)) || !record(value.group)) return null;
     const group = value.group;
@@ -37,7 +41,8 @@ export function readAuthenticatedDraft(): AuthenticatedDraft | null {
       typeof group.joint_treatment_test_at === "string";
     if (!answered && (group.joint_treatment_muscle_test !== null || group.joint_treatment_test_at !== null)) return null;
     if (value.phase !== "draft" && !answered) return null;
-    return value as unknown as AuthenticatedDraft;
+    const draft = value as unknown as AuthenticatedDraft;
+    return draft.phase === "draft" ? { ...draft, group: normalizeGroupRevision(draft.group) } : draft;
   } catch { return null; }
 }
 
@@ -46,7 +51,7 @@ export function createAuthenticatedDraft(
   initial: AuthenticatedDraft | null, auth: ReturnType<typeof createAuthLifecycle>,
 ) {
   let retrySave: (() => Promise<void>) | null = null;
-  let entry = initial;
+  let entry = initial?.phase === "draft" ? { ...initial, group: normalizeGroupRevision(initial.group) } : initial;
   let restored = initial !== null;
   const listeners = new Set<() => void>();
   let snapshot = entry === null ? null : { ...entry, restored };
@@ -55,8 +60,9 @@ export function createAuthenticatedDraft(
     for (const listener of listeners) listener();
   };
   const save = (next: AuthenticatedDraft) => {
-    localStorage.setItem(KEY, JSON.stringify(next));
-    entry = next;
+    const versioned = { ...next, schemaVersion: 2 as const };
+    localStorage.setItem(KEY, JSON.stringify(versioned));
+    entry = versioned;
     publish();
   };
   const check = (owner: string, generation: number) => {
@@ -121,9 +127,18 @@ export function createAuthenticatedDraft(
               if (existing !== null || group.joint_treatment_muscle_test !== null) return port.saveGroup(group);
             }
             if (entry !== null && entry.group.id !== group.id) throw new Error("A local draft is already pending");
-            save({ owner, generation, group: structuredClone(group),
+            save({ owner, generation, group: prepareGroupSave(entry?.group ?? null, group),
               phase: group.joint_treatment_muscle_test === null ? "draft" : "flushing" });
             if (group.joint_treatment_muscle_test !== null) await flush();
+          };
+          if (property === "reorderSymptoms") return async (id: string, ids: readonly string[], revision: number) => {
+            const generation = await admit();
+            if (entry !== null && entry.group.id !== id) throw new Error("A local draft is already pending");
+            if (entry === null || entry.phase === "anchored") return port.reorderSymptoms(id, ids, revision);
+            if (entry.phase === "flushing") throw new Error("Retry the pending group save first");
+            const committed = prepareSymptomReorder(entry.group, ids, revision);
+            save({ ...entry, generation, group: committed });
+            return structuredClone(committed);
           };
           const value: unknown = Reflect.get(target, property, receiver);
           return typeof value === "function" ? value.bind(target) : value;

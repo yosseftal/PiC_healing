@@ -26,7 +26,7 @@ Wave 13 implementation is authorized; follow its ticket index for the current ex
 | [10][W10] | [Document][S10] | [Suite][T10] | [Document][A10] | [Document][H10] |
 | [11][W11] | [Document][S11] | [Suite][T11] | [Document][A11] | [Document][H11] |
 | [12][W12] | [Document][S12] | [Suite][T12] | [Document][A12] | [Document][H12] |
-| [13][W13] | [Document][S13] | [Suite][T13] | [Document][A13] | — |
+| [13][W13] | [Document][S13] | [Suite][T13] | [Document][A13] | [Checkpoint][H13] |
 
 [W0]: wave-0/INDEX.md
 [W1]: wave-1/INDEX.md
@@ -80,6 +80,7 @@ Wave 13 implementation is authorized; follow its ticket index for the current ex
 [S13]: wave-13/specs/wave-13-spec.md
 [T13]: wave-13/tickets/INDEX.md
 [A13]: wave-13/audits/wave-13-content-audit.md
+[H13]: wave-13/handoffs/w13-02-manual-apply-checkpoint.md
 
 Artifact shortcuts open the primary record or ticket suite. Open a wave number for every preserved version,
 additional audit and handoff. A dash means no standalone artifact was found; shared specifications remain linked

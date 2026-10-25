@@ -40,6 +40,10 @@ export {
 } from "./repository-port";
 
 export { DelegatingRepositoryPort } from "./delegating-repository-port";
+export {
+  GroupRevisionConflictError, InvalidSymptomOrderError,
+  normalizeGroupRevision, prepareGroupSave, prepareSymptomReorder,
+} from "./group-revision";
 
 export {
   EmptyRatingUpdateError,

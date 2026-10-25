@@ -28,6 +28,10 @@ import type {
 import {
   DEFAULT_GUEST_SESSION_GATE_STATE,
   normalizeInViewUnit,
+  normalizeGroupRevision,
+  prepareGroupSave,
+  prepareSymptomReorder,
+  GroupNotFoundError,
   rehydrateInViewUnit,
   TRACER_BULLET_SEED_TREATMENT_ROWS,
   TRACER_BULLET_SEED_TREATMENTS,
@@ -68,6 +72,8 @@ export const DEFAULT_PERSISTED_GUEST_FLOW_FACTS: PersistedGuestFlowFacts = {
 export interface LocalGuestRepositoryOptions {
   storage?: GuestKeyValueStorage;
   storageKey?: string;
+  /** Explicit equivalent lock for isolated storage or another persistent backend. */
+  writeLock?: GuestWriteLock;
 }
 
 /**
@@ -113,6 +119,7 @@ function resolveDefaultStorage(): GuestKeyValueStorage {
 }
 
 interface GuestRepositorySnapshot {
+  schemaVersion?: 2;
   groups: Record<string, SymptomGroup>;
   playerSessions: Record<string, PlayerSession>;
   libraryRows: Record<string, LibraryRow>;
@@ -160,10 +167,13 @@ export class GuestRepositoryCannotPromoteError extends Error {
 export class LocalGuestRepository implements RepositoryPort {
   private readonly storage: GuestKeyValueStorage;
   private readonly storageKey: string;
+  private readonly writeLock: GuestWriteLock;
 
   constructor(options: LocalGuestRepositoryOptions = {}) {
     this.storage = options.storage ?? resolveDefaultStorage();
     this.storageKey = options.storageKey ?? DEFAULT_GUEST_STORAGE_KEY;
+    this.writeLock = options.writeLock ?? (this.storage instanceof InMemoryGuestKeyValueStorage
+      ? createIsolatedGuestWriteLock(this.storage) : browserWriteLock);
   }
 
   private readSnapshot(): GuestRepositorySnapshot {
@@ -183,17 +193,32 @@ export class LocalGuestRepository implements RepositoryPort {
   }
 
   private writeSnapshot(snapshot: GuestRepositorySnapshot): void {
-    this.storage.setItem(this.storageKey, JSON.stringify(snapshot));
+    this.storage.setItem(this.storageKey, JSON.stringify({ ...snapshot, schemaVersion: 2 }));
   }
 
   async getGroup(groupId: string): Promise<SymptomGroup | null> {
-    return this.readSnapshot().groups[groupId] ?? null;
+    const group = this.readSnapshot().groups[groupId];
+    return group ? normalizeGroupRevision(group) : null;
   }
 
   async saveGroup(group: SymptomGroup): Promise<void> {
-    const snapshot = this.readSnapshot();
-    snapshot.groups[group.id] = group;
-    this.writeSnapshot(snapshot);
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      snapshot.groups[group.id] = prepareGroupSave(snapshot.groups[group.id] ?? null, group);
+      this.writeSnapshot(snapshot);
+    });
+  }
+
+  async reorderSymptoms(groupId: string, orderedIDs: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      const group = snapshot.groups[groupId];
+      if (!group) throw new GroupNotFoundError(groupId);
+      const committed = prepareSymptomReorder(group, orderedIDs, expectedRevision);
+      snapshot.groups[groupId] = committed;
+      this.writeSnapshot(snapshot);
+      return normalizeGroupRevision(committed);
+    });
   }
 
   async getPlayerSession(sessionId: string): Promise<PlayerSession | null> {
@@ -206,63 +231,71 @@ export class LocalGuestRepository implements RepositoryPort {
   }
 
   async savePlayerSession(session: PlayerSession): Promise<void> {
-    const snapshot = this.readSnapshot();
-    snapshot.playerSessions[session.id] = { ...session, units: session.units.map(normalizeInViewUnit) };
-    this.writeSnapshot(snapshot);
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      snapshot.playerSessions[session.id] = { ...session, units: session.units.map(normalizeInViewUnit) };
+      this.writeSnapshot(snapshot);
+    });
   }
 
   async getOrCreateLibraryRow(treatmentId: string, provenance: LibraryRowProvenance): Promise<LibraryRow> {
-    const snapshot = this.readSnapshot();
-    const existingRowId = snapshot.libraryRowIdByTreatmentId[treatmentId];
-    const existingRow = existingRowId === undefined ? undefined : snapshot.libraryRows[existingRowId];
-    if (existingRow !== undefined) {
-      return existingRow;
-    }
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      const existingRowId = snapshot.libraryRowIdByTreatmentId[treatmentId];
+      const existingRow = existingRowId === undefined ? undefined : snapshot.libraryRows[existingRowId];
+      if (existingRow !== undefined) {
+        return existingRow;
+      }
 
-    const newRow: LibraryRow = {
-      id: crypto.randomUUID(),
-      treatment_id: treatmentId,
-      use_count: 0,
-      provenance,
-      variant_type: "original",
-      global_reference_id: treatmentId,
-      protocol_content: null,
-      created_at: new Date().toISOString(),
-    };
-    snapshot.libraryRows[newRow.id] = newRow;
-    snapshot.libraryRowIdByTreatmentId[treatmentId] = newRow.id;
-    this.writeSnapshot(snapshot);
-    return newRow;
+      const newRow: LibraryRow = {
+        id: crypto.randomUUID(),
+        treatment_id: treatmentId,
+        use_count: 0,
+        provenance,
+        variant_type: "original",
+        global_reference_id: treatmentId,
+        protocol_content: null,
+        created_at: new Date().toISOString(),
+      };
+      snapshot.libraryRows[newRow.id] = newRow;
+      snapshot.libraryRowIdByTreatmentId[treatmentId] = newRow.id;
+      this.writeSnapshot(snapshot);
+      return newRow;
+    });
   }
 
   async incrementUseCount(libraryRowId: string, idempotencyKey: string): Promise<LibraryRow> {
-    const snapshot = this.readSnapshot();
-    const row = snapshot.libraryRows[libraryRowId];
-    if (row === undefined) {
-      throw new Error(`LocalGuestRepository.incrementUseCount: no library row with id "${libraryRowId}"`);
-    }
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      const row = snapshot.libraryRows[libraryRowId];
+      if (row === undefined) {
+        throw new Error(`LocalGuestRepository.incrementUseCount: no library row with id "${libraryRowId}"`);
+      }
 
-    const usedKeys = snapshot.usedIncrementIdempotencyKeysByRowId[libraryRowId] ?? [];
-    if (!usedKeys.includes(idempotencyKey)) {
-      usedKeys.push(idempotencyKey);
-      snapshot.usedIncrementIdempotencyKeysByRowId[libraryRowId] = usedKeys;
-      row.use_count += 1;
-      this.writeSnapshot(snapshot);
-    }
+      const usedKeys = snapshot.usedIncrementIdempotencyKeysByRowId[libraryRowId] ?? [];
+      if (!usedKeys.includes(idempotencyKey)) {
+        usedKeys.push(idempotencyKey);
+        snapshot.usedIncrementIdempotencyKeysByRowId[libraryRowId] = usedKeys;
+        row.use_count += 1;
+        this.writeSnapshot(snapshot);
+      }
 
-    return row;
+      return row;
+    });
   }
 
   async appendTimelineEvent(event: Omit<TimelineEvent, "id" | "created_at">): Promise<TimelineEvent> {
-    const snapshot = this.readSnapshot();
-    const fullEvent: TimelineEvent = {
-      ...event,
-      id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-    };
-    snapshot.timelineEvents.push(fullEvent);
-    this.writeSnapshot(snapshot);
-    return fullEvent;
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      const fullEvent: TimelineEvent = {
+        ...event,
+        id: crypto.randomUUID(),
+        created_at: new Date().toISOString(),
+      };
+      snapshot.timelineEvents.push(fullEvent);
+      this.writeSnapshot(snapshot);
+      return fullEvent;
+    });
   }
 
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
@@ -275,9 +308,11 @@ export class LocalGuestRepository implements RepositoryPort {
   }
 
   async saveGuestSessionGate(state: GuestSessionGateState): Promise<void> {
-    const snapshot = this.readSnapshot();
-    snapshot.sessionGate = { ...state };
-    this.writeSnapshot(snapshot);
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      snapshot.sessionGate = { ...state };
+      this.writeSnapshot(snapshot);
+    });
   }
 
   /**
@@ -302,9 +337,11 @@ export class LocalGuestRepository implements RepositoryPort {
   }
 
   async saveGuestFlowFacts(facts: PersistedGuestFlowFacts): Promise<void> {
-    const snapshot = this.readSnapshot();
-    snapshot.guestFlowFacts = { ...facts };
-    this.writeSnapshot(snapshot);
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      snapshot.guestFlowFacts = { ...facts };
+      this.writeSnapshot(snapshot);
+    });
   }
 
   private readGuestSessionGateSync(): GuestSessionGateState {
@@ -325,7 +362,9 @@ export class LocalGuestRepository implements RepositoryPort {
    * blob.
    */
   async clear(): Promise<void> {
-    this.storage.removeItem(this.storageKey);
+    return this.writeLock(this.storageKey, async () => {
+      this.storage.removeItem(this.storageKey);
+    });
   }
 
   async listTreatments() {
@@ -336,3 +375,36 @@ export class LocalGuestRepository implements RepositoryPort {
     return TRACER_BULLET_SEED_TREATMENT_ROWS.find((row) => row.id === treatmentId) ?? null;
   }
 }
+
+export type GuestWriteLock = <T>(key: string, write: () => Promise<T>) => Promise<T>;
+
+export class GuestStorageWriteLockUnavailableError extends Error {
+  constructor() {
+    super("Guest storage remains readable, but safe writes require a storage lock. Retry in a supported browser.");
+    this.name = "GuestStorageWriteLockUnavailableError";
+  }
+}
+
+const isolatedLocks = new WeakMap<GuestKeyValueStorage, Map<string, Promise<unknown>>>();
+
+/** Only for explicitly isolated in-memory storage, never for cross-tab persistent storage. */
+export function createIsolatedGuestWriteLock(storage: GuestKeyValueStorage): GuestWriteLock {
+  let keys = isolatedLocks.get(storage);
+  if (!keys) { keys = new Map(); isolatedLocks.set(storage, keys); }
+  const queues = keys;
+  return async (key, write) => {
+    const result = (queues.get(key) ?? Promise.resolve()).catch(() => undefined).then(write);
+    queues.set(key, result);
+    try { return await result; }
+    finally { if (queues.get(key) === result) queues.delete(key); }
+  };
+}
+
+const browserWriteLock: GuestWriteLock = async (key, write) => {
+  const environment = globalThis as typeof globalThis & {
+    navigator?: { locks?: { request: GuestWriteLock } };
+  };
+  const locks = environment.navigator?.locks;
+  if (!locks) throw new GuestStorageWriteLockUnavailableError();
+  return locks.request('pic:guest-write:' + key, write);
+};

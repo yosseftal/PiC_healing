@@ -25,8 +25,9 @@ import type {
   PlayerUnit,
   Symptom,
 } from "pic-engine";
-import { GroupEngine, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
+import { GroupEngine, GroupRevisionConflictError, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 import { runRepositoryPortContractTests } from "pic-engine/test/contract/repository-port.contract";
+import { runGroupOrderContract } from "pic-engine/test/contract/group-order.contract";
 import { SupabaseRepository } from "./index";
 
 function loadEnvLocal(path: string): Record<string, string> {
@@ -460,7 +461,7 @@ describe("SupabaseRepository", () => {
       // never mutated it, not merely that they couldn't see it. The lone "unseen" unit reads back
       // "in_view" (ticket 01's getPlayerSession rehydration, DEC-015) - a documented read-time
       // reconstruction, not a mutation of what was actually persisted.
-      await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+      await expect(repository.getGroup(group.id)).resolves.toEqual({ ...group, revision: group.revision ?? 0 });
       await expect(repository.getPlayerSession(session.id)).resolves.toEqual({
         ...session,
         units: [{ ...session.units[0], state: "in_view" }],
@@ -475,6 +476,90 @@ describe("SupabaseRepository", () => {
     beforeAll(async () => {
       user = await createAuthenticatedTestUser();
       repository = new SupabaseRepository(user.client);
+    });
+
+    runGroupOrderContract(() => ({ port: repository, fresh: () => new SupabaseRepository(user.client) }));
+
+    function orderedFixture(): FinalizedSymptomGroup {
+      return { id: randomUUID(), name: "Priority fixture", revision: 0,
+        created_at: "2026-10-20T00:00:00.000Z", joint_treatment_muscle_test: "together",
+        joint_treatment_test_at: "2026-10-20T00:00:00.000Z",
+        symptoms: ["First", "Second", "Third"].map((name, i) => ({ id: randomUUID(), name,
+          polarity: "negative", intensity: i * 3, rated_at: "2026-10-20T00:00:00.000Z" })) };
+    }
+
+    it("competing reorder, append and rating accept one revision and preserve the winner on fresh read", async () => {
+      const group = orderedFixture();
+      await repository.saveGroup(group);
+      const peer = new SupabaseRepository(user.client);
+      const appended = { ...group, symptoms: [...group.symptoms, { ...group.symptoms[0]!, id: randomUUID(), name: "Fourth" }] };
+      const rated = { ...group, symptoms: group.symptoms.map((s, i) => i === 0 ? { ...s, intensity: 10 } : s) };
+      const outcomes = await Promise.allSettled([
+        repository.reorderSymptoms(group.id, group.symptoms.map((s) => s.id).reverse(), 0),
+        peer.saveGroup(appended), new SupabaseRepository(user.client).saveGroup(rated),
+      ]);
+      expect(outcomes.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      for (const outcome of outcomes) if (outcome.status === "rejected") {
+        expect(outcome.reason).toBeInstanceOf(GroupRevisionConflictError);
+      }
+      const winner = outcomes.findIndex((r) => r.status === "fulfilled");
+      const expected = winner === 0 ? { ...group, symptoms: [...group.symptoms].reverse() }
+        : winner === 1 ? appended : rated;
+      expect(await new SupabaseRepository(user.client).getGroup(group.id)).toEqual({ ...expected, revision: 1 });
+    });
+
+    it("rejects another owner and direct table writes while keeping owner reads and checked RPC writes", async () => {
+      const group = orderedFixture();
+      await repository.saveGroup(group);
+      const stranger = await createAuthenticatedTestUser();
+      const foreign = new SupabaseRepository(stranger.client);
+      await expect(foreign.getGroup(group.id)).resolves.toBeNull();
+      await expect(foreign.reorderSymptoms(group.id, group.symptoms.map((s) => s.id).reverse(), 0)).rejects.toThrow();
+      await expect(foreign.saveGroup({ ...group, name: "Foreign" })).rejects.toThrow();
+      expect((await user.client.from("symptom_groups").update({ name: "Bypass" }).eq("id", group.id)).error).not.toBeNull();
+      expect((await user.client.from("symptoms").update({ intensity: 9 }).eq("id", group.symptoms[0]!.id)).error).not.toBeNull();
+      expect(await repository.getGroup(group.id)).toEqual(group);
+    });
+
+    it("rolls back the entire aggregate when a later symptom violates a database constraint", async () => {
+      const group = orderedFixture();
+      await repository.saveGroup(group);
+      await expect(repository.saveGroup({ ...group, name: "Must roll back",
+        symptoms: group.symptoms.map((s, i) => i === 2 ? { ...s, intensity: 99 } : s) })).rejects.toThrow();
+      expect(await new SupabaseRepository(user.client).getGroup(group.id)).toEqual(group);
+    });
+
+    it("ordinary exact retries compare typed UUIDs and timestamps without advancing revision", async () => {
+      const group = orderedFixture();
+      await repository.saveGroup(group);
+      for (const revision of [undefined, 0]) for (const timestamp of ["2026-10-20T00:00:00Z", "2026-10-20T03:00:00+03:00"]) {
+        await repository.saveGroup({ ...group, id: group.id.toUpperCase(), revision,
+          created_at: timestamp, joint_treatment_test_at: timestamp,
+          symptoms: group.symptoms.map((s) => ({ ...s, id: s.id.toUpperCase(), rated_at: timestamp })) });
+      }
+      expect(await repository.getGroup(group.id)).toEqual(group);
+    });
+
+    it("retains microseconds through read, reorder and unrelated save and detects a real difference", async () => {
+      const group = orderedFixture();
+      const timestamp = "2026-10-20T00:00:00.123456Z";
+      const { symptoms, ...fields } = group;
+      expect((await serviceClient.from("symptom_groups").insert({ ...fields, user_id: user.userId,
+        created_at: timestamp, joint_treatment_test_at: timestamp })).error).toBeNull();
+      expect((await serviceClient.from("symptoms").insert(symptoms.map((s, index) => ({ ...s,
+        group_id: group.id, user_id: user.userId, priority_position: index, rated_at: timestamp })))).error).toBeNull();
+      const initial = (await repository.getGroup(group.id))!;
+      expect(initial.created_at).toBe(timestamp);
+      expect(initial.symptoms.every((s) => s.rated_at === timestamp)).toBe(true);
+      const reordered = await repository.reorderSymptoms(group.id, symptoms.map((s) => s.id).reverse(), 0);
+      await repository.saveGroup({ ...reordered, name: "Renamed" });
+      const saved = (await new SupabaseRepository(user.client).getGroup(group.id))!;
+      expect(saved).toEqual({ ...reordered, name: "Renamed", revision: 2 });
+      expect(saved.joint_treatment_test_at).toBe(timestamp);
+      await expect(repository.saveGroup({ ...saved, revision: undefined,
+        created_at: "2026-10-20T00:00:00.123457Z" }))
+        .rejects.toBeInstanceOf(GroupRevisionConflictError);
+      expect(await repository.getGroup(group.id)).toEqual(saved);
     });
 
     it("returns null for an unknown group id", async () => {
@@ -500,7 +585,7 @@ describe("SupabaseRepository", () => {
 
       await repository.saveGroup(group);
 
-      await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+      await expect(repository.getGroup(group.id)).resolves.toEqual({ ...group, revision: group.revision ?? 0 });
     });
 
     it("saveGroup persists a symptom's rated_at, and getGroup reads that exact value back", async () => {
@@ -580,7 +665,7 @@ describe("SupabaseRepository", () => {
       },
     );
 
-    it("a second saveGroup call removes symptoms no longer present (full-replace semantics)", async () => {
+    it("a second saveGroup rejects omitted members without changing the stored aggregate", async () => {
       const keptSymptom: Symptom = {
         id: randomUUID(),
         name: "Lower Back Pain",
@@ -605,10 +690,11 @@ describe("SupabaseRepository", () => {
       };
       await repository.saveGroup(group);
 
-      await repository.saveGroup({ ...group, symptoms: [keptSymptom] });
+      const committed = (await repository.getGroup(group.id))!;
+      await expect(repository.saveGroup({ ...committed, symptoms: [keptSymptom] })).rejects.toThrow();
 
       const reloaded = await repository.getGroup(group.id);
-      expect(reloaded?.symptoms.map((symptom) => symptom.id)).toEqual([keptSymptom.id]);
+      expect(reloaded).toEqual(committed);
     });
   });
 
@@ -847,7 +933,7 @@ describe("SupabaseRepository", () => {
         newUserId: user.userId,
       });
 
-      expect(result.group).toEqual(group);
+      expect(result.group).toEqual({ ...group, revision: group.revision ?? 0 });
       expect(result.playerSession).toEqual(playerSession);
       expect(result.libraryRow.treatment_id).toBe(seedTreatmentId);
       expect(result.libraryRow.use_count).toBe(1);
@@ -857,7 +943,7 @@ describe("SupabaseRepository", () => {
 
       // Every one of the 5 rows is genuinely durable and RLS-scoped to newUserId - re-read independently
       // through the same port, not merely echoed back in the call's own return value.
-      await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+      await expect(repository.getGroup(group.id)).resolves.toEqual({ ...group, revision: group.revision ?? 0 });
       await expect(repository.getPlayerSession(playerSession.id)).resolves.toEqual(playerSession);
 
       // "local guest state cleared" (spec §E's "no partial adapter swap... only after the RPC call
@@ -888,7 +974,7 @@ describe("SupabaseRepository", () => {
       const replay = await repository.promoteGuestToAccount({
         idempotencyKey: group.id, group, playerSession, newUserId: user.userId,
       });
-      expect(replay.group).toEqual(group);
+      expect(replay.group).toEqual({ ...group, revision: group.revision ?? 0 });
       expect(replay.playerSession).toEqual(playerSession);
       expect(replay.libraryRow.id).toBe(legacy.library_row_id);
       expect(replay.timelineEvent.id).toBe(legacy.timeline_event_id);
@@ -956,7 +1042,7 @@ describe("SupabaseRepository", () => {
 
       // The group itself was promoted exactly once - not duplicated, not carrying duplicated symptoms.
       const reloadedGroup = await repository.getGroup(group.id);
-      expect(reloadedGroup).toEqual(group);
+      expect(reloadedGroup).toEqual({ ...group, revision: group.revision ?? 0 });
       expect(reloadedGroup?.symptoms).toHaveLength(group.symptoms.length);
     });
 
@@ -1051,7 +1137,7 @@ describe("SupabaseRepository", () => {
           newUserId: user.userId,
         });
         expect(retryResult.libraryRow.use_count).toBe(1);
-        await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+        await expect(repository.getGroup(group.id)).resolves.toEqual({ ...group, revision: group.revision ?? 0 });
         await expect(repository.getPlayerSession(playerSession.id)).resolves.toEqual(playerSession);
       },
       15_000,
@@ -1103,7 +1189,7 @@ describe("SupabaseRepository", () => {
       const retry = await repository.promoteGuestToAccount(input);
 
       expect(retry.libraryRow.use_count).toBe(1);
-      await expect(repository.getGroup(group.id)).resolves.toEqual(group);
+      await expect(repository.getGroup(group.id)).resolves.toEqual({ ...group, revision: group.revision ?? 0 });
       const { data: timelineRows } = await serviceClient
         .from("timeline_events")
         .select("id")

@@ -17,6 +17,7 @@ import type { RepositoryPort } from "./repository-port";
 const completePort: RepositoryPort = {
   getGroup: async () => null,
   saveGroup: async () => undefined,
+  reorderSymptoms: async () => { throw new Error("compile-check only"); },
   getPlayerSession: async () => null,
   savePlayerSession: async () => undefined,
   getOrCreateLibraryRow: async () => {

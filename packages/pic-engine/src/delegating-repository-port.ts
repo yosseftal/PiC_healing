@@ -31,6 +31,10 @@ export class DelegatingRepositoryPort implements RepositoryPort {
     return this.provider.saveGroup(group);
   }
 
+  reorderSymptoms(groupId: string, orderedIDs: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
+    return this.provider.reorderSymptoms(groupId, orderedIDs, expectedRevision);
+  }
+
   getPlayerSession(sessionId: string): Promise<PlayerSession | null> {
     return this.provider.getPlayerSession(sessionId);
   }

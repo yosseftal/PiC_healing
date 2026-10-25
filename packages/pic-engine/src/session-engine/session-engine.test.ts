@@ -63,6 +63,19 @@ describe("SessionEngine", () => {
   });
 
   describe("onFinishRequested", () => {
+    it("versions only new Finish intents and preserves legacy omission through rearming and restoration", async () => {
+      const legacy = { gateTriggered: true, pendingFinishRequest: { sessionId: "legacy", kind: "finish" as const } };
+      const { port, sessionEngine } = buildEngine(new FakeRepositoryPort(), { initialGateState: legacy });
+      await sessionEngine.onFinishRequested("legacy", "finishAnyway");
+      expect((await port.getGuestSessionGate()).pendingFinishRequest)
+        .toEqual({ sessionId: "legacy", kind: "finishAnyway" });
+      const restored = buildEngine(port, { initialGateState: await port.getGuestSessionGate() }).sessionEngine;
+      await restored.onFinishRequested("legacy", "finish");
+      expect((await port.getGuestSessionGate()).pendingFinishRequest).not.toHaveProperty("promotionPayloadVersion");
+      await restored.onFinishRequested("new-session", "finish");
+      expect((await port.getGuestSessionGate()).pendingFinishRequest)
+        .toEqual({ sessionId: "new-session", kind: "finish", promotionPayloadVersion: 2 });
+    });
     it("signals gateTriggered=true and does not run Finish side effects when mode is guest", async () => {
       const { port, playerEngine, sessionEngine } = buildEngine();
       const sessionId = await playerEngine.startSession("treatment-1", null, ["a"]);
@@ -350,7 +363,7 @@ describe("SessionEngine", () => {
 
       const persisted = await port.getGuestSessionGate();
       expect(persisted.gateTriggered).toBe(true);
-      expect(persisted.pendingFinishRequest).toEqual({ sessionId, kind: "finish" });
+      expect(persisted.pendingFinishRequest).toEqual({ sessionId, kind: "finish", promotionPayloadVersion: 2 });
 
       const reloaded = buildEngine(port, { initialGateState: persisted });
       expect(reloaded.sessionEngine.getState().gateTriggered).toBe(true);
