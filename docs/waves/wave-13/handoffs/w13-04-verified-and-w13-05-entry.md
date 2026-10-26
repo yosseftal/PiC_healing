@@ -16,7 +16,7 @@ Both independent Standards and Spec reviews pass on the final source, including 
 
 The [ticket Resolution](../tickets/w13-04-reversible-questionnaire-and-recovery.md) maps every AC to evidence.
 The [implementation review](../audits/w13-04-implementation-review.md) preserves red/green history and review limits.
-The scoped implementation commit follows this record; its hash is recorded after committing.
+Reviewed implementation and verified W13-04 closure commit: `97cf3c3`.
 
 ## Behavior and seams to preserve
 

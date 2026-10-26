@@ -162,6 +162,7 @@ and `.scratch/w13-04-full-final.log`.
 
 No therapeutic/domain approval was inferred. Later W13-07 content/embed and W13-09 physical/native checks remain separate.
 Continue from the [verified checkpoint and W13-05 entry](../handoffs/w13-04-verified-and-w13-05-entry.md).
+Reviewed implementation, final verification and closure are committed in `97cf3c3`.
 
 [relocation-link-1]: w13-01-instant-questionnaire-and-initial-rating.md
 [relocation-link-2]: w13-03-renewed-joint-answer-after-addition.md
