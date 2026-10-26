@@ -150,7 +150,8 @@ const ephemeralContractTreatmentIds: string[] = [];
 let contractTreatmentIdPool: string[] = [];
 
 beforeAll(async () => {
-  const poolSize = 32;
+  // Expanded priority/promotion contracts need additional distinct IDs; never reuse an exhausted fixture.
+  const poolSize = 48;
   const { data, error } = await serviceClient
     .from("treatments")
     .insert(
@@ -1207,17 +1208,9 @@ describe("SupabaseRepository", () => {
         toRpcPayload(group, playerSession, user.userId, { symptoms: null }),
       );
 
-      // Asserted against the RPC's own specific validation message, not merely "error is not null" (nor
-      // merely "mentions p_symptoms" - PostgREST's own "could not find the function" error already lists
-      // every parameter name it was looking for, p_symptoms included, so that weaker check would still
-      // trivially pass for the wrong reason pre-migration). Ticket 07's nullable-group migration
-      // (`20260831233000_promote_guest_to_account_nullable_group.sql`) splits validation so a present,
-      // non-null `p_guest_group` with a null `p_symptoms` now raises this specific, more precise message
-      // instead of the old blanket "are all required" (that message is now reserved for the
-      // p_player_session/p_new_user_id-missing case, which this payload does not hit). Requiring this
-      // verbatim means the test properly fails red against the pre-ticket-07 migration and will only pass
-      // once the nullable-group migration is applied *and* this exact validation path behaves as designed.
-      expect(error?.message).toMatch(/p_symptoms is required when p_guest_group is present/i);
+      // Require the checked RPC's exact array-validation diagnostic, then prove transaction rollback.
+      // A missing-function error mentioning the parameter cannot satisfy this assertion.
+      expect(error?.message).toBe("promote_guest_to_account: p_symptoms must be an array");
 
       await expectNoPromotionRowsLanded({
         groupId: group.id,

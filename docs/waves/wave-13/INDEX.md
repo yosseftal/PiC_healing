@@ -2,7 +2,7 @@
 
 [All waves](../INDEX.md)
 
-Implementation authorized. W13-01 and W13-06 are closed; W13-02 is the active persistence frontier.
+Implementation authorized. W13-01, W13-02 and W13-06 are closed; W13-03 is the active frontier.
 
 ## Specifications
 
@@ -28,6 +28,7 @@ Implementation authorized. W13-01 and W13-06 are closed; W13-02 is the active pe
 - [Verified W13-01 checkpoint and exact resume instructions](handoffs/w13-01-checkpoint.md)
 - [Verified W13-06 checkpoint and active W13-02 entry](handoffs/w13-06-checkpoint.md)
 - [W13-02 reviewed implementation: manual SQL application and exact resume](handoffs/w13-02-manual-apply-checkpoint.md)
+- [W13-02 verified closure and active W13-03 entry](handoffs/w13-02-verified-and-w13-03-entry.md)
 
 ## Briefs and preserved checkpoints
 

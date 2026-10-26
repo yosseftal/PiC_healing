@@ -125,7 +125,7 @@ async () => {
   await root.groupEngineActions.setJointTreatmentMuscleTest(groupId, "together");
   await root.groupEngineActions.finalizeGroup(groupId);
   const anchored = await root.groupEngineActions.getGroup(groupId);
-  expect(anchored).toEqual({ ...staged, joint_treatment_muscle_test: "together",
+  expect(anchored).toEqual({ ...staged, revision: staged!.revision! + 1, joint_treatment_muscle_test: "together",
     joint_treatment_test_at: expect.any(String) });
   expect(anchored?.symptoms[0]).toMatchObject({ id: symptom, polarity: "positive", intensity: 7 });
   expect(root.authenticatedDraft.store.getSnapshot()).toBeNull();

@@ -1,5 +1,8 @@
 # W13-02 additive SQL review and rollout
 
+**Current status:** the human confirmed application on 2026-10-26; full real verification passes 632 tests.
+The original prepared migration remains unchanged. Preparation-phase pending statements below are historical.
+
 Prepared migration destination: `supabase/migrations/20261022120000_durable_group_priority.sql`.
 The original `.sql.txt` draft remains preserved verbatim under `audits/w13-02-test-drafts/` as historical evidence.
 The runtime migration at the destination above includes the final reviewed safeguards; use that file for application.

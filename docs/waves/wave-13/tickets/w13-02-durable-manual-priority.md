@@ -1,6 +1,6 @@
 # W13-02 — Reorder topics and preserve priority through storage and promotion
 
-**Status:** in progress — implementation reviewed; local gates pass; awaiting manual SQL application and real verification.
+**Status:** closed — full remote verification passed on 2026-10-26 after confirmed migration application.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md).
 **Blocking:** [W13-03](w13-03-renewed-joint-answer-after-addition.md), [W13-05](w13-05-clean-summary-and-polarity-view.md).
@@ -49,17 +49,17 @@ The visible priority and stable IDs match, all ratings are unchanged, and one re
 
 ## Acceptance Criteria
 
-- [ ] **AC-01:** Move controls change canonical manual priority through GroupEngine, not only React state.
-- [ ] **AC-02:** All topic identities, names, ratings, rating timestamps and joint answer remain unchanged by a pure reorder.
-- [ ] **AC-03:** Duplicate, foreign, omitted and unknown IDs are rejected without partial mutation.
-- [ ] **AC-04:** Both adapters return the committed order; Supabase reads explicitly order by persisted priority.
-- [ ] **AC-05:** Concurrent reorder, append and rating writes cannot clobber membership, scores or a newer revision.
-- [ ] **AC-06:** Storage failure/conflict retains a truthful retry path; optimistic preview is never announced as saved.
-- [ ] **AC-07:** Legacy Guest snapshots and database groups load deterministically without losing members or actual zero ratings.
-- [ ] **AC-08:** New ordered Guest promotion and exact lost-response replay preserve order and count completion only once.
-- [ ] **AC-09:** Frozen legacy promotion requests remain byte/shape compatible; changed payload with the same key is rejected.
-- [ ] **AC-10:** No reorder operation deletes/reinserts rows; migration is additive and ownership checks reject another account.
-- [ ] **AC-11:** Keyboard focus, one-based priority labels and announcements work in Hebrew and English.
+- [x] **AC-01:** Move controls change canonical manual priority through GroupEngine, not only React state.
+- [x] **AC-02:** All topic identities, names, ratings, rating timestamps and joint answer remain unchanged by a pure reorder.
+- [x] **AC-03:** Duplicate, foreign, omitted and unknown IDs are rejected without partial mutation.
+- [x] **AC-04:** Both adapters return the committed order; Supabase reads explicitly order by persisted priority.
+- [x] **AC-05:** Concurrent reorder, append and rating writes cannot clobber membership, scores or a newer revision.
+- [x] **AC-06:** Storage failure/conflict retains a truthful retry path; optimistic preview is never announced as saved.
+- [x] **AC-07:** Legacy Guest snapshots and database groups load deterministically without losing members or actual zero ratings.
+- [x] **AC-08:** New ordered Guest promotion and exact lost-response replay preserve order and count completion only once.
+- [x] **AC-09:** Frozen legacy promotion requests remain byte/shape compatible; changed payload with the same key is rejected.
+- [x] **AC-10:** No reorder operation deletes/reinserts rows; migration is additive and ownership checks reject another account.
+- [x] **AC-11:** Keyboard focus, one-based priority labels and announcements work in Hebrew and English.
 
 ## Testing Requirements
 
@@ -97,6 +97,47 @@ Implementation is authorized by the user; wait for prerequisites and serial disp
 
 ## Resolution
 
+### Closed after real database verification — 2026-10-26
+
+The human confirmed `migration applied` for `20261022120000_durable_group_priority.sql`.
+The applied migration was not edited. No runtime implementation change was needed during verification.
+The first full run passed 629 tests and found three test-harness mismatches: exhausted isolated treatment IDs,
+the checked RPC's new exact array-validation diagnostic, and the expected revision advance on a real joint answer.
+The fixture pool now provides 48 distinct same-run IDs; exact payload, zero-write, content and count assertions remain intact.
+
+Final root `npm test`: **64 files / 632 tests passed, zero failed or skipped** (103.56 seconds).
+Worker cap 2 and the previously approved controlled signup address were supplied only to the process.
+Normal TLS stayed enabled. The test command also passed both dependency graphs:
+engine 74 modules / 205 dependencies; web 774 / 1709, with zero violations.
+Root typecheck, lint and web depcruise pass. The unchanged browser implementation retains its six passing
+Hebrew/English committed-priority and promotion journeys from the reviewed implementation checkpoint.
+
+| AC | Concrete closure evidence |
+| --- | --- |
+| 01 | Rendered composition tests and keyboard browser moves call public GroupEngine/port reorder. |
+| 02 | Shared fresh-port contract plus real timestamp/read/reorder/save tests preserve all personal fields. |
+| 03 | Fake, Guest and real Supabase permutation/token/overflow tests reject invalid writes without partial state. |
+| 04 | Fresh adapter instances read committed order; checked RPC projection explicitly orders positions. |
+| 05 | Real concurrent reorder/append/rating accepts one revision; held-lock tests cover every Guest blob writer. |
+| 06 | Rendered failure, stale-token refresh, frozen full-permutation retry and cancel/review paths pass. |
+| 07 | Legacy Guest reads retain zero/order without rewriting; real legacy and typed timestamp contracts pass. |
+| 08 | Real ordered promotion, exact retry and lost-response suites retain one row-set and one completion. |
+| 09 | Real legacy receipts, strict changed payload/timestamp/version checks and literal v1 wire regression pass. |
+| 10 | Real foreign-owner, direct-DML denial and rollback tests pass; SQL never deletes/reinserts group members. |
+| 11 | Six prior Chromium cases verify Hebrew/English labels, announcements, keyboard moves and boundary focus. |
+
+The read-only post-run sweep returns 200 and the expected new column counts: groups 8, symptoms 10.
+Row counts match the pre-wave baseline: profiles 31, groups 23, symptoms 22, treatments 23,
+Player sessions 30, personal library 23, Timeline 26. Only same-run UUID fixtures/Auth users were cleaned up.
+Counts verify cleanup, not content equivalence; no existing personal data or treatment content was deleted.
+Both independent review axes already passed; verification changed only the three test-harness expectations above.
+Implementation commit remains `5439a4f`; the scoped closure commit records this final evidence and test corrections.
+Continue with W13-03; its approved implementation authorization persists.
+
+### Historical pre-application evidence — 2026-10-25
+
+The following preserves the earlier open checkpoint; the closure above supersedes its pending status.
+
 Implementation is in progress; no closure or full-gate pass is claimed.
 The agreed [persistence contract](../audits/w13-02-contract-proposal.md) is implemented across engine,
 Guest storage, Supabase RPC mapping and web decorators; final review and integration verification remain open.
@@ -119,7 +160,7 @@ that syntax is corrected and final reruns remain required. W13-01 and W13-06's p
 Real database owner/race/rollback/legacy-receipt evidence awaits the established manual SQL Editor checkpoint.
 All ACs remain unchecked until the complete slice, independent reviews and required database verification pass.
 
-### Final local checkpoint
+#### Final local checkpoint before schema application
 
 Root typecheck, lint and web depcruise pass; the web graph contains 774 modules / 1709 dependencies with zero violations.
 The final local-only Vitest command passes 58 files / 563 tests. It explicitly excludes remote files and filters the

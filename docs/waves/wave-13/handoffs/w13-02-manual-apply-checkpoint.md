@@ -1,5 +1,8 @@
 # W13-02 manual schema-application checkpoint
 
+**Historical checkpoint:** application is confirmed and W13-02 is closed.
+Continue from [verified closure and W13-03 entry](w13-02-verified-and-w13-03-entry.md).
+
 Date: 2026-10-25, Asia/Jerusalem. This is an open-ticket checkpoint, not Wave 13 closure.
 Implementation commit: `5439a4f` — reviewed runtime, additive SQL and red database contracts.
 

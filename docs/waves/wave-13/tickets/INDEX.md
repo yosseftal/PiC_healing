@@ -1,7 +1,7 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** W13-01 and W13-06 closed; W13-02 active. Other tickets await their prerequisites and dispatch.
+**Status:** W13-01, W13-02 and W13-06 closed; W13-03 active. Other tickets await prerequisites and dispatch.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -19,7 +19,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** None
 
 - **Ticket:** [W13-02][W13-02]
-  **Status:** in progress; implemented and reviewed, local gates pass; awaiting manual SQL application and real verification.
+  **Status:** closed; 64 files / 632 tests pass against the updated real schema, with no failures or skips.
   **End-to-end delivery:** Reorder topics and preserve priority through storage and promotion
   **Blocked by:** W13-01
 
