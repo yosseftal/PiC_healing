@@ -26,6 +26,7 @@ import type {
   TimelineEvent,
   Treatment,
   TreatmentListItem,
+  MembershipRevisionInput,
 } from "pic-engine";
 import {
   DEFAULT_GUEST_SESSION_GATE_STATE,
@@ -35,6 +36,7 @@ import {
   InvalidSymptomOrderError,
   PromoteGuestToAccountIdentityMismatchError,
   rehydrateInViewUnit,
+  membershipState, validateMembershipRevisionInput, MembershipRevisionIdentityMismatchError, InvalidMembershipRevisionError,
 } from "pic-engine";
 
 /** Thrown when an operation needs the current Event Manager's identity but no session is present. */
@@ -183,6 +185,17 @@ function rowToTimelineEvent(row: TimelineEventRow): TimelineEvent {
  * inside the database transaction. Group writes additionally enforce whole-group revision comparison.
  */
 export class SupabaseRepository implements RepositoryPort {
+  async commitMembershipRevision(input: MembershipRevisionInput): Promise<FinalizedSymptomGroup> {
+    validateMembershipRevisionInput(input);
+    // Fixed public fields only: raw SQL fixtures can inject a late rollback, product callers cannot.
+    const request: MembershipRevisionInput = { operationId: input.operationId, groupId: input.groupId,
+      expectedRevision: input.expectedRevision, expectedMembershipRevision: input.expectedMembershipRevision,
+      additions: input.additions.map((row) => ({ id: row.id, name: row.name, polarity: row.polarity, intensity: row.intensity })),
+      orderedSymptomIds: [...input.orderedSymptomIds], answer: input.answer, answeredAt: input.answeredAt };
+    const { data, error } = await this.client.rpc("commit_membership_revision", { p_request: request });
+    if (error) throw groupWriteError("commitMembershipRevision", input.groupId, error);
+    return normalizeGroupRevision(data as SymptomGroup) as FinalizedSymptomGroup;
+  }
   constructor(private readonly client: SupabaseClient) {}
 
   private async currentUserId(): Promise<string> {
@@ -411,13 +424,19 @@ export class SupabaseRepository implements RepositoryPort {
    * duplicating their row-to-domain-object mapping here.
    */
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
-    const ordered = input.promotionPayloadVersion === 2;
+    const membershipVersioned = input.promotionPayloadVersion === 3;
+    const ordered = input.promotionPayloadVersion === 2 || membershipVersioned;
     if (input.promotionPayloadVersion !== undefined && !ordered) {
       throw new Error("Unsupported promotion payload version");
     }
     if (ordered && input.group !== null &&
         (!Number.isSafeInteger(input.group.revision) || input.group.revision! < 0)) {
       throw new GroupRevisionConflictError(input.group.id);
+    }
+    const membership = membershipVersioned && input.group !== null ? membershipState(input.group) : null;
+    if (membershipVersioned && input.group !== null &&
+      (membership?.answerMembershipRevision === null || input.group.joint_treatment_test_at === null)) {
+      throw new InvalidMembershipRevisionError("V3 promotion requires the actual answer and its timestamp.");
     }
     const expectedIdempotencyKey = input.group?.id ?? input.playerSession.id;
     if (input.idempotencyKey !== expectedIdempotencyKey) {
@@ -439,6 +458,8 @@ export class SupabaseRepository implements RepositoryPort {
               joint_treatment_test_at: input.group.joint_treatment_test_at,
               created_at: input.group.created_at,
               ...(ordered ? { revision: input.group.revision } : {}),
+              ...(membership === null ? {} : { membership_revision: membership.membershipRevision,
+                joint_treatment_membership_revision: membership.answerMembershipRevision }),
             },
       p_symptoms:
         input.group === null
@@ -454,7 +475,7 @@ export class SupabaseRepository implements RepositoryPort {
               ...(ordered ? { priority_position: index } : {}),
             })),
       p_player_session: {
-        ...(ordered ? { payload_version: 2 } : {}),
+        ...(ordered ? { payload_version: input.promotionPayloadVersion } : {}),
         id: input.playerSession.id,
         treatment_id: input.playerSession.treatment_id,
         linked_group_id: input.playerSession.linked_group_id,
@@ -558,6 +579,8 @@ export class SupabaseRepository implements RepositoryPort {
 }
 
 function groupWriteError(operation: string, groupId: string, error: { message: string; code?: string }): Error {
+  if (error.message.includes("MEMBERSHIP_OPERATION_MISMATCH")) return new MembershipRevisionIdentityMismatchError();
+  if (error.message.includes("GROUP_ANSWER_MEMBERSHIP")) return new InvalidMembershipRevisionError(error.message);
   if (error.message.includes("GROUP_REVISION")) return new GroupRevisionConflictError(groupId);
   if (error.message.includes("GROUP_MEMBERSHIP")) return new InvalidSymptomOrderError(error.message);
   return wrapError(operation, error);

@@ -27,9 +27,10 @@ export function createGroupStaging(port: RepositoryPort) {
   });
   return {
     port: decorated,
-    async build(operation: () => Promise<string>): Promise<SymptomGroup> {
+    async build(operation: () => Promise<string>, base?: SymptomGroup): Promise<SymptomGroup> {
       if (staged !== null) throw new Error("A group is already being prepared");
       const draft = new Map<string, SymptomGroup>();
+      if (base !== undefined) draft.set(base.id, structuredClone(base));
       staged = draft;
       try {
         const id = await operation();

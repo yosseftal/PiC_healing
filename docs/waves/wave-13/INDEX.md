@@ -2,7 +2,8 @@
 
 [All waves](../INDEX.md)
 
-Implementation authorized. W13-01, W13-02 and W13-06 are closed; W13-03 is the active frontier.
+Implementation authorized. W13-01, W13-02 and W13-06 are closed.
+W13-03 is reviewed and awaits its separate manual SQL application and full remote verification.
 
 ## Specifications
 
@@ -23,6 +24,7 @@ Implementation authorized. W13-01, W13-02 and W13-06 are closed; W13-03 is the a
 - [W13-02 SQL preparation and coordinated rollout](audits/w13-02-sql-rollout-review.md)
 - [W13-02 implementation review and verification frontier](audits/w13-02-implementation-review.md)
 - [W13-03 atomic membership and renewed-answer contract](audits/w13-03-membership-contract.md)
+- [W13-03 implementation review and database verification frontier](audits/w13-03-implementation-review.md)
 
 ## Handoffs
 
@@ -30,6 +32,7 @@ Implementation authorized. W13-01, W13-02 and W13-06 are closed; W13-03 is the a
 - [Verified W13-06 checkpoint and active W13-02 entry](handoffs/w13-06-checkpoint.md)
 - [W13-02 reviewed implementation: manual SQL application and exact resume](handoffs/w13-02-manual-apply-checkpoint.md)
 - [W13-02 verified closure and active W13-03 entry](handoffs/w13-02-verified-and-w13-03-entry.md)
+- [Current W13-03 manual-application checkpoint and exact resume](handoffs/w13-03-manual-apply-checkpoint.md)
 
 ## Briefs and preserved checkpoints
 

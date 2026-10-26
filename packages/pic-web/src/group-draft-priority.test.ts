@@ -68,3 +68,45 @@ it("keeps authenticated reorder local until the actual joint answer and protects
   await f.engine.reorderSymptoms(f.id, [f.first, f.last], anchored.revision!);
   expect((await f.cloud.getGroup(f.id))?.symptoms.map(({ id }) => id)).toEqual([f.first, f.last]);
 });
+
+it("rejects an answered-list revision while the original authenticated anchor is still flushing", async () => {
+  const f = await draftFixture();
+  f.save.mockRejectedValueOnce(new Error("Anchor response lost"));
+  await expect(f.engine.setJointTreatmentMuscleTest(f.id, "together")).rejects.toThrow("Anchor response lost");
+  const base = (await f.port.getGroup(f.id))!;
+  const frozen = structuredClone(f.save.mock.calls[0]![0]);
+  const added = crypto.randomUUID();
+  await expect(f.engine.commitMembershipRevision({ operationId: crypto.randomUUID(), groupId: f.id,
+    expectedRevision: base.revision!, expectedMembershipRevision: 0,
+    additions: [{ id: added, name: "Not anchored yet", polarity: "positive", intensity: 3 }],
+    orderedSymptomIds: [...base.symptoms.map((row) => row.id), added], answer: "split_suggested",
+    answeredAt: "2026-10-26T02:03:04Z" })).rejects.toThrow("pending");
+  expect(f.draft.store.getSnapshot()?.group).toEqual(frozen);
+  expect(f.save).toHaveBeenCalledTimes(1);
+  await f.draft.retrySave();
+  expect(f.save.mock.calls[1]![0]).toEqual(frozen);
+  expect((await f.cloud.getGroup(f.id))?.symptoms).toHaveLength(2);
+});
+
+it("keeps a complete initial membership edit local until its actual answer, with old IDs intact", async () => {
+  const f = await draftFixture();
+  const base = (await f.port.getGroup(f.id))!;
+  const staging = createGroupStaging(f.port);
+  const engine = new GroupEngine(staging.port);
+  const prepared = await staging.build(async () => {
+    const added = await engine.addSymptom(f.id, "New first");
+    await engine.rate(added, { intensity: 9, polarity: "positive" });
+    const staged = (await staging.port.getGroup(f.id))!;
+    await engine.reorderSymptoms(f.id, [added, f.last, f.first], staged.revision!);
+    return f.id;
+  }, base);
+  const frozen = { ...prepared, revision: base.revision };
+  await f.port.saveGroup(frozen);
+  expect(f.save).not.toHaveBeenCalled();
+  expect(readAuthenticatedDraft()?.group.symptoms.map((row) => row.name)).toEqual(["New first", "Last", "First"]);
+  expect(readAuthenticatedDraft()?.group.symptoms.slice(1)).toEqual([...base.symptoms].reverse());
+  await f.engine.setJointTreatmentMuscleTest(f.id, "split_suggested");
+  expect(f.save).toHaveBeenCalledTimes(1);
+  expect(f.save.mock.calls[0]![0].joint_treatment_muscle_test).toBe("split_suggested");
+  expect((await f.cloud.getGroup(f.id))?.symptoms).toEqual(prepared.symptoms);
+});

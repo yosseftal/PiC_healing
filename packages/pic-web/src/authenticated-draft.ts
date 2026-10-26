@@ -1,5 +1,6 @@
 import {
-  normalizeGroupRevision, prepareGroupSave, prepareSymptomReorder, type RepositoryPort, type SymptomGroup,
+  normalizeGroupRevision, prepareGroupSave, prepareSymptomReorder,
+  type MembershipRevisionInput, type RepositoryPort, type SymptomGroup,
 } from "pic-engine";
 import { InquiryOperationCancelled, inquiryGenerationStore } from "./inquiry-lifecycle";
 import type { createAuthLifecycle } from "./auth-lifecycle";
@@ -139,6 +140,11 @@ export function createAuthenticatedDraft(
             const committed = prepareSymptomReorder(entry.group, ids, revision);
             save({ ...entry, generation, group: committed });
             return structuredClone(committed);
+          };
+          if (property === "commitMembershipRevision") return async (input: MembershipRevisionInput) => {
+            await admit();
+            if (entry !== null) throw new Error("Retry the pending group save first");
+            return port.commitMembershipRevision(input);
           };
           const value: unknown = Reflect.get(target, property, receiver);
           return typeof value === "function" ? value.bind(target) : value;

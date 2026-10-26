@@ -1,12 +1,12 @@
 import { expect, type Page } from "@playwright/test";
-import type { FinalizedSymptomGroup, PlayerSession, Symptom, SymptomGroup } from "pic-engine";
-import { TRACER_BULLET_SEED_TREATMENTS } from "pic-engine";
+import type { FinalizedSymptomGroup, MembershipRevisionInput, PlayerSession, Symptom, SymptomGroup } from "pic-engine";
+import { prepareMembershipRevision, membershipRevisionFingerprint, TRACER_BULLET_SEED_TREATMENTS } from "pic-engine";
 
 type Row = Record<string, unknown>;
 export interface PromotionPayload {
   p_guest_group: Omit<FinalizedSymptomGroup, "symptoms"> | null;
   p_symptoms: (Symptom & { priority_position?: number })[];
-  p_player_session: PlayerSession & { payload_version?: 2 };
+  p_player_session: PlayerSession & { payload_version?: 2 | 3 };
   p_new_user_id: string;
 }
 
@@ -25,11 +25,19 @@ export async function installJourneyTransport(page: Page) {
   let logins = 0;
   let failPromotion = false;
   let losePromotionResponse = false;
+  let failRevision = false;
+  let loseRevisionResponse = false;
+  const revisions: MembershipRevisionInput[] = [];
+  const revisionReceipts = new Map<string, string>();
   const receipts = new Map<string, { payload: string; result: Row }>();
   const readGroup = (id: string): SymptomGroup | null => {
     const group = tables.symptom_groups!.find((row) => row.id === id && row.user_id === user.id);
     if (!group) return null;
     return { id: group.id, name: group.name, created_at: group.created_at, revision: group.revision ?? 0,
+      ...(group.membership_revision === undefined ? {} : {
+        membership_revision: group.membership_revision,
+        joint_treatment_membership_revision: group.joint_treatment_membership_revision,
+      }),
       joint_treatment_muscle_test: group.joint_treatment_muscle_test, joint_treatment_test_at: group.joint_treatment_test_at,
       symptoms: tables.symptoms!.filter((row) => row.group_id === id && row.user_id === user.id)
       .sort((a, b) => Number(a.priority_position) - Number(b.priority_position))
@@ -65,6 +73,42 @@ export async function installJourneyTransport(page: Page) {
     const table = url.pathname.split("/").at(-1)!;
     const method = request.method();
     requests.push({ table, method });
+    if (table === "commit_membership_revision") {
+      expect(method).toBe("POST");
+      const { p_request: input } = request.postDataJSON() as { p_request: MembershipRevisionInput };
+      revisions.push(input);
+      if (failRevision) {
+        failRevision = false;
+        await route.fulfill({ status: 503, json: { message: "Temporarily unavailable" } }); return;
+      }
+      const current = readGroup(input.groupId);
+      if (current === null) {
+        await route.fulfill({ status: 404, json: { message: "Group not found" } }); return;
+      }
+      const previous = revisionReceipts.get(input.operationId);
+      const fingerprint = membershipRevisionFingerprint(input);
+      if (previous !== undefined) {
+        expect(fingerprint).toBe(previous);
+        await route.fulfill({ json: current }); return;
+      }
+      if (current.revision !== input.expectedRevision) {
+        await route.fulfill({ status: 409, json: { code: "P0001", message: "group_revision_conflict" } }); return;
+      }
+      const committed = prepareMembershipRevision(current, input);
+      const { symptoms, ...group } = committed;
+      Object.assign(tables.symptom_groups!.find((row) => row.id === group.id)!, group);
+      symptoms.forEach((symptom, priority_position) => {
+        const old = tables.symptoms!.find((row) => row.id === symptom.id);
+        const saved = { ...symptom, group_id: group.id, user_id: user.id, priority_position };
+        if (old) Object.assign(old, saved); else tables.symptoms!.push(saved);
+      });
+      revisionReceipts.set(input.operationId, fingerprint);
+      if (loseRevisionResponse) {
+        loseRevisionResponse = false;
+        await route.fulfill({ status: 503, json: { message: "Committed response lost" } }); return;
+      }
+      await route.fulfill({ json: readGroup(group.id) }); return;
+    }
     if (["get_symptom_group", "save_symptom_group", "reorder_group_symptoms"].includes(table)) {
       expect(method).toBe("POST");
       const body = request.postDataJSON() as { p_group_id?: string; p_group?: SymptomGroup;
@@ -123,10 +167,15 @@ export async function installJourneyTransport(page: Page) {
         expect(JSON.stringify(payload)).toBe(previous.payload);
         await route.fulfill({ json: previous.result }); return;
       }
-      if (session.payload_version === 2 && payload.p_guest_group) {
+      if ((session.payload_version === 2 || session.payload_version === 3) && payload.p_guest_group) {
         expect(payload.p_guest_group.revision).toEqual(expect.any(Number));
         expect(payload.p_symptoms.map(({ priority_position }) => priority_position))
           .toEqual(payload.p_symptoms.map((_, index) => index));
+      }
+      if (session.payload_version === 3 && payload.p_guest_group) {
+        expect(payload.p_guest_group.membership_revision).toEqual(expect.any(Number));
+        expect(payload.p_guest_group.joint_treatment_membership_revision)
+          .toBe(payload.p_guest_group.membership_revision);
       }
       if (payload.p_guest_group) {
         tables.symptom_groups!.push({ ...payload.p_guest_group, user_id: owner });
@@ -178,8 +227,10 @@ export async function installJourneyTransport(page: Page) {
       await route.fulfill({ status: 204 });
     } else throw new Error(`Unexpected REST method: ${method} ${table}`);
   });
-  return { tables, promotions, requests, user, confirm: () => { confirmed = true; },
+  return { tables, promotions, revisions, requests, user, confirm: () => { confirmed = true; },
     failNextPromotion: () => { failPromotion = true; },
     loseNextPromotionResponse: () => { losePromotionResponse = true; },
+    failNextRevision: () => { failRevision = true; },
+    loseNextRevisionResponse: () => { loseRevisionResponse = true; },
     counts: () => ({ signups, logins }) };
 }

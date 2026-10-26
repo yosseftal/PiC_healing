@@ -52,7 +52,7 @@ export interface SessionState {
  * here from `group.id` when present, otherwise `playerSession.id` — see `promote()`) and `newUserId`.
  */
 export interface GuestSnapshot {
-  promotionPayloadVersion?: 2;
+  promotionPayloadVersion?: 2 | 3;
   group: FinalizedSymptomGroup | null;
   playerSession: PlayerSession;
 }
@@ -60,7 +60,7 @@ export interface GuestSnapshot {
 type PendingFinishKind = "finish" | "finishAnyway";
 
 interface PendingFinishRequest {
-  promotionPayloadVersion?: 2;
+  promotionPayloadVersion?: 2 | 3;
   sessionId: string;
   kind: PendingFinishKind;
 }
@@ -145,7 +145,7 @@ export class SessionEngine {
     this.gateTriggered = true;
     this.pendingFinishRequest = this.pendingFinishRequest?.sessionId === sessionId
       ? { ...this.pendingFinishRequest, kind }
-      : { sessionId, kind, promotionPayloadVersion: 2 };
+      : { sessionId, kind, promotionPayloadVersion: 3 };
     await this.persistGateState();
     this.notify();
   }

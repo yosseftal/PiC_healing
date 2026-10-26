@@ -13,6 +13,7 @@ import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
 import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
+import { QuestionnaireEditUtility } from "./QuestionnaireEditUtility";
 
 export interface SymptomGroupSummaryScreenProps {
   groupId: string;
@@ -107,7 +108,8 @@ export function SymptomGroupSummaryScreen({ groupId }: SymptomGroupSummaryScreen
   }
 
   return <section data-testid="guest-flow-group-summary">
-    <TherapeuticScreenFrame allowInquiryReset title={message("summary.title").text} stageLabel={message("summary.title").text}>
+    <TherapeuticScreenFrame allowInquiryReset title={message("summary.title").text} stageLabel={message("summary.title").text}
+      utilities={<QuestionnaireEditUtility disabled={busy || pending !== null} />}>
       <div className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-4">
         <TherapeuticContentCard aria-label={message("summary.title").text}>
           {group === null ? <p role="status">

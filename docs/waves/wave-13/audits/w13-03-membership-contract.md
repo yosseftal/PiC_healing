@@ -38,9 +38,17 @@ Pure reorder, ordinary rating and naming preserve the membership/answer markers.
 Initial unanswered assembly stays baseline zero and remains supported; initial cloud NOT NULL constraints remain intact.
 
 Generic aggregate saves must fail closed on additions to an answered group, even if the payload repeats its previous answer.
+An answered group cannot be reset to a null answer/date to bypass that guard on a later save.
 Generic saves cannot reset/forge membership counters. `finalizeGroup` validates association and retains metadata.
 The new command retains every old ID and all old symptom fields, accepts new IDs only once, validates the complete permutation,
 then commits additions/order/answer/timestamps/counters/revision together. No deletion, reparenting or automatic splitting.
+Adapters reject new IDs already bound to another group, including Guest/Fake storage under the same write lock.
+
+For an initially UNANSWERED local draft only, aggregate save may retain the full existing ID set while changing order
+and appending new members under CAS. This does not change the answered-group guard or cloud NOT NULL constraints.
+The editor prepares public add/rate/reorder calls inside one staging window seeded with the unanswered base.
+Freeze that complete aggregate and restore its expected revision to the committed base token before its single final save.
+Never persist intermediate initial additions or split final save/reorder into two visible writes.
 
 ## Atomicity and operation receipts
 
@@ -73,6 +81,9 @@ Expose edit/return from joint/advisory/summary; put secondary edit tools in util
 Back/remount retains text, IDs, ratings and order. An addition invalidates the local pending answer; pure reorder does not.
 No prior answer authorizes the expanded list. Fresh No commits `split_suggested` and retains sovereign advisory continuation.
 Publish the new committed group/flow only after success; capture owner, provider and inquiry generation across awaits.
+Bind draft lifetime to the existing composition admission owner/provider/generation, not a permanent auth revision.
+Capture authority per send; renewed same-owner authority may retry the exact frozen request without changing its answer.
+Do not infer therapeutic ownership from a transient identity badge or assign an owner to unanchored Guest work.
 Use existing exclusive-operation serialization. Pending authenticated flush/promotion must settle or retain its exact frozen
 request before a divergent revision is admitted. No editable authenticated reload expansion or private engine hydration.
 Do not silently rebase an old answer onto changed membership after a conflict: retain intent, inspect refreshed state,

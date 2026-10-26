@@ -31,11 +31,13 @@ import {
   normalizeGroupRevision,
   prepareGroupSave,
   prepareSymptomReorder,
+  prepareMembershipRevision, membershipRevisionFingerprint, MembershipRevisionIdentityMismatchError,
   GroupNotFoundError,
   rehydrateInViewUnit,
   TRACER_BULLET_SEED_TREATMENT_ROWS,
   TRACER_BULLET_SEED_TREATMENTS,
 } from "pic-engine";
+import type { MembershipRevisionInput, FinalizedSymptomGroup } from "pic-engine";
 
 /** The minimal Web Storage shape this adapter needs - satisfied by real `localStorage` or a test double. */
 export interface GuestKeyValueStorage {
@@ -119,6 +121,7 @@ function resolveDefaultStorage(): GuestKeyValueStorage {
 }
 
 interface GuestRepositorySnapshot {
+  membershipReceipts?: Record<string, { groupId: string; fingerprint: string }>;
   schemaVersion?: 2;
   groups: Record<string, SymptomGroup>;
   playerSessions: Record<string, PlayerSession>;
@@ -165,6 +168,30 @@ export class GuestRepositoryCannotPromoteError extends Error {
  * "dumb" pass-through store.
  */
 export class LocalGuestRepository implements RepositoryPort {
+  async commitMembershipRevision(input: MembershipRevisionInput): Promise<FinalizedSymptomGroup> {
+    return this.writeLock(this.storageKey, async () => {
+      const snapshot = this.readSnapshot();
+      const group = snapshot.groups[input.groupId];
+      if (!group) throw new GroupNotFoundError(input.groupId);
+      const fingerprint = membershipRevisionFingerprint(input);
+      const receipt = snapshot.membershipReceipts?.[input.operationId];
+      if (receipt) {
+        if (receipt.groupId !== input.groupId || receipt.fingerprint !== fingerprint) {
+          throw new MembershipRevisionIdentityMismatchError();
+        }
+        return normalizeGroupRevision(group) as FinalizedSymptomGroup;
+      }
+      const committed = prepareMembershipRevision(group, input);
+      if (input.additions.some((row) => Object.values(snapshot.groups).some((g) => g.symptoms.some((s) => s.id === row.id)))) {
+        throw new MembershipRevisionIdentityMismatchError();
+      }
+      snapshot.groups[input.groupId] = committed;
+      snapshot.membershipReceipts = { ...snapshot.membershipReceipts,
+        [input.operationId]: { groupId: input.groupId, fingerprint } };
+      this.writeSnapshot(snapshot);
+      return normalizeGroupRevision(committed) as FinalizedSymptomGroup;
+    });
+  }
   private readonly storage: GuestKeyValueStorage;
   private readonly storageKey: string;
   private readonly writeLock: GuestWriteLock;

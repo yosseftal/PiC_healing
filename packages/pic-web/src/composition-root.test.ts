@@ -6,11 +6,15 @@ import type { FinalizedSymptomGroup, LibraryRow, PlayerSession, RepositoryPort, 
 import { DEFAULT_GUEST_STORAGE_KEY, LocalGuestRepository } from "pic-adapter-local-guest";
 import type { GuestSnapshot } from "pic-engine";
 import { DEFAULT_GUEST_SESSION_GATE_STATE } from "pic-engine";
-import { GroupNotFoundError, prepareGroupSave, prepareSymptomReorder, type SymptomGroup } from "pic-engine";
+import {
+  GroupNotFoundError, prepareGroupSave, prepareMembershipRevision, membershipRevisionFingerprint,
+  prepareSymptomReorder, type SymptomGroup,
+} from "pic-engine";
 import { compositionRoot, swapToSupabaseAdapter } from "./composition-root";
 
 function createInMemoryAuthenticatedPort(): RepositoryPort {
   const groups = new Map<string, SymptomGroup>();
+  const membershipReceipts = new Map<string, string>();
   const sessions = new Map<string, PlayerSession>();
   const libraryRows = new Map<string, LibraryRow>();
   const libraryRowIdByTreatmentId = new Map<string, string>();
@@ -24,6 +28,20 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
     },
     async saveGroup(group) {
       groups.set(group.id, prepareGroupSave(groups.get(group.id) ?? null, group));
+    },
+    async commitMembershipRevision(input) {
+      const group = groups.get(input.groupId);
+      if (!group) throw new GroupNotFoundError(input.groupId);
+      const fingerprint = membershipRevisionFingerprint(input);
+      const receipt = membershipReceipts.get(input.operationId);
+      if (receipt !== undefined) {
+        if (receipt !== fingerprint) throw new Error("Operation payload changed");
+        return structuredClone(group) as FinalizedSymptomGroup;
+      }
+      const committed = prepareMembershipRevision(group, input);
+      membershipReceipts.set(input.operationId, fingerprint);
+      groups.set(input.groupId, committed);
+      return structuredClone(committed);
     },
     async reorderSymptoms(id, ids, revision) {
       const group = groups.get(id);
@@ -532,7 +550,7 @@ it.each([false, true])("recovers Gate after cleanup/rearming fail and reload, bo
   const { compositionRoot: restored } = await import("./composition-root");
   const facts = await import("./guest-flow-facts");
   await vi.waitFor(async () => expect(await restored.repositoryPort.getGuestSessionGate()).toEqual({
-    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway", promotionPayloadVersion: 2 },
+    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway", promotionPayloadVersion: 3 },
   }));
   expect(await restored.repositoryPort.getPlayerSession(sessionId)).toEqual(before);
   expect(facts.guestFlowFactsStore.getSnapshot().activePlayerSessionId).toBe(sessionId);
@@ -581,7 +599,7 @@ it.each([false, true])("retains latest Finish kind after gate/cleanup failures, 
   vi.spyOn(provider, "clear").mockRejectedValueOnce(new Error("Cleanup unavailable"));
   await expect(fresh.inquiryResetActions.resetInquiry(true)).rejects.toThrow("Cleanup unavailable");
   expect(await fresh.repositoryPort.getGuestSessionGate()).toEqual({
-    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway", promotionPayloadVersion: 2 },
+    gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway", promotionPayloadVersion: 3 },
   });
   expect(fresh.sessionEngineStore.getSnapshot().gateTriggered).toBe(true);
   await fresh.inquiryResetActions.resetInquiry(true);
@@ -722,4 +740,62 @@ it.each(["discard", "promote"])("keeps %s cleanup last after delayed pointer per
   await cleanup;
   await facts.settleGuestFlowPersistence();
   expect(localStorage.getItem(DEFAULT_GUEST_STORAGE_KEY)).toBeNull();
+});
+
+it("retains the frozen revision across authority renewal and retries under the same admission owner", async () => {
+  vi.resetModules(); localStorage.clear();
+  const { compositionRoot: root } = await import("./composition-root");
+  const { inquiryGenerationStore } = await import("./inquiry-lifecycle");
+  await import("./guest-flow-facts");
+  await prepareGate(root);
+  const snapshot = (await root.promotePathActions.assembleGuestSnapshotForPendingGate())!;
+  const port = createInMemoryAuthenticatedPort();
+  await root.promotePathActions.promoteWithAuthenticatedRepository(port, snapshot, "same-admission-owner");
+  const groupId = await root.groupEngineActions.createDraftGroup("Same owner");
+  const original = await root.groupEngineActions.addSymptom(groupId, "Original");
+  await root.groupEngineActions.rate(original, { intensity: 4 });
+  await root.groupEngineActions.setJointTreatmentMuscleTest(groupId, "together");
+  await root.groupEngineActions.finalizeGroup(groupId);
+  const actions = root.questionnaire.actionsFor(inquiryGenerationStore.getSnapshot());
+  expect(await actions.beginEdit()).toBe(true);
+  const added = actions.add()!;
+  actions.edit(added, { name: "Retained", intensity: 8, polarity: "positive" });
+  expect(await actions.finish()).toBe(true);
+  const commit = port.commitMembershipRevision.bind(port);
+  const writes = vi.spyOn(port, "commitMembershipRevision").mockImplementationOnce(async (input) => {
+    const group = await commit(input);
+    root.authLifecycle.completeDetachment();
+    return group;
+  });
+  expect(await actions.answer("split_suggested")).toBe(false);
+  const frozen = structuredClone(writes.mock.calls[0]![0]);
+  expect(root.questionnaire.store.getSnapshot().answer).toBe("split_suggested");
+  expect(await actions.answer("together")).toBe(true);
+  expect(writes.mock.calls[1]![0]).toEqual(frozen);
+  expect((await port.getGroup(groupId))?.symptoms.map((row) => row.name)).toEqual(["Original", "Retained"]);
+  expect(root.questionnaire.store.getSnapshot().existing?.joint_treatment_muscle_test).toBe("split_suggested");
+});
+
+it.each([undefined, 2] as const)(
+  "retains the older Finish marker %s through failed reset recovery and reload", async (version) => {
+  vi.resetModules(); localStorage.clear();
+  const { compositionRoot: first } = await import("./composition-root");
+  await import("./guest-flow-facts");
+  const sessionId = await first.playerEngineActions.startSession("old-reset-treatment", null, ["one"]);
+  const expected = { gateTriggered: true, pendingFinishRequest: { sessionId, kind: "finishAnyway" as const,
+    ...(version === undefined ? {} : { promotionPayloadVersion: version }) } };
+  await first.repositoryPort.saveGuestSessionGate({ ...expected,
+    pendingFinishRequest: { ...expected.pendingFinishRequest, kind: "finish" } });
+  vi.resetModules();
+  const { compositionRoot: current } = await import("./composition-root");
+  await import("./guest-flow-facts");
+  await current.sessionEngineActions.onFinishRequested(sessionId, "finishAnyway");
+  vi.spyOn(current.repositoryPort.getProvider() as LocalGuestRepository, "clear")
+    .mockRejectedValueOnce(new Error("Old reset cleanup interrupted"));
+  await expect(current.inquiryResetActions.resetInquiry(true)).rejects.toThrow("Old reset cleanup interrupted");
+  expect(JSON.parse(localStorage.getItem("pic-web.inquiry-reset-recovery.v1")!).gate).toEqual(expected);
+  vi.restoreAllMocks(); vi.resetModules();
+  const { compositionRoot: restored } = await import("./composition-root");
+  await vi.waitFor(async () => expect(await restored.repositoryPort.getGuestSessionGate()).toEqual(expected));
+  await restored.inquiryResetActions.resetInquiry(true);
 });

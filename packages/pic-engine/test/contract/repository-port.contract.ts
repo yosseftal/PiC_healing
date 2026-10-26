@@ -349,7 +349,7 @@ export function runRepositoryPortContractTests(
             expect(await port.getGroup(group.id)).toBeNull();
             expect(await port.getPlayerSession(playerSession.id)).toBeNull();
           }
-          for (const promotionPayloadVersion of [null, 1, 3]) {
+          for (const promotionPayloadVersion of [null, 1, 4]) {
             const group = makePromotionGroup({ revision: 0 });
             const playerSession = makePromotionSession({ linked_group_id: group.id });
             const input = JSON.parse(JSON.stringify({ idempotencyKey: group.id,
@@ -387,6 +387,31 @@ export function runRepositoryPortContractTests(
           input.group.name = "Changed caller object";
           await expect(port.promoteGuestToAccount(input)).rejects.toThrow();
           await expect(port.promoteGuestToAccount(frozen)).resolves.toMatchObject({ group: replay.group });
+        });
+        it("promotes v3 answer association and rejects malformed association before any write", async () => {
+          const incomplete = makePromotionGroup({ revision: 0 });
+          const incompleteSession = makePromotionSession({ linked_group_id: incomplete.id });
+          const malformed = JSON.parse(JSON.stringify({ idempotencyKey: incomplete.id,
+            group: { ...incomplete, joint_treatment_test_at: null }, playerSession: incompleteSession,
+            newUserId, promotionPayloadVersion: 3 }));
+          await expect(port.promoteGuestToAccount(malformed)).rejects.toThrow();
+          expect(await port.getGroup(incomplete.id)).toBeNull();
+          for (const invalid of [true, false]) {
+            const group = makePromotionGroup({ revision: 4, membership_revision: 2,
+              joint_treatment_membership_revision: invalid ? 1 : 2 });
+            const playerSession = makePromotionSession({ linked_group_id: group.id });
+            const input = { idempotencyKey: group.id, group, playerSession, newUserId, promotionPayloadVersion: 3 as const };
+            if (invalid) {
+              await expect(port.promoteGuestToAccount(input)).rejects.toThrow();
+              expect(await port.getGroup(group.id)).toBeNull();
+              expect(await port.getPlayerSession(playerSession.id)).toBeNull();
+            } else {
+              const result = await port.promoteGuestToAccount(input);
+              expect(result.group).toEqual(group);
+              expect((await port.promoteGuestToAccount(input)).group).toEqual(group);
+              await expect(port.promoteGuestToAccount({ ...input, promotionPayloadVersion: 2 })).rejects.toThrow();
+            }
+          }
         });
         const writesAllFivePromotedEntitiesTitle =
           "writes group (with its embedded symptoms), player session, library row, and timeline event, " +

@@ -19,7 +19,8 @@ export function validRecovery(value: unknown): value is PromotionRecovery {
     value.generation < 0 || typeof value.owner !== "string" || value.owner.length === 0 ||
     (value.kind !== "finish" && value.kind !== "finishAnyway") || !record(value.snapshot)) return false;
   const { playerSession: session, group } = value.snapshot;
-  if (value.snapshot.promotionPayloadVersion !== undefined && value.snapshot.promotionPayloadVersion !== 2) return false;
+  if (value.snapshot.promotionPayloadVersion !== undefined && value.snapshot.promotionPayloadVersion !== 2 &&
+    value.snapshot.promotionPayloadVersion !== 3) return false;
   if (!record(session) || typeof session.id !== "string" || typeof session.treatment_id !== "string" ||
     typeof session.success_declared !== "boolean" || !Array.isArray(session.units) ||
     !session.units.every((unit) => record(unit) && typeof unit.unit_id === "string" &&

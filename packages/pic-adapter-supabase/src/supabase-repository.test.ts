@@ -28,6 +28,7 @@ import type {
 import { GroupEngine, GroupRevisionConflictError, PromoteGuestToAccountIdentityMismatchError } from "pic-engine";
 import { runRepositoryPortContractTests } from "pic-engine/test/contract/repository-port.contract";
 import { runGroupOrderContract } from "pic-engine/test/contract/group-order.contract";
+import { runMembershipRevisionContract } from "pic-engine/test/contract/membership-revision.contract";
 import { SupabaseRepository } from "./index";
 
 function loadEnvLocal(path: string): Record<string, string> {
@@ -480,6 +481,7 @@ describe("SupabaseRepository", () => {
     });
 
     runGroupOrderContract(() => ({ port: repository, fresh: () => new SupabaseRepository(user.client) }));
+    runMembershipRevisionContract(() => ({ port: repository, fresh: () => new SupabaseRepository(user.client) }));
 
     function orderedFixture(): FinalizedSymptomGroup {
       return { id: randomUUID(), name: "Priority fixture", revision: 0,
@@ -489,15 +491,41 @@ describe("SupabaseRepository", () => {
           polarity: "negative", intensity: i * 3, rated_at: "2026-10-20T00:00:00.000Z" })) };
     }
 
+    it("rolls back new members, positions, actual answer and receipt after a forced late transaction failure", async () => {
+      const group = orderedFixture();
+      await repository.saveGroup(group);
+      const addition = { id: randomUUID(), name: "Pending", polarity: "positive" as const, intensity: 8 };
+      const request = { operationId: randomUUID(), groupId: group.id, expectedRevision: 0, expectedMembershipRevision: 0,
+        additions: [addition], orderedSymptomIds: [addition.id, ...group.symptoms.map((s) => s.id)],
+        answer: "split_suggested" as const, answeredAt: "2026-10-26T10:00:00.000Z" };
+      const { error } = await user.client.rpc("commit_membership_revision", {
+        p_request: { ...request, __test_only_failure_after_write__: true },
+      });
+      expect(error?.message).toBe("MEMBERSHIP_TEST_ROLLBACK: simulated failure after membership writes");
+      expect(await repository.getGroup(group.id)).toEqual(group);
+      // A retained receipt would reject the successful actual request or misreport its old group.
+      const committed = await repository.commitMembershipRevision(request);
+      expect(committed.symptoms).toHaveLength(4);
+      expect(committed).toMatchObject({ membership_revision: 1, joint_treatment_membership_revision: 1,
+        joint_treatment_muscle_test: "split_suggested" });
+      expect(await repository.commitMembershipRevision(request)).toEqual(committed);
+    });
+
     it("competing reorder, append and rating accept one revision and preserve the winner on fresh read", async () => {
       const group = orderedFixture();
       await repository.saveGroup(group);
       const peer = new SupabaseRepository(user.client);
-      const appended = { ...group, symptoms: [...group.symptoms, { ...group.symptoms[0]!, id: randomUUID(), name: "Fourth" }] };
+      const addition = { id: randomUUID(), name: "Fourth", polarity: "negative" as const, intensity: 5 };
+      const request = { operationId: randomUUID(), groupId: group.id, expectedRevision: 0, expectedMembershipRevision: 0,
+        additions: [addition], orderedSymptomIds: [...group.symptoms.map((s) => s.id), addition.id],
+        answer: "split_suggested" as const, answeredAt: "2026-10-26T10:00:00.000Z" };
+      const appended = { ...group, symptoms: [...group.symptoms, { ...addition, rated_at: request.answeredAt }],
+        membership_revision: 1, joint_treatment_membership_revision: 1,
+        joint_treatment_muscle_test: "split_suggested", joint_treatment_test_at: request.answeredAt };
       const rated = { ...group, symptoms: group.symptoms.map((s, i) => i === 0 ? { ...s, intensity: 10 } : s) };
       const outcomes = await Promise.allSettled([
         repository.reorderSymptoms(group.id, group.symptoms.map((s) => s.id).reverse(), 0),
-        peer.saveGroup(appended), new SupabaseRepository(user.client).saveGroup(rated),
+        peer.commitMembershipRevision(request), new SupabaseRepository(user.client).saveGroup(rated),
       ]);
       expect(outcomes.filter((r) => r.status === "fulfilled")).toHaveLength(1);
       for (const outcome of outcomes) if (outcome.status === "rejected") {
@@ -517,6 +545,11 @@ describe("SupabaseRepository", () => {
       await expect(foreign.getGroup(group.id)).resolves.toBeNull();
       await expect(foreign.reorderSymptoms(group.id, group.symptoms.map((s) => s.id).reverse(), 0)).rejects.toThrow();
       await expect(foreign.saveGroup({ ...group, name: "Foreign" })).rejects.toThrow();
+      const addition = { id: randomUUID(), name: "Foreign append", polarity: "negative" as const, intensity: 5 };
+      await expect(foreign.commitMembershipRevision({ operationId: randomUUID(), groupId: group.id,
+        expectedRevision: 0, expectedMembershipRevision: 0, additions: [addition],
+        orderedSymptomIds: [...group.symptoms.map((s) => s.id), addition.id],
+        answer: "together", answeredAt: "2026-10-26T10:00:00.000Z" })).rejects.toThrow();
       expect((await user.client.from("symptom_groups").update({ name: "Bypass" }).eq("id", group.id)).error).not.toBeNull();
       expect((await user.client.from("symptoms").update({ intensity: 9 }).eq("id", group.symptoms[0]!.id)).error).not.toBeNull();
       expect(await repository.getGroup(group.id)).toEqual(group);
@@ -637,7 +670,7 @@ describe("SupabaseRepository", () => {
     });
 
     it(
-      "GroupEngine.hasPriorRating returns false before rate() and true after it, backed by " +
+      "GroupEngine.hasPriorRating recognizes a committed initial rating and blind zero rerating, backed by " +
         "SupabaseRepository end-to-end",
       async () => {
         const groupId = randomUUID();
@@ -653,16 +686,20 @@ describe("SupabaseRepository", () => {
         await repository.saveGroup(emptyFinalizedGroup);
 
         const engine = new GroupEngine(repository);
-        const symptomId = await engine.addSymptom(groupId, "Lower Back Pain");
-
-        expect(await engine.hasPriorRating(symptomId)).toBe(false);
-
-        await engine.rate(symptomId, { polarity: "negative", intensity: 6 });
+        const symptomId = randomUUID();
+        await expect(engine.addSymptom(groupId, "Bypass")).rejects.toThrow();
+        await engine.commitMembershipRevision({ operationId: randomUUID(), groupId,
+          expectedRevision: 0, expectedMembershipRevision: 0,
+          additions: [{ id: symptomId, name: "Lower Back Pain", polarity: "negative", intensity: 6 }],
+          orderedSymptomIds: [symptomId], answer: "together", answeredAt: now });
+        expect(await engine.hasPriorRating(symptomId)).toBe(true);
+        await engine.rate(symptomId, { polarity: "negative", intensity: 0 });
 
         expect(await engine.hasPriorRating(symptomId)).toBe(true);
 
         const reloaded = await repository.getGroup(groupId);
         expect(reloaded?.symptoms[0]?.rated_at).not.toBeNull();
+        expect(reloaded?.symptoms[0]?.intensity).toBe(0);
       },
     );
 

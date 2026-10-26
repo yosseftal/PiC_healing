@@ -4,6 +4,7 @@ import type {
   PromoteGuestToAccountResult,
   RepositoryPort,
   SymptomGroup,
+  MembershipRevisionInput,
 } from "./repository-port";
 import type { LibraryRow, LibraryRowProvenance, PlayerSession, TimelineEvent } from "./types";
 
@@ -13,6 +14,9 @@ import type { LibraryRow, LibraryRowProvenance, PlayerSession, TimelineEvent } f
  * succeeds, `swapProvider` retargets every engine to the authenticated adapter without reconstruction.
  */
 export class DelegatingRepositoryPort implements RepositoryPort {
+  commitMembershipRevision(input: MembershipRevisionInput) {
+    return this.provider.commitMembershipRevision(input);
+  }
   constructor(private provider: RepositoryPort) {}
 
   swapProvider(provider: RepositoryPort): void {

@@ -5,10 +5,23 @@ import type {
   PlayerSession,
   SymptomGroupDraft,
   TimelineEvent,
+  Polarity, Intensity, JointTreatmentMuscleTestResult, Timestamp,
 } from "./types";
 
 /** Either lifecycle state of a Symptom Group, as persisted via `getGroup` / `saveGroup`. */
 export type SymptomGroup = SymptomGroupDraft | FinalizedSymptomGroup;
+
+/** Frozen actual response and stable IDs for one append-only questionnaire revision. */
+export interface MembershipRevisionInput {
+  operationId: string;
+  groupId: string;
+  expectedRevision: number;
+  expectedMembershipRevision: number;
+  additions: readonly { id: string; name: string; polarity: Polarity; intensity: Intensity }[];
+  orderedSymptomIds: readonly string[];
+  answer: JointTreatmentMuscleTestResult;
+  answeredAt: Timestamp;
+}
 
 /**
  * Thrown by `RepositoryPort.promoteGuestToAccount` when a call reuses an `idempotencyKey` that already
@@ -45,7 +58,7 @@ export class PromoteGuestToAccountIdentityMismatchError extends Error {
 
 /** Input to `promoteGuestToAccount`: the full Guest state to move to the newly authenticated account. */
 export interface PromoteGuestToAccountInput {
-  promotionPayloadVersion?: 2;
+  promotionPayloadVersion?: 2 | 3;
   /**
    * Client-generated idempotency key. For a linked Symptom Group promotion this is the Guest Group's
    * client-side UUID (reused as the eventual `symptom_groups.id`). For an unlinked session (`group:
@@ -93,7 +106,7 @@ export interface GuestSessionGateState {
   pendingFinishRequest: {
     sessionId: string;
     kind: "finish" | "finishAnyway";
-    promotionPayloadVersion?: 2;
+    promotionPayloadVersion?: 2 | 3;
   } | null;
 }
 
@@ -130,6 +143,7 @@ export interface PromoteGuestToAccountResult {
  * engine speaks only to this port.
  */
 export interface RepositoryPort {
+  commitMembershipRevision(input: MembershipRevisionInput): Promise<FinalizedSymptomGroup>;
   getGroup(groupId: string): Promise<SymptomGroup | null>;
 
   saveGroup(group: SymptomGroup): Promise<void>;

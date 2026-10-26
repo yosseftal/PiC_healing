@@ -15,6 +15,7 @@ import type { RepositoryPort } from "./repository-port";
  * proof file (not necessarily the interface) needs updating.
  */
 const completePort: RepositoryPort = {
+  commitMembershipRevision: async () => { throw new Error("compile-check only"); },
   getGroup: async () => null,
   saveGroup: async () => undefined,
   reorderSymptoms: async () => { throw new Error("compile-check only"); },

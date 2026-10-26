@@ -95,7 +95,14 @@ it("refreshes a conflict and keeps its exact requested permutation for explicit 
 it("retains an incompatible permutation after a concurrent append until the Event Manager cancels it", async () => {
   const { id, before, actions } = await prepare();
   const last = before.symptoms[2]!;
-  await act(async () => { await actions.addSymptom(id, "New concern"); });
+  const added = crypto.randomUUID();
+  await act(async () => {
+    await compositionRoot.groupEngine.commitMembershipRevision({ operationId: crypto.randomUUID(), groupId: id,
+      expectedRevision: before.revision!, expectedMembershipRevision: 0,
+      additions: [{ id: added, name: "New concern", polarity: "negative", intensity: 3 }],
+      orderedSymptomIds: [...before.symptoms.map((row) => row.id), added],
+      answer: "together", answeredAt: "2026-10-26T03:04:05Z" });
+  });
   fireEvent.click(within(screen.getByTestId(`summary-symptom-${last.id}`)).getByRole("button", { name: "Move topic up" }));
   await screen.findByRole("button", { name: "Try this priority change again" });
   expect(screen.getByText("New concern")).toBeTruthy();

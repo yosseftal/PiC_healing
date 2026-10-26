@@ -38,13 +38,16 @@ import { LocalGuestRepository } from "pic-adapter-local-guest";
 import {
   DelegatingRepositoryPort,
   GroupEngine,
+  membershipState,
   LibraryEngine,
   parseStructuredMarkdown,
   PlayerEngine,
   SessionEngine,
   TimelineEngine,
 } from "pic-engine";
-import type { AtomicUnitContent, Intensity, JointTreatmentMuscleTestResult, Polarity, Treatment } from "pic-engine";
+import type {
+  AtomicUnitContent, Intensity, JointTreatmentMuscleTestResult, MembershipRevisionInput, Polarity, Treatment,
+} from "pic-engine";
 import type { GuestSnapshot, RepositoryPort, SymptomGroup } from "pic-engine";
 import type { PlayerSession } from "pic-engine";
 import {
@@ -206,7 +209,7 @@ const untrackedSessionEngineActions = {
     // Public call arguments retain the newest intent even when the engine's gate storage write rejects.
     pendingGuestFinishRequest = sessionEngine.getState().mode === "guest" ?
       pendingGuestFinishRequest?.sessionId === sessionId ? { ...pendingGuestFinishRequest, kind } :
-        { sessionId, kind, promotionPayloadVersion: 2 } : null;
+        { sessionId, kind, promotionPayloadVersion: 3 } : null;
     await sessionEngine.onFinishRequested(sessionId, kind);
     await playerSessionStore.refresh(sessionId);
     if (playerSessionStore.getSnapshot(sessionId)?.success_declared === true) {
@@ -249,8 +252,15 @@ const untrackedGroupEngineActions = {
     }
     return groupEngine.setJointTreatmentMuscleTest(groupId, answer);
   },
-  getGroup(groupId: string) {
-    return repositoryPort.getGroup(groupId);
+  async getGroup(groupId: string) {
+    const generation = inquiryGenerationStore.getSnapshot();
+    const provider = repositoryPort.getProvider();
+    const identity = authStore.getSnapshot();
+    const group = await provider.getGroup(groupId);
+    const current = authStore.getSnapshot();
+    if (generation !== inquiryGenerationStore.getSnapshot() || provider !== repositoryPort.getProvider() ||
+      identity.owner !== current.owner || identity.revision !== current.revision) throw new InquiryOperationCancelled();
+    return group;
   },
   async reorderSymptoms(groupId: string, orderedIds: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
     const identity = authStore.getSnapshot();
@@ -340,7 +350,85 @@ const groupEngineActions = trackedActions(untrackedGroupEngineActions);
 const questionnaire = createQuestionnaireDraft({
   activeGroup: () => activeGroupId,
   getGroup: (id) => groupEngineActions.getGroup(id),
+  revisionIdentity: captureQuestionnaireIdentity,
   continueExisting: () => guestFlowFacts.setGuestFlowSymptomAdditionComplete(true),
+  editExisting: () => {
+    guestFlowFacts.setGuestFlowSymptomAdditionComplete(false);
+    guestFlowFacts.setGuestFlowSummaryAcknowledged(false);
+  },
+  reviewRevision: () => {
+    guestFlowFacts.setGuestFlowGroupFinalized(false);
+    guestFlowFacts.setGuestFlowSymptomAdditionComplete(true);
+  },
+  revisionCommitted: (group) => {
+    guestFlowFacts.setGuestFlowSummaryAcknowledged(false);
+    guestFlowFacts.setGuestFlowGroupFinalized(group.joint_treatment_muscle_test === "together");
+    guestFlowFacts.setGuestFlowSymptomAdditionComplete(true);
+  },
+  createRevisionSubmission(base, rows, answer) {
+    const check = captureQuestionnaireIdentity();
+    const input: MembershipRevisionInput = {
+      operationId: crypto.randomUUID(), groupId: base.id, expectedRevision: base.revision ?? 0,
+      expectedMembershipRevision: membershipState(base).membershipRevision,
+      additions: rows.filter((row) => !base.symptoms.some((old) => old.id === row.id)),
+      orderedSymptomIds: rows.map((row) => row.id), answer, answeredAt: new Date().toISOString(),
+    };
+    const frozen = structuredClone(input);
+    return () => trackExclusiveFlowOperation(async () => {
+      check();
+      const authority = captureQuestionnaireIdentity(true);
+      authority();
+      const committed = await groupEngine.commitMembershipRevision(structuredClone(frozen));
+      authority();
+      return committed;
+    });
+  },
+  createUnansweredSubmission(base, rows) {
+    const check = captureQuestionnaireIdentity();
+    const additions = rows.filter((row) => !base.symptoms.some((old) => old.id === row.id));
+    const provider = repositoryPort.getProvider();
+    const wasFinalized = guestFlowFacts.guestFlowFactsStore.getSnapshot().groupFinalized;
+    let prepared: SymptomGroup | null = null;
+    return () => trackExclusiveFlowOperation(async () => {
+      check();
+      const authority = captureQuestionnaireIdentity(true);
+      authority();
+      if (additions.length && prepared === null) {
+        prepared = await groupStaging.build(async () => {
+          const materialized = new Map<string, string>();
+          for (const row of additions) {
+            const id = await groupEngine.addSymptom(base.id, row.name); authority();
+            materialized.set(row.id, id);
+            await groupEngine.rate(id, { polarity: row.polarity, intensity: row.intensity }); authority();
+          }
+          const staged = await groupStaging.port.getGroup(base.id); authority();
+          if (staged === null) throw new Error("Group is unavailable");
+          await groupEngine.reorderSymptoms(base.id, rows.map((row) => materialized.get(row.id) ?? row.id),
+            staged.revision ?? 0);
+          authority();
+          return base.id;
+        }, base);
+        // The provider advances the aggregate once for this complete initial-list update.
+        prepared = { ...prepared, revision: base.revision ?? 0 };
+      }
+      if (prepared !== null) { await provider.saveGroup(structuredClone(prepared)); authority(); }
+      const current = await repositoryPort.getGroup(base.id); authority();
+      if (current === null) throw new Error("Group is unavailable");
+      const requestedIds = rows.map((row) => row.id);
+      const orderChanged = requestedIds.some((id, index) => base.symptoms[index]?.id !== id);
+      const alreadyApplied = requestedIds.length === current.symptoms.length &&
+        requestedIds.every((id, index) => current.symptoms[index]?.id === id);
+      // A prepared initial aggregate already contains its complete order. A changed editor order
+      // retains the token the EM actually saw; only explicit conflict review may renew that token.
+      const committed = prepared === null && orderChanged && !alreadyApplied ?
+        await groupEngine.reorderSymptoms(base.id, requestedIds, base.revision ?? 0) : current;
+      authority();
+      const answer = membershipState(committed);
+      guestFlowFacts.setGuestFlowGroupFinalized(wasFinalized && committed.joint_treatment_test_at !== null &&
+        answer.answerMembershipRevision !== null);
+      return committed;
+    });
+  },
   createSubmission(draft) {
     const generation = inquiryGenerationStore.getSnapshot();
     const provider = repositoryPort.getProvider();
@@ -384,6 +472,21 @@ const questionnaire = createQuestionnaireDraft({
     });
   },
 });
+function captureQuestionnaireIdentity(checkAuthority = false) {
+  const generation = inquiryGenerationStore.getSnapshot();
+  const provider = repositoryPort.getProvider();
+  const owner = authenticatedOwner;
+  const identity = authStore.getSnapshot();
+  return () => {
+    const current = authStore.getSnapshot();
+    if (generation !== inquiryGenerationStore.getSnapshot() || provider !== repositoryPort.getProvider() ||
+      owner !== authenticatedOwner || checkAuthority && owner !== null &&
+        (current.owner !== identity.owner || current.revision !== identity.revision)) throw new InquiryOperationCancelled();
+    const draft = authenticatedDraft.store.getSnapshot();
+    if (draft?.restored || draft && draft.phase !== "draft" || promotionSwitching || promotionRecovery !== null ||
+      pendingGuestFinishRequest !== null) throw new Error("Recover the pending save first");
+  };
+}
 const playerEngineActions = trackedActions(untrackedPlayerEngineActions);
 const sessionEngineActions = {
   ...trackedActions({ onFinishRequested: untrackedSessionEngineActions.onFinishRequested }),

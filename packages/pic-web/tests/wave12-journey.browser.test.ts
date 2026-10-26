@@ -158,7 +158,7 @@ for (const locale of ["he", "en"] as const) {
           terminal_nemar_response: linked ? "yes" : "no", success_declared: false });
         expect(initialSession.units.map((unit) => unit.state)).toEqual(["completed", "skipped", "skipped", "unseen"]);
         expect(gated.sessionGate.pendingFinishRequest).toEqual({
-          sessionId: initialSession.id, kind: linked ? "finish" : "finishAnyway", promotionPayloadVersion: 2,
+          sessionId: initialSession.id, kind: linked ? "finish" : "finishAnyway", promotionPayloadVersion: 3,
         });
         expect(network.requests).toEqual([]);
         await presentation(page, other, "Alias survives reset");
@@ -210,7 +210,7 @@ for (const locale of ["he", "en"] as const) {
         expect(successful.p_guest_group).toEqual(linked ? expect.objectContaining({ id: initialGroup.id }) : null);
         expect(successful.p_symptoms).toEqual(linked ? initialGroup.symptoms.map((symptom, priority_position) =>
           ({ ...symptom, priority_position })) : []);
-        expect(successful.p_player_session).toEqual({ ...initialSession, payload_version: 2 });
+        expect(successful.p_player_session).toEqual({ ...initialSession, payload_version: 3 });
         expect(JSON.stringify(successful)).not.toContain("Alias survives reset");
         expect(network.tables.player_sessions).toEqual([expect.objectContaining({
           ...initialSession, success_declared: true, finished_at: expect.any(String), user_id: network.user.id,

@@ -1,4 +1,5 @@
 import type { SymptomGroup } from "./repository-port";
+import { membershipState, InvalidMembershipRevisionError } from "./membership-state";
 
 export class GroupRevisionConflictError extends Error {
   constructor(groupId: string) {
@@ -26,6 +27,7 @@ function nextRevision(group: SymptomGroup): number {
 
 /** Legacy mutable reads normalize the token; frozen promotion payloads must not use this helper. */
 export function normalizeGroupRevision(group: SymptomGroup): SymptomGroup {
+  membershipState(group);
   const revision = group.revision === undefined ? 0 : group.revision;
   if (!validRevision(revision)) throw new GroupRevisionConflictError(group.id);
   return { ...group, revision, symptoms: group.symptoms.map((symptom) => ({ ...symptom })) };
@@ -38,20 +40,38 @@ function content(group: SymptomGroup): string {
   ]);
 }
 
-/** Prepare an append-only aggregate CAS under the repository's write lock. */
+/** Prepare aggregate CAS; initial unanswered assembly may reorder while retaining every member. */
 export function prepareGroupSave(current: SymptomGroup | null, incoming: SymptomGroup): SymptomGroup {
   const next = normalizeGroupRevision(incoming);
   if (new Set(next.symptoms.map((s) => s.id)).size !== next.symptoms.length) {
     throw new InvalidSymptomOrderError();
   }
-  if (current === null) return next;
+  if (current === null) {
+    if (membershipState(next).membershipRevision !== 0) {
+      throw new InvalidMembershipRevisionError("Generic creation starts with the initial membership.");
+    }
+    return next;
+  }
   const stored = normalizeGroupRevision(current);
+  const storedMembership = membershipState(stored);
+  const incomingMembership = membershipState(next);
+  if (storedMembership.membershipRevision !== incomingMembership.membershipRevision ||
+    (stored.joint_treatment_muscle_test !== null && next.joint_treatment_muscle_test === null) ||
+    (stored.joint_treatment_muscle_test !== null && next.symptoms.length > stored.symptoms.length)) {
+    if (incoming.revision !== stored.revision) throw new GroupRevisionConflictError(incoming.id);
+    throw new InvalidMembershipRevisionError("Answered membership changes require commitMembershipRevision.");
+  }
   if (content(stored) === content(next)) return stored;
   if (!validRevision(incoming.revision) || incoming.revision !== stored.revision) {
     throw new GroupRevisionConflictError(incoming.id);
   }
-  if (stored.id !== next.id || stored.symptoms.some((s, index) => next.symptoms[index]?.id !== s.id)) {
-    throw new InvalidSymptomOrderError("Saving a group must retain all existing members in order; new members append.");
+  const retainsMembers = stored.joint_treatment_muscle_test === null
+    ? stored.symptoms.every((s) => next.symptoms.some((candidate) => candidate.id === s.id))
+    : stored.symptoms.every((s, index) => next.symptoms[index]?.id === s.id);
+  if (stored.id !== next.id || !retainsMembers) {
+    throw new InvalidSymptomOrderError(
+      "Saving a group must retain every existing member; answered priority uses reorderSymptoms.",
+    );
   }
   return { ...next, revision: nextRevision(stored) };
 }

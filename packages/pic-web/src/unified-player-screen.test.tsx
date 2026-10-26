@@ -44,6 +44,7 @@ function createFakeAuthenticatedPort(): RepositoryPort {
       return null;
     },
     async saveGroup() {},
+    async commitMembershipRevision(input) { throw new GroupNotFoundError(input.groupId); },
     async reorderSymptoms(id) { throw new GroupNotFoundError(id); },
     async getPlayerSession(sessionId: string) {
       return sessions.get(sessionId) ?? null;

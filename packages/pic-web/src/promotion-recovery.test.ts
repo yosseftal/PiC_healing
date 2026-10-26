@@ -12,7 +12,7 @@ const credentials = { email: "recovery@example.com", password: "recovery secret"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); });
 
-async function setup(linked = true) {
+async function setup(linked = true, symptoms: NonNullable<GuestSnapshot["group"]>["symptoms"] = []) {
   vi.resetModules();
   localStorage.clear();
   vi.stubEnv("VITE_SUPABASE_URL", "https://recovery.invalid");
@@ -40,7 +40,7 @@ async function setup(linked = true) {
     success_declared: false, finished_at: null, integrating_reason: null,
   };
   const snapshot: GuestSnapshot = { group: linked ? {
-    id: groupId, name: "Recovery group", symptoms: [], created_at: "2026-10-15T00:00:00Z",
+    id: groupId, name: "Recovery group", symptoms, created_at: "2026-10-15T00:00:00Z",
     joint_treatment_muscle_test: "together", joint_treatment_test_at: "2026-10-15T00:00:00Z",
   } : null, playerSession: session };
   if (snapshot.group) await root.repositoryPort.saveGroup(snapshot.group);
@@ -83,17 +83,17 @@ async function reload(f: Awaited<ReturnType<typeof setup>>) {
   return (await import("./composition-root")).compositionRoot;
 }
 
-it("assembles a new Finish intent as v2 and retains its marker through cleanup recovery and constructor recreation", async () => {
+it("assembles a new Finish intent as v3 and retains its marker through cleanup recovery and constructor recreation", async () => {
   const f = await setup();
   const assembled = await f.root.promotePathActions.assembleGuestSnapshotForPendingGate();
-  expect(assembled?.promotionPayloadVersion).toBe(2);
+  expect(assembled?.promotionPayloadVersion).toBe(3);
   f.save.mockRejectedValueOnce(new Error("Completion write lost"));
   await expect(f.root.promotePathActions.signInAndPromote(credentials)).rejects.toThrow("Completion");
   const frozen = JSON.parse(localStorage.getItem(RECOVERY_KEY)!);
-  expect(frozen.snapshot.promotionPayloadVersion).toBe(2);
+  expect(frozen.snapshot.promotionPayloadVersion).toBe(3);
   await f.root.promotePathActions.signInAndPromote();
   expect(f.rpc.mock.calls[1]![0]).toEqual(f.rpc.mock.calls[0]![0]);
-  expect(f.rpc.mock.calls[1]![0].promotionPayloadVersion).toBe(2);
+  expect(f.rpc.mock.calls[1]![0].promotionPayloadVersion).toBe(3);
   expect(f.effects()).toBe(1);
 });
 
@@ -117,14 +117,12 @@ it("replays an old gate-only v1 lost response after reload without upgrading the
 });
 
 it("matches an existing v1 gate-only wire receipt despite normalized revisions and actual zero ratings", async () => {
-  const f = await setup();
-  const oldGroup = { ...f.snapshot.group!, symptoms: [
-    { id: randomUUID(), name: "Historical zero", polarity: "negative" as const, intensity: 0 as const,
+  const f = await setup(true, [
+    { id: randomUUID(), name: "Historical zero", polarity: "negative", intensity: 0,
       rated_at: "2026-10-15T01:02:03.123456Z" },
-    { id: randomUUID(), name: "Unrated", polarity: "positive" as const, intensity: 0 as const, rated_at: null },
-  ] };
-  const current = (await f.root.repositoryPort.getGroup(oldGroup.id))!;
-  await f.root.repositoryPort.saveGroup({ ...oldGroup, revision: current.revision });
+    { id: randomUUID(), name: "Unrated", polarity: "positive", intensity: 0, rated_at: null },
+  ]);
+  const oldGroup = f.snapshot.group!;
   await f.root.repositoryPort.saveGuestSessionGate({ gateTriggered: true,
     pendingFinishRequest: { sessionId: f.snapshot.playerSession.id, kind: "finish" } });
   const session = f.snapshot.playerSession;
@@ -497,5 +495,26 @@ it("restores an owner-bound split_suggested promotion without changing the Event
   await root.promotePathActions.signInAndPromote();
   expect(f.rpc.mock.calls[1]?.[0]).toEqual(f.rpc.mock.calls[0]?.[0]);
   expect(f.rpc.mock.calls[1]?.[0].group?.joint_treatment_muscle_test).toBe("split_suggested");
+  expect(f.effects()).toBe(1);
+});
+
+it.each([undefined, 2] as const)(
+  "preserves an older gate-only version %s through kind change, durable recovery and reload", async (version) => {
+  const f = await setup();
+  await f.root.repositoryPort.saveGuestSessionGate({ gateTriggered: true,
+    pendingFinishRequest: { sessionId: f.snapshot.playerSession.id, kind: "finish",
+      ...(version === undefined ? {} : { promotionPayloadVersion: version }) } });
+  const root = await reload(f);
+  await root.sessionEngineActions.onFinishRequested(f.snapshot.playerSession.id, "finishAnyway");
+  f.rpc.mockImplementationOnce(async (input) => { await f.commit(input); throw new Error("Old response lost"); });
+  await root.promotePathActions.signInAndPromote(credentials);
+  const frozen = JSON.parse(localStorage.getItem(RECOVERY_KEY)!);
+  if (version === undefined) expect(frozen.snapshot).not.toHaveProperty("promotionPayloadVersion");
+  else expect(frozen.snapshot.promotionPayloadVersion).toBe(2);
+  const restored = await reload(f);
+  await restored.promotePathActions.signInAndPromote();
+  expect(f.rpc.mock.calls[1]![0]).toEqual(f.rpc.mock.calls[0]![0]);
+  if (version === undefined) expect(f.rpc.mock.calls[1]![0]).not.toHaveProperty("promotionPayloadVersion");
+  else expect(f.rpc.mock.calls[1]![0].promotionPayloadVersion).toBe(2);
   expect(f.effects()).toBe(1);
 });

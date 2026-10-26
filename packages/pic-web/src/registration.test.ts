@@ -40,7 +40,7 @@ it("registers with trimmed display metadata and exact transient password without
   expect(root.sessionEngineStore.getSnapshot().mode).toBe("guest");
   expect(await root.promotePathActions.assembleGuestSnapshotForPendingGate()).toEqual(before);
   expect((await root.repositoryPort.getGuestSessionGate()).pendingFinishRequest)
-    .toEqual({ sessionId: session.id, kind: "finishAnyway", promotionPayloadVersion: 2 });
+    .toEqual({ sessionId: session.id, kind: "finishAnyway", promotionPayloadVersion: 3 });
   expect(JSON.stringify(localStorage)).not.toContain("secret");
 });
 

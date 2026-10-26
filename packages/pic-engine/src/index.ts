@@ -20,6 +20,9 @@ export type {
   TimelineEvent,
   Timestamp,
 } from "./types";
+export type { MembershipRevisionInput } from "./repository-port";
+export { membershipState, prepareMembershipRevision, membershipRevisionFingerprint, validateMembershipRevisionInput,
+  InvalidMembershipRevisionError, MembershipRevisionIdentityMismatchError } from "./membership-revision";
 
 export type {
   PromoteGuestToAccountInput,

@@ -74,7 +74,16 @@ describe("SessionEngine", () => {
       expect((await port.getGuestSessionGate()).pendingFinishRequest).not.toHaveProperty("promotionPayloadVersion");
       await restored.onFinishRequested("new-session", "finish");
       expect((await port.getGuestSessionGate()).pendingFinishRequest)
-        .toEqual({ sessionId: "new-session", kind: "finish", promotionPayloadVersion: 2 });
+        .toEqual({ sessionId: "new-session", kind: "finish", promotionPayloadVersion: 3 });
+    });
+    it("keeps frozen v2 Finish intent through kind changes and constructor restoration", async () => {
+      const gate = { gateTriggered: true, pendingFinishRequest: {
+        sessionId: "frozen-v2", kind: "finish" as const, promotionPayloadVersion: 2 as const } };
+      const { port, sessionEngine } = buildEngine(new FakeRepositoryPort(), { initialGateState: gate });
+      await sessionEngine.onFinishRequested("frozen-v2", "finishAnyway");
+      const restored = buildEngine(port, { initialGateState: await port.getGuestSessionGate() }).sessionEngine;
+      await restored.onFinishRequested("frozen-v2", "finish");
+      expect((await port.getGuestSessionGate()).pendingFinishRequest).toEqual(gate.pendingFinishRequest);
     });
     it("signals gateTriggered=true and does not run Finish side effects when mode is guest", async () => {
       const { port, playerEngine, sessionEngine } = buildEngine();
@@ -363,7 +372,7 @@ describe("SessionEngine", () => {
 
       const persisted = await port.getGuestSessionGate();
       expect(persisted.gateTriggered).toBe(true);
-      expect(persisted.pendingFinishRequest).toEqual({ sessionId, kind: "finish", promotionPayloadVersion: 2 });
+      expect(persisted.pendingFinishRequest).toEqual({ sessionId, kind: "finish", promotionPayloadVersion: 3 });
 
       const reloaded = buildEngine(port, { initialGateState: persisted });
       expect(reloaded.sessionEngine.getState().gateTriggered).toBe(true);

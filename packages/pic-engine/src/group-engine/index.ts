@@ -43,6 +43,8 @@
 import type { FinalizedSymptomGroup, Intensity, JointTreatmentMuscleTestResult, Polarity, Symptom } from "../types";
 import type { RepositoryPort, SymptomGroup } from "../repository-port";
 import { prepareSymptomReorder } from "../group-revision";
+import type { MembershipRevisionInput } from "../repository-port";
+import { membershipState, validateMembershipRevisionInput } from "../membership-revision";
 
 /** `addSymptom`'s placeholder rating for a not-yet-rated symptom - see `Symptom.rated_at`'s doc comment. */
 const UNRATED_PLACEHOLDER_POLARITY: Polarity = "negative";
@@ -105,6 +107,15 @@ export class GroupEngine {
   private readonly groupIdBySymptomId = new Map<string, string>();
 
   constructor(private readonly repositoryPort: RepositoryPort) {}
+
+  async commitMembershipRevision(input: MembershipRevisionInput): Promise<FinalizedSymptomGroup> {
+    const request = structuredClone(input);
+    validateMembershipRevisionInput(request);
+    const committed = await this.repositoryPort.commitMembershipRevision(request);
+    membershipState(committed);
+    for (const row of request.additions) this.groupIdBySymptomId.set(row.id, request.groupId);
+    return committed;
+  }
 
   async reorderSymptoms(groupId: string, orderedIDs: readonly string[], expectedRevision: number): Promise<SymptomGroup> {
     prepareSymptomReorder(await this.loadGroupOrThrow(groupId), orderedIDs, expectedRevision);
@@ -221,6 +232,7 @@ export class GroupEngine {
    */
   async finalizeGroup(groupId: string): Promise<{ group: FinalizedSymptomGroup; splitAdvisory: boolean }> {
     const group = await this.loadGroupOrThrow(groupId);
+    membershipState(group);
     // `joint_treatment_test_at` is always set in the same call as `joint_treatment_muscle_test` (see
     // `setJointTreatmentMuscleTest` above), so this single condition also narrows `group` to satisfy
     // `FinalizedSymptomGroup` below - both fields are checked explicitly (rather than asserted) so a future
@@ -236,6 +248,7 @@ export class GroupEngine {
     };
     await this.repositoryPort.saveGroup(finalizedGroup);
     const committed = await this.loadGroupOrThrow(groupId);
+    membershipState(committed);
     if (committed.joint_treatment_muscle_test === null || committed.joint_treatment_test_at === null) {
       throw new JointTreatmentMuscleTestNotSetError(groupId);
     }

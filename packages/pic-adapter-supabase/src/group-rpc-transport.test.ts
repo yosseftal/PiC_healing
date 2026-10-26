@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { FinalizedSymptomGroup, PromoteGuestToAccountInput } from "pic-engine";
-import { GroupRevisionConflictError, InvalidSymptomOrderError } from "pic-engine";
+import { GroupRevisionConflictError, InvalidSymptomOrderError, InvalidMembershipRevisionError,
+  MembershipRevisionIdentityMismatchError } from "pic-engine";
 import { SupabaseRepository } from "./supabase-repository";
 
 const group: FinalizedSymptomGroup = {
@@ -25,6 +26,16 @@ function transport(response: unknown, status = 200) {
 }
 
 describe("checked group RPC transport", () => {
+  it("commits the frozen membership operation through one atomic RPC", async () => {
+    const { port, requests } = transport({ ...group, membership_revision: 1, joint_treatment_membership_revision: 1 });
+    const addition = { id: crypto.randomUUID(), name: "New", polarity: "negative" as const, intensity: 6 };
+    const input = { operationId: crypto.randomUUID(), groupId: group.id, expectedRevision: 7,
+      expectedMembershipRevision: 0, additions: [addition], orderedSymptomIds: [group.symptoms[0]!.id, addition.id],
+      answer: "together" as const, answeredAt: "2026-10-26T10:00:00.000Z" };
+    expect(await port.commitMembershipRevision({ ...input, ...{ __test_only_failure_after_write__: true } }))
+      .toMatchObject({ membership_revision: 1 });
+    expect(requests).toEqual([{ path: "/rest/v1/rpc/commit_membership_revision", body: { p_request: input } }]);
+  });
   it("saves through one checked RPC and returns the reorder transaction projection", async () => {
     const { port, requests } = transport(group);
     await port.saveGroup(group);
@@ -41,6 +52,8 @@ describe("checked group RPC transport", () => {
     for (const [message, errorType] of [
       ["GROUP_REVISION_CONFLICT: stale", GroupRevisionConflictError],
       ["GROUP_MEMBERSHIP: omitted", InvalidSymptomOrderError],
+      ["GROUP_ANSWER_MEMBERSHIP: forged association", InvalidMembershipRevisionError],
+      ["MEMBERSHIP_OPERATION_MISMATCH: changed request", MembershipRevisionIdentityMismatchError],
     ] as const) {
       await expect(transport({ message }, 400).port.saveGroup(group)).rejects.toBeInstanceOf(errorType);
     }
@@ -78,5 +91,28 @@ describe("checked group RPC transport", () => {
     const { port, requests } = transport(group);
     expect(await port.getGroup(group.id)).toEqual(group);
     expect(requests).toEqual([{ path: "/rest/v1/rpc/get_symptom_group", body: { p_group_id: group.id } }]);
+  });
+  it("serializes fresh v3 membership markers without changing either frozen v1/v2 branch", async () => {
+    const revised = { ...group, membership_revision: 2, joint_treatment_membership_revision: 2 };
+    const { port, requests } = transport({ message: "stop" }, 400);
+    const input: PromoteGuestToAccountInput = { idempotencyKey: group.id, group: revised, newUserId: "owner",
+      playerSession: { id: "session", treatment_id: "treatment", linked_group_id: group.id, units: [],
+        terminal_nemar_response: "yes", success_declared: false, finished_at: null, integrating_reason: null } };
+    for (const version of [undefined, 2, 3] as const) {
+      await expect(port.promoteGuestToAccount({ ...input, promotionPayloadVersion: version })).rejects.toThrow();
+    }
+    expect(requests).toHaveLength(3);
+    expect(requests[0]!.body).not.toMatchObject({ p_guest_group: { membership_revision: 2 } });
+    expect(requests[1]!.body).not.toMatchObject({ p_guest_group: { membership_revision: 2 } });
+    expect(requests[2]!.body).toMatchObject({ p_guest_group: { revision: 7,
+      membership_revision: 2, joint_treatment_membership_revision: 2 }, p_player_session: { payload_version: 3 } });
+    await expect(port.promoteGuestToAccount({ ...input, group, promotionPayloadVersion: 3 })).rejects.toThrow();
+    expect(requests[3]!.body).toMatchObject({ p_guest_group: {
+      membership_revision: 0, joint_treatment_membership_revision: 0 }, p_player_session: { payload_version: 3 } });
+    expect(group).not.toHaveProperty("membership_revision");
+    await expect(port.promoteGuestToAccount({ ...input, group: null, idempotencyKey: "session",
+      playerSession: { ...input.playerSession, linked_group_id: null }, promotionPayloadVersion: 3 })).rejects.toThrow();
+    expect(requests[4]!.body).toMatchObject({ p_guest_group: null, p_symptoms: [], p_player_session: { payload_version: 3 } });
+    expect(input.group).toBe(revised);
   });
 });

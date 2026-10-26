@@ -35,6 +35,9 @@ export const messageDefinitions = {
   "reset.retry": { params: [] },
   "reset.success": { params: [] },
 
+  "questionnaire.edit": { params: [] },
+  "questionnaire.pending": { params: [] },
+  "questionnaire.reviewConflict": { params: [] },
   "joint.title": { params: [] },
   "joint.question": { params: [] },
   "joint.advisory": { params: [] },
@@ -200,6 +203,9 @@ export const dictionaries = {
     "reset.retry": "לנסות להתחיל מחדש",
     "reset.success": "בירור חדש מוכן.",
 
+    "questionnaire.edit": "חזרה לרשימה והוספת נושאים",
+    "questionnaire.pending": "התוספות ממתינות לאישור מחודש של כל הרשימה. הרשימה הקודמת נשארת שמורה.",
+    "questionnaire.reviewConflict": "סקירת הרשימה המעודכנת ומענה מחדש",
     "joint.title": "בדיקת שריר לטיפול משותף",
     "joint.question": "האם נכון ומדויק לטפל בכל הרשימה ביחד?",
     "joint.advisory": "ייתכן שמתאים יותר לטפל בסימפטומים האלה בקבוצות נפרדות.",
@@ -390,6 +396,9 @@ export const dictionaries = {
     "reset.retry": "Retry starting new",
     "reset.success": "A new inquiry is ready.",
 
+    "questionnaire.edit": "Return to the list and add topics",
+    "questionnaire.pending": "Additions await a fresh answer for the whole list. Your previous list remains saved.",
+    "questionnaire.reviewConflict": "Review the updated list and answer again",
     "joint.title": "Joint Treatment Muscle Test",
     "joint.question": "Is it right and accurate to treat the whole list together?",
     "joint.advisory": "These symptoms may heal better as separate groups.",

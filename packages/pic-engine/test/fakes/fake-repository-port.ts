@@ -1,4 +1,7 @@
 import type { FinalizedSymptomGroup, LibraryRow, LibraryRowProvenance, PlayerSession, TimelineEvent } from "../../src/types";
+import { membershipState, membershipRevisionFingerprint, prepareMembershipRevision, MembershipRevisionIdentityMismatchError,
+  InvalidMembershipRevisionError } from "../../src/membership-revision";
+import type { MembershipRevisionInput } from "../../src/repository-port";
 import {
   GroupRevisionConflictError, normalizeGroupRevision, prepareGroupSave, prepareSymptomReorder,
 } from "../../src/group-revision";
@@ -17,7 +20,8 @@ import {
 /** Mirror the versioned wire fields so read normalization cannot upgrade a legacy frozen receipt. */
 function promotionPayload(input: PromoteGuestToAccountInput): string {
   const group = input.group;
-  const ordered = input.promotionPayloadVersion === 2;
+  const membershipVersioned = input.promotionPayloadVersion === 3;
+  const ordered = input.promotionPayloadVersion === 2 || membershipVersioned;
   return JSON.stringify({
     newUserId: input.newUserId,
     group: group === null ? null : {
@@ -25,6 +29,8 @@ function promotionPayload(input: PromoteGuestToAccountInput): string {
       joint_treatment_muscle_test: group.joint_treatment_muscle_test,
       joint_treatment_test_at: group.joint_treatment_test_at,
       ...(ordered ? { revision: group.revision } : {}),
+      ...(membershipVersioned ? { membership_revision: membershipState(group).membershipRevision,
+        joint_treatment_membership_revision: membershipState(group).answerMembershipRevision } : {}),
       symptoms: group.symptoms.map((s, index) => ({ id: s.id, name: s.name, polarity: s.polarity, intensity: s.intensity,
         ...(s.rated_at === null ? {} : { rated_at: s.rated_at }), ...(ordered ? { priority_position: index } : {}) })),
     },
@@ -40,11 +46,30 @@ function detached<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as 
  * engine ticket (05-09) writes its unit tests against this class; it is exercised here only through the
  * shared contract suite (`../contract/repository-port.contract.ts`).
  *
- * Deliberately does NOT validate any business rule (e.g. an out-of-range `intensity`, or a group whose
- * `joint_treatment_muscle_test` is unset) - it only stores and returns whatever it is given. That
- * validation belongs to `GroupEngine` (ticket 07), never to a `RepositoryPort` implementation.
+ * Ordinary rating validation belongs to GroupEngine. Aggregate concurrency and atomic membership
+ * commands repeat their storage invariants here, matching both concrete adapters at the public seam.
  */
 export class FakeRepositoryPort implements RepositoryPort {
+  private readonly membershipReceipts = new Map<string, { groupId: string; fingerprint: string }>();
+  async commitMembershipRevision(input: MembershipRevisionInput): Promise<FinalizedSymptomGroup> {
+    const current = this.groupsById.get(input.groupId);
+    if (!current) throw new Error(`Missing group ${input.groupId}`);
+    const fingerprint = membershipRevisionFingerprint(input);
+    const receipt = this.membershipReceipts.get(input.operationId);
+    if (receipt) {
+      if (receipt.groupId !== input.groupId || receipt.fingerprint !== fingerprint) {
+        throw new MembershipRevisionIdentityMismatchError();
+      }
+      return detached(current) as FinalizedSymptomGroup;
+    }
+    const next = prepareMembershipRevision(current, input);
+    if (input.additions.some((row) => [...this.groupsById.values()].some((g) => g.symptoms.some((s) => s.id === row.id)))) {
+      throw new MembershipRevisionIdentityMismatchError();
+    }
+    this.groupsById.set(input.groupId, next);
+    this.membershipReceipts.set(input.operationId, { groupId: input.groupId, fingerprint });
+    return detached(next);
+  }
   private readonly groupsById = new Map<string, SymptomGroup>();
   private readonly playerSessionsById = new Map<string, PlayerSession>();
   private readonly libraryRowsById = new Map<string, LibraryRow>();
@@ -145,13 +170,18 @@ export class FakeRepositoryPort implements RepositoryPort {
   }
 
   async promoteGuestToAccount(input: PromoteGuestToAccountInput): Promise<PromoteGuestToAccountResult> {
-    const ordered = input.promotionPayloadVersion === 2;
+    const membershipVersioned = input.promotionPayloadVersion === 3;
+    const ordered = input.promotionPayloadVersion === 2 || membershipVersioned;
     if (input.promotionPayloadVersion !== undefined && !ordered) {
       throw new Error("Unsupported promotion payload version");
     }
     if (ordered && input.group !== null &&
         (!Number.isSafeInteger(input.group.revision) || input.group.revision! < 0)) {
       throw new GroupRevisionConflictError(input.group.id);
+    }
+    if (membershipVersioned && input.group !== null &&
+      (membershipState(input.group).answerMembershipRevision === null || input.group.joint_treatment_test_at === null)) {
+      throw new InvalidMembershipRevisionError("V3 promotion requires the actual answer and its timestamp.");
     }
     const existingRecord = this.promotionRecordsByIdempotencyKey.get(input.idempotencyKey);
     if (existingRecord !== undefined) {
@@ -167,7 +197,9 @@ export class FakeRepositoryPort implements RepositoryPort {
     }
 
     if (input.group !== null) {
-      await this.saveGroup(input.group);
+      const promoted = membershipVersioned ? input.group : { ...input.group,
+        membership_revision: undefined, joint_treatment_membership_revision: undefined };
+      this.groupsById.set(input.group.id, normalizeGroupRevision(promoted));
     }
     await this.savePlayerSession(input.playerSession);
 

@@ -45,8 +45,12 @@ export function runGroupOrderContract(makePorts: () => { port: RepositoryPort; f
       await port.saveGroup({ id, name: "CAS", symptoms: [], revision: 0,
         created_at: "2026-10-20T00:00:00.000Z", joint_treatment_muscle_test: "together",
         joint_treatment_test_at: "2026-10-20T00:00:00.000Z" });
-      const first = await engine.addSymptom(id, "First");
-      const second = await engine.addSymptom(id, "Second");
+      const first = crypto.randomUUID(), second = crypto.randomUUID();
+      await engine.commitMembershipRevision({ operationId: crypto.randomUUID(), groupId: id,
+        expectedRevision: 0, expectedMembershipRevision: 0, additions: [
+          { id: first!, name: "First", polarity: "negative", intensity: 1 },
+          { id: second!, name: "Second", polarity: "negative", intensity: 1 }],
+        orderedSymptomIds: [first!, second!], answer: "together", answeredAt: "2026-10-20T00:00:00.000Z" });
       const before = (await port.getGroup(id))!;
       for (const order of [[first], [first, first], [first, crypto.randomUUID()]]) {
         await expect(port.reorderSymptoms(id, order, before.revision!)).rejects.toBeInstanceOf(InvalidSymptomOrderError);
@@ -71,9 +75,13 @@ export function runGroupOrderContract(makePorts: () => { port: RepositoryPort; f
       await port.saveGroup({ id: groupId, name: "", symptoms: [], revision: 0,
         created_at: "2026-10-20T00:00:00.000Z", joint_treatment_muscle_test: "together",
         joint_treatment_test_at: "2026-10-20T00:00:00.000Z" });
-      const first = await engine.addSymptom(groupId, "First");
-      const second = await engine.addSymptom(groupId, "Second");
-      const third = await engine.addSymptom(groupId, "Third");
+      const first = crypto.randomUUID(), second = crypto.randomUUID(), third = crypto.randomUUID();
+      await engine.commitMembershipRevision({ operationId: crypto.randomUUID(), groupId,
+        expectedRevision: 0, expectedMembershipRevision: 0, additions: [
+          { id: first, name: "First", polarity: "negative", intensity: 1 },
+          { id: second, name: "Second", polarity: "negative", intensity: 1 },
+          { id: third, name: "Third", polarity: "negative", intensity: 1 }],
+        orderedSymptomIds: [first, second, third], answer: "together", answeredAt: "2026-10-20T00:00:00.000Z" });
       await engine.rate(first, { intensity: 0, polarity: "positive" });
       await engine.rate(second, { intensity: 5 });
       await engine.rate(third, { intensity: 9 });

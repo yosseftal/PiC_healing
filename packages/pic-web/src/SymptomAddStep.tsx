@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import type { Intensity, Polarity } from "pic-engine";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useGroupEngineState, useQuestionnaire } from "./group-engine-context";
+import { useInquiryUtilities } from "./inquiry-utilities-context";
 import { INPUT_CONTROL, UTILITY_CONTROL } from "./control-affordance";
 import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
@@ -13,7 +14,9 @@ export function SymptomAddStep(): ReactNode {
   const { message } = useLocale();
   const { activeGroupId } = useGroupEngineState();
   const { state, actions } = useQuestionnaire();
+  const { setOpen } = useInquiryUtilities();
   const names = useRef(new Map<string, HTMLInputElement>());
+  const topicRows = useRef(new Map<string, HTMLFieldSetElement>());
   const form = useRef<HTMLFormElement>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [moveFocus, setMoveFocus] = useState<{ id: string; offset: -1 | 1 } | null>(null);
@@ -22,13 +25,13 @@ export function SymptomAddStep(): ReactNode {
   }, [focusId, state.rows]);
   useEffect(() => {
     if (moveFocus === null) return;
-    const row = names.current.get(moveFocus.id)?.closest("fieldset");
+    const row = topicRows.current.get(moveFocus.id);
     const requested = row?.querySelector<HTMLButtonElement>(`[data-move="${moveFocus.offset}"]`);
     const target = requested && !requested.disabled ? requested : row?.querySelector<HTMLButtonElement>("button:enabled");
     target?.focus();
     setMoveFocus(null);
   }, [moveFocus, state.rows]);
-  const locked = state.busy || state.recovery || activeGroupId !== null;
+  const locked = state.busy || state.recovery || activeGroupId !== null && !state.revising;
   function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFocusId(actions.add());
@@ -41,9 +44,16 @@ export function SymptomAddStep(): ReactNode {
     title={message("group.title").text} stageLabel={message("group.stage").text}
     utilities={state.recovery ? <div role="status">
       <p><LocalizedMessage message={message("symptom.recovery")} /></p>
-      <button className={UTILITY_CONTROL} type="button" disabled={state.busy} onClick={() => void actions.retry()}>
+      <button className={UTILITY_CONTROL} type="button" disabled={state.busy}
+        onClick={() => void actions.retry().then((saved) => {
+        if (saved) setOpen(false);
+      })}>
         <LocalizedMessage message={message("symptom.retry")} />
       </button>
+      {state.conflict ? <button className={UTILITY_CONTROL} type="button" disabled={state.busy}
+        onClick={() => void actions.reviewConflict().then((reviewed) => { if (reviewed) setOpen(false); })}>
+        {message("questionnaire.reviewConflict").text}
+      </button> : null}
     </div> : null}
   >
     <form ref={form} className="pic-symptom-step" data-testid="symptom-add-step" onSubmit={add}>
@@ -55,7 +65,8 @@ export function SymptomAddStep(): ReactNode {
             <p><LocalizedMessage message={message("questionnaire.preparationPriority")} /></p>
             <p><LocalizedMessage message={message("questionnaire.preparationRating")} /></p>
           </details>
-          {state.existing !== null ? <>
+          {state.revising ? <p role="status"><LocalizedMessage message={message("questionnaire.pending")} /></p> : null}
+          {state.existing !== null && !state.revising ? <>
             {state.existing.name ? <h2><bdi dir="auto" lang="">{state.existing.name}</bdi></h2> : null}
             <ol className="pic-questionnaire-existing">
               {state.existing.symptoms.map((row) => <li key={row.id}><bdi dir="auto" lang="">{row.name}</bdi></li>)}
@@ -66,14 +77,22 @@ export function SymptomAddStep(): ReactNode {
             <label><LocalizedMessage message={message("group.name")} />
               <input className={INPUT_CONTROL} aria-label={message("group.name").text}
                 placeholder={message("group.placeholder").text} dir="auto" lang="" value={state.title}
-                disabled={locked} onChange={(event) => actions.setTitle(event.target.value)} />
+                disabled={locked || state.revising} onChange={(event) => actions.setTitle(event.target.value)} />
             </label>
             <div data-testid="questionnaire-topics" className="pic-questionnaire-topics">
               {state.rows.map((row, index) => {
+                const existing = state.existing?.symptoms.some((old) => old.id === row.id) === true;
                 const label = row.polarity === "negative" ? "initial.negativeIntensity" : "initial.positiveIntensity";
-                return <fieldset className="pic-questionnaire-row" data-testid="questionnaire-row" key={row.id}
+                return <fieldset className="pic-questionnaire-row"
+                  data-testid={existing ? "questionnaire-existing-row" : "questionnaire-row"} key={row.id}
+                  ref={(node) => { if (node) topicRows.current.set(row.id, node); else topicRows.current.delete(row.id); }}
                   disabled={locked} data-topic-id={row.id}>
                   <legend><LocalizedMessage message={message("questionnaire.priority", { position: index + 1 })} /></legend>
+                  {existing ? <p><bdi dir="auto" lang="">{row.name}</bdi>{" — "}
+                    <LocalizedMessage message={message("summary.rating", {
+                      polarity: message(row.polarity === "positive" ? "summary.positive" : "summary.negative").text,
+                      intensity: row.intensity ?? 0, maximum: 10,
+                    })} /></p> : <>
                   <label className="pic-questionnaire-row__name"><LocalizedMessage message={message("symptom.name")} />
                     <input ref={(node) => { if (node) names.current.set(row.id, node); else names.current.delete(row.id); }}
                       className={INPUT_CONTROL} aria-label={message("symptom.name").text}
@@ -103,6 +122,7 @@ export function SymptomAddStep(): ReactNode {
                     <LocalizedMessage message={message(row.polarity === "negative"
                       ? "initial.negativeEndpoints" : "initial.positiveEndpoints")} />
                   </p>
+                  </>}
                   <div className="pic-questionnaire-row__moves">
                     {([-1, 1] as const).map((offset) => <button className={UTILITY_CONTROL} type="button" key={offset}
                       aria-label={message(offset === -1 ? "questionnaire.moveUp" : "questionnaire.moveDown").text}
@@ -118,14 +138,14 @@ export function SymptomAddStep(): ReactNode {
           </>}
           <span className="sr-only" role="status">{state.moved === null ? "" :
             <LocalizedMessage message={message("questionnaire.moved", { position: state.moved.position })} />}</span>
-          {state.invalid && state.existing === null ? <p role="status">
+          {state.invalid && (state.existing === null || state.revising) ? <p role="status">
             <LocalizedMessage message={message("questionnaire.completeRows")} /></p> : null}
           {state.recovery ? <p role="status"><LocalizedMessage message={message("symptom.recovery")} />{" "}
             <LocalizedMessage message={message("symptom.recoveryHint")} /></p> : null}
         </div>
       </TherapeuticContentCard>
       <div className="pic-symptom-form__actions" role="group" aria-label={message("player.availableActions").text}>
-        {state.existing === null ? <button className={UTILITY_CONTROL} type="submit"
+        {state.existing === null || state.revising ? <button className={UTILITY_CONTROL} type="submit"
           data-testid="add-symptom-action" disabled={locked}>
           <LocalizedMessage message={message("symptom.add")} />
         </button> : null}

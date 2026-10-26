@@ -6,7 +6,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_GUEST_STORAGE_KEY, LocalGuestRepository } from "pic-adapter-local-guest";
 import type { FinalizedSymptomGroup, PlayerSession, RepositoryPort } from "pic-engine";
-import { GroupNotFoundError, prepareGroupSave, prepareSymptomReorder, type SymptomGroup } from "pic-engine";
+import {
+  GroupNotFoundError, prepareGroupSave, prepareMembershipRevision, prepareSymptomReorder, type SymptomGroup,
+} from "pic-engine";
 import { compositionRoot } from "./composition-root";
 import {
   assembleGuestSnapshotForPendingGate,
@@ -180,7 +182,7 @@ describe("promoteWithAuthenticatedRepository", () => {
     await sessionEngineActions.onFinishRequested(session.id, "finish");
     const pendingSnapshot = await promotePathActions.assembleGuestSnapshotForPendingGate();
     expect(pendingSnapshot).toEqual({
-      group: { ...group, revision: 0 }, playerSession: session, promotionPayloadVersion: 2,
+      group: { ...group, revision: 0 }, playerSession: session, promotionPayloadVersion: 3,
     });
 
     await promotePathActions.promoteWithAuthenticatedRepository(
@@ -195,7 +197,7 @@ describe("promoteWithAuthenticatedRepository", () => {
     expect(localStorage.getItem("pic-web.locale.v1")).toBe(locale);
     expect(promotion).toHaveBeenCalledWith({
       idempotencyKey: group.id, group: { ...group, revision: 0 }, playerSession: session,
-      newUserId: "user-success", promotionPayloadVersion: 2,
+      newUserId: "user-success", promotionPayloadVersion: 3,
     });
     expect(await authenticatedPort.getGroup(group.id)).toEqual({ ...group, revision: 0 });
     expect(await authenticatedPort.getPlayerSession(session.id)).toEqual({
@@ -372,6 +374,13 @@ function createInMemoryAuthenticatedPort(): RepositoryPort {
     },
     async saveGroup(group) {
       groups.set(group.id, prepareGroupSave(groups.get(group.id) ?? null, group));
+    },
+    async commitMembershipRevision(input) {
+      const group = groups.get(input.groupId);
+      if (!group) throw new GroupNotFoundError(input.groupId);
+      const committed = prepareMembershipRevision(group, input);
+      groups.set(input.groupId, committed);
+      return structuredClone(committed);
     },
     async reorderSymptoms(id, ids, revision) {
       const group = groups.get(id);
@@ -631,7 +640,7 @@ describe("promote path remote integration", () => {
 
     const snapshot = await promotePathActions.assembleGuestSnapshotForPendingGate();
     expect(snapshot).toEqual({
-      group: linked ? { ...group, revision: 0 } : null, playerSession: session, promotionPayloadVersion: 2,
+      group: linked ? { ...group, revision: 0 } : null, playerSession: session, promotionPayloadVersion: 3,
     });
 
     const supabaseRepository = createSupabaseRepositoryFromClient(testUser.client);

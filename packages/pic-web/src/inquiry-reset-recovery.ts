@@ -20,7 +20,8 @@ function validRecovery(value: unknown): value is InquiryResetRecovery {
   const pending = value.gate.pendingFinishRequest;
   if (value.gate.gateTriggered !== true || !record(pending) || typeof pending.sessionId !== "string" ||
     (pending.kind !== "finish" && pending.kind !== "finishAnyway")) return false;
-  if (pending.promotionPayloadVersion !== undefined && pending.promotionPayloadVersion !== 2) return false;
+  if (pending.promotionPayloadVersion !== undefined && pending.promotionPayloadVersion !== 2 &&
+    pending.promotionPayloadVersion !== 3) return false;
   const facts = value.facts;
   if (![facts.activeGroupId, facts.activePlayerSessionId].every((id) => id === null || typeof id === "string")) {
     return false;
