@@ -22,6 +22,7 @@ Implementation authorized. W13-01, W13-02 and W13-06 are closed; W13-03 is the a
 - [W13-02 persistence contract](audits/w13-02-contract-proposal.md)
 - [W13-02 SQL preparation and coordinated rollout](audits/w13-02-sql-rollout-review.md)
 - [W13-02 implementation review and verification frontier](audits/w13-02-implementation-review.md)
+- [W13-03 atomic membership and renewed-answer contract](audits/w13-03-membership-contract.md)
 
 ## Handoffs
 

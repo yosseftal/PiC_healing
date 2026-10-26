@@ -46,6 +46,8 @@ DEC-017: actual verified identity and persistence are distinct; never invent a j
 ## Seam map excerpt
 
 Read the 03 row of the execution seam map and the ticket's blocked-by edges.
+W13-02 is closed at `851cc97`. Follow [the agreed membership contract](../audits/w13-03-membership-contract.md)
+for the public command, independent membership markers, operation receipts and exact v1/v2/v3 promotion boundary.
 UI reaches GroupEngine through contexts/composition; durable domain changes belong to public engine/port contracts.
 Preserve inquiry generation, owner checks, stable IDs and retry serialization across transient mounts.
 Resolve Must-fix risks in the active slice before reporting DoD complete.

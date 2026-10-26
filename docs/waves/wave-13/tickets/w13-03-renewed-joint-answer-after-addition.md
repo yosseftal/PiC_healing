@@ -1,11 +1,12 @@
 # W13-03 — Add to an answered list and confirm the full revised list again
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** in progress — W13-02 verified and closed; atomic membership/answer implementation dispatched.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-02](w13-02-durable-manual-priority.md).
 **Blocking:** [W13-04](w13-04-reversible-questionnaire-and-recovery.md).
 **Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-002, DEC-010, DEC-013, DEC-014, DEC-017, DEC-018; W13-D4.
+**Execution contract:** [Membership/answer public seam and ownership](../audits/w13-03-membership-contract.md).
 
 ## Objective & Context
 
