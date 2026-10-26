@@ -2,8 +2,8 @@
 
 [All waves](../INDEX.md)
 
-Implementation authorized. W13-01, W13-02 and W13-06 are closed.
-W13-03 is reviewed and awaits its separate manual SQL application and full remote verification.
+Implementation authorized. W13-01, W13-02, W13-03 and W13-06 are closed.
+W13-03 passes 66 files / 686 tests against the applied schema. W13-04 is the next frontier.
 
 ## Specifications
 
@@ -32,7 +32,8 @@ W13-03 is reviewed and awaits its separate manual SQL application and full remot
 - [Verified W13-06 checkpoint and active W13-02 entry](handoffs/w13-06-checkpoint.md)
 - [W13-02 reviewed implementation: manual SQL application and exact resume](handoffs/w13-02-manual-apply-checkpoint.md)
 - [W13-02 verified closure and active W13-03 entry](handoffs/w13-02-verified-and-w13-03-entry.md)
-- [Current W13-03 manual-application checkpoint and exact resume](handoffs/w13-03-manual-apply-checkpoint.md)
+- [Historical W13-03 manual-application checkpoint](handoffs/w13-03-manual-apply-checkpoint.md)
+- [W13-03 verified closure and W13-04 entry](handoffs/w13-03-verified-and-w13-04-entry.md)
 
 ## Briefs and preserved checkpoints
 

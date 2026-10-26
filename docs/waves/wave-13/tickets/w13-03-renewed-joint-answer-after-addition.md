@@ -1,6 +1,6 @@
 # W13-03 — Add to an answered list and confirm the full revised list again
 
-**Status:** in progress — implementation reviewed; new additive database migration awaits manual application.
+**Status:** closed — human-applied schema verified by 66 files / 686 passing tests, with no failures or skips.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-02](w13-02-durable-manual-priority.md).
 **Blocking:** [W13-04](w13-04-reversible-questionnaire-and-recovery.md).
@@ -45,16 +45,16 @@ Inject a save failure: the previously committed group remains intact and retry c
 
 ## Acceptance Criteria
 
-- [ ] **AC-01:** Adding at least one topic after any previous joint answer requires a new answer for the full updated list.
-- [ ] **AC-02:** Pure reordering never forces another joint answer.
-- [ ] **AC-03:** Back and retry retain pending additions, text, ratings, IDs, order and the actual fresh answer.
-- [ ] **AC-04:** Original membership and answer remain committed together until the revised transaction succeeds.
-- [ ] **AC-05:** A successful revision persists membership, order and its fresh answer together in Guest and Supabase.
-- [ ] **AC-06:** Fresh No is accepted with the existing non-blocking advisory; no forced Yes or automatic split occurs.
-- [ ] **AC-07:** A stale/concurrent revision or different owner is rejected without partial writes or overwriting newer work.
-- [ ] **AC-08:** Same-operation retry after failure/lost response does not duplicate topics or change completion counts.
-- [ ] **AC-09:** Prior history, existing ratings, source IDs and anchored group continuity remain intact.
-- [ ] **AC-10:** Pending Guest promotion is settled or retained for exact replay before a divergent revision is committed.
+- [x] **AC-01:** Adding at least one topic after any previous joint answer requires a new answer for the full updated list.
+- [x] **AC-02:** Pure reordering never forces another joint answer.
+- [x] **AC-03:** Back and retry retain pending additions, text, ratings, IDs, order and the actual fresh answer.
+- [x] **AC-04:** Original membership and answer remain committed together until the revised transaction succeeds.
+- [x] **AC-05:** A successful revision persists membership, order and its fresh answer together in Guest and Supabase.
+- [x] **AC-06:** Fresh No is accepted with the existing non-blocking advisory; no forced Yes or automatic split occurs.
+- [x] **AC-07:** A stale/concurrent revision or different owner is rejected without partial writes or overwriting newer work.
+- [x] **AC-08:** Same-operation retry after failure/lost response does not duplicate topics or change completion counts.
+- [x] **AC-09:** Prior history, existing ratings, source IDs and anchored group continuity remain intact.
+- [x] **AC-10:** Pending Guest promotion is settled or retained for exact replay before a divergent revision is committed.
 
 ## Testing Requirements
 
@@ -117,8 +117,7 @@ The applied W13-02 migration is unchanged; W13-03 uses a separate additive SQL f
 Independent Standards and Spec reviews pass. Both initial Spec P2 findings have regression evidence and pass re-review.
 The independent SQL/compatibility review passes after rerun-safety and stale-error-classification fixes.
 See [implementation review](../audits/w13-03-implementation-review.md) for architecture, review limits and runner evidence.
-Final verification results and the exact manual-application entry point are recorded at the checkpoint below.
-The full real database gate must pass after application before this ticket can close.
+The pre-application checkpoint below remains historical evidence. Final applied-schema verification follows it.
 
 - Root `npm run typecheck` and `npm run lint`: pass on the final runtime.
 - `npm run depcruise --workspaces --if-present`: zero violations; engine 76 modules / 215 dependencies, web 777 / 1726.
@@ -136,20 +135,40 @@ Run logs are ignored local artifacts: `.scratch/w13-03-before-migration-remote.l
 Continue from the [manual-application checkpoint](../handoffs/w13-03-manual-apply-checkpoint.md).
 Reviewed implementation, additive SQL, red remote contracts and checkpoint are committed in `b4aac4f`.
 
-### Acceptance evidence mapping
+### Final applied-schema verification — 2026-10-26
 
-| AC | Implemented evidence | Remaining closure gate |
+The human confirmed application of `20261026120000_atomic_membership_answer_revision.sql`.
+The first exact root run passed 684 tests and failed two old rated-at fixtures: they attempted generic append
+to an answered list, now correctly rejected with `GROUP_ANSWER_MEMBERSHIP`.
+Those fixtures now create complete new initial groups. Their exact timestamp/null assertions remain unchanged;
+the focused real-schema rerun passed 2/2. No production runtime, applied SQL or contract assertion was weakened.
+
+The final exact root `npm test` passes **66 files / 686 tests**, no failures or skips, 110.28 seconds.
+Command environment: worker cap 2, approved controlled signup address, normal TLS, network-enabled host runner.
+Root typecheck, lint and web depcruise pass; root test also passes both workspace dependency graphs:
+engine 76 modules / 215 dependencies and web 777 / 1726, zero violations.
+The prior 14/14 final-runtime Chromium journeys remain valid: only fixture setup changed after that browser run.
+Final log: `.scratch/w13-03-after-migration-final.log` (ignored local artifact).
+
+Read-only cleanup counts remain 31/23/22/23/30/23/26 for profiles/groups/symptoms/treatments/Player/library/Timeline.
+Group schema exposes both new markers (10 columns total); symptom schema remains 10 columns.
+The applied SQL hash remains `640ACFE68FC5F80BC764AF4F1CA236BD6B89E9A2836EA3C2EDE70FDBE61ADABD`.
+Same-run UUID fixture cleanup was the only deletion scope used. No content or existing unrelated row was deleted.
+
+### Acceptance evidence mapping — all pass
+
+| AC | UI/local evidence | Applied-schema evidence in the full green suite |
 | --- | --- | --- |
-| 01 | Questionnaire regressions and bilingual browser return/add/fresh-answer journeys | Real revised-list persistence |
-| 02 | Pure-order controls, stale-order conflict, unchanged-editor canonical read | Real metadata-preserving reorder |
-| 03 | Stable draft rows, Back, frozen failure/lost-response retry and explicit conflict review | Real retry transaction |
-| 04 | No publish before persistence; Guest/Fake atomic contracts; browser injected failure | Real late rollback |
-| 05 | Shared command and Guest/Fake contracts; controlled Supabase transport | Applied-schema atomic command |
-| 06 | Initial Yes/No × fresh Yes/No contract matrix and fresh-No advisory controls | Real persisted fresh No |
-| 07 | Stale/foreign/invalid command matrix and composition owner/provider/generation guards | Real RLS/concurrent writers |
-| 08 | Current-state receipt replay after later reorder/rating; browser lost-response retry | Real exactly-once receipt |
-| 09 | Old values/zero/timestamps/IDs retained; browser no extra Finish/Timeline/library count | Real continuity/count checks |
-| 10 | Frozen absent/v2 and fresh-v3 recovery, rearm, kind/reset and pending-save guards | Real promotion compatibility |
+| 01 | Questionnaire regressions; bilingual return/add/fresh-answer journeys | Previous Yes/No × fresh Yes/No contract |
+| 02 | Pure-order, stale-order and unchanged-editor controls | Reorder/finalize retains membership/answer association |
+| 03 | Stable draft rows, Back and explicit conflict review | Identical operation retry returns current committed group |
+| 04 | No publish before persistence; browser injected failure | Exact late-failure signal, unchanged group, same-UUID retry |
+| 05 | Shared command and Guest/Fake contracts | Real command writes additions/order/answer/markers together |
+| 06 | Fresh-No advisory and sovereign continuation | Actual No and matching answer version persist |
+| 07 | Composition owner/provider/generation guards | Foreign owner rejected; competing writers accept one revision |
+| 08 | Browser failure/lost-response retry | Receipt replay after newer order/rating; changed payload rejected |
+| 09 | Old values/zero/timestamps/IDs retained | Fresh reads, blind zero and completion counts remain exact |
+| 10 | Frozen absent/v2 and fresh-v3 recovery/rearm/reset | V3 association, old payload identity and real Finish replay pass |
 
-AC checkboxes remain open until the required applied-schema evidence passes. No therapeutic decision was inferred.
+Every AC passes with the applied-schema gate above. No therapeutic decision was inferred.
 Only same-run UUID fixture cleanup is authorized. No content, existing row or historical artifact was deleted.

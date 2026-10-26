@@ -1,7 +1,7 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** W13-01, W13-02 and W13-06 closed; W13-03 awaits its manual schema-application checkpoint.
+**Status:** W13-01, W13-02, W13-03 and W13-06 closed; W13-04 is the next implementation frontier.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -24,7 +24,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** W13-01
 
 - **Ticket:** [W13-03][W13-03]
-  **Status:** reviewed implementation; [manual SQL application and full verification pending][H13-03].
+  **Status:** closed; 66 files / 686 tests pass against the updated real schema, no failures or skips.
   **End-to-end delivery:** Add to an answered list and confirm the full revised list again
   **Blocked by:** W13-02
 
@@ -63,7 +63,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
 [W13-07]: w13-07-welcome-text-guide-and-video.md
 [W13-08]: w13-08-post-finish-routing-and-content-hygiene.md
 [W13-09]: w13-09-integrated-journeys-and-wave-handoff.md
-[H13-03]: ../handoffs/w13-03-manual-apply-checkpoint.md
+[H13-03]: ../handoffs/w13-03-verified-and-w13-04-entry.md
 
 ```mermaid
 flowchart LR
@@ -133,7 +133,7 @@ Use this ticket index for current ticket IDs and blocking edges.
 - W13-07 must verify actual YouTube embedding; the known watch URL alone is not proof of embed permission.
 - W13-02/03 require authorized isolated database evidence. The user permits cleanup only of same-run fixture UUIDs.
 - Physical/native checks remain explicitly visible in W13-09. A prior-wave manual-QA waiver is not automatically inherited.
-- W13-02 is closed; resume W13-03 from the [current manual-application checkpoint][H13-03].
+- W13-03 is closed; continue to W13-04 from the [verified checkpoint][H13-03].
 
 ## Execution checkpoint protocol
 

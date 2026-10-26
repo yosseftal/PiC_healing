@@ -116,8 +116,9 @@ describe("symptoms.rated_at column (ticket 01 — direct Supabase client)", () =
     const { data: current, error: readError } = await user.client.rpc("get_symptom_group", { p_group_id: groupId });
     expect(readError).toBeNull();
     expect(current).not.toBeNull();
+    // Seed a complete initial group; extending an answered list requires a fresh membership answer.
     const { error: insertError } = await user.client.rpc("save_symptom_group", { p_group: {
-      ...current, symptoms: [...current.symptoms, {
+      ...current, id: randomUUID(), symptoms: [{
         id: symptomId,
         name: "Lower Back Pain",
         polarity: "negative",
@@ -142,7 +143,7 @@ describe("symptoms.rated_at column (ticket 01 — direct Supabase client)", () =
     expect(readError).toBeNull();
     expect(current).not.toBeNull();
     const { error: insertError } = await user.client.rpc("save_symptom_group", { p_group: {
-      ...current, symptoms: [...current.symptoms, {
+      ...current, id: randomUUID(), symptoms: [{
         id: symptomId,
         name: "Neck Tension",
         polarity: "positive",

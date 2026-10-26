@@ -80,3 +80,13 @@ The late-failure fixture uses a raw RPC-only marker after writes and before rece
 The ordinary adapter whitelist cannot emit that marker. The test requires its exact diagnostic and unchanged aggregate,
 then proves the unreserved UUID succeeds exactly once through the ordinary serializer.
 Keep W13-03 open until the exact full test suite and all ACs pass on the applied schema.
+
+## Final applied-schema result — 2026-10-26
+
+The human confirmed application. W13-03 is now closed: the exact root gate passes 66 files / 686 tests,
+no failures or skips, 110.28 seconds. Root typecheck/lint and both dependency graphs pass.
+The initial applied run's only failures were two old rated-at fixture setups attempting forbidden answered append.
+They now create complete new initial groups; exact timestamp/null assertions remain and the focused 2/2 rerun passes.
+The production runtime and applied migration were not changed, so the prior 14/14 browser evidence remains valid.
+Final row counts equal baseline; same-run UUID cleanup was the only deletion scope used.
+See [verified closure](../handoffs/w13-03-verified-and-w13-04-entry.md) for the current frontier.

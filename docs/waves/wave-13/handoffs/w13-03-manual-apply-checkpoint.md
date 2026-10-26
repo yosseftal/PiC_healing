@@ -1,5 +1,8 @@
 # W13-03 reviewed implementation: manual application checkpoint
 
+**Historical checkpoint:** W13-03 application is confirmed and the ticket is closed.
+Continue from [verified closure and W13-04 entry](w13-03-verified-and-w13-04-entry.md).
+
 Date: 2026-10-26, Asia/Jerusalem. Open-ticket checkpoint; neither W13-03 nor Wave 13 is closed.
 W13-01, W13-02 and W13-06 are closed. W13-02 closure commit: `851cc97`.
 Contract checkpoint: `be61cdd`. Reviewed implementation, additive SQL and red remote contracts: `b4aac4f`.
