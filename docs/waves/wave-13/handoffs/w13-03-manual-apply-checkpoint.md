@@ -2,7 +2,7 @@
 
 Date: 2026-10-26, Asia/Jerusalem. Open-ticket checkpoint; neither W13-03 nor Wave 13 is closed.
 W13-01, W13-02 and W13-06 are closed. W13-02 closure commit: `851cc97`.
-Contract checkpoint: `be61cdd`. The scoped implementation commit follows this record in Git history.
+Contract checkpoint: `be61cdd`. Reviewed implementation, additive SQL and red remote contracts: `b4aac4f`.
 
 ## Verified frontier
 

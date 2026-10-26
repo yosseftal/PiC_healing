@@ -134,6 +134,7 @@ The full real database gate must pass after application before this ticket can c
 Run logs are ignored local artifacts: `.scratch/w13-03-before-migration-remote.log` and
 `.scratch/w13-03-browser-final.log`. The full `npm test` remains unchanged and red until SQL application.
 Continue from the [manual-application checkpoint](../handoffs/w13-03-manual-apply-checkpoint.md).
+Reviewed implementation, additive SQL, red remote contracts and checkpoint are committed in `b4aac4f`.
 
 ### Acceptance evidence mapping
 
