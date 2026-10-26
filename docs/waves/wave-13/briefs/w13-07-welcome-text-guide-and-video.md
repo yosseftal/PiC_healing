@@ -3,7 +3,8 @@
 ## Identity and authorization
 
 Ticket: [W13-07](../tickets/w13-07-welcome-text-guide-and-video.md).
-User approved implementation of the full suite after preflight. Work only when dispatched in serial order.
+User approved parallel implementation from ca6441e; the current ownership contract supersedes serial dispatch.
+Read [parallel convergence ownership](../audits/w13-parallel-convergence-contract.md) before editing.
 Read AGENTS.md, CLAUDE.md, CONTEXT.md, decisions.md, the active specification and the complete ticket before editing.
 The older preflight-only instructions describe that earlier turn; this execution charter supersedes that gate.
 

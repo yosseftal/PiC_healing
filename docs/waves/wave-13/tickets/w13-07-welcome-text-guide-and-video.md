@@ -1,6 +1,6 @@
 # W13-07 — Learn PIC through a welcome page, text guide and official video
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** in progress — parallel implementation authorized and dispatched from ca6441e.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04](w13-04-reversible-questionnaire-and-recovery.md).
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).

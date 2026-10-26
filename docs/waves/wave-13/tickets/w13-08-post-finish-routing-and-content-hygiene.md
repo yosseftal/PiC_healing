@@ -1,6 +1,6 @@
 # W13-08 — Return clearly after Finish while preserving all treatment content
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** in progress — parallel implementation authorized and dispatched from ca6441e.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** None.
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).

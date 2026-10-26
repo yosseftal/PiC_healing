@@ -1,6 +1,6 @@
 # W13-05 — Review a clean priority list with an optional polarity view
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** in progress — parallel implementation authorized and dispatched from ca6441e.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md), [W13-02](w13-02-durable-manual-priority.md).
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
