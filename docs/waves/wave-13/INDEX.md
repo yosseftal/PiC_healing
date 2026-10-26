@@ -2,8 +2,8 @@
 
 [All waves](../INDEX.md)
 
-Implementation authorized. W13-01, W13-02, W13-03 and W13-06 are closed.
-W13-03 passes 66 files / 686 tests against the applied schema. W13-04 is the active implementation frontier.
+Implementation authorized. W13-01, W13-02, W13-03, W13-04 and W13-06 are closed.
+The clean W13-04 checkpoint passes 68 files / 711 tests and 26 Chromium journeys. W13-05 is the next frontier.
 
 ## Specifications
 
@@ -26,6 +26,7 @@ W13-03 passes 66 files / 686 tests against the applied schema. W13-04 is the act
 - [W13-03 atomic membership and renewed-answer contract](audits/w13-03-membership-contract.md)
 - [W13-03 implementation review and database verification frontier](audits/w13-03-implementation-review.md)
 - [W13-04 presentation navigation and versioned draft contract](audits/w13-04-navigation-contract.md)
+- [W13-04 implementation and independent review](audits/w13-04-implementation-review.md)
 
 ## Handoffs
 
@@ -35,6 +36,7 @@ W13-03 passes 66 files / 686 tests against the applied schema. W13-04 is the act
 - [W13-02 verified closure and active W13-03 entry](handoffs/w13-02-verified-and-w13-03-entry.md)
 - [Historical W13-03 manual-application checkpoint](handoffs/w13-03-manual-apply-checkpoint.md)
 - [W13-03 verified closure and W13-04 entry](handoffs/w13-03-verified-and-w13-04-entry.md)
+- [Current W13-04 verified checkpoint and W13-05 entry](handoffs/w13-04-verified-and-w13-05-entry.md)
 
 ## Briefs and preserved checkpoints
 

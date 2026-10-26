@@ -16,9 +16,11 @@ import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
 import { TreatmentPickerTitle } from "./content-localization/TreatmentPickerTitle";
 import { useInquiryUtilities } from "./inquiry-utilities-context";
+import { useQuestionnaireNavigation } from "./questionnaire-navigation-context";
 
 export function TreatmentPickerScreen() {
   const { message } = useLocale();
+  const navigation = useQuestionnaireNavigation();
   const utilities = useInquiryUtilities();
   const utilitiesRef = useRef(utilities);
   utilitiesRef.current = utilities;
@@ -38,14 +40,17 @@ export function TreatmentPickerScreen() {
     if (!isCancelled()) {
       setTreatments(rows);
     }
-  });
+  }, { readOnly: true });
   const {
     status: selectStatus,
     run: selectTreatment,
     retry: retrySelectTreatment,
   } = useAsyncAction(async (treatmentId: string) => {
+    if (!navigation.actions.canAct()) return;
+    const check = navigation.actions.assertCurrent;
     setZeroH3GuardTreatmentId(null);
     const parsedUnits = await getParsedTreatmentContent(treatmentId);
+    check();
     if (parsedUnits.length === 0) {
       setZeroH3GuardTreatmentId(treatmentId);
       return;
@@ -69,7 +74,8 @@ export function TreatmentPickerScreen() {
 
   return (
     <section data-testid="guest-flow-pick-treatment">
-      <TherapeuticScreenFrame allowInquiryReset title={message("picker.title").text} stageLabel={message("picker.title").text}
+      <TherapeuticScreenFrame allowInquiryReset questionnaireLocation="pick-treatment"
+        title={message("picker.title").text} stageLabel={message("picker.title").text}
         utilities={<div className="grid min-w-0 gap-4">
           <label className="inline-flex min-h-11 min-w-11 items-center gap-3 rounded-pic-button px-3 py-2">
             <input
@@ -89,6 +95,7 @@ export function TreatmentPickerScreen() {
                   className={`${UTILITY_CONTROL} w-full min-w-0 [overflow-wrap:anywhere]`}
                   type="button"
                   data-testid={`pick-treatment-${treatment.id}`}
+                  disabled={navigation.state.waiting}
                   onClick={() => void selectTreatment(treatment.id)}
                 >
                   <TreatmentPickerTitle treatmentId={treatment.id} title={treatment.title} />

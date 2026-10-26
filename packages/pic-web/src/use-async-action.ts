@@ -12,6 +12,7 @@ export type AsyncActionRunResult<Result> =
  */
 export function useAsyncAction<Arguments extends unknown[], Result>(
   action: (...arguments_: Arguments) => Promise<Result>,
+  options: { readOnly?: boolean } = {},
 ) {
   const actionRef = useRef(action);
   const generationRef = useRef(inquiryGenerationStore.getSnapshot());
@@ -40,7 +41,7 @@ export function useAsyncAction<Arguments extends unknown[], Result>(
 
     try {
       if (generationRef.current !== inquiryGenerationStore.getSnapshot()) throw new Error("Inquiry was reset");
-      const value = await trackFlowOperation(() => actionRef.current(...arguments_));
+      const value = await trackFlowOperation(() => actionRef.current(...arguments_), options.readOnly ? "read" : "write");
       return { ok: true, value };
     } catch {
       if (mountedRef.current && invocationRef.current === invocation) {
@@ -49,7 +50,7 @@ export function useAsyncAction<Arguments extends unknown[], Result>(
       }
       return { ok: false };
     }
-  }, []);
+  }, [options.readOnly]);
 
   const retry = useCallback(async (): Promise<AsyncActionRunResult<Result> | null> => {
     const lastArguments = lastArgumentsRef.current;

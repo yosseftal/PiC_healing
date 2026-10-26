@@ -1,6 +1,11 @@
 import * as guestFlowFacts from "./guest-flow-facts";
 import { createGroupStaging } from "./group-staging";
 import { createQuestionnaireDraft } from "./questionnaire-draft";
+import { createQuestionnaireNavigation } from "./questionnaire-navigation";
+import { createSummaryPriority } from "./summary-priority";
+import {
+  assertQuestionnaireWebWriteSafe, clearQuestionnaireWebRecovery, readQuestionnaireWebRecovery, saveQuestionnaireWebRecovery,
+} from "./questionnaire-web-recovery";
 import {
   createAuthenticatedDraft, readAuthenticatedDraft, hasAuthenticatedFocus, clearAuthenticatedFocus,
   markAuthenticatedFocus,
@@ -67,6 +72,7 @@ const guestRepository = new LocalGuestRepository();
 const repositoryPort: DelegatingRepositoryPort = new DelegatingRepositoryPort(guestRepository);
 const retainedDraft = readAuthenticatedDraft();
 const retainedAuthenticatedFocus = hasAuthenticatedFocus();
+const savedWebDraft = readQuestionnaireWebRecovery();
 let resetRecovery = readInquiryResetRecovery();
 let promotionRecovery = readPromotionRecovery();
 if (retainedDraft !== null) restoreInquiryGeneration(retainedDraft.generation);
@@ -88,6 +94,15 @@ const persistedGuestGate = promotionRecovery === null ?
         { promotionPayloadVersion: promotionRecovery.snapshot.promotionPayloadVersion }),
     },
   };
+const retainedWebDraft = promotionRecovery !== null || resetRecovery !== null ? null :
+  savedWebDraft !== null && (savedWebDraft.owner !== null ||
+    savedWebDraft.groupId === persistedGuestFlowFacts.activeGroupId &&
+    [savedWebDraft.location, savedWebDraft.returnLocation].every((location) =>
+      location === "pick-treatment" ? persistedGuestFlowFacts.groupFinalized && persistedGuestFlowFacts.summaryAcknowledged :
+        location === "group-summary" ? persistedGuestFlowFacts.groupFinalized : location !== "joint-treatment" ||
+          persistedGuestFlowFacts.symptomAdditionComplete || savedWebDraft.fields?.revising ||
+          savedWebDraft.fields?.attempted)) ? savedWebDraft : null;
+if (retainedWebDraft !== null) restoreInquiryGeneration(retainedWebDraft.generation);
 let verificationPending = readVerificationPending();
 if (verificationPending?.sessionId !== persistedGuestGate.pendingFinishRequest?.sessionId ||
   verificationPending?.kind !== persistedGuestGate.pendingFinishRequest?.kind) verificationPending = null;
@@ -343,27 +358,72 @@ function trackedActions<T extends Record<string, (...args: never[]) => Promise<u
         await recoverPendingReset();
         return action(...args);
       });
-    }),
+    }, ["getGroup", "hasPriorRating", "revealPriorRating"].includes(name) ? "read" : "write"),
   ])) as T;
 }
 const groupEngineActions = trackedActions(untrackedGroupEngineActions);
+const questionnaireNavigation = createQuestionnaireNavigation({
+  initial: retainedWebDraft,
+  screen: () => guestFlowFacts.guestFlowStore.getSnapshot(),
+  current: () => captureQuestionnaireAccess(),
+  hasRecovery: () => questionnaire.store.getSnapshot().writeRecovery || summaryPriority.store.getSnapshot().pending !== null,
+  busy: () => questionnaire.store.getSnapshot().busy || summaryPriority.store.getSnapshot().busy,
+});
 const questionnaire = createQuestionnaireDraft({
+  initial: retainedWebDraft,
+  owner: () => authenticatedOwner,
+  captureAccess: captureQuestionnaireAccess,
+  blocked: () => !questionnaireVisible() || questionnaireNavigation.store.getSnapshot().waiting,
   activeGroup: () => activeGroupId,
   getGroup: (id) => groupEngineActions.getGroup(id),
   revisionIdentity: captureQuestionnaireIdentity,
-  continueExisting: () => guestFlowFacts.setGuestFlowSymptomAdditionComplete(true),
-  editExisting: () => {
-    guestFlowFacts.setGuestFlowSymptomAdditionComplete(false);
-    guestFlowFacts.setGuestFlowSummaryAcknowledged(false);
-  },
-  reviewRevision: () => {
-    guestFlowFacts.setGuestFlowGroupFinalized(false);
+  continueExisting: () => {
     guestFlowFacts.setGuestFlowSymptomAdditionComplete(true);
+    questionnaireNavigation.show(
+      guestFlowFacts.guestFlowFactsStore.getSnapshot().groupFinalized ? "group-summary" : "joint-treatment",
+    );
   },
+  editExisting: () => questionnaireNavigation.show("create-group"),
+  reviewRevision: () => questionnaireNavigation.showQuestion(),
   revisionCommitted: (group) => {
     guestFlowFacts.setGuestFlowSummaryAcknowledged(false);
     guestFlowFacts.setGuestFlowGroupFinalized(group.joint_treatment_muscle_test === "together");
     guestFlowFacts.setGuestFlowSymptomAdditionComplete(true);
+    if (group.joint_treatment_muscle_test === "split_suggested") {
+      questionnaireNavigation.showAdvisory(true);
+      questionnaireNavigation.show("joint-treatment");
+    } else questionnaireNavigation.show("group-summary");
+  },
+  createJointResponse(groupId, response) {
+    const provider = repositoryPort.getProvider();
+    let prepared: SymptomGroup | null = null;
+    const check = captureQuestionnaireIdentity(false, () => prepared);
+    let answered = response === "finalize";
+    return () => trackExclusiveFlowOperation(async () => {
+      assertQuestionnaireWebWriteSafe();
+      check();
+      if (!answered) {
+        if (prepared === null) {
+          const base = await repositoryPort.getGroup(groupId); check();
+          if (base === null) throw new Error("Group is unavailable");
+          prepared = await groupStaging.build(async () => {
+            await groupEngine.setJointTreatmentMuscleTest(groupId, response === "yes" ? "together" : "split_suggested");
+            check(); return groupId;
+          }, base);
+          prepared = { ...prepared, revision: base.revision ?? 0 };
+        }
+        const pending = authenticatedDraft.store.getSnapshot();
+        if (pending && pending.phase !== "draft" && matchesPreparedQuestionnaireGroup(pending.group, prepared))
+          await authenticatedDraft.retrySave();
+        else await provider.saveGroup(structuredClone(prepared));
+        check(); answered = true;
+      }
+      if (response !== "no") { await untrackedGroupEngineActions.finalizeGroup(groupId); check(); }
+    });
+  },
+  jointResponded(response) {
+    if (response === "no") questionnaireNavigation.showAdvisory(true);
+    else questionnaireNavigation.show("group-summary");
   },
   createRevisionSubmission(base, rows, answer) {
     const check = captureQuestionnaireIdentity();
@@ -375,6 +435,7 @@ const questionnaire = createQuestionnaireDraft({
     };
     const frozen = structuredClone(input);
     return () => trackExclusiveFlowOperation(async () => {
+      assertQuestionnaireWebWriteSafe();
       check();
       const authority = captureQuestionnaireIdentity(true);
       authority();
@@ -390,6 +451,7 @@ const questionnaire = createQuestionnaireDraft({
     const wasFinalized = guestFlowFacts.guestFlowFactsStore.getSnapshot().groupFinalized;
     let prepared: SymptomGroup | null = null;
     return () => trackExclusiveFlowOperation(async () => {
+      assertQuestionnaireWebWriteSafe();
       check();
       const authority = captureQuestionnaireIdentity(true);
       authority();
@@ -436,6 +498,7 @@ const questionnaire = createQuestionnaireDraft({
     let prepared: SymptomGroup | null = null;
     let saved = false;
     const current = () => {
+      assertQuestionnaireWebWriteSafe();
       if (generation !== inquiryGenerationStore.getSnapshot() || provider !== repositoryPort.getProvider() ||
         owner !== authenticatedOwner) throw new InquiryOperationCancelled();
       if (authenticatedDraft.store.getSnapshot()?.restored || promotionSwitching || promotionRecovery !== null) {
@@ -469,22 +532,58 @@ const questionnaire = createQuestionnaireDraft({
       activeGroupId = prepared.id;
       groupEngineStore.notify();
       guestFlowFacts.setGuestFlowSymptomAdditionComplete(true);
+      questionnaireNavigation.clear(true);
     });
   },
 });
-function captureQuestionnaireIdentity(checkAuthority = false) {
+const summaryPriority = createSummaryPriority({
+  assertWriteSafe: assertQuestionnaireWebWriteSafe,
+  captureAccess: captureQuestionnaireAccess,
+  blocked: () => questionnaireNavigation.store.getSnapshot().waiting || !questionnaireVisible(),
+  getGroup: (id) => groupEngineActions.getGroup(id),
+  reorder: (id, ids, revision) => groupEngineActions.reorderSymptoms(id, ids, revision),
+});
+function captureQuestionnaireIdentity(checkAuthority = false, pendingAggregate?: () => SymptomGroup | null) {
   const generation = inquiryGenerationStore.getSnapshot();
   const provider = repositoryPort.getProvider();
   const owner = authenticatedOwner;
   const identity = authStore.getSnapshot();
   return () => {
+    if (!questionnaireVisible()) throw new InquiryOperationCancelled();
     const current = authStore.getSnapshot();
     if (generation !== inquiryGenerationStore.getSnapshot() || provider !== repositoryPort.getProvider() ||
       owner !== authenticatedOwner || checkAuthority && owner !== null &&
         (current.owner !== identity.owner || current.revision !== identity.revision)) throw new InquiryOperationCancelled();
     const draft = authenticatedDraft.store.getSnapshot();
-    if (draft?.restored || draft && draft.phase !== "draft" || promotionSwitching || promotionRecovery !== null ||
+    const prepared = pendingAggregate?.();
+    const matching = prepared && draft && matchesPreparedQuestionnaireGroup(draft.group, prepared);
+    if (draft?.restored || draft && draft.phase !== "draft" && !matching || promotionSwitching || promotionRecovery !== null ||
       pendingGuestFinishRequest !== null) throw new Error("Recover the pending save first");
+  };
+}
+/** The authenticated draft advances the prepared base revision once; every other value must remain identical. */
+function matchesPreparedQuestionnaireGroup(actual: SymptomGroup, prepared: SymptomGroup) {
+  return actual.revision === (prepared.revision ?? 0) + 1 &&
+    JSON.stringify({ ...actual, revision: prepared.revision }) === JSON.stringify(prepared);
+}
+function questionnaireOwner() {
+  return authenticatedOwner ?? questionnaire.store.getSnapshot().owner;
+}
+function questionnaireVisible() {
+  const owner = questionnaireOwner();
+  const identity = authStore.getSnapshot();
+  return owner === null || identity.status === "verified" && identity.owner === owner;
+}
+function captureQuestionnaireAccess() {
+  const generation = inquiryGenerationStore.getSnapshot();
+  const provider = repositoryPort.getProvider();
+  const owner = questionnaireOwner();
+  const identity = authStore.getSnapshot();
+  return () => {
+    const current = authStore.getSnapshot();
+    if (generation !== inquiryGenerationStore.getSnapshot() || provider !== repositoryPort.getProvider() ||
+      owner !== questionnaireOwner() || !questionnaireVisible() || owner !== null && current.revision !== identity.revision)
+      throw new InquiryOperationCancelled();
   };
 }
 const playerEngineActions = trackedActions(untrackedPlayerEngineActions);
@@ -590,6 +689,7 @@ const inquiryResetActions = {
         if (resetRecovery !== null) clearInquiryResetRecovery();
         if (promotionRecovery !== null) clearPromotionRecovery();
         clearAuthenticatedFocus();
+        clearQuestionnaireWebRecovery();
         authenticatedDraft.discard();
       } catch (error) {
         if (resetRecovery !== null) {
@@ -649,8 +749,39 @@ const authLifecycle = createAuthLifecycle(getBrowserClient, () => {
 });
 if (promotionRecovery !== null) authLifecycle.bind(promotionRecovery.owner);
 else if (retainedDraft !== null) authLifecycle.bind(retainedDraft.owner);
+else if (retainedWebDraft?.owner) authLifecycle.bind(retainedWebDraft.owner);
 const authenticatedDraft = createAuthenticatedDraft(retainedDraft, authLifecycle);
 const authStore = authLifecycle.store;
+function persistQuestionnaireWebDraft() {
+  if (resetting || promotionSwitching || promotionRecovery !== null || resetRecovery !== null) return;
+  const draft = questionnaire.store.getSnapshot();
+  const presentation = questionnaireNavigation.store.getSnapshot();
+  if (draft.readOnly && retainedWebDraft !== null) {
+    questionnaire.storageStatus(saveQuestionnaireWebRecovery(retainedWebDraft));
+    return;
+  }
+  const dirty = draft.readOnly || draft.revising || activeGroupId === null &&
+    (draft.title.length > 0 || draft.rows.length > 1 || draft.rows.some((row) =>
+      row.name.length > 0 || row.intensity !== null || row.polarity !== "negative")) ||
+    draft.attempted && (draft.busy || draft.recovery) || summaryPriority.store.getSnapshot().pending !== null;
+  if (!dirty && activeGroupId === null && presentation.location === null) {
+    try { clearQuestionnaireWebRecovery(); } catch { questionnaire.storageStatus(false); }
+    return;
+  }
+  const saved = saveQuestionnaireWebRecovery({
+    schemaVersion: 1, generation: inquiryGenerationStore.getSnapshot(), owner: questionnaireOwner(), groupId: activeGroupId,
+    fields: dirty ? { title: draft.title, rows: draft.rows, revising: draft.revising,
+      attempted: draft.attempted || summaryPriority.store.getSnapshot().pending !== null } : null,
+    location: presentation.location, returnLocation: presentation.returnLocation, focus: presentation.focus,
+    advisory: presentation.advisory, advisoryDismissed: presentation.advisoryDismissed,
+    returnAdvisory: presentation.returnAdvisory,
+  });
+  questionnaire.storageStatus(saved);
+}
+questionnaire.store.subscribe(persistQuestionnaireWebDraft);
+questionnaireNavigation.store.subscribe(persistQuestionnaireWebDraft);
+summaryPriority.store.subscribe(persistQuestionnaireWebDraft);
+guestFlowFacts.guestFlowFactsStore.subscribe(persistQuestionnaireWebDraft);
 let verifiedIdentity = false;
 type AuthPresentation = ReturnType<typeof authStore.getSnapshot> & { fullName: string | null };
 let authPresentation: AuthPresentation = { ...authStore.getSnapshot(), fullName: null };
@@ -909,6 +1040,8 @@ const promotePathActions = {
 
 /** Resets composition-layer group flow pointer between tests. */
 export function resetGroupFlowFactsForTest(): void {
+  summaryPriority.reset();
+  questionnaireNavigation.reset();
   questionnaire.reset();
   activeGroupId = null;
   groupEngineStore.notify();
@@ -991,6 +1124,10 @@ export function resetTreatmentContentCacheForTest(): void {
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
+  summaryPriority,
+  questionnaireVisible,
+  captureQuestionnaireAccess,
+  questionnaireNavigation,
   questionnaire,
   authLifecycle,
   authStore,

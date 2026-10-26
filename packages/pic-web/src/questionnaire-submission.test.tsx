@@ -223,7 +223,7 @@ it("returns from summary, stages a new topic and requires a fresh full-list answ
 });
 
 async function editList() {
-  fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Open utilities" }));
   fireEvent.click(await screen.findByTestId("edit-questionnaire"));
   await screen.findByTestId("symptom-add-step");
 }

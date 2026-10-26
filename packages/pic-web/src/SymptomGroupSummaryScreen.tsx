@@ -1,19 +1,18 @@
 /**
  * Read-only group summary (Ticket 08-06): reflects finalized `GroupEngine` state before treatment pick.
  */
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { GroupRevisionConflictError, type SymptomGroup } from "pic-engine";
+import { useEffect, useRef, type ReactNode } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { UTILITY_CONTROL } from "./control-affordance";
-import { inquiryGenerationStore, useInquiryDraft } from "./inquiry-lifecycle";
 import { setGuestFlowSummaryAcknowledged } from "./guest-flow-facts";
-import { useGroupEngineActions } from "./group-engine-context";
+import { useSummaryPriority } from "./group-engine-context";
 import { AtomicActionLayout } from "./action-layout/AtomicActionLayout";
 import { useLocale } from "./i18n/locale-provider";
 import { LocalizedMessage } from "./i18n/localized-message";
 import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
 import { QuestionnaireEditUtility } from "./QuestionnaireEditUtility";
+import { useQuestionnaireNavigation } from "./questionnaire-navigation-context";
 
 export interface SymptomGroupSummaryScreenProps {
   groupId: string;
@@ -21,94 +20,29 @@ export interface SymptomGroupSummaryScreenProps {
 
 export function SymptomGroupSummaryScreen({ groupId }: SymptomGroupSummaryScreenProps): ReactNode {
   const { message } = useLocale();
-  const { getGroup, reorderSymptoms } = useGroupEngineActions();
-  const [group, setGroup] = useState<SymptomGroup | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState<{ id: string; offset: -1 | 1; orderedIds: readonly string[] } | null>(null);
-  const [conflict, setConflict] = useState(false);
-  const [moved, setMoved] = useState<number | null>(null);
-  const [focus, setFocus] = useState<{ id: string; offset: -1 | 1 } | null>(null);
+  const navigation = useQuestionnaireNavigation();
+  const { state, actions } = useSummaryPriority();
+  const { group, busy, pending, conflict, moved, focus } = state;
   const rows = useRef(new Map<string, HTMLLIElement>());
-  const operation = useRef(0);
-  const working = useRef(false);
-  useInquiryDraft(pending !== null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void getGroup(groupId).then((loaded) => {
-      if (!cancelled && loaded !== null && loaded.joint_treatment_muscle_test !== null) {
-        setGroup(loaded);
-      }
-    });
-    return () => {
-      cancelled = true;
-      operation.current++;
-    };
-  }, [getGroup, groupId]);
-
+  const move = actions.move;
+  useEffect(() => { void actions.load(groupId); }, [actions, groupId]);
   useEffect(() => {
     if (focus === null || busy) return;
     const row = rows.current.get(focus.id);
-    const requested = row?.querySelector<HTMLButtonElement>(`[data-move="${focus.offset}"]`);
+    const requested = row?.querySelector<HTMLButtonElement>('[data-move="' + focus.offset + '"]');
     const target = requested && !requested.disabled ? requested : row?.querySelector<HTMLButtonElement>("button:enabled");
     (target ?? row)?.focus();
-    setFocus(null);
   }, [focus, busy, group]);
 
-  async function move(request: { id: string; offset: -1 | 1; orderedIds?: readonly string[] }, retry = false) {
-    if (group === null || working.current) return;
-    const ids = group.symptoms.map(({ id }) => id);
-    const index = ids.indexOf(request.id);
-    const destination = index + request.offset;
-    if (request.orderedIds === undefined) {
-      if (index < 0 || destination < 0 || destination >= ids.length) return;
-      [ids[index], ids[destination]] = [ids[destination]!, ids[index]!];
-    }
-    const intent = { ...request, orderedIds: request.orderedIds ?? ids };
-    working.current = true;
-    const token = ++operation.current;
-    const generation = inquiryGenerationStore.getSnapshot();
-    const current = () => token === operation.current && generation === inquiryGenerationStore.getSnapshot();
-    setBusy(true);
-    setMoved(null);
-    try {
-      // Retry reads again: a failed response may have followed a committed write.
-      const base = retry ? await getGroup(groupId) : group;
-      if (!current()) return;
-      if (base === null) throw new Error("The group is unavailable");
-      setGroup(base);
-      const committed = await reorderSymptoms(groupId, intent.orderedIds, base.revision!);
-      if (!current()) return;
-      setGroup(committed);
-      setMoved(committed.symptoms.findIndex(({ id }) => id === intent.id) + 1);
-      setPending(null);
-      setConflict(false);
-      setFocus(intent);
-    } catch (error) {
-      if (!current()) return;
-      setPending(intent);
-      setConflict(false);
-      try {
-        const authoritative = await getGroup(groupId);
-        if (current() && authoritative !== null) {
-          setGroup(authoritative);
-          setConflict(error instanceof GroupRevisionConflictError);
-        }
-      } catch { /* Retain the explicit intent even if the refresh is temporarily unavailable. */ }
-      if (current()) setFocus(intent);
-    } finally {
-      working.current = false;
-      if (current()) setBusy(false);
-    }
-  }
-
   function handleConfirm(): void {
-    if (working.current || pending !== null) return;
+    if (busy || pending !== null || !navigation.actions.canAct()) return;
     setGuestFlowSummaryAcknowledged(true);
+    navigation.actions.show("pick-treatment");
   }
 
   return <section data-testid="guest-flow-group-summary">
-    <TherapeuticScreenFrame allowInquiryReset title={message("summary.title").text} stageLabel={message("summary.title").text}
+    <TherapeuticScreenFrame allowInquiryReset questionnaireLocation="group-summary"
+      title={message("summary.title").text} stageLabel={message("summary.title").text}
       utilities={<QuestionnaireEditUtility disabled={busy || pending !== null} />}>
       <div className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-4">
         <TherapeuticContentCard aria-label={message("summary.title").text}>
@@ -133,7 +67,7 @@ export function SymptomGroupSummaryScreen({ groupId }: SymptomGroupSummaryScreen
                 <div className="flex gap-2">
                   {([-1, 1] as const).map((offset) => <button className={UTILITY_CONTROL} type="button" key={offset}
                     aria-label={message(offset === -1 ? "questionnaire.moveUp" : "questionnaire.moveDown").text}
-                    data-move={offset} disabled={busy || pending !== null ||
+                    data-move={offset} disabled={busy || navigation.state.waiting || pending !== null ||
                       (offset === -1 ? index === 0 : index === group.symptoms.length - 1)}
                     onClick={() => void move({ id: symptom.id, offset })}>
                     {offset === -1 ? <ArrowUp aria-hidden="true" size={20} /> : <ArrowDown aria-hidden="true" size={20} />}
@@ -157,7 +91,7 @@ export function SymptomGroupSummaryScreen({ groupId }: SymptomGroupSummaryScreen
               label: message("priority.retry").text, onAction: () => void move(pending, true) },
             { kind: "button", id: "priority-review", intent: "secondary", disabled: busy,
               label: message("priority.review").text, onAction: () => {
-                setPending(null); setConflict(false); setFocus(pending);
+                actions.review();
               } },
           ] : [{ kind: "button", id: "summary-confirm", intent: "primary", disabled: busy,
             testId: "confirm-group-summary", label: message("summary.continue").text, onAction: handleConfirm }]} />

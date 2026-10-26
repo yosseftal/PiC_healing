@@ -46,8 +46,29 @@ export function useGroupEngineActions(): GroupEngineActions {
 export function useQuestionnaire() {
   useGroupEngineContext();
   const { questionnaire } = compositionRoot;
-  const state = useSyncExternalStore(questionnaire.store.subscribe, questionnaire.store.getSnapshot);
+  const state = useQuestionnaireDraftState();
   const generation = useSyncExternalStore(inquiryGenerationStore.subscribe, inquiryGenerationStore.getSnapshot);
-  const actions = useMemo(() => questionnaire.actionsFor(generation), [generation, questionnaire]);
+  const identity = useSyncExternalStore(compositionRoot.authStore.subscribe, compositionRoot.authStore.getSnapshot);
+  const provider = compositionRoot.repositoryPort.getProvider();
+  const actions = useMemo(() => questionnaire.actionsFor(generation),
+    [generation, questionnaire, provider, identity.owner, identity.status, identity.revision]);
+  return { state, actions };
+}
+
+/** Frame chrome may read draft retention status without admitting engine actions. */
+export function useQuestionnaireDraftState() {
+  const { store } = compositionRoot.questionnaire;
+  return useSyncExternalStore(store.subscribe, store.getSnapshot);
+}
+
+export function useSummaryPriority() {
+  useGroupEngineContext();
+  const { summaryPriority } = compositionRoot;
+  const state = useSyncExternalStore(summaryPriority.store.subscribe, summaryPriority.store.getSnapshot);
+  const generation = useSyncExternalStore(inquiryGenerationStore.subscribe, inquiryGenerationStore.getSnapshot);
+  const identity = useSyncExternalStore(compositionRoot.authStore.subscribe, compositionRoot.authStore.getSnapshot);
+  const provider = compositionRoot.repositoryPort.getProvider();
+  const actions = useMemo(() => summaryPriority.actionsFor(generation),
+    [generation, summaryPriority, provider, identity.owner, identity.status, identity.revision]);
   return { state, actions };
 }

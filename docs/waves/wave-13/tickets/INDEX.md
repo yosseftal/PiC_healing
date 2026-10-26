@@ -1,7 +1,7 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** W13-01, W13-02, W13-03 and W13-06 closed; W13-04 is the active implementation frontier.
+**Status:** W13-01, W13-02, W13-03, W13-04 and W13-06 closed; clean checkpoint before W13-05.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -29,11 +29,12 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** W13-02
 
 - **Ticket:** [W13-04][W13-04]
-  **Status:** in progress; composition presentation and versioned draft recovery dispatched.
+  **Status:** closed; 68 files / 711 real-schema tests and 26 Chromium journeys pass, both review axes pass.
   **End-to-end delivery:** Navigate backward through the questionnaire without losing work
   **Blocked by:** W13-01, W13-03
 
 - **Ticket:** [W13-05][W13-05]
+  **Status:** next entry; prerequisites complete, implementation not started at this checkpoint.
   **End-to-end delivery:** Review a clean priority list with an optional polarity view
   **Blocked by:** W13-01, W13-02
 
@@ -64,7 +65,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
 [W13-07]: w13-07-welcome-text-guide-and-video.md
 [W13-08]: w13-08-post-finish-routing-and-content-hygiene.md
 [W13-09]: w13-09-integrated-journeys-and-wave-handoff.md
-[H13-03]: ../handoffs/w13-03-verified-and-w13-04-entry.md
+[H13-03]: ../handoffs/w13-04-verified-and-w13-05-entry.md
 
 ```mermaid
 flowchart LR
@@ -134,7 +135,7 @@ Use this ticket index for current ticket IDs and blocking edges.
 - W13-07 must verify actual YouTube embedding; the known watch URL alone is not proof of embed permission.
 - W13-02/03 require authorized isolated database evidence. The user permits cleanup only of same-run fixture UUIDs.
 - Physical/native checks remain explicitly visible in W13-09. A prior-wave manual-QA waiver is not automatically inherited.
-- W13-03 is closed; continue to W13-04 from the [verified checkpoint][H13-03].
+- W13-04 is closed; resume W13-05 from the [verified checkpoint][H13-03].
 
 ## Execution checkpoint protocol
 

@@ -11,6 +11,26 @@ import {
   prepareSymptomReorder, type SymptomGroup,
 } from "pic-engine";
 import { compositionRoot, swapToSupabaseAdapter } from "./composition-root";
+import { createClient } from "@supabase/supabase-js";
+
+afterEach(() => { vi.unstubAllEnvs(); sessionStorage.clear(); });
+
+async function prepareVerifiedIdentity(owner: string) {
+  vi.stubEnv("VITE_SUPABASE_URL", "https://identity.invalid");
+  vi.stubEnv("VITE_SUPABASE_ANON_KEY", "public-fixture");
+  const path = await import("./promote-path");
+  const client = createClient("https://identity.invalid", "public-fixture", {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const user = { id: owner, email: "fixture@example.com", email_confirmed_at: "2026-10-26",
+    app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-10-26" };
+  vi.spyOn(client.auth, "getUser").mockResolvedValue({ data: { user }, error: null });
+  vi.spyOn(client.auth, "onAuthStateChange").mockReturnValue({
+    data: { subscription: { id: "fixture", callback: () => undefined, unsubscribe: () => undefined } },
+  });
+  vi.spyOn(path, "createSupabaseBrowserClient").mockReturnValue(client);
+  vi.spyOn(path, "readVerifiedProfileName").mockResolvedValue(null);
+}
 
 function createInMemoryAuthenticatedPort(): RepositoryPort {
   const groups = new Map<string, SymptomGroup>();
@@ -446,7 +466,9 @@ describe("W12 reset composition boundaries", () => {
     async function prepareSavedInquiry() {
     vi.resetModules();
     localStorage.clear();
+    await prepareVerifiedIdentity("saved-owner");
     const { compositionRoot: fresh, swapToSupabaseAdapter: swap } = await import("./composition-root");
+    fresh.authLifecycle.bind("saved-owner");
     await import("./guest-flow-facts");
     const authenticatedPort = createInMemoryAuthenticatedPort();
     swap(authenticatedPort);
@@ -472,6 +494,7 @@ describe("W12 reset composition boundaries", () => {
     render(createElement(AppProviders, { children: [
       createElement(GuestFlowRouter, { key: "flow" }), createElement(PreferencesProbe, { key: "preferences" }),
     ] }));
+    await act(async () => { await fresh.authLifecycle.verify(); });
     act(() => locale.setCustomNemarAlias("My chosen phrase"));
       return { fresh, authenticatedPort, groupId, before, stateBefore, finish, finishAnyway, preferences: () => locale };
     }
@@ -744,7 +767,10 @@ it.each(["discard", "promote"])("keeps %s cleanup last after delayed pointer per
 
 it("retains the frozen revision across authority renewal and retries under the same admission owner", async () => {
   vi.resetModules(); localStorage.clear();
+  await prepareVerifiedIdentity("same-admission-owner");
   const { compositionRoot: root } = await import("./composition-root");
+  root.authLifecycle.bind("same-admission-owner");
+  await root.authLifecycle.verify();
   const { inquiryGenerationStore } = await import("./inquiry-lifecycle");
   await import("./guest-flow-facts");
   await prepareGate(root);
@@ -770,7 +796,9 @@ it("retains the frozen revision across authority renewal and retries under the s
   expect(await actions.answer("split_suggested")).toBe(false);
   const frozen = structuredClone(writes.mock.calls[0]![0]);
   expect(root.questionnaire.store.getSnapshot().answer).toBe("split_suggested");
-  expect(await actions.answer("together")).toBe(true);
+  expect(await actions.answer("together")).toBe(false);
+  const renewedActions = root.questionnaire.actionsFor(inquiryGenerationStore.getSnapshot());
+  expect(await renewedActions.answer("together")).toBe(true);
   expect(writes.mock.calls[1]![0]).toEqual(frozen);
   expect((await port.getGroup(groupId))?.symptoms.map((row) => row.name)).toEqual(["Original", "Retained"]);
   expect(root.questionnaire.store.getSnapshot().existing?.joint_treatment_muscle_test).toBe("split_suggested");

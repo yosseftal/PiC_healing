@@ -4,11 +4,12 @@ import { act, cleanup, render, screen, fireEvent } from "@testing-library/react"
 import { createClient, type AuthChangeEvent, type Session } from "@supabase/supabase-js";
 import { afterEach, expect, it, vi } from "vitest";
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); localStorage.clear(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); localStorage.clear(); sessionStorage.clear(); });
 
 async function setup() {
   vi.resetModules();
   localStorage.clear();
+  sessionStorage.clear();
   vi.stubEnv("VITE_SUPABASE_URL", "https://identity.invalid");
   vi.stubEnv("VITE_SUPABASE_ANON_KEY", "public-fixture");
   const path = await import("./promote-path");
@@ -79,6 +80,93 @@ async function pendingGate(f: Awaited<ReturnType<typeof setup>>) {
   }));
   return { id, rpc, port, sessions, read, save, saveGroup, increment, timeline };
 }
+
+it("edits and continues an authenticated summary while repeated same-authority verification settles", async () => {
+  const f = await setup();
+  vi.spyOn(f.path, "readVerifiedProfileName").mockResolvedValue(null);
+  const saved = await pendingGate(f);
+  await f.root.promotePathActions.signInAndPromote({ email: f.user.email, password: "secret" });
+  await f.root.inquiryResetActions.resetInquiry(true);
+  f.verify.mockImplementation(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return { data: { user: f.user }, error: null };
+  });
+  localStorage.setItem("pic-web.locale.v1", "en");
+  const { App } = await import("./App");
+  render(createElement(App));
+  await act(async () => { await f.root.authLifecycle.verify(); });
+  fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "Authenticated summary" } });
+  fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Actual topic" } });
+  fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "6" } });
+  fireEvent.click(screen.getByTestId("finish-symptom-addition"));
+  fireEvent.click(await screen.findByRole("button", { name: "Yes" }));
+  await screen.findByRole("button", { name: "Continue to treatment" });
+  fireEvent.click(await screen.findByRole("button", { name: "Open utilities" }));
+  fireEvent.click(screen.getByTestId("edit-questionnaire"));
+  await screen.findByTestId("questionnaire-existing-row");
+  fireEvent.click(screen.getByTestId("finish-symptom-addition"));
+  fireEvent.click(await screen.findByRole("button", { name: "Continue to treatment" }));
+  await screen.findByTestId("guest-flow-pick-treatment");
+  const id = f.root.groupEngineStore.getSnapshot().activeGroupId!;
+  expect((await saved.port.getGroup(id))?.symptoms.map((row) => [row.name, row.intensity])).toEqual([["Actual topic", 6]]);
+  expect(saved.rpc).toHaveBeenCalledOnce();
+});
+
+it("hides an authenticated questionnaire immediately on suspension and retries its frozen flushing No", async () => {
+  const f = await setup();
+  const release = f.root.authLifecycle.start();
+  const saved = await pendingGate(f);
+  await f.root.promotePathActions.signInAndPromote({ email: f.user.email, password: "secret" });
+  await f.root.inquiryResetActions.resetInquiry(true);
+  localStorage.setItem("pic-web.locale.v1", "en");
+  const { App } = await import("./App");
+  const { inquiryGenerationStore } = await import("./inquiry-lifecycle");
+  render(createElement(App));
+  fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "Private live title" } });
+  fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Private live topic" } });
+  fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "6" } });
+  const old = f.root.questionnaire.actionsFor(inquiryGenerationStore.getSnapshot());
+  const getGroup = saved.port.getGroup.bind(saved.port);
+  let releaseRead!: () => void;
+  const paused = new Promise<void>((resolve) => { releaseRead = resolve; });
+  const read = vi.mocked(saved.port.getGroup).mockImplementationOnce(async (id) => { await paused; return getGroup(id); });
+  const pendingRead = f.root.groupEngineActions.getGroup("missing-group").catch(() => null);
+  await vi.waitFor(() => expect(read).toHaveBeenCalled());
+  let navigation!: Promise<boolean>;
+  act(() => { navigation = f.root.questionnaireNavigation.back("create-group"); });
+  act(() => { f.event("SIGNED_OUT", null); });
+  expect(screen.queryByDisplayValue("Private live topic")).toBeNull();
+  expect(screen.queryByDisplayValue("Private live title")).toBeNull();
+  expect(await old.finish()).toBe(false);
+  await act(async () => { releaseRead(); await pendingRead; expect(await navigation).toBe(false); });
+  expect(f.root.questionnaireNavigation.store.getSnapshot().waiting).toBe(false);
+  await act(async () => { await f.root.authLifecycle.verify(); });
+  expect(screen.getByLabelText("Symptom name")).toHaveProperty("value", "Private live topic");
+  expect(await old.finish()).toBe(false);
+  fireEvent.click(screen.getByTestId("finish-symptom-addition"));
+  await screen.findByRole("button", { name: "No" });
+  const original = saved.saveGroup.getMockImplementation()!;
+  saved.saveGroup.mockImplementationOnce(async (group) => { await original(group); throw new Error("Response lost"); });
+  fireEvent.click(screen.getByTestId("muscle-test-no"));
+  await screen.findByTestId("retry-membership-revision");
+  const frozen = structuredClone(f.root.authenticatedDraft.store.getSnapshot()!.group);
+  expect(f.root.authenticatedDraft.store.getSnapshot()?.phase).toBe("flushing");
+  const pending = f.root.authenticatedDraft.store.getSnapshot()!.group;
+  const originalName = pending.symptoms[0]!.name;
+  pending.symptoms[0]!.name = "Divergent same-group content";
+  const priorWrites = saved.saveGroup.mock.calls.length;
+  await act(async () => {
+    const actions = f.root.questionnaire.actionsFor(inquiryGenerationStore.getSnapshot());
+    expect(await actions.respondJoint("no")).toBe(false);
+  });
+  expect(saved.saveGroup.mock.calls.length).toBe(priorWrites);
+  pending.symptoms[0]!.name = originalName;
+  fireEvent.click(screen.getByTestId("retry-membership-revision"));
+  await screen.findByRole("button", { name: "Finalize anyway" });
+  expect(await saved.port.getGroup(frozen.id)).toEqual(frozen);
+  expect(f.root.authenticatedDraft.store.getSnapshot()).toBeNull();
+  release();
+});
 
 it("reuses a restored identity at its real Gate and keeps authenticated new groups on the saved provider", async () => {
   const f = await setup();
@@ -582,7 +670,12 @@ it.each(["Player", "answered group"])("does not restore subsequent authenticated
   vi.spyOn(path, "createSupabaseBrowserClient").mockReturnValue(f.client);
   const { App } = await import("./App");
   render(createElement(App));
-  expect(await screen.findByTestId("guest-flow-create-group")).toBeDefined();
+  if (kind === "Player") expect(await screen.findByTestId("guest-flow-create-group")).toBeDefined();
+  else {
+    expect(screen.queryByTestId("guest-flow-create-group")).toBeNull();
+    await act(async () => { await root.authLifecycle.verify(); });
+    expect(await screen.findByTestId("questionnaire-readonly-recovery")).toBeDefined();
+  }
   expect(saved.rpc).toHaveBeenCalledOnce();
   cleanup();
   const before = localStorage.getItem("pic:guest-repository:v1");

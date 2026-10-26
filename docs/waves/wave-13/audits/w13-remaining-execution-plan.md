@@ -22,14 +22,17 @@ Independent reviews remain separate from implementation context.
 
 - W13-02: closed after confirmed SQL application and full real verification: 64 files / 632 passing tests.
 - W13-06: completed and verified as an independent branch during W13-02 architecture/SQL preparation.
-- W13-03 is the current frontier; start only after the verified W13-02 closure commit.
+- W13-03: closed in `b9c5a11` after confirmed SQL application; 66 files / 686 tests pass, no failures or skips.
+- W13-04: closed after 68 files / 711 real-schema tests and 26 browser journeys pass; both review axes pass.
+- Clean context checkpoint before W13-05; no next-ticket implementation started.
 - No simultaneous writers to composition-root, dictionaries, context hooks or tests.
 - W13-02 web controls follow the agreed contract and preserve the completed W13-06 identity presentation.
 - W13-08 may be dispatched independently when source ownership and verification runners are available.
 
 After quota interruptions, finishing/debug verification used gpt-6.1-sol with high reasoning in fresh owned contexts.
 The bounded Guest public-lock tests used gpt-6-luna with high reasoning; both final review axes used gpt-6.1-sol.
-Resume from `../handoffs/w13-02-verified-and-w13-03-entry.md`; the original manual checkpoint remains as history.
+W13-04 uses gpt-6.1-sol/high for presentation lifetime, owner visibility and uncertain-request recovery.
+Resume from `../handoffs/w13-04-verified-and-w13-05-entry.md`; original manual checkpoints remain as history.
 
 ## W13-02 seam decisions to preserve
 
@@ -43,6 +46,8 @@ The approved resolution is an atomic checked save that rejects omitted members a
 while preserving ordinary field/rating/joint updates and append semantics. Explicit reorder owns order changes.
 No shipped GroupEngine removal caller requires retaining destructive replacement behavior.
 Legacy callers must fail safely rather than silently erase newer ordering or membership.
+W13-03 further constrains answered membership: additions and their fresh actual answer use the atomic revision command;
+generic answered saves cannot append or clear the answer to bypass it. Initial unanswered local staging stays bounded.
 
 New promotion behavior must be distinguishable from frozen legacy requests. Do not enrich or rewrite an existing
 frozen request while reusing its idempotency key. Preserve old receipt/fingerprint equality and completion count.

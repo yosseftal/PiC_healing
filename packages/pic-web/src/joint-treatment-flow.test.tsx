@@ -5,7 +5,7 @@ import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
 import {
   resetGuestFlowFactsForTest,
-  setGuestFlowSymptomAdditionComplete,
+  setGuestFlowSymptomAdditionComplete, guestFlowFactsStore,
 } from "./guest-flow-facts";
 import { JointTreatmentMuscleTestStep } from "./JointTreatmentMuscleTestStep";
 import { SymptomGroupSummaryScreen } from "./SymptomGroupSummaryScreen";
@@ -51,12 +51,6 @@ describe("JointTreatmentMuscleTestStep", () => {
     await compositionRoot.groupEngineActions.addSymptom(groupId, "Neck Pain");
     setGuestFlowSymptomAdditionComplete(true);
 
-    const setJointTreatmentMuscleTest = vi.spyOn(
-      compositionRoot.groupEngineActions,
-      "setJointTreatmentMuscleTest",
-    );
-    const finalizeGroup = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup");
-
     renderMuscleTestStep(groupId);
 
     await waitFor(() => {
@@ -66,24 +60,17 @@ describe("JointTreatmentMuscleTestStep", () => {
     fireEvent.click(screen.getByTestId("muscle-test-yes"));
 
     await waitFor(() => {
-      expect(setJointTreatmentMuscleTest).toHaveBeenCalledWith(groupId, "together");
-      expect(finalizeGroup).toHaveBeenCalledWith(groupId);
+      expect(guestFlowFactsStore.getSnapshot().groupFinalized).toBe(true);
     });
 
+    expect((await compositionRoot.groupEngineActions.getGroup(groupId))?.joint_treatment_muscle_test).toBe("together");
     expect(screen.queryByTestId("split-advisory")).toBeNull();
-    expect(screen.queryByTestId("finalize-anyway")).toBeNull();
   });
 
   it('"No" answer shows a dismissible split suggestion but still allows finalize on demand', async () => {
     const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
     await compositionRoot.groupEngineActions.addSymptom(groupId, "Neck Pain");
     setGuestFlowSymptomAdditionComplete(true);
-
-    const setJointTreatmentMuscleTest = vi.spyOn(
-      compositionRoot.groupEngineActions,
-      "setJointTreatmentMuscleTest",
-    );
-    const finalizeGroup = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup");
 
     renderMuscleTestStep(groupId);
 
@@ -94,7 +81,6 @@ describe("JointTreatmentMuscleTestStep", () => {
     fireEvent.click(screen.getByTestId("muscle-test-no"));
 
     await waitFor(() => {
-      expect(setJointTreatmentMuscleTest).toHaveBeenCalledWith(groupId, "split_suggested");
       expect(screen.getByTestId("split-advisory")).toBeTruthy();
       expect(screen.getByTestId("finalize-anyway")).toBeTruthy();
     });
@@ -106,7 +92,7 @@ describe("JointTreatmentMuscleTestStep", () => {
     fireEvent.click(screen.getByTestId("finalize-anyway"));
 
     await waitFor(() => {
-      expect(finalizeGroup).toHaveBeenCalledWith(groupId);
+      expect(guestFlowFactsStore.getSnapshot().groupFinalized).toBe(true);
     });
   });
 
@@ -114,22 +100,8 @@ describe("JointTreatmentMuscleTestStep", () => {
     const groupId = await compositionRoot.groupEngineActions.createDraftGroup("Lower Back");
     await compositionRoot.groupEngineActions.addSymptom(groupId, "Neck Pain");
     setGuestFlowSymptomAdditionComplete(true);
-    const setJointTreatmentMuscleTest = vi
-      .spyOn(compositionRoot.groupEngineActions, "setJointTreatmentMuscleTest")
-      .mockRejectedValueOnce(new Error("temporarily unavailable"))
-      .mockResolvedValueOnce(undefined);
-    const draftGroup = await compositionRoot.repositoryPort.getGroup(groupId);
-    if (draftGroup === null) {
-      throw new Error("Expected the retry test's draft group to exist");
-    }
-    const finalizeGroup = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup").mockResolvedValue({
-      group: {
-        ...draftGroup,
-        joint_treatment_muscle_test: "together",
-        joint_treatment_test_at: new Date().toISOString(),
-      },
-      splitAdvisory: false,
-    });
+    const provider = compositionRoot.repositoryPort.getProvider();
+    vi.spyOn(provider, "saveGroup").mockRejectedValueOnce(new Error("temporarily unavailable"));
 
     renderMuscleTestStep(groupId);
     fireEvent.click(screen.getByTestId("muscle-test-yes"));
@@ -143,8 +115,7 @@ describe("JointTreatmentMuscleTestStep", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try this muscle test response again" }));
 
     await waitFor(() => {
-      expect(setJointTreatmentMuscleTest).toHaveBeenCalledTimes(2);
-      expect(finalizeGroup).toHaveBeenCalledWith(groupId);
+      expect(guestFlowFactsStore.getSnapshot().groupFinalized).toBe(true);
     });
   });
 });

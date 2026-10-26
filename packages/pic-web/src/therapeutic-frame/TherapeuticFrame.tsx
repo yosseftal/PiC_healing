@@ -37,6 +37,7 @@ type TherapeuticFrameBaseProps = {
   stageLabel: string;
   tone?: TherapeuticFrameTone;
   utilityTrigger?: ReactNode;
+  navigation?: ReactNode;
   width?: TherapeuticFrameWidth;
 };
 
@@ -117,6 +118,7 @@ export function TherapeuticFrame({
   title,
   tone = "neutral",
   utilityTrigger,
+  navigation,
   width = "reading",
   ...accessibleName
 }: TherapeuticFrameProps) {
@@ -138,10 +140,11 @@ export function TherapeuticFrame({
     >
       <header className="pic-therapeutic-frame__header">
         <div className="pic-therapeutic-frame__heading">
+          {navigation}
           {eyebrow === undefined ? null : (
             <div className="pic-therapeutic-frame__eyebrow">{eyebrow}</div>
           )}
-          {title === undefined ? null : <h1 id={titleId}>{title}</h1>}
+          {title === undefined ? null : <h1 id={titleId} tabIndex={-1}>{title}</h1>}
           {progress === undefined ? null : (
             <div className="pic-therapeutic-frame__progress">{progress}</div>
           )}

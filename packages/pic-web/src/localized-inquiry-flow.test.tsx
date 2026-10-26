@@ -5,7 +5,7 @@ import type { SymptomGroup } from "pic-engine";
 import { changeFixtureAlias, TerminologyFixture } from "./i18n/terminology-test-fixture";
 import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
-import { resetGuestFlowFactsForTest, setGuestFlowSymptomAdditionComplete } from "./guest-flow-facts";
+import { guestFlowFactsStore, resetGuestFlowFactsForTest, setGuestFlowSymptomAdditionComplete } from "./guest-flow-facts";
 import { JointTreatmentMuscleTestStep } from "./JointTreatmentMuscleTestStep";
 import { SymptomGroupSummaryScreen } from "./SymptomGroupSummaryScreen";
 import { GuestFlowRouter } from "./guest-flow-router";
@@ -25,22 +25,24 @@ it("retains a pending joint response and current-locale recovery without a third
   setGuestFlowSymptomAdditionComplete(true);
   let reject!: (reason: Error) => void;
   const pending = new Promise<void>((_, fail) => { reject = fail; });
-  const response = vi.spyOn(compositionRoot.groupEngineActions, "setJointTreatmentMuscleTest")
-    .mockReturnValueOnce(pending);
-  const finalize = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup");
+  const provider = compositionRoot.repositoryPort.getProvider();
+  const save = provider.saveGroup.bind(provider);
+  const response = vi.spyOn(provider, "saveGroup").mockImplementationOnce(async (group) => { await pending; await save(group); });
   render(<AppProviders><TerminologyFixture /><JointTreatmentMuscleTestStep groupId={groupId} /></AppProviders>);
   fireEvent.click(screen.getByTestId("muscle-test-no"));
+  await waitFor(() => expect(response).toHaveBeenCalledOnce());
   act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
   switchLanguage("he");
   await act(async () => { reject(new Error("Reconnect")); await pending.catch(() => {}); });
-  expect(screen.getByText("אפשר לנסות שוב לרשום את תשובת בדיקת השריר.")).toBeTruthy();
-  expect(screen.getByRole("group", { name: "פעולות זמינות" }).querySelectorAll("button")).toHaveLength(2);
-  expect(screen.queryByRole("button", { name: "ניסיון נוסף לרישום תשובת בדיקת השריר" })).toBeNull();
+  expect(await screen.findByText("אפשר לנסות שוב לרשום את תשובת בדיקת השריר.")).toBeTruthy();
+  expect(screen.getByRole("group", { name: "פעולות זמינות" }).querySelectorAll("button")).toHaveLength(1);
+  expect(screen.getByRole("button", { name: "ניסיון נוסף לרישום תשובת בדיקת השריר" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "פתיחת הכלים" }));
   fireEvent.click(screen.getByRole("button", { name: "ניסיון נוסף לרישום תשובת בדיקת השריר" }));
   await waitFor(() => expect(response).toHaveBeenCalledTimes(2));
-  expect(response).toHaveBeenNthCalledWith(2, groupId, "split_suggested");
-  expect(finalize).not.toHaveBeenCalled();
+  expect(response.mock.calls[1]![0]).toEqual(response.mock.calls[0]![0]);
+  expect((await compositionRoot.groupEngineActions.getGroup(groupId))?.joint_treatment_muscle_test).toBe("split_suggested");
+  expect(guestFlowFactsStore.getSnapshot().groupFinalized).toBe(false);
 });
 
 it("settles pending catalog and selection recovery in the chosen language without resetting voluntary linking", async () => {
@@ -117,8 +119,7 @@ it("keeps joint No advisory and sovereign finalization through language changes 
   const groupId = await compositionRoot.groupEngineActions.createDraftGroup("גב Back");
   await compositionRoot.groupEngineActions.addSymptom(groupId, "צוואר Neck");
   setGuestFlowSymptomAdditionComplete(true);
-  const response = vi.spyOn(compositionRoot.groupEngineActions, "setJointTreatmentMuscleTest");
-  const finalize = vi.spyOn(compositionRoot.groupEngineActions, "finalizeGroup");
+  const response = vi.spyOn(compositionRoot.repositoryPort.getProvider(), "saveGroup");
   const view = render(<AppProviders><TerminologyFixture /><JointTreatmentMuscleTestStep groupId={groupId} /></AppProviders>);
   const no = screen.getByTestId("muscle-test-no");
   act(() => changeFixtureAlias("שלי Right <b>{nemar}</b>"));
@@ -126,11 +127,12 @@ it("keeps joint No advisory and sovereign finalization through language changes 
   expect(screen.getByTestId("muscle-test-no")).toBe(no);
   expect(no.textContent).toBe("לא");
   expect(response).not.toHaveBeenCalled();
-  expect(finalize).not.toHaveBeenCalled();
+  expect(guestFlowFactsStore.getSnapshot().groupFinalized).toBe(false);
   expect(view.container.querySelectorAll(".pic-therapeutic-frame")).toHaveLength(1);
   fireEvent.click(no);
   await waitFor(() => expect(screen.getByTestId("split-advisory").textContent)
     .toBe("ייתכן שמתאים יותר לטפל בסימפטומים האלה בקבוצות נפרדות."));
+  const answered = await compositionRoot.groupEngineActions.getGroup(groupId);
   switchLanguage("en");
   expect(screen.getByTestId("split-advisory").textContent).toBe("These symptoms may heal better as separate groups.");
   fireEvent.click(screen.getByTestId("dismiss-split-advisory"));
@@ -138,10 +140,13 @@ it("keeps joint No advisory and sovereign finalization through language changes 
   switchLanguage("he");
   expect(screen.queryByTestId("split-advisory")).toBeNull();
   expect(screen.getByRole("group", { name: "פעולות זמינות" }).querySelectorAll("button")).toHaveLength(1);
-  expect(response).toHaveBeenCalledExactlyOnceWith(groupId, "split_suggested");
-  expect(finalize).not.toHaveBeenCalled();
+  expect(response).toHaveBeenCalledOnce();
+  expect(answered?.joint_treatment_muscle_test).toBe("split_suggested");
+  expect(await compositionRoot.groupEngineActions.getGroup(groupId)).toEqual(answered);
+  expect(guestFlowFactsStore.getSnapshot().groupFinalized).toBe(false);
   fireEvent.click(screen.getByTestId("finalize-anyway"));
-  await waitFor(() => expect(finalize).toHaveBeenCalledExactlyOnceWith(groupId));
+  await waitFor(() => expect(guestFlowFactsStore.getSnapshot().groupFinalized).toBe(true));
+  expect(response).toHaveBeenCalledTimes(2);
 });
 
 it("flows through joint Yes, summary and the complete catalog into a canonically linked Player after selection", async () => {

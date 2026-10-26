@@ -1,6 +1,15 @@
 import { createMessageResolver, type MessageTemplate } from "./messages";
 
 export const messageDefinitions = {
+  "navigation.back": { params: [] },
+  "navigation.return": { params: [] },
+  "navigation.preparation": { params: [] },
+  "navigation.waiting": { params: [] },
+  "navigation.recovery": { params: [] },
+  "navigation.continue": { params: [] },
+  "navigation.readonly": { params: [] },
+  "navigation.reloadLimit": { params: [] },
+  "navigation.storageUnavailable": { params: [] },
   "priority.retry": { params: [] },
   "priority.review": { params: [] },
   "priority.unsaved": { params: [] },
@@ -186,6 +195,17 @@ export const messageDefinitions = {
 // Newly authored UI copy is product-approved for Wave 11 (2026-10-11), not a website quotation.
 export const dictionaries = {
   he: {
+    "navigation.back": "חזרה",
+    "navigation.return": "חזרה לשאלון",
+    "navigation.preparation": "הכנה לשאלון",
+    "navigation.waiting": "ממתינות לסיום הפעולה. העבודה שלך נשמרת כאן.",
+    "navigation.recovery": "הפעולה לא הסתיימה. אפשר לנסות שוב לפני המעבר.",
+    "navigation.continue": "המשך",
+    "navigation.readonly": "הטיוטה מוצגת לקריאה בלבד לאחר טעינה מחדש. לא ניתן לחדש מכאן פעולה שלא הסתיימה. " +
+      "אפשר לעיין בפרטים או לבחור בכלים לפתוח שאלון חדש לאחר אישור ויתור על הטיוטה.",
+    "navigation.reloadLimit": "הטיוטה נשמרת בלשונית הזו. לאחר טעינה מחדש, פעולות שלא הסתיימו וטיוטות של חשבון " +
+      "מוצגות לקריאה בלבד. סגירת הלשונית או מעבר למכשיר אחר אינם שומרים טיוטה ניתנת לעריכה.",
+    "navigation.storageUnavailable": "הדפדפן לא הצליח לשמור עותק של הטיוטה. העבודה נשארת כאן כל עוד הלשונית פתוחה.",
     "draft.unsaved": "טיוטת הקבוצה עדיין מקומית ולא נשמרה בחשבון.",
     "draft.retainedTitle": "הטיוטה המקומית נשמרה במכשיר",
     "draft.retainedBody": "אחרי טעינה מחדש אפשר לראות כאן את הטיוטה, אבל עדיין אי אפשר להמשיך אותה. " +
@@ -379,6 +399,18 @@ export const dictionaries = {
     "identity.promotionFailed": "לא הצלחנו לאשר שהשמירה הושלמה; ייתכן שהעבודה כבר בחשבון. אפשר לנסות שוב כשתהיי מוכנה.",
   },
   en: {
+    "navigation.back": "Back",
+    "navigation.return": "Return to questionnaire",
+    "navigation.preparation": "Questionnaire preparation",
+    "navigation.waiting": "Waiting for the current action. Your work stays here.",
+    "navigation.recovery": "The action needs recovery. Try again before moving on.",
+    "navigation.continue": "Continue",
+    "navigation.readonly": "This retained draft is read-only after reload. An unfinished action cannot resume here. " +
+      "Review the details, or use utilities to start a new questionnaire after confirming discard.",
+    "navigation.reloadLimit": "Draft fields stay in this tab. After reload, unfinished saves and account drafts are read-only. " +
+      "Closing the tab or using another device does not preserve an editable draft.",
+    "navigation.storageUnavailable": "The browser could not retain a draft copy. " +
+      "Your work stays here while this tab remains open.",
     "draft.unsaved": "This group draft is local and has not been saved to your account.",
     "draft.retainedTitle": "Your local draft is retained",
     "draft.retainedBody": "After reloading, you can view this draft here, but continuing it is not available yet. " +

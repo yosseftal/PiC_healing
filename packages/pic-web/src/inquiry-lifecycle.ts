@@ -3,7 +3,7 @@ import { useEffect, useId } from "react";
 /** Reset cancels a paused operation before its next provider call. */
 export class InquiryOperationCancelled extends Error {}
 
-const pending = new Set<Promise<boolean>>();
+const pending = new Map<Promise<boolean>, "read" | "write">();
 const drafts = new Map<string, boolean>();
 const draftListeners = new Set<() => void>();
 let cachedHasDraft = false;
@@ -14,8 +14,8 @@ let saving = false;
 let failures = 0;
 
 /** Tracks the whole UI operation, including continuations between public engine calls. */
-export function trackFlowOperation<T>(operation: () => Promise<T>): Promise<T> {
-  return trackOperation(operation, false);
+export function trackFlowOperation<T>(operation: () => Promise<T>, kind: "read" | "write" = "write"): Promise<T> {
+  return trackOperation(operation, false, kind);
 }
 
 /** Reauthentication can settle a paused save, while remaining part of reset's drain. */
@@ -23,7 +23,8 @@ export function trackIdentityOperation<T>(operation: () => Promise<T>): Promise<
   return trackOperation(operation, true);
 }
 
-async function trackOperation<T>(operation: () => Promise<T>, identity: boolean): Promise<T> {
+async function trackOperation<T>(operation: () => Promise<T>, identity: boolean, kind: "read" | "write" = "write"):
+Promise<T> {
   if (admissionClosed) throw new Error("Inquiry reset is pending");
   if (saving && !identity) throw new Error("Saving is pending");
   const result = operation();
@@ -31,7 +32,7 @@ async function trackOperation<T>(operation: () => Promise<T>, identity: boolean)
     if (error instanceof InquiryOperationCancelled) return true;
     failures += 1; return false;
   });
-  pending.add(settled);
+  pending.set(settled, kind);
   try {
     return await result;
   } finally {
@@ -41,7 +42,7 @@ async function trackOperation<T>(operation: () => Promise<T>, identity: boolean)
 
 /** Drain admitted writes before freezing Guest work; the caller uses untracked engine calls inside. */
 export function trackExclusiveFlowOperation<T>(operation: () => Promise<T>): Promise<T> {
-  const admitted = [...pending];
+  const admitted = [...pending.keys()];
   return trackFlowOperation(async () => {
     saving = true;
     try {
@@ -58,13 +59,24 @@ export function prepareFlowSettlement(isCurrent = () => true): () => Promise<voi
   return async () => {
     let failed = false;
     while (pending.size > 0) {
-      const results = await Promise.all([...pending]);
+      const results = await Promise.all([...pending.keys()]);
       failed ||= results.includes(false);
     }
     if (!isCurrent()) return;
     admissionClosed = true;
     if (failed || failures !== initialFailures) throw new Error("Inquiry operation did not settle successfully");
   };
+}
+
+/** Presentation waits for admitted outer operations without interrupting their public-action continuations. */
+export async function settleFlowOperations(): Promise<boolean> {
+  let succeeded = true;
+  while (pending.size > 0) {
+    const admitted = [...pending.entries()];
+    const results = await Promise.all(admitted.map(([operation]) => operation));
+    succeeded &&= !results.some((success, index) => !success && admitted[index]?.[1] === "write");
+  }
+  return succeeded;
 }
 
 export function useInquiryDraft(dirty: boolean): void {

@@ -9,11 +9,13 @@ import { LocalizedMessage } from "./i18n/localized-message";
 import { TherapeuticContentCard } from "./therapeutic-frame/TherapeuticFrame";
 import { TherapeuticScreenFrame } from "./therapeutic-frame/TherapeuticScreenFrame";
 import "./symptom-creation.css";
+import { useQuestionnaireNavigation } from "./questionnaire-navigation-context";
 
 export function SymptomAddStep(): ReactNode {
   const { message } = useLocale();
   const { activeGroupId } = useGroupEngineState();
   const { state, actions } = useQuestionnaire();
+  const navigation = useQuestionnaireNavigation();
   const { setOpen } = useInquiryUtilities();
   const names = useRef(new Map<string, HTMLInputElement>());
   const topicRows = useRef(new Map<string, HTMLFieldSetElement>());
@@ -31,7 +33,7 @@ export function SymptomAddStep(): ReactNode {
     target?.focus();
     setMoveFocus(null);
   }, [moveFocus, state.rows]);
-  const locked = state.busy || state.recovery || activeGroupId !== null && !state.revising;
+  const locked = state.busy || state.recovery || navigation.state.waiting || activeGroupId !== null && !state.revising;
   function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFocusId(actions.add());
@@ -40,7 +42,7 @@ export function SymptomAddStep(): ReactNode {
     if (!await actions.finish()) form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }
 
-  return <TherapeuticScreenFrame allowInquiryReset
+  return <TherapeuticScreenFrame allowInquiryReset questionnaireLocation="create-group"
     title={message("group.title").text} stageLabel={message("group.stage").text}
     utilities={state.recovery ? <div role="status">
       <p><LocalizedMessage message={message("symptom.recovery")} /></p>
@@ -77,6 +79,7 @@ export function SymptomAddStep(): ReactNode {
             <label><LocalizedMessage message={message("group.name")} />
               <input className={INPUT_CONTROL} aria-label={message("group.name").text}
                 placeholder={message("group.placeholder").text} dir="auto" lang="" value={state.title}
+                data-navigation-focus="title"
                 disabled={locked || state.revising} onChange={(event) => actions.setTitle(event.target.value)} />
             </label>
             <div data-testid="questionnaire-topics" className="pic-questionnaire-topics">
@@ -96,6 +99,7 @@ export function SymptomAddStep(): ReactNode {
                   <label className="pic-questionnaire-row__name"><LocalizedMessage message={message("symptom.name")} />
                     <input ref={(node) => { if (node) names.current.set(row.id, node); else names.current.delete(row.id); }}
                       className={INPUT_CONTROL} aria-label={message("symptom.name").text}
+                      data-navigation-focus={`${row.id}:name`}
                       aria-invalid={state.invalid && !row.name.trim() || undefined}
                       placeholder={message("symptom.placeholder").text} dir="auto" lang="" value={row.name}
                       onChange={(event) => actions.edit(row.id, { name: event.target.value })} />
@@ -103,6 +107,7 @@ export function SymptomAddStep(): ReactNode {
                   <label><LocalizedMessage message={message("rating.polarity")} />
                     <select className={INPUT_CONTROL} aria-label={message("rating.polarity").text}
                       value={row.polarity}
+                      data-navigation-focus={`${row.id}:polarity`}
                       onChange={(event) => actions.edit(row.id, { polarity: event.target.value as Polarity })}>
                       <option value="negative">{message("rating.negative").text}</option>
                       <option value="positive">{message("rating.positive").text}</option>
@@ -112,6 +117,7 @@ export function SymptomAddStep(): ReactNode {
                     <select className={INPUT_CONTROL} aria-label={message(label).text}
                       aria-invalid={state.invalid && row.intensity === null || undefined}
                       aria-describedby={row.id + "-endpoints"} value={row.intensity ?? ""}
+                      data-navigation-focus={`${row.id}:intensity`}
                       onChange={(event) => actions.edit(row.id, { intensity: event.target.value === "" ? null :
                         Number(event.target.value) as Intensity })}>
                       <option value="">{message("initial.choose").text}</option>
@@ -150,7 +156,7 @@ export function SymptomAddStep(): ReactNode {
           <LocalizedMessage message={message("symptom.add")} />
         </button> : null}
         <button className={UTILITY_CONTROL} type="button" data-testid="finish-symptom-addition"
-          disabled={state.busy} onClick={() => void finish()}>
+          disabled={state.busy || navigation.state.waiting} onClick={() => void finish()}>
           <LocalizedMessage message={message("symptom.done")} />
         </button>
       </div>
