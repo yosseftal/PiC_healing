@@ -1,7 +1,7 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** W13-01, W13-02, W13-03 and W13-06 closed; W13-04 is the next implementation frontier.
+**Status:** W13-01, W13-02, W13-03 and W13-06 closed; W13-04 is the active implementation frontier.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -29,6 +29,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** W13-02
 
 - **Ticket:** [W13-04][W13-04]
+  **Status:** in progress; composition presentation and versioned draft recovery dispatched.
   **End-to-end delivery:** Navigate backward through the questionnaire without losing work
   **Blocked by:** W13-01, W13-03
 

@@ -3,6 +3,8 @@
 ## Identity and authorization
 
 Ticket: [W13-04](../tickets/w13-04-reversible-questionnaire-and-recovery.md).
+Current execution contract: [composition presentation and versioned recovery](../audits/w13-04-navigation-contract.md).
+W13-03 is verified and closed in `b9c5a11`; root has now dispatched W13-04.
 User approved implementation of the full suite after preflight. Work only when dispatched in serial order.
 Read AGENTS.md, CLAUDE.md, CONTEXT.md, decisions.md, the active specification and the complete ticket before editing.
 The older preflight-only instructions describe that earlier turn; this execution charter supersedes that gate.

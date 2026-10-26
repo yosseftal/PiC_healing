@@ -1,11 +1,12 @@
 # W13-04 — Navigate backward through the questionnaire without losing work
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** in progress — W13-03 verified and closed; presentation navigation and recovery dispatched.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01][relocation-link-1], [W13-03][relocation-link-2].
 **Blocking:** [W13-07](w13-07-welcome-text-guide-and-video.md), [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
 **Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
 **Domain decisions:** DEC-011, DEC-013, DEC-014, DEC-015, DEC-017, DEC-018.
+**Execution contract:** [Composition presentation and versioned recovery](../audits/w13-04-navigation-contract.md).
 
 ## Objective & Context
 
