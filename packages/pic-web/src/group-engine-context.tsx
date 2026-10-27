@@ -72,3 +72,16 @@ export function useSummaryPriority() {
     [generation, summaryPriority, provider, identity.owner, identity.status, identity.revision]);
   return { state, actions };
 }
+
+/** Current blind input is retained above transient summary/help mounts. */
+export function useSummaryRating() {
+  useGroupEngineContext();
+  const { summaryRating } = compositionRoot;
+  const state = useSyncExternalStore(summaryRating.store.subscribe, summaryRating.store.getSnapshot);
+  const generation = useSyncExternalStore(inquiryGenerationStore.subscribe, inquiryGenerationStore.getSnapshot);
+  const identity = useSyncExternalStore(compositionRoot.authStore.subscribe, compositionRoot.authStore.getSnapshot);
+  const provider = compositionRoot.repositoryPort.getProvider();
+  const actions = useMemo(() => summaryRating.actionsFor(generation),
+    [generation, summaryRating, provider, identity.owner, identity.status, identity.revision]);
+  return { state, actions };
+}

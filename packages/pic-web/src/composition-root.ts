@@ -3,6 +3,7 @@ import { createGroupStaging } from "./group-staging";
 import { createQuestionnaireDraft } from "./questionnaire-draft";
 import { createQuestionnaireNavigation } from "./questionnaire-navigation";
 import { createSummaryPriority } from "./summary-priority";
+import { createSummaryRating } from "./summary-rating";
 import {
   assertQuestionnaireWebWriteSafe, clearQuestionnaireWebRecovery, readQuestionnaireWebRecovery, saveQuestionnaireWebRecovery,
 } from "./questionnaire-web-recovery";
@@ -536,13 +537,6 @@ const questionnaire = createQuestionnaireDraft({
     });
   },
 });
-const summaryPriority = createSummaryPriority({
-  assertWriteSafe: assertQuestionnaireWebWriteSafe,
-  captureAccess: captureQuestionnaireAccess,
-  blocked: () => questionnaireNavigation.store.getSnapshot().waiting || !questionnaireVisible(),
-  getGroup: (id) => groupEngineActions.getGroup(id),
-  reorder: (id, ids, revision) => groupEngineActions.reorderSymptoms(id, ids, revision),
-});
 function captureQuestionnaireIdentity(checkAuthority = false, pendingAggregate?: () => SymptomGroup | null) {
   const generation = inquiryGenerationStore.getSnapshot();
   const provider = repositoryPort.getProvider();
@@ -568,6 +562,18 @@ function matchesPreparedQuestionnaireGroup(actual: SymptomGroup, prepared: Sympt
 }
 function questionnaireOwner() {
   return authenticatedOwner ?? questionnaire.store.getSnapshot().owner;
+}
+function captureQuestionnaireScope() {
+  const owner = questionnaireOwner();
+  const provider = repositoryPort.getProvider();
+  const generation = inquiryGenerationStore.getSnapshot();
+  return () => owner === questionnaireOwner() && provider === repositoryPort.getProvider() &&
+    generation === inquiryGenerationStore.getSnapshot();
+}
+function subscribeQuestionnaireScope(listener: () => void) {
+  const stopGroup = groupEngineStore.subscribe(listener);
+  const stopIdentity = authStore.subscribe(listener);
+  return () => { stopGroup(); stopIdentity(); };
 }
 function questionnaireVisible() {
   const owner = questionnaireOwner();
@@ -752,6 +758,29 @@ else if (retainedDraft !== null) authLifecycle.bind(retainedDraft.owner);
 else if (retainedWebDraft?.owner) authLifecycle.bind(retainedWebDraft.owner);
 const authenticatedDraft = createAuthenticatedDraft(retainedDraft, authLifecycle);
 const authStore = authLifecycle.store;
+const summaryPriority = createSummaryPriority({
+  assertWriteSafe: assertQuestionnaireWebWriteSafe,
+  captureAccess: captureQuestionnaireAccess,
+  captureScope: captureQuestionnaireScope,
+  subscribeToScope: subscribeQuestionnaireScope,
+  blocked: () => questionnaireNavigation.store.getSnapshot().waiting || !questionnaireVisible(),
+  getGroup: (id) => groupEngineActions.getGroup(id),
+  reorder: (id, ids, revision) => groupEngineActions.reorderSymptoms(id, ids, revision),
+});
+const summaryRating = createSummaryRating({
+  captureAccess: captureQuestionnaireAccess,
+  captureScope: captureQuestionnaireScope,
+  subscribeToScope: subscribeQuestionnaireScope,
+  blocked: () => !questionnaireVisible() || questionnaireNavigation.store.getSnapshot().waiting ||
+    summaryPriority.store.getSnapshot().busy || summaryPriority.store.getSnapshot().pending !== null,
+  getGroup: (id) => groupEngineActions.getGroup(id),
+  hasPriorRating: (id) => groupEngineActions.hasPriorRating(id),
+  rate: async (id, input) => {
+    assertQuestionnaireWebWriteSafe();
+    await groupEngineActions.rate(id, input);
+  },
+  afterSave: (id) => summaryPriority.actionsFor(inquiryGenerationStore.getSnapshot()).load(id, true),
+});
 function persistQuestionnaireWebDraft() {
   if (resetting || promotionSwitching || promotionRecovery !== null || resetRecovery !== null) return;
   const draft = questionnaire.store.getSnapshot();
@@ -1040,6 +1069,7 @@ const promotePathActions = {
 
 /** Resets composition-layer group flow pointer between tests. */
 export function resetGroupFlowFactsForTest(): void {
+  summaryRating.reset();
   summaryPriority.reset();
   questionnaireNavigation.reset();
   questionnaire.reset();
@@ -1124,6 +1154,7 @@ export function resetTreatmentContentCacheForTest(): void {
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
+  summaryRating,
   summaryPriority,
   questionnaireVisible,
   captureQuestionnaireAccess,

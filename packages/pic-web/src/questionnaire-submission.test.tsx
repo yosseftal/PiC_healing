@@ -230,7 +230,15 @@ async function editList() {
 async function answeredList(answer: "yes" | "no" = "yes") {
   mount(); fill(0, "Original", "4"); finish();
   fireEvent.click(await screen.findByTestId(`muscle-test-${answer}`));
-  if (answer === "no") fireEvent.click(await screen.findByTestId("finalize-anyway"));
+  if (answer === "no") {
+    await waitFor(() => {
+      const finalize = screen.getByRole("button", { name: "Finalize anyway" });
+      expect(finalize.closest("[inert]")).toBeNull();
+      expect(finalize.closest("[data-active-key]")?.getAttribute("data-active-key")).toBe("joint-treatment:advisory");
+      expect((finalize as HTMLButtonElement).disabled).toBe(false);
+      fireEvent.click(finalize);
+    });
+  }
   await screen.findByTestId("confirm-group-summary");
   return compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
 }

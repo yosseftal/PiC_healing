@@ -1,10 +1,10 @@
 # W13-05 — Review a clean priority list with an optional polarity view
 
-**Status:** in progress — parallel implementation authorized and dispatched from ca6441e.
+**Status:** in progress — implementation reviewed; final remote signup gate is rate limited.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md), [W13-02](w13-02-durable-manual-priority.md).
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
-**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
+**Execution gate:** Parallel dispatch authorized by the latest user charter; see the convergence contract.
 **Domain decisions:** DEC-010, DEC-011, DEC-012, DEC-013; W13-D2, W13-D3.
 
 ## Objective & Context
@@ -39,7 +39,7 @@ order; storage is unchanged. Start re-rating a topic and inspect visible and acc
 
 ## Acceptance Criteria
 
-- [ ] **AC-01:** Untitled lists render cleanly without a fabricated persisted name or empty heading.
+- [x] **AC-01:** Untitled lists render cleanly without a fabricated persisted name or empty heading.
 - [ ] **AC-02:** Manual priority is the default and is visually/accessibly distinguishable from intensity.
 - [ ] **AC-03:** No total-item counters remain on affected list surfaces; meaningful priority/scale values remain.
 - [ ] **AC-04:** Polarity view groups correctly with stable manual order and original priority numbers.
@@ -77,9 +77,45 @@ No existing content, unrelated database rows or treatment-content files may be d
 No automatic sorting of persisted priority, score-derived urgency, bulk rating, analytics, rewriting
 history, removing library use counts, group archival, treatment editing or database changes.
 
-Implementation is authorized by the user; wait for prerequisites and serial dispatch.
+Implementation is authorized by the user; prerequisites are closed and parallel dispatch is recorded.
 
 ## Resolution
 
-Not implemented. To complete after authorization: solution path, decisions, deviations, test evidence,
-review outcome, commit, and explicit resolution for every AC above.
+Implementation and independent review complete. Ticket remains in progress because the full root signup gate
+is externally rate limited; no all-green closure is claimed.
+See [implementation review](../audits/w13-05-implementation-review.md).
+
+### Solution path and architecture
+
+Web-only summary/reflection and retained current-response controller use public group/rating seams.
+Manual priority is the default; polarity grouping is presentation only. Public capability probing prevents invented
+editable state after unsupported engine reload. No private index hydration, engine change or database migration.
+The independent Spec finding (committed-cancel bypass) is fixed and re-reviewed; Standards found no actionable issue.
+
+### Acceptance evidence
+
+- AC-01: empty/whitespace title cases show no empty or fabricated group name.
+- AC-02: explicit labels and bilingual Chromium geometry prove logical priority/intensity separation.
+- AC-03: entry inspection and rendered/browser checks show no total-topic counters.
+- AC-04: mixed Negative/Positive/Unrated sections preserve original order and numerals.
+- AC-05: public save/reorder/rate/Reveal spies remain untouched across view changes; browser storage is identical.
+- AC-06: grouped view has no reorder buttons; manual view restores them.
+- AC-07: rendered and browser re-rating cases unmount summary/history/grouping, including accessible content.
+- AC-08: explicit public Reveal exposes actual prior zero; current input saves zero; unavailable capability stays guarded.
+- AC-09: 320px Hebrew/English browser cases retain logical layout and zero document overflow.
+
+### Test evidence
+
+Final focused regression: 2 files / 33 tests passed. Five focused Chromium cases and production build passed.
+Root typecheck and lint passed. Full npm test: 73 files, 764 passed / 1 failed (765 total), 114.95s.
+The only failure is real signup: Supabase over_email_send_rate_limit; the corrected navigation case passed.
+All-workspace dependency checks passed separately: engine 76 modules / 215 dependencies; web 802 / 1842.
+They were run separately because npm test uses a success-only command chain.
+Full inventory includes separately pending W13-07/08 candidates.
+Logs: .scratch/w13-05-checkpoint-root.log, -typecheck.log, -lint.log, -depcruise.log.
+Only same-run UUID fixtures/Auth users may be cleaned; existing content/rows remain preserved.
+
+### Deviations and carry-forward
+
+An existing animated test helper now selects the active, accessible advisory rather than a retained outgoing DOM node.
+Its functional assertions remain intact. Historical native/manual QA remains a separate W13-09 gate.
