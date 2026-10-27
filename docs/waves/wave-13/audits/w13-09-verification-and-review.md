@@ -22,7 +22,7 @@ No new domain normalization, preparation, transaction or port-shaping owner is i
 | Requirement / AC | Current owning evidence |
 | --- | --- |
 | Upstream / AC-01 | Ticket 01–08 Resolutions; explicit W13-07 Scope 2 / AC-08 exception keeps AC-01 pending |
-| Bilingual titled/untitled journey / AC-02 | New assembled HE untitled / EN titled cases; final result pending |
+| Bilingual titled/untitled journey / AC-02 | New assembled HE untitled / EN titled cases; focused 2/2 passed |
 | Atomic order and renewed answer / AC-03 | New payload/Guest assertions; durable-priority and membership browser cases |
 | Actual SQL rollback, ownership, replay / AC-03 | supabase-repository.test.ts plus shared priority/membership contracts |
 | Back/help/locale / AC-04 | New retained-draft path; questionnaire-navigation and education browser cases |
@@ -53,6 +53,24 @@ Real embedded playback was previously verified and is linked in the copy review;
 
 ## Final commands and reviews
 
-Pending source freeze and actual execution. Record command, result, exit status, date, tested SHA and local evidence path.
+The source is frozen after focused verification and both independent review axes. Its SHA-256 is
+9282BC9A1591BE1DCC459855D8E0F3A1125BE65622377044926891DC64E78682.
+
+- Focused: npm run test:browser -w packages/pic-web -- tests/w13-integrated-journeys.browser.test.ts
+  --project=chromium --workers=2: 2/2 passed, production build passed, 11.2s, exit 0.
+  Log: .scratch/w13-09-focused-third.log.
+- npm run typecheck: all workspaces passed, exit 0 (.scratch/w13-09-typecheck-final.log).
+- npm run lint: passed, exit 0 (.scratch/w13-09-lint-final.log).
+- Standards: gpt-6-luna/high, fresh read-only review against 6a6622b and repo guidance; no actionable findings.
+- Spec: gpt-6.1-sol/high, fresh read-only review against the ticket, approved entry plan and latest directive;
+  no actionable findings. Adverse evidence references were checked; neither review substitutes for runtime gates.
+- Full Chromium, exact npm test, dependency and final preservation results remain pending actual execution.
+
+Test authoring corrected two initial assumptions: scope language metadata to approved content rather than the outer HE frame;
+and distinguish presentation row UUIDs from public addSymptom's initial domain UUID allocation.
+Draft row IDs must survive help/locale/reorder. Actual committed IDs must survive every subsequent operation.
+A second run exposed an immediate read before the returned row mounted; an observable visibility wait fixes the test.
+No product/runtime defect, delay, timeout increase, skip or weaker continuity assertion was introduced.
+
 Run heavy runners sequentially with at most two workers and normal TLS. No skips/retries/threshold weakening.
 Only same-run UUID fixtures and Auth users may be cleaned. Existing treatment/data/source files remain intact.
