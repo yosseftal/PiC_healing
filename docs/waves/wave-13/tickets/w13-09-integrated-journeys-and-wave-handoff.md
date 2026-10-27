@@ -1,6 +1,6 @@
 # W13-09 — Prove the complete Wave 13 journeys and deliver the reviewed handoff
 
-**Status:** in progress — final dispatch explicitly authorized from checkpoint 6a6622b, 2026-10-27.
+**Status:** in progress — implemented at 8401180; full remote signup quota retry pending, 2026-10-27.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04][relocation-link-1], [W13-05][relocation-link-2], [W13-06][relocation-link-3],
 [W13-07][relocation-link-4], [W13-08][relocation-link-5].
@@ -99,6 +99,13 @@ W13-07 AC-01 is explicitly deferred under the user-approved fallback; never repo
 The latest W13-09 directive explicitly allows recording "Pending Manual QA Verification for Wave 13" when actual
 device/accessibility results are unavailable. Record that current decision, never a copied Wave 12 waiver.
 Final solution, AC mapping, commands, reviews and SHAs will be recorded after actual verification.
+
+The new assembled file passes 2/2 focused cases; the complete Chromium suite passes 205/205 with production build.
+Final source typecheck, lint and all-workspace dependency checks pass. Both independent review axes found no actionable issue.
+The first exact npm test passed 786/787 tests; real signup alone returned over_email_send_rate_limit.
+The unchanged full command is queued for retry; this ticket is not yet closed.
+See [current evidence](../audits/w13-09-verification-and-review.md) and
+[active final-gate handoff](../handoffs/wave-13-final-handoff.md).
 
 [relocation-link-1]: w13-04-reversible-questionnaire-and-recovery.md
 [relocation-link-2]: w13-05-clean-summary-and-polarity-view.md

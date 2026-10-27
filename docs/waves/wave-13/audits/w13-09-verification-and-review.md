@@ -39,6 +39,23 @@ competing reorder/append/rating; rejection of another owner/direct writes; exact
 and current v3 promotion; failed aggregate writes and one logical library/Timeline execution under dropped-response replay.
 The browser HTTP fixture must not be described as independently proving those server transactions.
 
+Concrete sources for the matrix:
+
+- [Assembled journeys](../../../../packages/pic-web/tests/w13-integrated-journeys.browser.test.ts)
+- [Real database/RLS/replay](../../../../packages/pic-adapter-supabase/src/supabase-repository.test.ts)
+- [Shared priority contract](../../../../packages/pic-engine/test/contract/group-order.contract.ts)
+- [Shared membership contract](../../../../packages/pic-engine/test/contract/membership-revision.contract.ts)
+- [Priority recovery](../../../../packages/pic-web/src/durable-priority.test.tsx)
+- [Navigation/generation](../../../../packages/pic-web/src/questionnaire-navigation.test.tsx)
+- [Reload/owner isolation](../../../../packages/pic-web/src/questionnaire-reload.test.tsx)
+- [Verified identity recovery](../../../../packages/pic-web/src/returning-identity.test.ts)
+- [Promotion replay/cleanup](../../../../packages/pic-web/src/promotion-recovery.test.ts)
+- [Confirmed completion integration](../../../../packages/pic-web/src/completion-integration.test.ts)
+- [Blind summary reflection](../../../../packages/pic-web/src/summary-presentation.test.tsx)
+- [Bilingual membership failures](../../../../packages/pic-web/tests/membership-revision.browser.test.ts)
+- [Bilingual priority replay](../../../../packages/pic-web/tests/durable-priority.browser.test.ts)
+- [Bilingual onboarding return](../../../../packages/pic-web/tests/w13-07-education.browser.test.ts)
+
 ## Current manual and content decisions
 
 Pending Manual QA Verification for Wave 13.
@@ -64,7 +81,15 @@ The source is frozen after focused verification and both independent review axes
 - Standards: gpt-6-luna/high, fresh read-only review against 6a6622b and repo guidance; no actionable findings.
 - Spec: gpt-6.1-sol/high, fresh read-only review against the ticket, approved entry plan and latest directive;
   no actionable findings. Adverse evidence references were checked; neither review substitutes for runtime gates.
-- Full Chromium, exact npm test, dependency and final preservation results remain pending actual execution.
+- Full Chromium: npm run test:browser -w packages/pic-web -- --project=chromium --workers=2:
+  205/205 passed, production build passed, 5.5m, exit 0 (.scratch/w13-09-chromium-full.log).
+- First exact npm test: 75 files / 787 tests, 786 passed and one failed, 143.60s, exit 1.
+  The sole failure is real signup over_email_send_rate_limit (.scratch/w13-09-root-final.log).
+  No assertion/security setting was changed. All other remote contracts passed; this is not a fully green gate.
+- All-workspace dependency checks passed separately because the failed npm test chain did not reach them:
+  engine 76 modules / 215 dependencies; web 807 / 1887, zero violations (.scratch/w13-09-dependency-final.log).
+- The exact full suite is queued for retry after 22:10 Asia/Jerusalem (2026-10-27), beyond the earlier successful
+  signup run's full hour. Final result and post-gate inventory remain pending (.scratch/w13-09-root-verified.log).
 
 Test authoring corrected two initial assumptions: scope language metadata to approved content rather than the outer HE frame;
 and distinguish presentation row UUIDs from public addSymptom's initial domain UUID allocation.

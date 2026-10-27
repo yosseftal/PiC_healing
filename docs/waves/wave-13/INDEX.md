@@ -4,7 +4,8 @@
 
 Implementation authorized. W13-01 through W13-08 are closed; W13-07 uses the explicit human-approved fallback.
 W13-07 AC-01 remains pending verified practical copy/transcript; it is not marked passed.
-Checkpoint 100b1d6 passes 75 files / 787 root tests and 203 Chromium cases. W13-09 is the next frontier.
+W13-09 is in progress at 8401180: 205 Chromium cases, typecheck, lint and dependency boundaries pass.
+The current full root gate is waiting for a real signup quota retry; no all-green closure is claimed.
 Native/manual Wave 13 closure evidence remains pending; see the current handoff.
 
 ## Specifications
@@ -36,6 +37,9 @@ Native/manual Wave 13 closure evidence remains pending; see the current handoff.
 - [W13-07/08 integration review and final evidence](audits/w13-07-08-implementation-review.md)
 - [W13-08 production reproduction and inventory](audits/w13-08-routing-reproduction.md)
 
+- [W13-09 verification and independent review](audits/w13-09-verification-and-review.md)
+- [W13-09 manual QA ledger](audits/w13-09-manual-qa.md)
+
 ## Handoffs
 
 - [Verified W13-01 checkpoint and exact resume instructions](handoffs/w13-01-checkpoint.md)
@@ -47,6 +51,8 @@ Native/manual Wave 13 closure evidence remains pending; see the current handoff.
 - [Historical W13-04 verified checkpoint and W13-05 entry](handoffs/w13-04-verified-and-w13-05-entry.md)
 
 - [Current verified parallel checkpoint and W13-09 entry](handoffs/w13-parallel-checkpoint-and-w13-09-entry.md)
+
+- [Active W13-09 final-gate checkpoint](handoffs/wave-13-final-handoff.md)
 
 ## Briefs and preserved checkpoints
 

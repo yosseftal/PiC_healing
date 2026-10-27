@@ -80,7 +80,7 @@ Wave 13 implementation is authorized; follow its ticket index for the current ex
 [S13]: wave-13/specs/wave-13-spec.md
 [T13]: wave-13/tickets/INDEX.md
 [A13]: wave-13/audits/wave-13-content-audit.md
-[H13]: wave-13/handoffs/w13-parallel-checkpoint-and-w13-09-entry.md
+[H13]: wave-13/handoffs/wave-13-final-handoff.md
 
 Artifact shortcuts open the primary record or ticket suite. Open a wave number for every preserved version,
 additional audit and handoff. A dash means no standalone artifact was found; shared specifications remain linked

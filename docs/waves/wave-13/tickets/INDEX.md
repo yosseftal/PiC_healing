@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
 **Updated:** 2026-10-27 (Asia/Jerusalem).
-**Status:** W13-01 through W13-08 closed; W13-07 accepted fallback retains pending AC-01. W13-09 is next.
+**Status:** W13-01 through W13-08 closed; W13-07 accepted fallback retains pending AC-01. W13-09 is in progress.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -55,7 +55,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** None
 
 - **Ticket:** [W13-09][W13-09]
-  **Status:** next authorized entry; no implementation started; manual closure gate remains.
+  **Status:** in progress, 8401180; focused 2/2 and full Chromium 205/205 pass; exact root signup quota retry pending.
   **End-to-end delivery:** Prove the complete Wave 13 journeys and deliver the reviewed handoff
   **Blocked by:** W13-04, W13-05, W13-06, W13-07, W13-08
 
@@ -140,7 +140,8 @@ Use this ticket index for current ticket IDs and blocking edges.
 - Actual official embedded playback was verified; see the copy-review artifact. No caption/translation promise is shipped.
 - W13-02/03 require authorized isolated database evidence. The user permits cleanup only of same-run fixture UUIDs.
 - Physical/native checks remain explicitly visible in W13-09. A prior-wave manual-QA waiver is not automatically inherited.
-- Resume W13-09 from the [current verified checkpoint][H13-current]; the earlier W13-04 checkpoint is historical.
+- W13-09 source is committed at 8401180; the current final-gate checkpoint records its pending remote retry.
+  Earlier verified checkpoints remain historical.
 
 ## Execution checkpoint protocol
 

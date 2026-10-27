@@ -37,13 +37,13 @@ Expire identity while work remains unsaved and simulate a late prior-owner name 
 
 ## Acceptance Criteria
 
-- [ ] **AC-01:** Verified own name produces a warm greeting; missing/failed name reads fall back without blocking the drawer.
-- [ ] **AC-02:** The literal placeholder “השם שלך” and default email-as-name are never displayed.
-- [ ] **AC-03:** Guest, checking, verified, verification pending, expired and uncertain states are truthfully distinguished.
-- [ ] **AC-04:** Identity status never claims that the current group or Finish is saved.
-- [ ] **AC-05:** Late name responses and cached names cannot cross account/revision boundaries.
-- [ ] **AC-06:** Profile reads do not become component-owned adapter calls or writes.
-- [ ] **AC-07:** Existing Sheet accessibility, reset confirmation and bilingual rendering remain intact.
+- [x] **AC-01:** Verified own name produces a warm greeting; missing/failed name reads fall back without blocking the drawer.
+- [x] **AC-02:** The literal placeholder “השם שלך” and default email-as-name are never displayed.
+- [x] **AC-03:** Guest, checking, verified, verification pending, expired and uncertain states are truthfully distinguished.
+- [x] **AC-04:** Identity status never claims that the current group or Finish is saved.
+- [x] **AC-05:** Late name responses and cached names cannot cross account/revision boundaries.
+- [x] **AC-06:** Profile reads do not become component-owned adapter calls or writes.
+- [x] **AC-07:** Existing Sheet accessibility, reset confirmation and bilingual rendering remain intact.
 
 ## Testing Requirements
 
@@ -123,3 +123,8 @@ The shared header also covers the Player's direct Sheet, within the same approve
 No engine, adapter, migration, auth mechanism or therapeutic behavior change belongs to this ticket.
 The scoped implementation commit uses `[W13-06]`; the following checkpoint records its exact hash.
 W13-02 remains in preparation; its unapplied SQL and red-test drafts are outside automatic discovery until its slice starts.
+
+### W13-09 documentation reconciliation — 2026-10-27
+
+The header checklist now matches the seven already checked ACs in this ticket's original Resolution.
+This administrative correction changes no requirement, historical test result or implementation.
