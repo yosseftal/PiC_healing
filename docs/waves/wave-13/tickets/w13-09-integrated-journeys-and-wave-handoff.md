@@ -1,11 +1,11 @@
 # W13-09 — Prove the complete Wave 13 journeys and deliver the reviewed handoff
 
-**Status:** ready — next authorized entry after verified convergence 100b1d6; implementation not started.
+**Status:** in progress — final dispatch explicitly authorized from checkpoint 6a6622b, 2026-10-27.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04][relocation-link-1], [W13-05][relocation-link-2], [W13-06][relocation-link-3],
 [W13-07][relocation-link-4], [W13-08][relocation-link-5].
 **Blocking:** None.
-**Execution gate:** Upstream convergence verified; resume from the current handoff in a fresh implementation context.
+**Execution gate:** Upstream convergence verified; W13-09 execution and final quality gates authorized.
 **Domain decisions:** DEC-010–DEC-018; all approved Wave 13 decisions.
 
 ## Objective & Context
@@ -88,15 +88,17 @@ No unrelated optimization, broad refactor, new features, invented test passes, c
 data deletion, production deployment, automatic merge/push or implementation beyond the approved tickets.
 Any newly discovered behavior gap is resolved in its owning ticket before final closure.
 
-Implementation is authorized by the user; wait for prerequisites and serial dispatch.
+Implementation is explicitly dispatched by the user's final W13-09 charter.
 
 ## Resolution
 
-Not implemented. Upstream convergence is verified at 100b1d6: 787 root tests and 203 Chromium cases pass.
+Execution started from clean checkpoint 6a6622b. Prior convergence evidence is 787 root tests and 203 Chromium cases;
+those results are historical until the required final commands run again.
 See [exact entry and assembled journey plan](../handoffs/w13-parallel-checkpoint-and-w13-09-entry.md).
 W13-07 AC-01 is explicitly deferred under the user-approved fallback; never report it as passed.
-Native/manual evidence or a fresh explicit human acceptance of pending status remains required for wave closure.
-Complete solution path, decisions, deviations, final test/review evidence and every AC during W13-09 execution.
+The latest W13-09 directive explicitly allows recording "Pending Manual QA Verification for Wave 13" when actual
+device/accessibility results are unavailable. Record that current decision, never a copied Wave 12 waiver.
+Final solution, AC mapping, commands, reviews and SHAs will be recorded after actual verification.
 
 [relocation-link-1]: w13-04-reversible-questionnaire-and-recovery.md
 [relocation-link-2]: w13-05-clean-summary-and-polarity-view.md
