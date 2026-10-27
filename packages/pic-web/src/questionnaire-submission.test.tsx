@@ -9,9 +9,14 @@ import { advanceInquiryGeneration, hasInquiryDraft, inquiryGenerationStore } fro
 import { SymptomGroupCreateScreen } from "./SymptomGroupCreateScreen";
 
 beforeEach(() => localStorage.setItem("pic-web.locale.v1", "en"));
-afterEach(() => { cleanup(); vi.restoreAllMocks(); resetGuestFlowFactsForTest(); localStorage.clear(); });
-function mount(router = true) {
-  return render(<AppProviders>{router ? <GuestFlowRouter /> : <SymptomGroupCreateScreen />}</AppProviders>);
+afterEach(() => {
+  cleanup(); vi.restoreAllMocks(); resetGuestFlowFactsForTest(); localStorage.clear(); sessionStorage.clear();
+});
+async function mount(router = true) {
+  const view = render(<AppProviders>{router ? <GuestFlowRouter /> : <SymptomGroupCreateScreen />}</AppProviders>);
+  if (router && screen.queryByTestId("welcome-start")) fireEvent.click(screen.getByTestId("welcome-start"));
+  await waitFor(() => expect(screen.queryByTestId("welcome-screen")).toBeNull());
+  return view;
 }
 function fill(index: number, name: string, intensity: string, positive = false) {
   const row = within(screen.getAllByTestId("questionnaire-row")[index]!);
@@ -24,7 +29,7 @@ function finish() { fireEvent.click(screen.getByTestId("finish-symptom-addition"
 
 it("keeps blank names and untouched scores for completion without creating an empty or partial group", async () => {
   const save = vi.spyOn(compositionRoot.repositoryPort.getProvider(), "saveGroup");
-  mount();
+  await mount();
   finish();
   await screen.findByText("Complete a name and a rating from 1 to 10 in every row to continue.");
   expect(document.activeElement).toBe(screen.getByLabelText("Symptom name"));
@@ -42,7 +47,7 @@ it("keeps blank names and untouched scores for completion without creating an em
 
 it("commits duplicate names and locally reordered rows once, then records the actual No answer", async () => {
   const save = vi.spyOn(compositionRoot.repositoryPort.getProvider(), "saveGroup");
-  mount();
+  await mount();
   fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "   " } });
   fill(0, "Neck", "1");
   fireEvent.click(screen.getByTestId("add-symptom-action"));
@@ -80,14 +85,14 @@ it("commits duplicate names and locally reordered rows once, then records the ac
 it("retains a complete frozen snapshot and its IDs after a rejected flush across transient mounts", async () => {
   const provider = compositionRoot.repositoryPort.getProvider();
   const save = vi.spyOn(provider, "saveGroup").mockRejectedValueOnce(new Error("Storage unavailable"));
-  const view = mount();
+  const view = await mount();
   fill(0, "Neck", "9", true);
   finish();
   await screen.findByText("Open utilities to try again.");
   expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
   const first = structuredClone(save.mock.calls[0]![0]);
   expect(await provider.getGroup(first.id)).toBeNull();
-  view.unmount(); mount();
+  view.unmount(); await mount();
   expect((screen.getByLabelText("Strength of the positive experience") as HTMLSelectElement).value).toBe("9");
   expect((screen.getByLabelText("Symptom name") as HTMLInputElement).value).toBe("Neck");
   finish();
@@ -104,7 +109,7 @@ it("retries a lost flush response with the same full group instead of adding dup
     await original(group);
     throw new Error("Response lost");
   });
-  mount(); fill(0, "Neck", "7"); finish();
+  await mount(); fill(0, "Neck", "7"); finish();
   await screen.findByText("Open utilities to try again.");
   expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
   const first = structuredClone(save.mock.calls[0]![0]);
@@ -116,7 +121,7 @@ it("retries a lost flush response with the same full group instead of adding dup
 
 it("publishes no partial group when staging fails and preserves local row IDs for retry", async () => {
   const save = vi.spyOn(compositionRoot.repositoryPort.getProvider(), "saveGroup");
-  mount(); fill(0, "Neck", "2");
+  await mount(); fill(0, "Neck", "2");
   const rowId = screen.getByTestId("questionnaire-row").getAttribute("data-topic-id");
   const uuid = vi.spyOn(crypto, "randomUUID").mockImplementationOnce(() => { throw new Error("Try again"); });
   finish();
@@ -129,13 +134,13 @@ it("publishes no partial group when staging fails and preserves local row IDs fo
   expect(save).toHaveBeenCalledOnce();
 });
 
-it("retains typed row names, scores, polarity and order across transient screen unmounts", () => {
-  const view = mount(false);
+it("retains typed row names, scores, polarity and order across transient screen unmounts", async () => {
+  const view = await mount(false);
   fill(0, "One", "1"); fireEvent.click(screen.getByTestId("add-symptom-action")); fill(1, "Two", "10", true);
   const second = screen.getAllByTestId("questionnaire-row")[1]!;
   const id = second.getAttribute("data-topic-id");
   fireEvent.click(within(second).getByRole("button", { name: "Move topic up" }));
-  view.unmount(); mount(false);
+  view.unmount(); await mount(false);
   expect(screen.getAllByTestId("questionnaire-row")[0]!.getAttribute("data-topic-id")).toBe(id);
   expect((screen.getAllByLabelText("Symptom name")[0] as HTMLInputElement).value).toBe("Two");
   expect((screen.getByLabelText("Strength of the positive experience") as HTMLSelectElement).value).toBe("10");
@@ -144,7 +149,7 @@ it("retains typed row names, scores, polarity and order across transient screen 
 
 it("rejects delayed callbacks and in-flight staging from a replaced inquiry generation", async () => {
   const save = vi.spyOn(compositionRoot.repositoryPort.getProvider(), "saveGroup");
-  mount(); fill(0, "Old", "5");
+  await mount(); fill(0, "Old", "5");
   const old = compositionRoot.questionnaire.actionsFor(inquiryGenerationStore.getSnapshot());
   await act(async () => {
     const pending = old.finish();
@@ -162,7 +167,7 @@ it("rejects delayed callbacks and in-flight staging from a replaced inquiry gene
 it("rejects a provider switch during staging without publishing or writing the draft to another owner", async () => {
   const provider = compositionRoot.repositoryPort.getProvider();
   const save = vi.spyOn(provider, "saveGroup");
-  mount(); fill(0, "Private", "6");
+  await mount(); fill(0, "Private", "6");
   const actions = compositionRoot.questionnaire.actionsFor(inquiryGenerationStore.getSnapshot());
   try {
     await act(async () => {
@@ -182,7 +187,7 @@ it("continues an existing rated group without rewriting a true zero or its times
   await compositionRoot.groupEngineActions.rate(topic, { intensity: 0, polarity: "positive" });
   const before = await compositionRoot.groupEngineActions.getGroup(id);
   const save = vi.spyOn(compositionRoot.repositoryPort.getProvider(), "saveGroup");
-  mount(); await screen.findByText("Existing zero"); finish();
+  await mount(); await screen.findByText("Existing zero"); finish();
   await screen.findByTestId("muscle-test-yes");
   expect(await compositionRoot.groupEngineActions.getGroup(id)).toEqual(before);
   expect(save).not.toHaveBeenCalled();
@@ -192,7 +197,7 @@ it("continues a retained legacy unrated group without guessing a rating or disca
   const id = await compositionRoot.groupEngineActions.createDraftGroup("");
   await compositionRoot.groupEngineActions.addSymptom(id, "Unrated legacy topic");
   const before = await compositionRoot.groupEngineActions.getGroup(id);
-  mount(); await screen.findByText("Unrated legacy topic");
+  await mount(); await screen.findByText("Unrated legacy topic");
   expect(screen.getByText(/Your previous list is retained/)).toBeTruthy();
   finish();
   await screen.findByTestId("muscle-test-yes");
@@ -200,7 +205,7 @@ it("continues a retained legacy unrated group without guessing a rating or disca
 });
 
 it("returns from summary, stages a new topic and requires a fresh full-list answer", async () => {
-  mount(); fill(0, "Neck", "3"); finish();
+  await mount(); fill(0, "Neck", "3"); finish();
   fireEvent.click(await screen.findByTestId("muscle-test-yes"));
   await screen.findByTestId("confirm-group-summary");
   const id = compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
@@ -228,7 +233,7 @@ async function editList() {
   await screen.findByTestId("symptom-add-step");
 }
 async function answeredList(answer: "yes" | "no" = "yes") {
-  mount(); fill(0, "Original", "4"); finish();
+  await mount(); fill(0, "Original", "4"); finish();
   fireEvent.click(await screen.findByTestId(`muscle-test-${answer}`));
   if (answer === "no") {
     await waitFor(() => {
@@ -274,7 +279,7 @@ it("retains the actual fresh response and exact request after a failed revision 
   await waitFor(() => expect(compositionRoot.questionnaire.store.getSnapshot().recovery).toBe(true));
   expect(await compositionRoot.groupEngineActions.getGroup(id)).toEqual(before);
   const frozen = structuredClone(write.mock.calls[0]![0]);
-  cleanup(); mount();
+  cleanup(); await mount();
   await editList();
   expect((screen.getByLabelText("Symptom name") as HTMLInputElement).value).toBe("Calm");
   fireEvent.click(screen.getByTestId("add-symptom-action"));
@@ -304,7 +309,7 @@ it("retries a committed lost revision response exactly once without duplicating 
 });
 
 it.each(["yes", "no"] as const)("pure editor reorder preserves the committed %s answer without asking again", async (answer) => {
-  mount(); fill(0, "First", "4");
+  await mount(); fill(0, "First", "4");
   fireEvent.click(screen.getByTestId("add-symptom-action")); fill(1, "Second", "5"); finish();
   fireEvent.click(await screen.findByTestId(`muscle-test-${answer}`));
   if (answer === "no") fireEvent.click(await screen.findByTestId("finalize-anyway"));
@@ -354,7 +359,7 @@ it("shows a true prior zero read-only while only additions use the initial 1–1
   await compositionRoot.groupEngineActions.setJointTreatmentMuscleTest(id, "together");
   await compositionRoot.groupEngineActions.finalizeGroup(id);
   const before = await compositionRoot.groupEngineActions.getGroup(id);
-  mount(); await screen.findByText("Legacy zero"); finish(); await screen.findByTestId("confirm-group-summary");
+  await mount(); await screen.findByText("Legacy zero"); finish(); await screen.findByTestId("confirm-group-summary");
   await editList();
   const old = screen.getByTestId("questionnaire-existing-row");
   expect(old.textContent).toContain("0/10");
@@ -367,7 +372,7 @@ it("shows a true prior zero read-only while only additions use the initial 1–1
 });
 
 it("freezes an unanswered list revision with a new first topic through a lost flush response", async () => {
-  mount(); fill(0, "Original", "3"); finish(); await screen.findByTestId("muscle-test-yes");
+  await mount(); fill(0, "Original", "3"); finish(); await screen.findByTestId("muscle-test-yes");
   const id = compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
   const before = (await compositionRoot.groupEngineActions.getGroup(id))!;
   await editList(); fireEvent.click(screen.getByTestId("add-symptom-action")); fill(0, "New first", "9", true);
@@ -425,7 +430,7 @@ it("does not publish an in-flight revision after the inquiry generation changes"
 });
 
 it("retains a stale editor reorder until explicit review and retry instead of overwriting a concurrent order", async () => {
-  mount(); fill(0, "First", "4");
+  await mount(); fill(0, "First", "4");
   fireEvent.click(screen.getByTestId("add-symptom-action")); fill(1, "Second", "5");
   fireEvent.click(screen.getByTestId("add-symptom-action")); fill(2, "Third", "6"); finish();
   fireEvent.click(await screen.findByTestId("muscle-test-yes"));
@@ -462,7 +467,7 @@ it("returns an undated legacy No to the question without fabricating finalizatio
     joint_treatment_test_at: null });
   const { setGuestFlowSymptomAdditionComplete } = await import("./guest-flow-facts");
   setGuestFlowSymptomAdditionComplete(true);
-  mount(); await screen.findByTestId("muscle-test-yes");
+  await mount(); await screen.findByTestId("muscle-test-yes");
   await editList(); finish();
   await screen.findByTestId("muscle-test-yes");
   expect(screen.queryByTestId("confirm-group-summary")).toBeNull();
@@ -472,7 +477,7 @@ it("returns an undated legacy No to the question without fabricating finalizatio
 });
 
 it("returns a valid No to its advisory after a pure editor return without asking again or finalizing", async () => {
-  mount(); fill(0, "Original", "4"); finish();
+  await mount(); fill(0, "Original", "4"); finish();
   fireEvent.click(await screen.findByTestId("muscle-test-no"));
   await screen.findByTestId("split-advisory");
   const id = compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
@@ -487,7 +492,7 @@ it("returns a valid No to its advisory after a pure editor return without asking
 });
 
 it("closes an unchanged editor onto the latest canonical order without writing a new priority", async () => {
-  mount(); fill(0, "First", "4");
+  await mount(); fill(0, "First", "4");
   fireEvent.click(screen.getByTestId("add-symptom-action")); fill(1, "Second", "5"); finish();
   fireEvent.click(await screen.findByTestId("muscle-test-yes"));
   await screen.findByTestId("confirm-group-summary");

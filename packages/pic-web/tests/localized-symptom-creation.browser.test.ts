@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test, type Page } from "@playwright/test";
 
 const copy = {
@@ -55,6 +56,7 @@ for (const locale of ["he", "en"] as const) {
     test(`${locale} creation preserves names and rating drafts in one phone frame at ${viewport.width}px`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await page.goto(`/tests/symptom-creation.fixture.html?locale=${locale}`);
+      await enterQuestionnaire(page, locale);
       const name = page.getByRole("textbox", { name: copy[locale].name });
       await expect(name).toHaveAttribute("placeholder", copy[locale].placeholder);
       await name.fill("גב Back 123 ".repeat(10));

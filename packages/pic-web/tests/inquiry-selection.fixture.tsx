@@ -42,10 +42,10 @@ if (params.get("stage") === "picker") {
 let calls = 0;
 rootElement.dataset.actionCalls = "0";
 for (const key of ["setJointTreatmentMuscleTest", "finalizeGroup"] as const) {
-  const original = compositionRoot.groupEngineActions[key];
-  Object.assign(compositionRoot.groupEngineActions, { [key]: (...args: never[]) => {
+  const original = compositionRoot.groupEngine[key];
+  Object.assign(compositionRoot.groupEngine, { [key]: (...args: never[]) => {
     rootElement.dataset.actionCalls = String(++calls);
-    return (original as (...values: never[]) => unknown)(...args);
+    return (original as (...values: never[]) => unknown).apply(compositionRoot.groupEngine, args);
   } });
 }
 const startSession = compositionRoot.playerEngineActions.startSession;

@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { readdirSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
@@ -21,6 +22,7 @@ test("shipped app completes Guest Group → Player → sovereign Persistence Gat
   await page.addInitScript(() => localStorage.setItem("pic-web.locale.v1", "en"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  await enterQuestionnaire(page, "en");
   await expect(page.getByLabel("List name (optional)", { exact: true })).toBeVisible();
   await context.setOffline(true);
   await page.getByLabel("List name (optional)", { exact: true }).fill("Production journey");

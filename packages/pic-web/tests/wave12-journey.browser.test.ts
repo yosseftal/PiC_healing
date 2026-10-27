@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test, type Page } from "@playwright/test";
 import type { GuestSessionGateState, PlayerSession, SymptomGroup } from "pic-engine";
 import { installJourneyTransport } from "./wave12-transport";
@@ -69,6 +70,7 @@ for (const locale of ["he", "en"] as const) {
         await page.emulateMedia({ reducedMotion: "reduce" });
         await page.setViewportSize({ width: 390, height: 844 });
         await page.goto(`/tests/wave12-journey.fixture.html?locale=${locale}`);
+        await enterQuestionnaire(page, locale);
         const groupInput = page.getByLabel(text.group, { exact: true });
         await groupInput.fill("Discarded draft טיוטה");
         await page.getByRole("button", { name: text.open, exact: true }).click();

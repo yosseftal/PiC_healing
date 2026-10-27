@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import { LocalGuestRepository } from "pic-adapter-local-guest";
 import { DelegatingRepositoryPort } from "pic-engine";
 import { App } from "./App";
@@ -8,6 +8,7 @@ import { GuestModeShell } from "./GuestModeShell";
 import { SessionEngineProvider } from "./session-engine-context";
 import { LocaleProvider } from "./i18n/locale-provider";
 import { compositionRoot } from "./composition-root";
+import { resetGuestFlowFactsForTest } from "./guest-flow-facts";
 
 /**
  * Ticket 14's thin smoke tests (per the spec's Testing Decisions - "UI layer: thin smoke tests only... no
@@ -15,8 +16,16 @@ import { compositionRoot } from "./composition-root";
  * (every other test file explicitly imports from "vitest"), so `@testing-library/react`'s automatic
  * `afterEach` cleanup never registers itself - clean up explicitly instead.
  */
+beforeEach(() => {
+  resetGuestFlowFactsForTest();
+  localStorage.clear();
+  sessionStorage.clear();
+});
 afterEach(() => {
   cleanup();
+  resetGuestFlowFactsForTest();
+  localStorage.clear();
+  sessionStorage.clear();
 });
 
 describe("pic-web app shell", () => {
@@ -32,10 +41,10 @@ describe("pic-web app shell", () => {
     ).not.toThrow();
   });
 
-  it("renders the full App shell without throwing at boot", () => {
-    const { getByTestId } = render(<App />);
+  it("renders the fresh welcome in the full App shell without throwing at boot", async () => {
+    render(<App />);
 
-    expect(getByTestId("guest-flow-create-group")).toBeTruthy();
+    expect(await screen.findByTestId("welcome-screen")).toBeTruthy();
   });
 
   const singletonTitle =

@@ -314,7 +314,7 @@ for (const viewport of [
         expect(control.text).toBeGreaterThanOrEqual(4.5);
         expect(control.border).toBeGreaterThanOrEqual(3);
       }
-      const region = sheet.getByRole("region");
+      const region = sheet.getByRole("region", { name: /^(תוכן הכלים|Utilities content)$/ });
       await region.evaluate((element) => { element.scrollTop = element.scrollHeight; });
       expect(await region.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
       expect(await page.evaluate(() => [scrollX, scrollY])).toEqual([0, 0]);

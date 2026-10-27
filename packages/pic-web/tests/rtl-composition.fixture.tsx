@@ -1,6 +1,7 @@
+import { AppProviders } from "../src/app-providers";
 import { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { LocaleProvider, useLocale } from "../src/i18n/locale-provider";
+import { useLocale } from "../src/i18n/locale-provider";
 import { HorizontalSlideContainer } from "../src/HorizontalSlideContainer";
 import { TherapeuticScreenFrame } from "../src/therapeutic-frame/TherapeuticScreenFrame";
 import { TherapeuticContentCard, TherapeuticTableScroller } from "../src/therapeutic-frame/TherapeuticFrame";
@@ -68,4 +69,6 @@ function CompositionDemo() {
 
 const root = document.getElementById("root");
 if (root === null) throw new Error("Composition demo requires #root");
-createRoot(root).render(<LocaleProvider><CompositionDemo /></LocaleProvider>);
+createRoot(root).render(<AppProviders>
+  <CompositionDemo />
+</AppProviders>);

@@ -1,10 +1,10 @@
 # W13-07 — Learn PIC through a welcome page, text guide and official video
 
-**Status:** in progress — parallel implementation authorized and dispatched from ca6441e.
+**Status:** closed — approved fallback delivered; AC-01 deferred by explicit human decision, 2026-10-27.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04](w13-04-reversible-questionnaire-and-recovery.md).
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
-**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
+**Execution gate:** Parallel implementation authorized by the latest user charter.
 **Domain decisions:** DEC-001, DEC-015, DEC-017; W13-D5 and approved W13-07V.
 
 ## Objective & Context
@@ -49,15 +49,15 @@ authentication return, which must retain routing precedence.
 ## Acceptance Criteria
 
 - [ ] **AC-01:** A source-verified practical Hebrew adaptation is explicitly approved before being shipped.
-- [ ] **AC-02:** Welcome explains purpose, available actions and Sigal’s background with traceable copy provenance.
-- [ ] **AC-03:** Education remains free, skippable and revisitable without an account or therapeutic completion event.
-- [ ] **AC-04:** Active inquiry/Player/persistence recovery is never replaced by onboarding.
-- [ ] **AC-05:** The W13-07V container plays the official source only after activation and actual embedding is verified.
-- [ ] **AC-06:** Playback stops on close/leave; the exact questionnaire draft and return location survive.
-- [ ] **AC-07:** Blocked/unavailable video has a source-link fallback and never blocks text or questionnaire use.
-- [ ] **AC-08:** No captions, translation or physical instructions are claimed without verification/approval.
-- [ ] **AC-09:** Hebrew/English, keyboard focus, small-screen sizing and screen-reader frame naming are usable.
-- [ ] **AC-10:** No bundled video, custom player infrastructure, treatment metadata or tracking events are introduced.
+- [x] **AC-02:** Welcome explains purpose, available actions and Sigal’s background with traceable copy provenance.
+- [x] **AC-03:** Education remains free, skippable and revisitable without an account or therapeutic completion event.
+- [x] **AC-04:** Active inquiry/Player/persistence recovery is never replaced by onboarding.
+- [x] **AC-05:** The W13-07V container plays the official source only after activation and actual embedding is verified.
+- [x] **AC-06:** Playback stops on close/leave; the exact questionnaire draft and return location survive.
+- [x] **AC-07:** Blocked/unavailable video has a source-link fallback and never blocks text or questionnaire use.
+- [x] **AC-08:** No captions, translation or physical instructions are claimed without verification/approval.
+- [x] **AC-09:** Hebrew/English, keyboard focus, small-screen sizing and screen-reader frame naming are usable.
+- [x] **AC-10:** No bundled video, custom player infrastructure, treatment metadata or tracking events are introduced.
 
 ## Testing Requirements
 
@@ -90,9 +90,38 @@ No custom streaming stack, video download/redistribution, offline media cache, a
 view tracking, Unified Player instance, therapeutic completion marker, new clinical claims or invented instructions.
 Do not weaken the production output allowlist to admit an arbitrary media asset.
 
-Implementation is authorized by the user; wait for prerequisites and serial dispatch.
+Implementation is authorized; parallel dispatch and integration ownership are recorded in the convergence audit.
 
 ## Resolution
 
-Not implemented. To complete after authorization: solution path, decisions, deviations, test evidence,
-review outcome, commit, and explicit resolution for every AC above.
+### Solution path and approval
+
+Implemented approved r1 introductions, first-run welcome, free revisitable guide and the W13-07V click-to-load container.
+See [copy approval](../audits/w13-07-copy-review.md) and [integration review](../audits/w13-07-08-implementation-review.md).
+On 2026-10-27 the user explicitly instructed the Scope Item 2 / AC-08 fallback: keep AC-01 pending verified transcript/copy
+and continue toward W13-09. This does not claim a physical procedure, captions or a translated track was approved.
+
+### Acceptance evidence
+
+- AC-01: PENDING verified practical transcript/copy; no unverified physical instructions shipped.
+- AC-02: exact approved r1 paragraphs carry official-source provenance and approval revision.
+- AC-03: welcome has two primary choices; the free drawer guide creates no therapeutic completion event.
+- AC-04: actual router facts and recovery precedence guard fresh welcome; public eligibility precedes load side effects.
+- AC-05: exact pinned source; real local embedded playback observed at 0:22 / 5:16, plus controlled browser activation cases.
+- AC-06: guide return retains draft/location, removes iframe and restores the available invoking drawer control.
+- AC-07: controlled blocked-video cases retain the external source link and text/questionnaire access.
+- AC-08: the approved fallback is explicit; no invented procedure, caption promise or unapproved translation.
+- AC-09: Hebrew paragraph language/direction, English controls, focus and narrow geometry are covered by automated checks.
+  Native accessibility/mobile results remain a separate W13-09 closure gate.
+- AC-10: no bundled media, custom Player, view tracking, therapeutic metadata or count/Timeline write.
+
+### Test and review evidence
+
+Focused integration 4 files / 24 tests passed. Real embed evidence and independent review are linked above.
+Full final npm test passed: 75 files / 787 tests, zero failures or skips, 204.89s, exit 0.
+All-workspace dependency checks passed: engine 76 modules / 215 dependencies; web 807 / 1887.
+Root typecheck and lint passed. Full Chromium and production build passed: 203/203 cases, 5.6m, exit 0.
+Logs: .scratch/w13-parallel-root-final.log, -typecheck-final.log, -lint-final.log; .scratch/w13-browser-verified.log.
+The runtime was frozen for the browser pass; subsequent changes only adapt Vitest entry helpers and documentation.
+Closure applies to the explicitly accepted fallback scope; AC-01 remains unchecked and pending verified practical copy.
+The optional education entry preserves the shared Frame's provider boundary.

@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test } from "@playwright/test";
 import type { SymptomGroup } from "pic-engine";
 
@@ -7,6 +8,7 @@ for (const locale of ["he", "en"] as const) {
       async ({ page }, testInfo) => {
       await page.setViewportSize({ width: 320, height: 568 });
       await page.goto(`/tests/symptom-creation.fixture.html?locale=${locale}&retry=${retry ? "1" : "0"}`);
+      await enterQuestionnaire(page, locale);
       const he = locale === "he";
       const name = he ? "שם הסימפטום" : "Symptom name";
       const polarity = he ? "קוטביות" : "Polarity";

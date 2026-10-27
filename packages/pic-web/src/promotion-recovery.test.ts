@@ -10,17 +10,26 @@ import type { GuestSnapshot, PlayerSession, PromoteGuestToAccountInput } from "p
 const RECOVERY_KEY = "pic-web.promotion-recovery.v1";
 const credentials = { email: "recovery@example.com", password: "recovery secret" };
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); sessionStorage.clear(); });
 
 async function setup(linked = true, symptoms: NonNullable<GuestSnapshot["group"]>["symptoms"] = []) {
   vi.resetModules();
-  localStorage.clear();
+  localStorage.clear(); sessionStorage.clear();
   vi.stubEnv("VITE_SUPABASE_URL", "https://recovery.invalid");
   vi.stubEnv("VITE_SUPABASE_ANON_KEY", "fixture-public");
   const path = await import("./promote-path");
   const user = { id: randomUUID(), email: credentials.email, email_confirmed_at: "2026-10-15",
     app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-10-15" };
-  const transport = vi.fn<typeof fetch>(async () => new Response(JSON.stringify([{ id: user.id }]), { status: 200 }));
+  let persistedGroup: GuestSnapshot["group"] = null;
+  const transport = vi.fn<typeof fetch>(async (input, init) => {
+    const route = new URL(String(input)).pathname;
+    let body: unknown = [{ id: user.id }];
+    if (route.endsWith("/get_symptom_group")) {
+      const request = JSON.parse(String(init?.body)) as { p_group_id: string };
+      body = persistedGroup?.id === request.p_group_id ? persistedGroup : null;
+    }
+    return new Response(JSON.stringify(body), { status: 200 });
+  });
   const client = createClient("https://recovery.invalid", "fixture-public", {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { fetch: transport },
@@ -55,6 +64,7 @@ async function setup(linked = true, symptoms: NonNullable<GuestSnapshot["group"]
     if (!previous) {
       payloads.set(input.idempotencyKey, JSON.stringify(input));
       rows.set(input.playerSession.id, structuredClone(input.playerSession));
+      persistedGroup = structuredClone(input.group);
       effects++;
     }
     return { group: input.group, playerSession: rows.get(input.playerSession.id)!, libraryRow: {

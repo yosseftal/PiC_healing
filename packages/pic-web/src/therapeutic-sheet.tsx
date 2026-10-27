@@ -170,7 +170,7 @@ export function TherapeuticSheet({
           <div
             aria-label={contentLabel ?? `${title} content`}
             className={[
-              "min-h-0 overflow-y-auto overscroll-contain p-6",
+              "min-h-0 overflow-y-auto overscroll-contain p-6 [overflow-anchor:none]",
               "[scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]",
             ].join(" ")}
             role="region"

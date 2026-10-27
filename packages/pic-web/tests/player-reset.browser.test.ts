@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test } from "@playwright/test";
 
 for (const locale of ["en", "he"] as const) {
@@ -53,6 +54,7 @@ for (const locale of ["en", "he"] as const) {
         .toHaveCount(1);
       expect(await page.evaluate(() => localStorage.getItem("pic:guest-repository:v1"))).toBeNull();
       await page.goto("/");
+      await enterQuestionnaire(page, locale);
       await expect(input).toHaveValue("");
       await expect(page.getByRole("dialog")).toHaveCount(0);
       await expect(page.locator("html")).toHaveAttribute("dir", en ? "ltr" : "rtl");

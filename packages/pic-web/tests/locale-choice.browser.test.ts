@@ -13,7 +13,7 @@ for (const viewport of [
     const frame = page.locator(".pic-therapeutic-frame");
     await expect(frame).toHaveAttribute("lang", "he");
     await expect(frame).toHaveAttribute("dir", "rtl");
-    const activeUnit = page.locator("[data-active-key]");
+    const activeUnit = page.getByTestId("guest-flow-player").locator("[data-active-key]");
     const initialUnit = await activeUnit.getAttribute("data-active-key");
     const initialNode = await activeUnit.elementHandle();
     await page.getByRole("button", { name: "פתיחת כלי הנגן" }).click();

@@ -10,21 +10,24 @@ import { PlayerEngineProvider } from "./player-engine-context";
 import { SessionEngineProvider } from "./session-engine-context";
 import { TreatmentContentProvider } from "./treatment-content-context";
 import { LocaleProvider } from "./i18n/locale-provider";
+import { EducationPresentationProvider } from "./education-presentation-context";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <LocaleProvider>
-      <InquiryUtilitiesProvider>
-      <SessionEngineProvider>
-        <CatalogProvider>
-          <TreatmentContentProvider>
-            <GroupEngineProvider>
-              <PlayerEngineProvider>{children}</PlayerEngineProvider>
-            </GroupEngineProvider>
-          </TreatmentContentProvider>
-        </CatalogProvider>
-      </SessionEngineProvider>
-      </InquiryUtilitiesProvider>
+      <EducationPresentationProvider>
+        <InquiryUtilitiesProvider>
+          <SessionEngineProvider>
+            <CatalogProvider>
+              <TreatmentContentProvider>
+                <GroupEngineProvider>
+                  <PlayerEngineProvider>{children}</PlayerEngineProvider>
+                </GroupEngineProvider>
+              </TreatmentContentProvider>
+            </CatalogProvider>
+          </SessionEngineProvider>
+        </InquiryUtilitiesProvider>
+      </EducationPresentationProvider>
     </LocaleProvider>
   );
 }

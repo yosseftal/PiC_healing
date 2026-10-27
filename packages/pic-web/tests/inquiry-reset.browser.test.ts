@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test } from "@playwright/test";
 
 for (const locale of ["en", "he"] as const) {
@@ -6,6 +7,7 @@ for (const locale of ["en", "he"] as const) {
       await page.setViewportSize({ width, height: width === 320 ? 568 : 900 });
       await page.addInitScript((language) => localStorage.setItem("pic-web.locale.v1", language), locale);
       await page.goto("/");
+      await enterQuestionnaire(page, locale);
       const en = locale === "en";
       const open = page.getByRole("button", { name: en ? "Open utilities" : "פתיחת הכלים", exact: true });
       const resetName = en ? "New symptom group" : "קבוצת סימפטומים חדשה";

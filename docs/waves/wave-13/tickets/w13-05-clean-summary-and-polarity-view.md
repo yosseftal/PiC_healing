@@ -1,6 +1,6 @@
 # W13-05 — Review a clean priority list with an optional polarity view
 
-**Status:** in progress — implementation reviewed; final remote signup gate is rate limited.
+**Status:** closed — reviewed and verified, 2026-10-27.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-01](w13-01-instant-questionnaire-and-initial-rating.md), [W13-02](w13-02-durable-manual-priority.md).
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
@@ -40,14 +40,14 @@ order; storage is unchanged. Start re-rating a topic and inspect visible and acc
 ## Acceptance Criteria
 
 - [x] **AC-01:** Untitled lists render cleanly without a fabricated persisted name or empty heading.
-- [ ] **AC-02:** Manual priority is the default and is visually/accessibly distinguishable from intensity.
-- [ ] **AC-03:** No total-item counters remain on affected list surfaces; meaningful priority/scale values remain.
-- [ ] **AC-04:** Polarity view groups correctly with stable manual order and original priority numbers.
-- [ ] **AC-05:** Changing view neither persists new order nor calls rating or Reveal actions.
-- [ ] **AC-06:** Reorder controls operate only against manual order.
-- [ ] **AC-07:** Blind re-rating hides prior polarity/intensity and grouping from both visible and accessible content.
-- [ ] **AC-08:** Explicit Reveal still works, re-rating accepts 0–10, and actual historical zeros remain unchanged.
-- [ ] **AC-09:** Long Hebrew/English topic labels remain readable without document overflow or extra main actions.
+- [x] **AC-02:** Manual priority is the default and is visually/accessibly distinguishable from intensity.
+- [x] **AC-03:** No total-item counters remain on affected list surfaces; meaningful priority/scale values remain.
+- [x] **AC-04:** Polarity view groups correctly with stable manual order and original priority numbers.
+- [x] **AC-05:** Changing view neither persists new order nor calls rating or Reveal actions.
+- [x] **AC-06:** Reorder controls operate only against manual order.
+- [x] **AC-07:** Blind re-rating hides prior polarity/intensity and grouping from both visible and accessible content.
+- [x] **AC-08:** Explicit Reveal still works, re-rating accepts 0–10, and actual historical zeros remain unchanged.
+- [x] **AC-09:** Long Hebrew/English topic labels remain readable without document overflow or extra main actions.
 
 ## Testing Requirements
 
@@ -81,8 +81,8 @@ Implementation is authorized by the user; prerequisites are closed and parallel 
 
 ## Resolution
 
-Implementation and independent review complete. Ticket remains in progress because the full root signup gate
-is externally rate limited; no all-green closure is claimed.
+Implementation and independent review complete. The final remote signup and all root gates now pass.
+Implementation commit: 81a31a8; final convergence evidence supersedes the earlier rate-limit frontier.
 See [implementation review](../audits/w13-05-implementation-review.md).
 
 ### Solution path and architecture
@@ -111,8 +111,13 @@ Root typecheck and lint passed. Full npm test: 73 files, 764 passed / 1 failed (
 The only failure is real signup: Supabase over_email_send_rate_limit; the corrected navigation case passed.
 All-workspace dependency checks passed separately: engine 76 modules / 215 dependencies; web 802 / 1842.
 They were run separately because npm test uses a success-only command chain.
-Full inventory includes separately pending W13-07/08 candidates.
+That earlier inventory included W13-07/08 candidates; it is superseded by the final convergence evidence below.
 Logs: .scratch/w13-05-checkpoint-root.log, -typecheck.log, -lint.log, -depcruise.log.
+Full final npm test passed: 75 files / 787 tests, zero failures or skips, 204.89s, exit 0.
+All-workspace dependency checks passed: engine 76 modules / 215 dependencies; web 807 / 1887.
+Root typecheck and lint passed. Full Chromium and production build passed: 203/203 cases, 5.6m, exit 0.
+Logs: .scratch/w13-parallel-root-final.log, -typecheck-final.log, -lint-final.log; .scratch/w13-browser-verified.log.
+The runtime was frozen for the browser pass; subsequent changes only adapt Vitest entry helpers and documentation.
 Only same-run UUID fixtures/Auth users may be cleaned; existing content/rows remain preserved.
 
 ### Deviations and carry-forward

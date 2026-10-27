@@ -1,10 +1,10 @@
 # W13-08 — Return clearly after Finish while preserving all treatment content
 
-**Status:** in progress — parallel implementation authorized and dispatched from ca6441e.
+**Status:** closed — reviewed and verified, 2026-10-27.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** None.
 **Blocking:** [W13-09](w13-09-integrated-journeys-and-wave-handoff.md).
-**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
+**Execution gate:** Parallel implementation authorized by the latest user charter.
 **Domain decisions:** DEC-004, DEC-005, DEC-006, DEC-013, DEC-015, DEC-016, DEC-017, DEC-018.
 
 ## Objective & Context
@@ -44,16 +44,16 @@ Repeat with lost-response uncertainty and demonstrate that no success is falsely
 
 ## Acceptance Criteria
 
-- [ ] **AC-01:** The reported experience is reproduced or its precise unreproduced limitation is recorded with source evidence.
-- [ ]  **AC-02:** Successful Finish/Finish Anyway reaches a clear return surface rather than automatically exposing another
+- [x] **AC-01:** The reported experience is reproduced or its precise unreproduced limitation is recorded with source evidence.
+- [x]  **AC-02:** Successful Finish/Finish Anyway reaches a clear return surface rather than automatically exposing another
       catalog.
-- [ ] **AC-03:** Another treatment/catalog opens only by explicit choice; no unsolicited Player session is started.
-- [ ] **AC-04:** A failed, pending, uncertain or Integrating outcome is never announced as successful completion.
-- [ ] **AC-05:** Return/reload/rerender does not repeat Finish, increment counts or create new library/timeline records.
-- [ ] **AC-06:** Current questionnaire continuity, explicit linking and reset confirmations are preserved.
-- [ ] **AC-07:** All treatment files, seed IDs, overlays and database rows remain intact; no hidden-ID cleanup is substituted.
-- [ ] **AC-08:** Shared catalog and Personal Treatment Library are not conflated in copy or source selection.
-- [ ] **AC-09:** The updated audit clearly separates confirmed routing behavior from candidate content and unverified live data.
+- [x] **AC-03:** Another treatment/catalog opens only by explicit choice; no unsolicited Player session is started.
+- [x] **AC-04:** A failed, pending, uncertain or Integrating outcome is never announced as successful completion.
+- [x] **AC-05:** Return/reload/rerender does not repeat Finish, increment counts or create new library/timeline records.
+- [x] **AC-06:** Current questionnaire continuity, explicit linking and reset confirmations are preserved.
+- [x] **AC-07:** All treatment files, seed IDs, overlays and database rows remain intact; no hidden-ID cleanup is substituted.
+- [x] **AC-08:** Shared catalog and Personal Treatment Library are not conflated in copy or source selection.
+- [x] **AC-09:** The updated audit clearly separates confirmed routing behavior from candidate content and unverified live data.
 
 ## Testing Requirements
 
@@ -86,9 +86,38 @@ No treatment content file or database-row deletion, soft-delete/unpublish substi
 hardcoded title/ID filtering, automatic treatment execution, Player semantic changes, or library/schema cleanup.
 Any later deletion requires separate human approval of exact targets and impacts.
 
-Implementation is authorized by the user; wait for prerequisites and serial dispatch.
+Implementation is authorized; parallel dispatch and integration ownership are recorded in the convergence audit.
 
 ## Resolution
 
-Not implemented. To complete after authorization: solution path, decisions, deviations, test evidence,
-review outcome, commit, and explicit resolution for every AC above.
+### Solution path and architecture
+
+Implemented a confirmed-completion surface with explicit questionnaire/catalog choices and bounded web-only recovery.
+See [routing reproduction and inventory](../audits/w13-08-routing-reproduction.md) and
+[integration review](../audits/w13-07-08-implementation-review.md).
+A hidden hint precedes Guest cleanup; visible success requires exact public revalidation after cleanup settles.
+Read-only account recovery does not hydrate engines, swap the active provider or create a profile.
+
+### Acceptance evidence
+
+- AC-01: local production assets reproduced the catalog return; the exact user's unexpected item remains unidentified.
+- AC-02: confirmed Finish/Finish Anyway displays explicit return; request alone does not announce success.
+- AC-03: production regression requires an explicit catalog choice and retains one session/execution/use count.
+- AC-04: pending, failed, Integrating and uncertain paths retain recovery; owner/provider/generation guards reject stale reads.
+- AC-05: controller/integration tests retain exact receipts and prove return/reload are read/navigation-only.
+- AC-06: public current-group verification, retained manual priority and existing reset confirmations remain intact.
+- AC-07: all three shared IDs and translation/seed files are preserved; read-only reference/count inventory matches baseline.
+- AC-08: copy explicitly names the shared catalog; no Personal Treatment Library query is substituted.
+- AC-09: the new audit separates actual routing, synthetic HTTP evidence, live aggregate counts and unidentified content.
+
+### Test and review evidence
+
+Focused completion/controller/composition/recovery: 4 files / 119 tests passed, zero skips/errors.
+Actual production regression reached confirmed success and explicit return without another execution.
+Full final npm test passed: 75 files / 787 tests, zero failures or skips, 204.89s, exit 0.
+All-workspace dependency checks passed: engine 76 modules / 215 dependencies; web 807 / 1887.
+Root typecheck and lint passed. Full Chromium and production build passed: 203/203 cases, 5.6m, exit 0.
+Logs: .scratch/w13-parallel-root-final.log, -typecheck-final.log, -lint-final.log; .scratch/w13-browser-verified.log.
+The runtime was frozen for the browser pass; subsequent changes only adapt Vitest entry helpers and documentation.
+Independent Standards/Spec reviews completed; both actionable Spec findings were fixed and re-reviewed.
+No content deletion or unrelated data cleanup was performed.

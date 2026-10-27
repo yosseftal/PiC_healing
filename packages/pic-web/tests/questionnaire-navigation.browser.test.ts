@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test } from "@playwright/test";
 
 for (const locale of ["he", "en"] as const) for (const reduced of [false, true]) {
@@ -6,6 +7,7 @@ for (const locale of ["he", "en"] as const) for (const reduced of [false, true])
       await page.setViewportSize({ width: 320, height: 568 });
       await page.emulateMedia({ reducedMotion: reduced ? "reduce" : "no-preference" });
       await page.goto(`/tests/symptom-creation.fixture.html?locale=${locale}`);
+      await enterQuestionnaire(page, locale);
       const he = locale === "he";
       const active = page.locator(".pic-horizontal-slide-panel:not([inert])");
       const name = he ? "שם הסימפטום" : "Symptom name";

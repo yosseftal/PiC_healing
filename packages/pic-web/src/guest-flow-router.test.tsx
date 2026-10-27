@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppProviders } from "./app-providers";
 import { compositionRoot } from "./composition-root";
 import { GuestFlowRouter } from "./guest-flow-router";
@@ -16,6 +16,8 @@ import {
 afterEach(() => {
   cleanup();
   resetGuestFlowFactsForTest();
+  localStorage.clear();
+  sessionStorage.clear();
 });
 
 describe("deriveGuestFlowScreen", () => {
@@ -100,14 +102,16 @@ describe("deriveGuestFlowScreen", () => {
 });
 
 describe("GuestFlowRouter", () => {
-  it("starts on create-group screen", () => {
+  it("starts with the fresh welcome and enters the questionnaire on the explicit action", async () => {
     render(
       <AppProviders>
         <GuestFlowRouter />
       </AppProviders>,
     );
 
-    expect(screen.getByTestId("guest-flow-create-group")).toBeTruthy();
+    expect(await screen.findByTestId("welcome-screen")).toBeTruthy();
+    fireEvent.click(await screen.findByTestId("welcome-start"));
+    expect(await screen.findByTestId("guest-flow-create-group")).toBeTruthy();
   });
 
   it("flow API switches the rendered screen component without component useState", async () => {
@@ -117,7 +121,8 @@ describe("GuestFlowRouter", () => {
       </AppProviders>,
     );
 
-    expect(screen.getByTestId("guest-flow-create-group")).toBeTruthy();
+    fireEvent.click(await screen.findByTestId("welcome-start"));
+    expect(await screen.findByTestId("guest-flow-create-group")).toBeTruthy();
 
     const groupId = await compositionRoot.groupEngineActions.createDraftGroup("test-group");
     setGuestFlowSymptomAdditionComplete(true);

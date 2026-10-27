@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { createElement } from "react";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,7 +9,11 @@ async function boot() {
   localStorage.setItem("pic-web.locale.v1", "en");
   const root = (await import("./composition-root")).compositionRoot;
   const { App } = await import("./App");
-  return { root, view: render(createElement(App)) };
+  const view = render(createElement(App));
+  const start = screen.queryByTestId("welcome-start");
+  if (start) fireEvent.click(start);
+  await waitFor(() => expect(screen.queryByTestId("welcome-screen")).toBeNull());
+  return { root, view };
 }
 for (const location of ["group-summary", "pick-treatment"] as const) {
   it(`rejects an editable retained ${location} target before the actual joint answer`, async () => {

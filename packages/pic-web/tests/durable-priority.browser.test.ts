@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test } from "@playwright/test";
 import type { SymptomGroup } from "pic-engine";
 import { installJourneyTransport } from "./wave12-transport";
@@ -10,6 +11,7 @@ for (const locale of ["he", "en"] as const) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`/tests/wave12-journey.fixture.html?locale=${locale}`);
+    await enterQuestionnaire(page, locale);
     const rows = page.getByTestId("questionnaire-row");
     for (const [index, name, intensity] of [[0, "Back גב", "9"], [1, "Neck צוואר", "3"], [2, "Sleep שינה", "1"]] as const) {
       if (index) await page.getByTestId("add-symptom-action").click();

@@ -12,6 +12,7 @@ import { IdentityDrawerStatus } from "../identity-drawer-status";
 import { useQuestionnaireNavigation } from "../questionnaire-navigation-context";
 import type { QuestionnaireLocation } from "../questionnaire-navigation";
 import { useQuestionnaireDraftState } from "../group-engine-context";
+import { EducationGuideEntry } from "../EducationGuideEntry";
 
 export type TherapeuticScreenFrameProps = TherapeuticFrameProps & {
   utilityTrigger?: never;
@@ -28,10 +29,9 @@ export function TherapeuticScreenFrame({
   const { message } = useLocale();
   const draft = useAuthenticatedDraft();
   const navigation = useQuestionnaireNavigation();
-  const questionnaire = useQuestionnaireDraftState();
+  const questionnaireDraft = useQuestionnaireDraftState();
   const controls = useInquiryResetControls();
   const { open, setOpen, confirmation, busy, keepRef, resetRef, keepInquiry, requestReset } = controls;
-
   return (
     <TherapeuticFrame
       {...frameProps}
@@ -70,12 +70,14 @@ export function TherapeuticScreenFrame({
             <InquiryResetControls controls={controls} />
             {confirmation ? null : <>
               <LanguageSelector />
+              {questionnaireLocation ? <EducationGuideEntry location={questionnaireLocation}
+                disabled={busy || confirmation} onOpened={() => setOpen(false)} /> : null}
               {questionnaireLocation && questionnaireLocation !== "preparation" ?
                 <button className={UTILITY_CONTROL} type="button" disabled={navigation.state.waiting}
                   onClick={() => void navigation.actions.preparation(questionnaireLocation).then((opened) => {
                     if (opened) setOpen(false);
                   })}>{message("navigation.preparation").text}</button> : null}
-              {questionnaireLocation ? <p role="status">{message(questionnaire.storageUnavailable ?
+              {questionnaireLocation ? <p role="status">{message(questionnaireDraft.storageUnavailable ?
                 "navigation.storageUnavailable" : "navigation.reloadLimit").text}</p> : null}
               {allowInquiryReset ? <button className={UTILITY_CONTROL} ref={resetRef} disabled={busy}
                 type="button" onClick={() => void requestReset(false)}>

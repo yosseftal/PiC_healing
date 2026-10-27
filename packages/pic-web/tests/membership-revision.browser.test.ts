@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test, type Page } from "@playwright/test";
 import type { SymptomGroup } from "pic-engine";
 import { installJourneyTransport } from "./wave12-transport";
@@ -15,6 +16,7 @@ async function edit(page: Page, he: boolean) {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 async function initial(page: Page, he: boolean, name: string) {
+  await enterQuestionnaire(page, he ? "he" : "en");
   await page.getByLabel(he ? "שם לרשימה (לא חובה)" : "List name (optional)", { exact: true }).fill(name);
   await fill(page, he, 0, "Original מקור", "4");
   await page.getByTestId("finish-symptom-addition").click();
@@ -33,6 +35,7 @@ for (const locale of ["he", "en"] as const) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width: 320, height: 568 });
     await page.goto(`/tests/wave12-journey.fixture.html?locale=${locale}`);
+    await enterQuestionnaire(page, locale);
     await initial(page, he, "Guest revision");
     const before = await guestGroup(page);
     await edit(page, he);
@@ -59,7 +62,8 @@ for (const locale of ["he", "en"] as const) {
     expect(saved.membership_revision).toBe(1);
     expect(saved.joint_treatment_membership_revision).toBe(1);
     await page.getByTestId("finalize-anyway").click();
-    await expect(page.getByTestId("symptom-count")).toContainText("3");
+    await expect(page.getByTestId("symptom-count")).toHaveCount(0);
+    await expect(page.locator(".pic-summary-topic")).toHaveCount(3);
     expect(await page.evaluate(() => ({ x: scrollX, y: scrollY, width: document.documentElement.scrollWidth,
       height: document.documentElement.scrollHeight }))).toEqual({ x: 0, y: 0, width: 320, height: 568 });
   });

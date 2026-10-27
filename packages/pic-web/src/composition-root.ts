@@ -1,4 +1,7 @@
 import * as guestFlowFacts from "./guest-flow-facts";
+import {
+  createCompletionPresentation, readCompletionRecovery, writeCompletionRecoveryHint,
+} from "./completion-presentation";
 import { createGroupStaging } from "./group-staging";
 import { createQuestionnaireDraft } from "./questionnaire-draft";
 import { createQuestionnaireNavigation } from "./questionnaire-navigation";
@@ -108,6 +111,19 @@ let verificationPending = readVerificationPending();
 if (verificationPending?.sessionId !== persistedGuestGate.pendingFinishRequest?.sessionId ||
   verificationPending?.kind !== persistedGuestGate.pendingFinishRequest?.kind) verificationPending = null;
 if (verificationPending !== null) restoreInquiryGeneration(verificationPending.generation);
+/** A receipt may restore presentation bookkeeping only when its original focus has no newer pending work. */
+function readCompletionFocusOwner(): string | null {
+  try { return localStorage.getItem("pic-web.authenticated-focus.v1"); } catch { return null; }
+}
+const completionBootMetadata = readCompletionRecovery();
+const bootCompletion = completionBootMetadata?.providerKey === "account" &&
+  completionBootMetadata.owner === readCompletionFocusOwner() && retainedDraft === null &&
+  promotionRecovery === null && resetRecovery === null && verificationPending === null &&
+  completionBootMetadata.generation >= inquiryGenerationStore.getSnapshot() &&
+  (savedWebDraft === null || savedWebDraft.owner === completionBootMetadata.owner &&
+    savedWebDraft.generation === completionBootMetadata.generation && savedWebDraft.fields === null) ?
+  completionBootMetadata : null;
+if (bootCompletion !== null) restoreInquiryGeneration(bootCompletion.generation);
 let pendingGuestFinishRequest = persistedGuestGate.pendingFinishRequest;
 const libraryEngine = new LibraryEngine(repositoryPort);
 const timelineEngine = new TimelineEngine(repositoryPort);
@@ -229,8 +245,7 @@ const untrackedSessionEngineActions = {
     await sessionEngine.onFinishRequested(sessionId, kind);
     await playerSessionStore.refresh(sessionId);
     if (playerSessionStore.getSnapshot(sessionId)?.success_declared === true) {
-      const { setGuestFlowPlayerSession } = await Promise.resolve(guestFlowFacts);
-      setGuestFlowPlayerSession(null);
+      await presentCompletedSession(sessionId);
     }
   },
   async promote(guestState: GuestSnapshot, newUserId: string): Promise<void> {
@@ -243,6 +258,7 @@ const untrackedGroupEngineActions = {
   async createDraftGroup(name: string): Promise<string> {
     await prepareNewFocus();
     const groupId = await groupEngine.createDraftGroup(name);
+    clearCompletionForNewFocus();
     activeGroupId = groupId;
     groupEngineStore.notify();
     const { persistGuestFlowFactsNow } = await Promise.resolve(guestFlowFacts);
@@ -301,6 +317,7 @@ const untrackedPlayerEngineActions = {
     const sessionId = await playerEngine.startSession(treatmentId, linkedGroupId, unitIds);
     await playerSessionStore.refresh(sessionId);
     const { setGuestFlowPlayerSession } = await Promise.resolve(guestFlowFacts);
+    clearCompletionForNewFocus();
     setGuestFlowPlayerSession(sessionId);
     return sessionId;
   },
@@ -320,11 +337,13 @@ const untrackedPlayerEngineActions = {
     authLifecycle.assertCompletionAllowed(sessionId);
     await playerEngine.finish(sessionId);
     await playerSessionStore.refresh(sessionId);
+    await presentCompletedSession(sessionId);
   },
   async finishAnyway(sessionId: string): Promise<void> {
     authLifecycle.assertCompletionAllowed(sessionId);
     await playerEngine.finishAnyway(sessionId);
     await playerSessionStore.refresh(sessionId);
+    await presentCompletedSession(sessionId);
   },
 };
 
@@ -530,6 +549,7 @@ const questionnaire = createQuestionnaireDraft({
         current();
         saved = true;
       }
+      clearCompletionForNewFocus();
       activeGroupId = prepared.id;
       groupEngineStore.notify();
       guestFlowFacts.setGuestFlowSymptomAdditionComplete(true);
@@ -717,6 +737,7 @@ const inquiryResetActions = {
       playerSessionStore.clear();
       facts.clearGuestFlowFacts();
       groupEngineStore.notify();
+      clearCompletionForNewFocus();
       advanceInquiryGeneration();
       authLifecycle.completeDetachment();
       promotionRecoveryStore.notify();
@@ -756,8 +777,209 @@ const authLifecycle = createAuthLifecycle(getBrowserClient, () => {
 if (promotionRecovery !== null) authLifecycle.bind(promotionRecovery.owner);
 else if (retainedDraft !== null) authLifecycle.bind(retainedDraft.owner);
 else if (retainedWebDraft?.owner) authLifecycle.bind(retainedWebDraft.owner);
+// Bind only the expected SDK identity; receipt metadata never hydrates an authenticated therapeutic focus.
+else if (bootCompletion?.owner) authLifecycle.bind(bootCompletion.owner);
 const authenticatedDraft = createAuthenticatedDraft(retainedDraft, authLifecycle);
 const authStore = authLifecycle.store;
+export interface CompletionRecoveryState {
+  status: "idle" | "pending" | "recovery";
+  owner: string | null;
+}
+let completionRecoveryState: CompletionRecoveryState = {
+  status: bootCompletion === null ? "idle" : "pending", owner: bootCompletion?.owner ?? null,
+};
+const completionRecoveryStore = createExternalStore(() => completionRecoveryState);
+let completionSessionId: string | null = bootCompletion?.sessionId ?? null;
+let completionReadOnlyOwner: string | null = bootCompletion?.owner ?? null;
+let completionReadPort: { owner: string; port: RepositoryPort } | null = null;
+let completionPersistFacts = bootCompletion === null;
+let completionOperation: Promise<void> | null = null;
+let completionLifecycleRevision = 0;
+let completionFlowReady = false;
+function setCompletionRecovery(status: CompletionRecoveryState["status"], owner: string | null) {
+  if (status === completionRecoveryState.status && owner === completionRecoveryState.owner) return;
+  completionRecoveryState = { status, owner };
+  completionRecoveryStore.notify();
+}
+function completionScope() {
+  const owner = authenticatedOwner ?? completionReadOnlyOwner;
+  return { owner, generation: inquiryGenerationStore.getSnapshot(), providerKey: owner === null ? "guest" : "account" };
+}
+function captureCompletionAccess() {
+  const scope = completionScope();
+  const provider = repositoryPort.getProvider();
+  const readPort = completionReadPort;
+  const identity = authStore.getSnapshot();
+  return () => {
+    const current = authStore.getSnapshot();
+    const next = completionScope();
+    if (scope.owner !== next.owner || scope.generation !== next.generation || scope.providerKey !== next.providerKey ||
+      provider !== repositoryPort.getProvider() || readPort !== completionReadPort ||
+      current.revision !== identity.revision || current.status === "uncertain" || current.status === "checking" ||
+      current.status === "reauthenticate" || scope.owner !== null &&
+        (current.status !== "verified" || current.owner !== scope.owner)) throw new InquiryOperationCancelled();
+  };
+}
+async function readCompletionSession(sessionId: string): Promise<PlayerSession | null> {
+  if (completionReadPort === null) return repositoryPort.getPlayerSession(sessionId);
+  const retained = completionReadPort;
+  const check = captureCompletionAccess();
+  check();
+  const client = getBrowserClient();
+  if (client === null) throw new Error("Public authentication configuration is unavailable");
+  const user = await getVerifiedUser(client);
+  check();
+  if (user.id !== retained.owner) throw new Error("Completion belongs to its original identity");
+  const session = await retained.port.getPlayerSession(sessionId);
+  check();
+  return session;
+}
+const completionPresentation = createCompletionPresentation({
+  captureAccess: captureCompletionAccess,
+  currentScope: completionScope,
+  getCurrentGroupId: () => activeGroupId,
+  getSession: readCompletionSession,
+  onReturnToQuestionnaire: (groupId) => !resetting && groupId !== null && groupId === activeGroupId ?
+    questionnaireNavigation.go("group-summary", "backward") : false,
+  onChooseCatalog: () => resetting ? false : questionnaireNavigation.go("pick-treatment", "forward"),
+});
+/** Public port success stages a hint without claiming that SDK identity or later cleanup is settled. */
+async function stageRootCompletion(sessionId: string): Promise<boolean> {
+  const scope = completionScope();
+  const provider = repositoryPort.getProvider();
+  const identity = authStore.getSnapshot();
+  completionPresentation.suspend();
+  const session = await readCompletionSession(sessionId);
+  const current = completionScope();
+  if (provider !== repositoryPort.getProvider() || scope.owner !== current.owner ||
+    scope.generation !== current.generation || identity.revision !== authStore.getSnapshot().revision ||
+    session?.id !== sessionId || session.success_declared !== true) return false;
+  const retained = readCompletionRecovery();
+  const choice = retained?.sessionId === sessionId && retained.owner === scope.owner &&
+    retained.generation === scope.generation && retained.providerKey === scope.providerKey ? retained.choice : null;
+  return writeCompletionRecoveryHint({ version: 2, owner: scope.owner, generation: scope.generation,
+    providerKey: scope.owner === null ? "guest" : "account", sessionId, choice });
+}
+function clearCompletionForNewFocus() {
+  ++completionLifecycleRevision;
+  completionPresentation.invalidate();
+  completionSessionId = null;
+  completionReadOnlyOwner = null;
+  completionReadPort = null;
+  completionPersistFacts = true;
+  setCompletionRecovery("idle", null);
+}
+/** A completed unlinked Guest run may leave a questionnaire pointer that was never promoted. */
+async function verifyCompletionGroup(): Promise<void> {
+  const groupId = activeGroupId;
+  if (groupId === null) return;
+  const provider = repositoryPort.getProvider();
+  const scope = completionScope();
+  const identity = authStore.getSnapshot();
+  const group = await repositoryPort.getGroup(groupId);
+  const current = completionScope();
+  if (provider !== repositoryPort.getProvider() || scope.owner !== current.owner ||
+    scope.generation !== current.generation || identity.revision !== authStore.getSnapshot().revision ||
+    activeGroupId !== groupId) throw new InquiryOperationCancelled();
+  if (group !== null && group.id !== groupId) throw new Error("The current questionnaire could not be verified");
+  if (group === null) {
+    activeGroupId = null;
+    groupEngineStore.notify();
+  }
+}
+function assertCompletionSettled() {
+  if (resetting || promotionSwitching || promotionRecovery !== null || resetRecovery !== null ||
+    verificationPending !== null || pendingGuestFinishRequest !== null) throw new Error("Saving still needs recovery");
+}
+function presentCompletedSession(sessionId: string, persistFacts = true): Promise<void> {
+  if (completionOperation !== null) return completionSessionId === sessionId ? completionOperation :
+    Promise.reject(new Error("Another completion presentation is pending"));
+  const lifecycle = completionLifecycleRevision;
+  completionSessionId = sessionId;
+  completionPersistFacts = persistFacts;
+  setCompletionRecovery("pending", completionScope().owner);
+  completionOperation = (async () => {
+    try {
+      assertCompletionSettled();
+      await guestFlowFacts.settleGuestFlowPersistence();
+      if (!await stageRootCompletion(sessionId)) {
+        throw new Error("Completion recovery hint could not be retained");
+      }
+      assertCompletionSettled();
+      await verifyCompletionGroup();
+      assertCompletionSettled();
+      if (persistFacts) {
+        await guestRepository.saveGuestFlowFacts({ ...guestFlowFacts.collectPersistedGuestFlowFacts(),
+          activePlayerSessionId: null });
+      }
+      assertCompletionSettled();
+      const owner = completionScope().owner;
+      const identity = authStore.getSnapshot();
+      const canPresent = owner === null || identity.status === "verified" && identity.owner === owner;
+      if (canPresent && !await completionPresentation.showConfirmed(sessionId)) {
+        throw new Error("Completion needs verification");
+      }
+      if (lifecycle !== completionLifecycleRevision) throw new InquiryOperationCancelled();
+      guestFlowFacts.setGuestFlowPlayerSession(null, false);
+      setCompletionRecovery(canPresent ? "idle" : "recovery", canPresent ? null : owner);
+    } catch (error) {
+      completionPresentation.suspend();
+      if (lifecycle === completionLifecycleRevision) setCompletionRecovery("recovery", completionScope().owner);
+      throw error;
+    }
+  })().finally(() => { completionOperation = null; });
+  return completionOperation;
+}
+async function publishPromotedCompletion(): Promise<void> {
+  if (resetting) return;
+  if (completionSessionId !== null && promotionRecovery === null &&
+    sessionEngineStore.getSnapshot().promotionStatus === "succeeded") {
+    await presentCompletedSession(completionSessionId, false);
+  }
+}
+async function retryCompletionRecovery(): Promise<void> {
+  await initialFlowFactsReady;
+  const metadata = readCompletionRecovery();
+  const sessionId = completionSessionId;
+  if (sessionId === null) return;
+  const identity = authStore.getSnapshot();
+  const owner = authenticatedOwner ?? completionReadOnlyOwner;
+  if (owner !== null && (identity.status !== "verified" || identity.owner !== owner)) {
+    completionPresentation.suspend();
+    setCompletionRecovery(identity.status === "checking" ? "pending" : "recovery", owner);
+    return;
+  }
+  if (completionReadOnlyOwner !== null) {
+    if (metadata?.owner !== completionReadOnlyOwner || metadata.sessionId !== sessionId ||
+      metadata.generation !== inquiryGenerationStore.getSnapshot() || readCompletionFocusOwner() !== metadata.owner) {
+      completionPresentation.suspend();
+      setCompletionRecovery("recovery", completionReadOnlyOwner);
+      return;
+    }
+    authLifecycle.bind(completionReadOnlyOwner);
+    if (completionReadPort === null) {
+      const client = getBrowserClient();
+      if (client === null) { setCompletionRecovery("recovery", completionReadOnlyOwner); return; }
+      completionReadPort = { owner: completionReadOnlyOwner, port: createSupabaseRepositoryFromClient(client) };
+    }
+  }
+  await presentCompletedSession(sessionId, completionPersistFacts);
+}
+let completionIdentityKey = JSON.stringify(authStore.getSnapshot());
+authStore.subscribe(() => {
+  const identity = authStore.getSnapshot();
+  const key = JSON.stringify(identity);
+  if (key === completionIdentityKey) return;
+  completionIdentityKey = key;
+  completionPresentation.suspend();
+  if (completionSessionId === null) return;
+  const owner = authenticatedOwner ?? completionReadOnlyOwner;
+  if (identity.status !== "verified" || identity.owner !== owner) {
+    setCompletionRecovery(identity.status === "checking" ? "pending" : "recovery", owner);
+  } else if (completionFlowReady && completionOperation === null && promotionRecovery === null && !promotionSwitching) {
+    void retryCompletionRecovery().catch(() => undefined);
+  }
+});
 const summaryPriority = createSummaryPriority({
   assertWriteSafe: assertQuestionnaireWebWriteSafe,
   captureAccess: captureQuestionnaireAccess,
@@ -910,6 +1132,12 @@ const untrackedPromotePathActions = {
       if (resetRecovery !== null) clearInquiryResetRecovery();
       authenticatedOwner = newUserId;
       markAuthenticatedFocus(newUserId);
+      setCompletionRecovery("pending", newUserId);
+      completionSessionId = request.snapshot.playerSession.id;
+      completionPersistFacts = false;
+      if (!await stageRootCompletion(completionSessionId)) {
+        throw new Error("Completion recovery hint could not be retained");
+      }
       await guestRepository.clear();
       clearPromotionRecovery();
       verificationPending = null;
@@ -918,10 +1146,12 @@ const untrackedPromotePathActions = {
       frozenPromotion = null;
       resetRecovery = null;
       pendingGuestFinishRequest = null;
-      facts.setGuestFlowPlayerSession(null, false);
+      // The Player pointer remains until the settled outer promotion publishes verified completion.
       recoveryStatus = null;
     } catch (error) {
       recoveryStatus = "failed";
+      completionPresentation.suspend();
+      setCompletionRecovery("recovery", newUserId);
       throw error;
     } finally { sessionEngineStore.notify(); promotionRecoveryStore.notify(); }
   },
@@ -1032,7 +1262,7 @@ const untrackedPromotePathActions = {
           frozenPromotion = null;
         }
       } finally { promotionSwitching = false; }
-    }).finally(() => { loginPromotion = null; });
+    }).finally(() => { loginPromotion = null; }).then(publishPromotedCompletion);
     return loginPromotion;
   },
   reauthenticate(credentials: LoginCredentials): Promise<void> {
@@ -1059,7 +1289,7 @@ function coordinatePromotion(port: RepositoryPort, snapshot: GuestSnapshot, owne
   publicPromotionOwner = owner;
   loginPromotion = trackExclusiveFlowOperation(() =>
     untrackedPromotePathActions.promoteWithAuthenticatedRepository(port, snapshot, owner),
-  ).finally(() => { loginPromotion = null; publicPromotionOwner = null; });
+  ).finally(() => { loginPromotion = null; publicPromotionOwner = null; }).then(publishPromotedCompletion);
   return loginPromotion;
 }
 const promotePathActions = {
@@ -1069,6 +1299,7 @@ const promotePathActions = {
 
 /** Resets composition-layer group flow pointer between tests. */
 export function resetGroupFlowFactsForTest(): void {
+  clearCompletionForNewFocus();
   summaryRating.reset();
   summaryPriority.reset();
   questionnaireNavigation.reset();
@@ -1077,7 +1308,7 @@ export function resetGroupFlowFactsForTest(): void {
   groupEngineStore.notify();
 }
 
-void Promise.resolve(guestFlowFacts).then(async ({ initGuestFlowFacts, setGuestFlowPlayerSession }) => {
+const initialFlowFactsReady = Promise.resolve(guestFlowFacts).then(async ({ initGuestFlowFacts }) => {
   initGuestFlowFacts({
     getActiveGroupId: () => activeGroupId,
     resetActiveGroup: resetGroupFlowFactsForTest,
@@ -1097,12 +1328,17 @@ void Promise.resolve(guestFlowFacts).then(async ({ initGuestFlowFacts, setGuestF
     const session = await repositoryPort.getPlayerSession(sessionId);
     if (initialGeneration !== inquiryGenerationStore.getSnapshot()) return;
     if (session?.success_declared === true) {
-      setGuestFlowPlayerSession(null);
+      await presentCompletedSession(sessionId);
     } else {
       await playerSessionStore.refresh(sessionId);
     }
   }
 });
+
+void initialFlowFactsReady.then(() => {
+  completionFlowReady = true;
+  if (bootCompletion !== null) void retryCompletionRecovery().catch(() => undefined);
+}).catch(() => undefined);
 
 const catalogActions = {
   listTreatments(): Promise<import("pic-engine").TreatmentListItem[]> {
@@ -1154,6 +1390,9 @@ export function resetTreatmentContentCacheForTest(): void {
 
 /** Everything a consumer needs, handed down exactly once via app-level providers. */
 export const compositionRoot = {
+  completionPresentation,
+  completionRecoveryStore,
+  retryCompletionRecovery,
   summaryRating,
   summaryPriority,
   questionnaireVisible,

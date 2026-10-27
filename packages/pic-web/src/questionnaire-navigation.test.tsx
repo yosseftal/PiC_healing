@@ -20,14 +20,14 @@ it("ignores an old Back handler after confirmed reset", async () => {
   const captured = render(<Capture />);
   const back = oldBack;
   await compositionRoot.inquiryResetActions.resetInquiry(true);
-  captured.unmount(); mount();
+  captured.unmount(); await mount();
   await act(async () => { expect(await back()).toBe(false); });
   expect(screen.queryByTestId("questionnaire-preparation")).toBeNull();
   expect(screen.getByLabelText("Symptom name")).toHaveProperty("value", "");
 });
 
 it("retries failed finalization without repeating the successful actual answer", async () => {
-  mount(); completeTopic();
+  await mount(); completeTopic();
   await screen.findByTestId("muscle-test-yes");
   const id = compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
   const provider = compositionRoot.repositoryPort.getProvider();
@@ -49,7 +49,7 @@ it("retries failed finalization without repeating the successful actual answer",
 });
 
 it("waits for an admitted Yes including its finalize continuation before Back to the retained list", async () => {
-  mount(); completeTopic(); await screen.findByTestId("muscle-test-yes");
+  await mount(); completeTopic(); await screen.findByTestId("muscle-test-yes");
   const provider = compositionRoot.repositoryPort.getProvider();
   const save = provider.saveGroup.bind(provider);
   let release!: () => void;
@@ -65,9 +65,12 @@ it("waits for an admitted Yes including its finalize continuation before Back to
   const id = compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
   expect((await compositionRoot.groupEngineActions.getGroup(id))?.joint_treatment_muscle_test).toBe("together");
 });
-function mount() {
+async function mount() {
   localStorage.setItem("pic-web.locale.v1", "en");
-  return render(<App />);
+  const view = render(<App />);
+  if (screen.queryByTestId("welcome-start")) fireEvent.click(screen.getByTestId("welcome-start"));
+  await waitFor(() => expect(screen.queryByTestId("welcome-screen")).toBeNull());
+  return view;
 }
 function completeTopic() {
   fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Neck" } });
@@ -75,7 +78,7 @@ function completeTopic() {
   fireEvent.click(screen.getByTestId("finish-symptom-addition"));
 }
 it("returns from preparation to the exact unfinished input without creating or discarding work", async () => {
-  mount();
+  await mount();
   fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "My list" } });
   const input = screen.getByLabelText("Symptom name");
   fireEvent.change(input, { target: { value: "Unsubmitted neck" } });
@@ -90,7 +93,7 @@ it("returns from preparation to the exact unfinished input without creating or d
 });
 
 it("revisits advisory, joint, summary and selection without rewriting an unchanged answered group", async () => {
-  const view = mount(); completeTopic();
+  const view = await mount(); completeTopic();
   fireEvent.click(await screen.findByTestId("muscle-test-no"));
   await screen.findByTestId("split-advisory");
   const id = compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
@@ -100,7 +103,7 @@ it("revisits advisory, joint, summary and selection without rewriting an unchang
   expect(await compositionRoot.groupEngineActions.getGroup(id)).toEqual(answered);
   fireEvent.click(await screen.findByRole("button", { name: "Continue" }));
   await screen.findByTestId("split-advisory");
-  view.unmount(); mount();
+  view.unmount(); await mount();
   await screen.findByTestId("split-advisory");
   fireEvent.click(screen.getByTestId("finalize-anyway"));
   await screen.findByTestId("confirm-group-summary");
@@ -119,7 +122,7 @@ it("revisits advisory, joint, summary and selection without rewriting an unchang
 });
 
 it("retains a failed summary priority intent across screen remounts", async () => {
-  const view = mount();
+  const view = await mount();
   fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "First" } });
   fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "3" } });
   fireEvent.click(screen.getByTestId("add-symptom-action"));
@@ -132,12 +135,12 @@ it("retains a failed summary priority intent across screen remounts", async () =
   vi.spyOn(compositionRoot.repositoryPort.getProvider(), "reorderSymptoms").mockRejectedValueOnce(new Error("Offline"));
   fireEvent.click(screen.getAllByRole("button", { name: "Move topic up" })[1]!);
   await screen.findByRole("button", { name: "Try this priority change again" });
-  view.unmount(); mount();
+  view.unmount(); await mount();
   await screen.findByRole("button", { name: "Try this priority change again" });
 });
 
 it("retries a lost actual No response with the same aggregate, timestamp and revision", async () => {
-  mount(); completeTopic(); await screen.findByTestId("muscle-test-no");
+  await mount(); completeTopic(); await screen.findByTestId("muscle-test-no");
   const provider = compositionRoot.repositoryPort.getProvider();
   const save = provider.saveGroup.bind(provider);
   const writes = vi.spyOn(provider, "saveGroup").mockImplementationOnce(async (group) => {
@@ -154,7 +157,7 @@ it("retries a lost actual No response with the same aggregate, timestamp and rev
 });
 
 it("returns from preparation to the dismissed advisory and exact invoking control", async () => {
-  mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-no"));
+  await mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-no"));
   await screen.findByRole("button", { name: "Dismiss" });
   fireEvent.click(screen.getByTestId("dismiss-split-advisory"));
   screen.getByTestId("finalize-anyway").focus();
@@ -173,7 +176,7 @@ it("returns from preparation to the dismissed advisory and exact invoking contro
 });
 
 it("retains an added topic revision and its score when backing out of the fresh full-list question", async () => {
-  mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-yes"));
+  await mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-yes"));
   await screen.findByTestId("confirm-group-summary");
   const id = compositionRoot.groupEngineStore.getSnapshot().activeGroupId!;
   const before = await compositionRoot.groupEngineActions.getGroup(id);
@@ -196,7 +199,7 @@ it("retains an added topic revision and its score when backing out of the fresh 
 });
 
 it("allows Back when an in-flight catalog read fails", async () => {
-  mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-yes"));
+  await mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-yes"));
   await screen.findByTestId("confirm-group-summary");
   let reject!: (reason: Error) => void;
   vi.spyOn(compositionRoot.repositoryPort.getProvider(), "listTreatments")
@@ -209,7 +212,7 @@ it("allows Back when an in-flight catalog read fails", async () => {
 });
 
 it("gives an admitted Player start precedence over queued questionnaire Back", async () => {
-  mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-yes"));
+  await mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-yes"));
   fireEvent.click(await screen.findByTestId("confirm-group-summary"));
   await screen.findByTestId("guest-flow-pick-treatment");
   const provider = compositionRoot.repositoryPort.getProvider();
@@ -226,7 +229,7 @@ it("gives an admitted Player start precedence over queued questionnaire Back", a
 });
 
 it("does not apply the old No Continue while a replacement Yes is settling", async () => {
-  mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-no"));
+  await mount(); completeTopic(); fireEvent.click(await screen.findByTestId("muscle-test-no"));
   await screen.findByRole("button", { name: "Dismiss" });
   fireEvent.click(await screen.findByRole("button", { name: "Back" }));
   const oldContinue = await screen.findByRole("button", { name: "Continue" });

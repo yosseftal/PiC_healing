@@ -1,10 +1,15 @@
 // @vitest-environment jsdom
 import { createElement } from "react";
-import { act, cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { createClient, type AuthChangeEvent, type Session } from "@supabase/supabase-js";
 import { afterEach, expect, it, vi } from "vitest";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllEnvs(); localStorage.clear(); sessionStorage.clear(); });
+
+async function startQuestionnaire() {
+  fireEvent.click(await screen.findByTestId("welcome-start"));
+  await waitFor(() => expect(screen.queryByTestId("welcome-screen")).toBeNull());
+}
 
 async function setup() {
   vi.resetModules();
@@ -95,6 +100,7 @@ it("edits and continues an authenticated summary while repeated same-authority v
   const { App } = await import("./App");
   render(createElement(App));
   await act(async () => { await f.root.authLifecycle.verify(); });
+  await startQuestionnaire();
   fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "Authenticated summary" } });
   fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Actual topic" } });
   fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "6" } });
@@ -122,6 +128,7 @@ it("hides an authenticated questionnaire immediately on suspension and retries i
   const { App } = await import("./App");
   const { inquiryGenerationStore } = await import("./inquiry-lifecycle");
   render(createElement(App));
+  await startQuestionnaire();
   fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "Private live title" } });
   fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Private live topic" } });
   fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "6" } });

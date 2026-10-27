@@ -54,15 +54,22 @@ function assignTracerEnv(env: Record<string, string>, email: string, password: s
   }
 }
 
-function renderHappyPathApp() {
+async function renderHappyPathApp() {
   localStorage.setItem("pic-web.locale.v1", "en");
-  return render(
+  const view = render(
     <AppProviders>
       <GuestModeShell>
         <GuestFlowRouter />
       </GuestModeShell>
     </AppProviders>,
   );
+  await waitFor(() => {
+    const start = screen.queryByRole("button", { name: "Start the questionnaire" });
+    if (start && start.closest("[inert]") === null) fireEvent.click(start);
+    expect(screen.queryByTestId("welcome-screen")).toBeNull();
+    expect(screen.getByLabelText("List name (optional)").closest("[inert]")).toBeNull();
+  });
+  return view;
 }
 
 const envPath = join(process.cwd(), ".env.local");
@@ -133,7 +140,7 @@ describe("happy path E2E (Ticket 08-09)", () => {
 
       const seedTreatment = TRACER_BULLET_SEED_TREATMENTS[1]!;
 
-      renderHappyPathApp();
+      await renderHappyPathApp();
 
       // Step 1–2: Guest bootstrap + symptom group creation (blind-rated)
       fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "   " } });

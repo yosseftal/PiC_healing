@@ -101,8 +101,10 @@ for (const locale of ["he", "en"] as const) {
     await switchLanguage(page, locale, other);
     expect(await card.evaluate((node) => node.scrollTop)).toBe(120);
     await expectSummaryChoiceInViewport(page);
-    await expect(page.getByTestId("symptom-count")).toHaveText(other === "he"
-      ? "30 סימפטומים בקבוצה" : "30 symptoms in this group");
+    await expect(page.getByTestId("symptom-count")).toHaveCount(0);
+    await expect(page.locator(".pic-summary-topic")).toHaveCount(30);
+    await expect(page.locator(".pic-summary-topic").last())
+      .toContainText(other === "he" ? "סדר עדיפות 30" : "Priority 30");
     await page.getByTestId("confirm-group-summary").click();
     await expect(page.getByTestId("guest-flow-pick-treatment")).toBeVisible();
     await checkContainment(page);
@@ -126,7 +128,8 @@ for (const locale of ["he", "en"] as const) {
       await expect(page.getByTestId("treatment-list").getByRole("button")).toHaveCount(23);
       const selector = page.getByRole("button", { name: other === "he" ? "עברית" : "English", exact: true });
       await selector.focus();
-      const scroller = page.getByTestId("therapeutic-sheet-content").getByRole("region");
+      const scroller = page.getByTestId("therapeutic-sheet-content")
+        .getByRole("region", { name: /^(תוכן הכלים|Utilities content)$/ });
       await scroller.evaluate((node) => { node.scrollTop = 200; });
       expect(await scroller.evaluate((node) => node.scrollTop)).toBe(200);
       expect(await scroller.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);

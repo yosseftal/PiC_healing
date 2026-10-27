@@ -10,19 +10,27 @@ import {
   setGuestFlowGroupFinalized, setGuestFlowSummaryAcknowledged,
 } from "./guest-flow-facts";
 
-function mount() {
+async function mount() {
   localStorage.setItem("pic-web.locale.v1", "en");
-  return render(<AppProviders><GuestFlowRouter /></AppProviders>);
+  const view = render(<AppProviders><GuestFlowRouter /></AppProviders>);
+  await waitFor(() => {
+    const start = screen.queryByRole("button", { name: "Start the questionnaire" });
+    if (start && start.closest("[inert]") === null) fireEvent.click(start);
+    const utilities = screen.getByRole("button", { name: "Open utilities" });
+    expect(utilities.closest("[inert]")).toBeNull();
+  });
+  return view;
 }
-function openReset() {
+async function openReset() {
   fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
-  fireEvent.click(screen.getByRole("button", { name: "New symptom group" }));
+  fireEvent.click(await screen.findByRole("button", { name: "New symptom group" }));
 }
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   resetGuestFlowFactsForTest();
   localStorage.clear();
+  sessionStorage.clear();
 });
 it("refuses a stale UI callback after reset while admitting work for the fresh inquiry", async () => {
   let lateWrite!: () => Promise<unknown>;
@@ -40,16 +48,16 @@ it("refuses a stale UI callback after reset while admitting work for the fresh i
   expect((await compositionRoot.repositoryPort.getGroup(groupId))?.name).toBe("Current inquiry");
 });
 it("keeps typed-only work on cancel and clears it on confirmed reset in the same creation screen", async () => {
-  mount();
+  await mount();
   fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "My draft" } });
-  openReset();
+  await openReset();
   const keep = await screen.findByRole("button", { name: "Keep current inquiry" });
   await waitFor(() => expect(keep).toBe(document.activeElement));
   fireEvent.click(screen.getByRole("button", { name: "Keep current inquiry" }));
   fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect((screen.getByLabelText("List name (optional)") as HTMLInputElement).value).toBe("My draft");
-  openReset();
+  await openReset();
   fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
   await waitFor(() => expect((screen.getByLabelText("List name (optional)") as HTMLInputElement).value).toBe("") );
   expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
@@ -58,9 +66,9 @@ it("keeps typed-only work on cancel and clears it on confirmed reset in the same
 
 
 it("resets an empty inquiry without confirmation and preserves unrelated preferences", async () => {
-  mount();
+  await mount();
   localStorage.setItem("other-app", "keep");
-  openReset();
+  await openReset();
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect((screen.getByLabelText("List name (optional)") as HTMLInputElement).value).toBe("");
   expect(localStorage.getItem("other-app")).toBe("keep");
@@ -77,12 +85,12 @@ it("waits for a slow create before re-evaluating loss, then removes the settled 
     await paused;
     await save(group);
   });
-  mount();
+  await mount();
   fireEvent.change(screen.getByLabelText("List name (optional)"), { target: { value: "Slow draft" } });
   fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Neck" } });
   fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "8" } });
   fireEvent.click(screen.getByTestId("finish-symptom-addition"));
-  openReset();
+  await openReset();
   expect(screen.queryByRole("button", { name: "Discard draft and start new" })).toBeNull();
   await act(async () => { release(); });
   fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
@@ -98,14 +106,14 @@ it("retains the exact committed record when storage removal fails and allows ret
   const symptom = await compositionRoot.groupEngineActions.addSymptom(groupId, "Retained symptom");
   await compositionRoot.groupEngineActions.rate(symptom, { intensity: 8, polarity: "positive" });
   const before = await compositionRoot.repositoryPort.getGroup(groupId);
-  mount();
+  await mount();
   await screen.findByText("Retained symptom");
   const remove = Storage.prototype.removeItem;
   vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key) {
     if (key === "pic:guest-repository:v1") throw new Error("Storage unavailable");
     remove.call(this, key);
   });
-  openReset();
+  await openReset();
   fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
   await screen.findByRole("button", { name: "Retry starting new" });
   expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBe(groupId);
@@ -116,7 +124,7 @@ it("retains the exact committed record when storage removal fails and allows ret
   expect(screen.getByText("Retained symptom")).toBeTruthy();
   expect(await compositionRoot.repositoryPort.getGroup(groupId)).toEqual(before);
   vi.restoreAllMocks();
-  openReset();
+  await openReset();
   fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
@@ -127,12 +135,12 @@ it("settles the entire atomic submission and preserves the typed rows when its f
   const paused = new Promise<void>((resolve) => { release = resolve; });
   const save = vi.spyOn(compositionRoot.repositoryPort.getProvider(), "saveGroup")
     .mockImplementationOnce(async () => { await paused; throw new Error("Storage unavailable"); });
-  mount();
+  await mount();
   fireEvent.change(screen.getByLabelText("Symptom name"), { target: { value: "Neck" } });
   fireEvent.change(screen.getByLabelText("Interference / suffering intensity"), { target: { value: "8" } });
   fireEvent.click(screen.getByTestId("finish-symptom-addition"));
   await waitFor(() => expect(save).toHaveBeenCalledOnce());
-  openReset();
+  await openReset();
   await act(async () => { release(); });
   await screen.findByRole("button", { name: "Retry starting new" });
   expect(compositionRoot.groupEngineStore.getSnapshot().activeGroupId).toBeNull();
@@ -161,10 +169,10 @@ it("settles delayed treatment parsing and its startSession continuation before r
     await paused;
     return [{ unit_id: "unit-one", unit_title: "One", unit_content: "Breathe", unit_order: 0, unit_rationale: null }];
   });
-  mount();
+  await mount();
   fireEvent.click(screen.getByRole("button", { name: "Open utilities" }));
   fireEvent.click(await screen.findByTestId("pick-treatment-slow-treatment"));
-  fireEvent.click(screen.getByRole("button", { name: "New symptom group" }));
+  fireEvent.click(await screen.findByRole("button", { name: "New symptom group" }));
   await act(async () => { release(); });
   fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -174,7 +182,7 @@ it("settles delayed treatment parsing and its startSession continuation before r
 });
 
 it("rejects new therapeutic writes during cleanup so they cannot resurrect discarded records", async () => {
-  mount();
+  await mount();
   const remove = Storage.prototype.removeItem;
   let lateWrite: Promise<string> | undefined;
   vi.spyOn(Storage.prototype, "removeItem").mockImplementation(function (this: Storage, key) {
@@ -184,7 +192,7 @@ it("rejects new therapeutic writes during cleanup so they cannot resurrect disca
     }
     remove.call(this, key);
   });
-  openReset();
+  await openReset();
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   await expect(lateWrite).rejects.toThrow("Inquiry reset is pending");
   expect(localStorage.getItem("pic:guest-repository:v1")).toBeNull();
@@ -200,8 +208,8 @@ it.each(["joint", "summary", "picker"])("offers reset from a finalized Guest %s 
     await compositionRoot.groupEngineActions.finalizeGroup(groupId);
   }
   if (stage === "picker") setGuestFlowSummaryAcknowledged(true);
-  mount();
-  openReset();
+  await mount();
+  await openReset();
   fireEvent.click(await screen.findByRole("button", { name: "Discard draft and start new" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   expect((screen.getByLabelText("List name (optional)") as HTMLInputElement).value).toBe("");

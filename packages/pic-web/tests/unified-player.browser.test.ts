@@ -231,7 +231,7 @@ test("200 percent zoom, reduced motion, and RTL preserve Player access and logic
   await page.keyboard.press("Enter");
   await expect(zoomedDialog).toBeHidden();
   await expect(page.getByRole("heading", { name: "Guidance table" })).toBeFocused();
-  const slide = page.getByTestId("horizontal-slide-container");
+  const slide = page.getByTestId("guest-flow-player").getByTestId("horizontal-slide-container");
   await expect(slide.locator("[data-translation='none']")).toHaveCount(1);
   const dialog = await openUtilities(page);
   const sheet = await dialog.boundingBox();

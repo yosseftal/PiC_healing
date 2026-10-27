@@ -174,7 +174,8 @@ for (const locale of ["he", "en"] as const) {
         expect(await nextCard.evaluate((element, original) => element === original, cardNode)).toBe(true);
         expect(await nextCard.evaluate((element) => element.scrollTop)).toBe(before);
         expect(await page.getByTestId("atomic-unit-content").textContent()).toBe(source);
-        await expect(page.locator("[data-active-key]")).toHaveAttribute("data-active-key", "unit-1");
+        await expect(page.getByTestId("guest-flow-player").locator("[data-active-key]"))
+          .toHaveAttribute("data-active-key", "unit-1");
         const sizes = await page.evaluate(() => ({
           width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
           x: window.scrollX, y: window.scrollY,

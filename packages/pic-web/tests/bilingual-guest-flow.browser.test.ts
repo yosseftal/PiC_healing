@@ -1,3 +1,4 @@
+import { enterQuestionnaire } from "./questionnaire-entry";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { expectReadable } from "./palette-contrast";
 
@@ -19,7 +20,10 @@ async function contained(page: Page, target: Locator) {
   await expect(target).toBeVisible();
   // Motion's reflected slide has a settled transform; measure after that state, before any action.
   const slide = target.locator("xpath=ancestor::*[@data-active-key]");
-  if (await slide.count()) await expect(slide).toHaveCSS("transform", "none");
+  if (await slide.count()) await expect.poll(() => slide.evaluateAll((nodes) => nodes.every((node) => {
+    const transform = getComputedStyle(node).transform;
+    return transform === "none" || new DOMMatrixReadOnly(transform).isIdentity;
+  }))).toBe(true);
   await target.evaluate(async (node) => {
     for (let ancestor: Element | null = node; ancestor !== null; ancestor = ancestor.parentElement) {
       await Promise.all(ancestor.getAnimations().map((animation) => animation.finished.catch(() => {})));
@@ -74,7 +78,10 @@ async function choose(page: Page, from: Locale, to: Locale, player = false) {
 }
 
 async function act(page: Page, target: Locator) {
-  // Measure before clicking; Playwright must not rescue clipped primary choices with automatic scrolling.
+  // Secondary tools scroll inside their Sheet. Main-frame primary choices still must fit before any click.
+  await target.evaluate((node) => {
+    if (node.closest('[role="dialog"]')) node.scrollIntoView({ block: "nearest", inline: "nearest" });
+  });
   await contained(page, target);
   const box = await target.boundingBox();
   expect(box!.width).toBeGreaterThanOrEqual(44);
@@ -91,10 +98,12 @@ for (const locale of ["he", "en"] as const) {
         test.setTimeout(60_000);
         await page.setViewportSize(viewport);
         await page.goto("/tests/content-localization.fixture.html?mode=flow");
+        await enterQuestionnaire(page, "he");
         await expect(page.getByRole("textbox", { name: copy.he.group })).toBeVisible();
         await expect(page.locator("html")).toHaveAttribute("lang", "he");
         await choose(page, "he", locale);
         await page.reload();
+        await enterQuestionnaire(page, locale);
         await expect(page.getByRole("textbox", { name: copy[locale].group })).toBeVisible();
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         const other = locale === "he" ? "en" : "he";

@@ -72,3 +72,16 @@ W13-09 requires actual native/manual results or an explicit human decision accep
 Neither the parallel charter nor passing automation silently waives those two gates.
 Continue independent authorized work while gathering them; keep blocked ACs and partial tickets honest.
 At context capacity, finish the current bounded unit, run gates, commit passing progress and write the exact next entry.
+
+## Superseding approval and integration ownership — 2026-10-27
+
+The user approved exact r1 welcome/background/non-procedural introductions, then explicitly selected W13-07 Scope 2 / AC-08:
+ship those introductions and the click-to-load official video with fallback; keep AC-01 pending verified practical copy.
+This decision permits W13-09 convergence without inventing physical instructions or treating AC-01 as passed.
+Actual embedded playback was verified separately; see the copy-review artifact.
+
+Root delegated disjoint Phase B shared writers: education owned router/Frame/providers; completion hardening owned
+composition-root. The latter used gpt-6.1-sol/high for owner-bound recovery/storage logic; localized UI used gpt-6-luna/high.
+Root reclaimed convergence integration before final verification. No same-file concurrent ownership was permitted.
+Independent Standards and Spec reviewers reported findings read-only; root alone ran final gates and commits.
+W13-09's native/manual gate remains separate and is not waived by this content decision.

@@ -49,3 +49,12 @@ No native screen-reader/mobile-keyboard evidence is claimed here; W13-09 retains
 An early delegated07 npm wrapper invocation accidentally selected the broad suite; its incomplete output is not a pass.
 Subsequent checks are centrally dispatched, exact-scope commands, with no agent-owned heavy runners.
 Read-only post-incident counts matched the prior seven-table baseline; no unrelated row was deleted.
+
+## Final convergence — 2026-10-27
+
+Full final npm test passed: 75 files / 787 tests, zero failures or skips, 204.89s, exit 0.
+All-workspace dependency checks passed: engine 76 modules / 215 dependencies; web 807 / 1887.
+Root typecheck and lint passed. Full Chromium and production build passed: 203/203 cases, 5.6m, exit 0.
+Logs: .scratch/w13-parallel-root-final.log, -typecheck-final.log, -lint-final.log; .scratch/w13-browser-verified.log.
+The runtime was frozen for the browser pass; subsequent changes only adapt Vitest entry helpers and documentation.
+The earlier signup quota and UI-helper failures are resolved; W13-05 is closed.
