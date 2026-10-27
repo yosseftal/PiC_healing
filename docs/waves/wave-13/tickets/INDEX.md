@@ -1,7 +1,8 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Status:** W13-01, W13-02, W13-03, W13-04 and W13-06 closed; clean checkpoint before W13-05.
+**Updated:** 2026-10-27 (Asia/Jerusalem).
+**Status:** W13-01 through W13-08 closed; W13-07 accepted fallback retains pending AC-01. W13-09 is next.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -34,7 +35,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** W13-01, W13-03
 
 - **Ticket:** [W13-05][W13-05]
-  **Status:** next entry; prerequisites complete, implementation not started at this checkpoint.
+  **Status:** closed; implementation 81a31a8, final convergence 100b1d6; 787 root tests / 203 Chromium cases pass.
   **End-to-end delivery:** Review a clean priority list with an optional polarity view
   **Blocked by:** W13-01, W13-02
 
@@ -44,14 +45,17 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** None
 
 - **Ticket:** [W13-07][W13-07]
+  **Status:** closed, 100b1d6; approved r1/video fallback. AC-01 remains pending verified practical copy.
   **End-to-end delivery:** Learn PIC through a welcome page, text guide and official video
   **Blocked by:** W13-04
 
 - **Ticket:** [W13-08][W13-08]
+  **Status:** closed, 100b1d6; confirmed completion/recovery and preserved catalog; final root/browser gates pass.
   **End-to-end delivery:** Return clearly after Finish while preserving all treatment content
   **Blocked by:** None
 
 - **Ticket:** [W13-09][W13-09]
+  **Status:** next authorized entry; no implementation started; manual closure gate remains.
   **End-to-end delivery:** Prove the complete Wave 13 journeys and deliver the reviewed handoff
   **Blocked by:** W13-04, W13-05, W13-06, W13-07, W13-08
 
@@ -66,6 +70,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
 [W13-08]: w13-08-post-finish-routing-and-content-hygiene.md
 [W13-09]: w13-09-integrated-journeys-and-wave-handoff.md
 [H13-03]: ../handoffs/w13-04-verified-and-w13-05-entry.md
+[H13-current]: ../handoffs/w13-parallel-checkpoint-and-w13-09-entry.md
 
 ```mermaid
 flowchart LR
@@ -130,12 +135,12 @@ Use this ticket index for current ticket IDs and blocking edges.
 
 ## Content and environment gates
 
-- W13-07 must produce and obtain approval of actual source-verified procedural text. The feature is approved;
-  nonexistent/unwritten text is not treated as already reviewed. A missing transcript remains an evidence dependency.
-- W13-07 must verify actual YouTube embedding; the known watch URL alone is not proof of embed permission.
+- W13-07 r1 introductions and the Scope 2 / AC-08 video fallback were explicitly human approved on 2026-10-27.
+  AC-01 remains pending verified practical copy/transcript. The accepted exception permits convergence, not an AC pass.
+- Actual official embedded playback was verified; see the copy-review artifact. No caption/translation promise is shipped.
 - W13-02/03 require authorized isolated database evidence. The user permits cleanup only of same-run fixture UUIDs.
 - Physical/native checks remain explicitly visible in W13-09. A prior-wave manual-QA waiver is not automatically inherited.
-- W13-04 is closed; resume W13-05 from the [verified checkpoint][H13-03].
+- Resume W13-09 from the [current verified checkpoint][H13-current]; the earlier W13-04 checkpoint is historical.
 
 ## Execution checkpoint protocol
 

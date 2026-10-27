@@ -1,11 +1,11 @@
 # W13-09 — Prove the complete Wave 13 journeys and deliver the reviewed handoff
 
-**Status:** ready — implementation authorized; wait for prerequisites and serial dispatch.
+**Status:** ready — next authorized entry after verified convergence 100b1d6; implementation not started.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04][relocation-link-1], [W13-05][relocation-link-2], [W13-06][relocation-link-3],
 [W13-07][relocation-link-4], [W13-08][relocation-link-5].
 **Blocking:** None.
-**Execution gate:** Authorized; complete prerequisites and wait for serial dispatch.
+**Execution gate:** Upstream convergence verified; resume from the current handoff in a fresh implementation context.
 **Domain decisions:** DEC-010–DEC-018; all approved Wave 13 decisions.
 
 ## Objective & Context
@@ -92,8 +92,11 @@ Implementation is authorized by the user; wait for prerequisites and serial disp
 
 ## Resolution
 
-Not implemented. To complete after authorization: solution path, decisions, deviations, test evidence,
-review outcome, commit, and explicit resolution for every AC above.
+Not implemented. Upstream convergence is verified at 100b1d6: 787 root tests and 203 Chromium cases pass.
+See [exact entry and assembled journey plan](../handoffs/w13-parallel-checkpoint-and-w13-09-entry.md).
+W13-07 AC-01 is explicitly deferred under the user-approved fallback; never report it as passed.
+Native/manual evidence or a fresh explicit human acceptance of pending status remains required for wave closure.
+Complete solution path, decisions, deviations, final test/review evidence and every AC during W13-09 execution.
 
 [relocation-link-1]: w13-04-reversible-questionnaire-and-recovery.md
 [relocation-link-2]: w13-05-clean-summary-and-polarity-view.md

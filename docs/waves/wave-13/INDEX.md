@@ -2,8 +2,10 @@
 
 [All waves](../INDEX.md)
 
-Implementation authorized. W13-01, W13-02, W13-03, W13-04 and W13-06 are closed.
-The clean W13-04 checkpoint passes 68 files / 711 tests and 26 Chromium journeys. W13-05 is the next frontier.
+Implementation authorized. W13-01 through W13-08 are closed; W13-07 uses the explicit human-approved fallback.
+W13-07 AC-01 remains pending verified practical copy/transcript; it is not marked passed.
+Checkpoint 100b1d6 passes 75 files / 787 root tests and 203 Chromium cases. W13-09 is the next frontier.
+Native/manual Wave 13 closure evidence remains pending; see the current handoff.
 
 ## Specifications
 
@@ -28,6 +30,12 @@ The clean W13-04 checkpoint passes 68 files / 711 tests and 26 Chromium journeys
 - [W13-04 presentation navigation and versioned draft contract](audits/w13-04-navigation-contract.md)
 - [W13-04 implementation and independent review](audits/w13-04-implementation-review.md)
 
+- [Parallel ownership and convergence contract](audits/w13-parallel-convergence-contract.md)
+- [W13-05 implementation review](audits/w13-05-implementation-review.md)
+- [W13-07 copy approval and real embed](audits/w13-07-copy-review.md)
+- [W13-07/08 integration review and final evidence](audits/w13-07-08-implementation-review.md)
+- [W13-08 production reproduction and inventory](audits/w13-08-routing-reproduction.md)
+
 ## Handoffs
 
 - [Verified W13-01 checkpoint and exact resume instructions](handoffs/w13-01-checkpoint.md)
@@ -36,7 +44,9 @@ The clean W13-04 checkpoint passes 68 files / 711 tests and 26 Chromium journeys
 - [W13-02 verified closure and active W13-03 entry](handoffs/w13-02-verified-and-w13-03-entry.md)
 - [Historical W13-03 manual-application checkpoint](handoffs/w13-03-manual-apply-checkpoint.md)
 - [W13-03 verified closure and W13-04 entry](handoffs/w13-03-verified-and-w13-04-entry.md)
-- [Current W13-04 verified checkpoint and W13-05 entry](handoffs/w13-04-verified-and-w13-05-entry.md)
+- [Historical W13-04 verified checkpoint and W13-05 entry](handoffs/w13-04-verified-and-w13-05-entry.md)
+
+- [Current verified parallel checkpoint and W13-09 entry](handoffs/w13-parallel-checkpoint-and-w13-09-entry.md)
 
 ## Briefs and preserved checkpoints
 
