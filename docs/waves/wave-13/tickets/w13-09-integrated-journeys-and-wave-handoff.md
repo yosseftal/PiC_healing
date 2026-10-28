@@ -1,6 +1,6 @@
 # W13-09 — Prove the complete Wave 13 journeys and deliver the reviewed handoff
 
-**Status:** in progress — implemented at 8401180; full remote signup quota retry pending, 2026-10-27.
+**Status:** closed — approved convergence scope verified 2026-10-28; explicit content/manual exceptions recorded.
 **Specification:** [Approved Wave 13 charter](../specs/wave-13-spec.md).
 **Blocked by:** [W13-04][relocation-link-1], [W13-05][relocation-link-2], [W13-06][relocation-link-3],
 [W13-07][relocation-link-4], [W13-08][relocation-link-5].
@@ -47,16 +47,16 @@ Provide an evidence index that a reviewer can follow from each AC to test/manual
 ## Acceptance Criteria
 
 - [ ] **AC-01:** All upstream ticket ACs are resolved with actual evidence; the final DAG contains no silently waived dependency.
-- [ ] **AC-02:** Both languages complete the full assembled journey with and without a questionnaire title.
-- [ ] **AC-03:** Order and renewed joint answer survive authorized storage/promotion round-trips without partial records.
-- [ ] **AC-04:** Back/help/video/locale changes retain work and do not cross owner or inquiry-generation boundaries.
-- [ ]  **AC-05:** Initial ratings, blind re-rating, actual zero history and optional polarity summary meet their distinct
+- [x] **AC-02:** Both languages complete the full assembled journey with and without a questionnaire title.
+- [x] **AC-03:** Order and renewed joint answer survive authorized storage/promotion round-trips without partial records.
+- [x] **AC-04:** Back/help/video/locale changes retain work and do not cross owner or inquiry-generation boundaries.
+- [x]  **AC-05:** Initial ratings, blind re-rating, actual zero history and optional polarity summary meet their distinct
       contracts.
-- [ ] **AC-06:** All intended completion paths increment once; failure, Integrating and return-only actions do not.
-- [ ] **AC-07:** Full required automated gates pass on the final reviewed tree with no hidden skip/retry/threshold weakening.
-- [ ] **AC-08:** Manual checks have actual results or explicitly accepted pending status; video and text approvals are recorded.
-- [ ] **AC-09:** Independent Standards/Spec reviews are complete and remaining risks are accurately stated.
-- [ ] **AC-10:** Handoff and indexes cite exact implementation commits; no content or database deletion is part of closure.
+- [x] **AC-06:** All intended completion paths increment once; failure, Integrating and return-only actions do not.
+- [x] **AC-07:** Full required automated gates pass on the final reviewed tree with no hidden skip/retry/threshold weakening.
+- [x] **AC-08:** Manual checks have actual results or explicitly accepted pending status; video and text approvals are recorded.
+- [x] **AC-09:** Independent Standards/Spec reviews are complete and remaining risks are accurately stated.
+- [x] **AC-10:** Handoff and indexes cite exact implementation commits; no content or database deletion is part of closure.
 
 ## Testing Requirements
 
@@ -92,20 +92,54 @@ Implementation is explicitly dispatched by the user's final W13-09 charter.
 
 ## Resolution
 
-Execution started from clean checkpoint 6a6622b. Prior convergence evidence is 787 root tests and 203 Chromium cases;
-those results are historical until the required final commands run again.
-See [exact entry and assembled journey plan](../handoffs/w13-parallel-checkpoint-and-w13-09-entry.md).
-W13-07 AC-01 is explicitly deferred under the user-approved fallback; never report it as passed.
-The latest W13-09 directive explicitly allows recording "Pending Manual QA Verification for Wave 13" when actual
-device/accessibility results are unavailable. Record that current decision, never a copied Wave 12 waiver.
-Final solution, AC mapping, commands, reviews and SHAs will be recorded after actual verification.
+### Solution path and architecture
 
-The new assembled file passes 2/2 focused cases; the complete Chromium suite passes 205/205 with production build.
-Final source typecheck, lint and all-workspace dependency checks pass. Both independent review axes found no actionable issue.
-The first exact npm test passed 786/787 tests; real signup alone returned over_email_send_rate_limit.
-The unchanged full command is queued for retry; this ticket is not yet closed.
-See [current evidence](../audits/w13-09-verification-and-review.md) and
-[active final-gate handoff](../handoffs/wave-13-final-handoff.md).
+Implementation: 8401180, dispatched from 6a6622b; verified closure: 2026-10-28 (Asia/Jerusalem).
+The new actual-App HE untitled and EN titled journeys reuse the existing HTTP-only fixture/transport.
+No runtime, fixture, transport, engine, adapter, migration, dependency or treatment-content change was needed.
+Presentation row IDs survive editing/help/locale/reorder; engine-allocated committed IDs survive every later operation.
+The browser fixture proves assembled behavior. Actual SQL/RLS/rollback/replay is verified separately by the root remote suite.
+See [verification matrix and independent review](../audits/w13-09-verification-and-review.md) and
+[final handoff](../handoffs/wave-13-final-handoff.md).
+
+### Acceptance evidence
+
+- AC-01: ACCEPTED SCOPE EXCEPTION, not passed. The strict upstream criterion remains pending W13-07 AC-01's verified copy.
+  Tickets 01–08 have evidence-bearing Resolutions; W13-07 closes only its explicitly approved Scope 2 / AC-08 fallback.
+  Both W13-07 AC-01 and this dependent criterion remain unchecked, rather than claiming completed practical text.
+  W13-06's header checklist was synchronized to its seven already checked original Resolution entries.
+- AC-02: both assembled cases pass: HE without a title and EN with a title, from welcome/guide through completion/return.
+- AC-03: exact committed IDs, order, ratings, timestamps, fresh No and membership association survive Guest promotion.
+  The real remote contracts verify atomic revision, late rollback, competing writers, owner rejection and receipt replay.
+- AC-04: guide/Back/locale return retains exact pending fields and row identity. Existing reload, identity, navigation,
+  promotion and completion matrices verify changed-owner, provider and inquiry-generation isolation.
+- AC-05: initial blank scores offer 1–10; independent polarity and manual priority remain distinct. Fresh blind re-rating
+  hides adjacent history/grouping, saves actual zero, and reveals zero history only on explicit request.
+- AC-06: HE terminal Yes/Finish and EN No/Integrating then Finish Anyway retain exactly one intended completion.
+  Lost-response retry is the same frozen payload; explicit questionnaire return creates no execution or library increment.
+- AC-07: final exact npm test passes 75 files / 787 tests, zero failures or skips, 144.99s, exit 0 on 2026-10-28.
+  All-workspace dependency checks pass: engine 76 modules / 215 dependencies; web 807 / 1887, zero violations.
+  Frozen-source typecheck/lint pass; complete bilingual Chromium and production build pass 205/205, 5.5m.
+- AC-08: Pending Manual QA Verification for Wave 13 is explicitly recorded under the current user's allowed alternative.
+  No native mobile/keyboard/safe-area/Hebrew screen-reader pass is claimed. This is not a copied Wave 12 waiver.
+  Approved r1, the verified official embed and the pending practical-copy requirement remain separate evidence.
+- AC-09: fresh independent source Standards (gpt-6-luna/high) and Spec (gpt-6.1-sol/high) reviews found no actionable issue.
+  Final Standards review found the dependent AC-01 checkbox overstated upstream completion; it is now explicitly unchecked.
+  Approved-scope closure and the accepted exception remain distinct from a passed criterion.
+  Both independent reviewers confirmed the corrected final documents with no remaining finding on 2026-10-28.
+- AC-10: the handoff/indexes cite exact implementation SHAs and preserved checkpoints. Final read-only inventory matches
+  all seven baseline counts and all three shared-source/reference inventories. No existing data, content or source file deleted.
+
+### Commands, provenance and limits
+
+Final root log: .scratch/w13-09-root-20261028-final.log. Real signup and all current database contracts pass.
+The command ran on beefd85 plus documentation-only updates; runtime/test sources remain identical to 8401180.
+Typecheck/lint logs: .scratch/w13-09-typecheck-final.log and .scratch/w13-09-lint-final.log.
+Full browser/build log: .scratch/w13-09-chromium-full.log; focused 2/2 log: .scratch/w13-09-focused-third.log.
+Preservation logs: .scratch/w13-09-inventory-20261028-before.log and -after.log; exact comparison passed.
+Earlier full attempts were 786/787 with signup email quota, then 786/787 with a Cloudflare 502 read.
+Both are retained as failures; no assertion, email-security setting, runtime retry or threshold was weakened.
+Only exact same-run UUID fixture/Auth cleanup was authorized and performed. No deployment, push or new wave work.
 
 [relocation-link-1]: w13-04-reversible-questionnaire-and-recovery.md
 [relocation-link-2]: w13-05-clean-summary-and-polarity-view.md

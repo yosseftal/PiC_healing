@@ -1,8 +1,10 @@
 # Wave 13 Ticket Index
 
 **Date:** 2026-10-20 (Asia/Jerusalem).
-**Updated:** 2026-10-27 (Asia/Jerusalem).
-**Status:** W13-01 through W13-08 closed; W13-07 accepted fallback retains pending AC-01. W13-09 is in progress.
+**Updated:** 2026-10-28 (Asia/Jerusalem).
+**Status:** W13-01 through W13-09 closed for the approved implementation scope.
+W13-07 AC-01 and current Wave 13 manual QA remain explicitly pending under the accepted scope decisions.
+W13-09's dependent AC-01 remains unchecked as an accepted scope exception, not a passed upstream criterion.
 
 [Wave index](../INDEX.md) · [Approved specification](../specs/wave-13-spec.md) ·
 [Content audit](../audits/wave-13-content-audit.md) · [Master wave index](../../INDEX.md)
@@ -55,7 +57,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** None
 
 - **Ticket:** [W13-09][W13-09]
-  **Status:** in progress, 8401180; focused 2/2 and full Chromium 205/205 pass; exact root signup quota retry pending.
+  **Status:** closed, 8401180; 787 root tests and 205 Chromium cases pass; accepted pending manual QA recorded.
   **End-to-end delivery:** Prove the complete Wave 13 journeys and deliver the reviewed handoff
   **Blocked by:** W13-04, W13-05, W13-06, W13-07, W13-08
 
@@ -70,7 +72,7 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
 [W13-08]: w13-08-post-finish-routing-and-content-hygiene.md
 [W13-09]: w13-09-integrated-journeys-and-wave-handoff.md
 [H13-03]: ../handoffs/w13-04-verified-and-w13-05-entry.md
-[H13-current]: ../handoffs/w13-parallel-checkpoint-and-w13-09-entry.md
+[H13-current]: ../handoffs/wave-13-final-handoff.md
 
 ```mermaid
 flowchart LR
@@ -140,8 +142,8 @@ Use this ticket index for current ticket IDs and blocking edges.
 - Actual official embedded playback was verified; see the copy-review artifact. No caption/translation promise is shipped.
 - W13-02/03 require authorized isolated database evidence. The user permits cleanup only of same-run fixture UUIDs.
 - Physical/native checks remain explicitly visible in W13-09. A prior-wave manual-QA waiver is not automatically inherited.
-- W13-09 source is committed at 8401180; the current final-gate checkpoint records its pending remote retry.
-  Earlier verified checkpoints remain historical.
+- W13-09 source is 8401180; the [final handoff][H13-current] records passing gates and preserved limitations.
+  Earlier verified checkpoints remain historical. The latest user directive explicitly permits the pending manual record.
 
 ## Execution checkpoint protocol
 

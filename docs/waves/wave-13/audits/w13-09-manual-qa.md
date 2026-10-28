@@ -29,3 +29,5 @@ and drawer content scrolls without trapping focus or losing the current topic.
 
 The accepted W13-07 practical-copy exception is separate: AC-01 still needs verified procedural Hebrew copy/transcript
 and explicit approval before any such instructions ship. Device QA cannot resolve that content requirement.
+
+Reviewed at final closure on 2026-10-28: status remains pending; no new native/device evidence is asserted.

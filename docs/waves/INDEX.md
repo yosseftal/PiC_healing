@@ -2,7 +2,8 @@
 
 Canonical wave documentation lives under **docs/waves/**.
 Start with a wave index, then its specification, tickets, audits and final handoff.
-Wave 13 implementation is authorized; follow its ticket index for the current execution checkpoint.
+Wave 13 implementation and automated verification are complete at source 8401180 (verified 2026-10-28).
+Its final handoff explicitly records pending manual QA and the approved practical-copy exception.
 
 ## Waves
 
@@ -26,7 +27,7 @@ Wave 13 implementation is authorized; follow its ticket index for the current ex
 | [10][W10] | [Document][S10] | [Suite][T10] | [Document][A10] | [Document][H10] |
 | [11][W11] | [Document][S11] | [Suite][T11] | [Document][A11] | [Document][H11] |
 | [12][W12] | [Document][S12] | [Suite][T12] | [Document][A12] | [Document][H12] |
-| [13][W13] | [Document][S13] | [Suite][T13] | [Document][A13] | [Checkpoint][H13] |
+| [13][W13] | [Document][S13] | [Suite][T13] | [Document][A13] | [Final handoff][H13] |
 
 [W0]: wave-0/INDEX.md
 [W1]: wave-1/INDEX.md
@@ -79,7 +80,7 @@ Wave 13 implementation is authorized; follow its ticket index for the current ex
 [W13]: wave-13/INDEX.md
 [S13]: wave-13/specs/wave-13-spec.md
 [T13]: wave-13/tickets/INDEX.md
-[A13]: wave-13/audits/wave-13-content-audit.md
+[A13]: wave-13/audits/w13-09-verification-and-review.md
 [H13]: wave-13/handoffs/wave-13-final-handoff.md
 
 Artifact shortcuts open the primary record or ticket suite. Open a wave number for every preserved version,

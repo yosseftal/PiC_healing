@@ -2,11 +2,11 @@
 
 [All waves](../INDEX.md)
 
-Implementation authorized. W13-01 through W13-08 are closed; W13-07 uses the explicit human-approved fallback.
-W13-07 AC-01 remains pending verified practical copy/transcript; it is not marked passed.
-W13-09 is in progress at 8401180: 205 Chromium cases, typecheck, lint and dependency boundaries pass.
-The current full root gate is waiting for a real signup quota retry; no all-green closure is claimed.
-Native/manual Wave 13 closure evidence remains pending; see the current handoff.
+W13-01 through W13-09 are closed for the approved implementation scope, verified 2026-10-28.
+Final source: 8401180. All 787 root tests and 205 Chromium cases pass; typecheck, lint and dependency checks pass.
+Pending Manual QA Verification for Wave 13 is explicitly recorded under the current user directive.
+W13-07 uses the approved fallback; AC-01 remains pending verified practical copy/transcript, not marked passed.
+The dependent W13-09 AC-01 also remains unchecked as an accepted scope exception.
 
 ## Specifications
 
@@ -50,9 +50,9 @@ Native/manual Wave 13 closure evidence remains pending; see the current handoff.
 - [W13-03 verified closure and W13-04 entry](handoffs/w13-03-verified-and-w13-04-entry.md)
 - [Historical W13-04 verified checkpoint and W13-05 entry](handoffs/w13-04-verified-and-w13-05-entry.md)
 
-- [Current verified parallel checkpoint and W13-09 entry](handoffs/w13-parallel-checkpoint-and-w13-09-entry.md)
+- [Verified parallel checkpoint and W13-09 entry](handoffs/w13-parallel-checkpoint-and-w13-09-entry.md)
 
-- [Active W13-09 final-gate checkpoint](handoffs/wave-13-final-handoff.md)
+- [Final implementation and verification handoff](handoffs/wave-13-final-handoff.md)
 
 ## Briefs and preserved checkpoints
 

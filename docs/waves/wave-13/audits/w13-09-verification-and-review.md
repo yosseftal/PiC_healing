@@ -1,6 +1,7 @@
 # W13-09 assembled verification and independent review
 
-Date: 2026-10-27 (Asia/Jerusalem). Fixed baseline: 6a6622b. Execution explicitly authorized by the final W13-09 charter.
+Prepared: 2026-10-27; resumed: 2026-10-28 (Asia/Jerusalem). Fixed baseline: 6a6622b.
+Execution explicitly authorized by the final W13-09 charter and the subsequent request to finish the wave.
 The previous 787 root tests / 203 Chromium cases are historical evidence, not the new final gate.
 
 ## Ownership and seams
@@ -11,7 +12,7 @@ Independent read-only Standards and Spec reviewers receive the frozen final diff
 Use the existing actual-App wave12-journey fixture and installJourneyTransport HTTP boundary.
 Do not replace application actions, engines or repositories. The browser transport is synthetic and does not prove SQL/RLS.
 The separately authorized full root remote suite provides actual database contract evidence.
-No runtime, fixture, engine, adapter, migration, dependency or treatment-content changes are planned.
+No runtime, fixture, engine, adapter, migration, dependency or treatment-content change was needed.
 
 The approved public seams are actual App interaction/accessibility, committed Guest storage, authenticated HTTP requests,
 and returned public entities. The existing lower-level suites supply adverse matrices rather than duplicating them here.
@@ -29,9 +30,9 @@ No new domain normalization, preparation, transaction or port-shaping owner is i
 | Owner/generation isolation / AC-04 | returning-identity, questionnaire-reload, promotion-recovery, completion-integration |
 | Initial 1–10, blind 0–10, zero, polarity / AC-05 | New assembled path; summary-presentation browser and rendered summary tests |
 | Once-only completion/recovery / AC-06 | New lost-response promotion path; completion/promotion suites and real remote replay |
-| Automated gates / AC-07 | Fresh final command results to be recorded below |
+| Automated gates / AC-07 | Final passing command results below |
 | Content and manual status / AC-08 | r1 and real embed in W13-07 copy review; current pending-manual decision below |
-| Independent review / AC-09 | Two fresh read-only review results to be recorded after source freeze |
+| Independent review / AC-09 | Fresh Standards/Spec review results below |
 | SHAs and preservation / AC-10 | Final handoff/index links; diff deletion/seam checks and read-only inventory |
 
 Actual SQL evidence includes forced late membership failure rolling back members, positions, answer and receipt;
@@ -88,8 +89,12 @@ The source is frozen after focused verification and both independent review axes
   No assertion/security setting was changed. All other remote contracts passed; this is not a fully green gate.
 - All-workspace dependency checks passed separately because the failed npm test chain did not reach them:
   engine 76 modules / 215 dependencies; web 807 / 1887, zero violations (.scratch/w13-09-dependency-final.log).
-- The exact full suite is queued for retry after 22:10 Asia/Jerusalem (2026-10-27), beyond the earlier successful
-  signup run's full hour. Final result and post-gate inventory remain pending (.scratch/w13-09-root-verified.log).
+- The 2026-10-27 22:10 retry passed real signup but failed one database read with Cloudflare 502 Bad Gateway:
+  786/787 passed, 146.01s, exit 1 (.scratch/w13-09-root-verified.log). No contract or runtime change followed.
+- Final exact npm test on 2026-10-28: 75 files / 787 passed, zero failures or skips, 144.99s, exit 0.
+  Real signup and the previously interrupted v3 contract pass (.scratch/w13-09-root-20261028-final.log).
+  The success chain also passes both dependency graphs: engine 76/215; web 807/1887, zero violations.
+  Executed HEAD was beefd85 plus documentation-only updates; runtime/test sources are identical to 8401180.
 
 Test authoring corrected two initial assumptions: scope language metadata to approved content rather than the outer HE frame;
 and distinguish presentation row UUIDs from public addSymptom's initial domain UUID allocation.
@@ -97,5 +102,18 @@ Draft row IDs must survive help/locale/reorder. Actual committed IDs must surviv
 A second run exposed an immediate read before the returned row mounted; an observable visibility wait fixes the test.
 No product/runtime defect, delay, timeout increase, skip or weaker continuity assertion was introduced.
 
-Run heavy runners sequentially with at most two workers and normal TLS. No skips/retries/threshold weakening.
+Heavy runners use at most two workers and normal TLS; no skipped tests, added automatic retries or threshold weakening.
 Only same-run UUID fixtures and Auth users may be cleaned. Existing treatment/data/source files remain intact.
+
+## Final preservation and closure — 2026-10-28
+
+The final read-only inventory comparison passes: profiles 31, groups 23, symptoms 22, treatments 23,
+Player sessions 30, personal library 23, Timeline 26. All three shared source IDs and reference counts match.
+Logs: .scratch/w13-09-inventory-20261028-before.log and -after.log. No personal content was exported.
+The W13-09 diff contains no deleted file and no runtime/engine/adapter/schema/dependency/content edit.
+Both applied migration SHA-256 values remain unchanged. Document links, Unicode line length and whitespace are checked.
+The current user explicitly accepts recording pending manual QA; W13-07 practical-copy AC-01 stays openly deferred.
+Final Standards review caught the dependent W13-09 AC-01 checkbox overstating upstream completion.
+Both the practical-copy AC and its dependent W13-09 criterion remain unchecked as accepted scope exceptions, not passes.
+The approved implementation scope closes separately from those outstanding criteria.
+Both independent reviewers rechecked the corrected closure documents on 2026-10-28 and confirmed no remaining finding.

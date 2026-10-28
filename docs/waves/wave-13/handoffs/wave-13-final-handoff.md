@@ -1,7 +1,8 @@
 # Wave 13 final implementation and verification handoff
 
-Date: 2026-10-27 (Asia/Jerusalem). Final W13-09 execution baseline: 6a6622b.
-Status: final automated gates in progress. Do not treat this draft as a closed-wave claim.
+Started: 2026-10-27; resumed: 2026-10-28 (Asia/Jerusalem). Final W13-09 execution baseline: 6a6622b.
+Status: W13-01 through W13-09 closed for the approved implementation scope; final automated gates pass.
+Pending Manual QA Verification for Wave 13 and W13-07 practical-copy AC-01 remain explicitly recorded below.
 
 ## Implementation history
 
@@ -15,7 +16,7 @@ Status: final automated gates in progress. Do not treat this draft as a closed-w
 | W13-06 greeting/identity | ec74ff0 | 11482da |
 | W13-07 approved education/video fallback | 100b1d6 | 6a6622b |
 | W13-08 confirmed completion/return | 100b1d6 | 6a6622b |
-| W13-09 assembled journeys | 8401180 | Final gate documentation pending |
+| W13-09 assembled journeys | 8401180 | Verified Resolution; closure SHA indexed next |
 
 a17ef59 records W13-09 dispatch and agreed public test seams. No new runtime change was needed in W13-09.
 8401180 adds the actual-App HE untitled and EN titled assembled tests; fixtures and HTTP transport remain unchanged.
@@ -42,7 +43,8 @@ The HTTP fixture proves assembled browser behavior; actual SQL/RLS/rollback/repl
 
 ## Final gates
 
-Tested source: 8401180, with no later runtime/test change. All commands use the repository root.
+Tested source: 8401180, with no later runtime/test change. Final root execution: beefd85 plus documentation-only updates.
+All commands use the repository root. Final real-database verification completed on 2026-10-28.
 Heavy runners are sequential, with two workers, normal TLS and the already authorized controlled signup address.
 
 | Command / scope | Actual final result | Evidence |
@@ -51,7 +53,7 @@ Heavy runners are sequential, with two workers, normal TLS and the already autho
 | npm run lint | Passed, exit 0 | .scratch/w13-09-lint-final.log |
 | Focused assembled Chromium | 2/2 passed, 11.2s, production build passed | .scratch/w13-09-focused-third.log |
 | Complete bilingual Chromium / production build | 205/205 passed, 5.5m, exit 0 | .scratch/w13-09-chromium-full.log |
-| Full npm test / actual remote database | Pending final result | .scratch/w13-09-root-final.log |
+| Full npm test / actual remote database | 75 files / 787 passed, 144.99s, exit 0 | .scratch/w13-09-root-20261028-final.log |
 | All-workspace dependency boundaries | Zero violations, engine 76/215, web 807/1887 | .scratch/w13-09-dependency-final.log |
 
 Real remote scope includes additive priority and atomic membership/answer contracts, owner/RLS rejection, late rollback,
@@ -59,12 +61,15 @@ competing writers, exact retries, real signup/verification, legacy/current promo
 No synthetic transport result substitutes for the actual database gate. No test is skipped; per-test retries are unchanged.
 
 The first exact root run passed 786/787 tests; real signup alone returned over_email_send_rate_limit, exit 1, 143.60s.
-This is not a fully green gate. The unchanged full suite is queued after 22:10 Asia/Jerusalem on 2026-10-27,
-after the earlier successful signup run is over an hour old. Evidence: .scratch/w13-09-root-verified.log when complete.
-No email-security setting, signup assertion or confirmation flow was bypassed.
+The 22:10 retry passed signup but encountered Cloudflare 502 Bad Gateway reading the promoted Player session:
+786/787 passed, exit 1, 146.01s (.scratch/w13-09-root-verified.log). Neither attempt is a fully green gate.
+The exact unchanged full command passed on 2026-10-28, including real signup and the v3 contract.
+Its success chain also passed both dependency graphs (engine 76/215; web 807/1887), zero violations.
+No email-security setting, signup assertion, confirmation flow, contract assertion or runtime was changed.
 
 Fresh independent reviews: Standards gpt-6-luna/high and Spec gpt-6.1-sol/high, both read-only, no actionable findings.
 The source freeze includes the observable returned-row wait. See the verification report for authoring corrections and limits.
+Final documentation review corrected the dependent AC-01 checkbox; both reviewers rechecked with no remaining finding.
 
 ## Explicitly retained limitations
 
@@ -75,6 +80,7 @@ The [manual ledger](../audits/w13-09-manual-qa.md) lists each pending check and 
 
 W13-07 AC-01 remains pending verified practical Hebrew transcript/copy and approval. The user explicitly accepted
 Scope 2 / AC-08: approved r1 welcome/background/non-procedural guide introduction plus official click-to-load video/link.
+W13-09's dependent AC-01 therefore also remains unchecked as an accepted scope exception, not a passed upstream criterion.
 No physical finger/force/calibration instructions or caption/translation promise was invented.
 Real embedded playback was separately verified before W13-09; the new controlled failure case does not replace that evidence.
 
@@ -95,7 +101,9 @@ Their SHA-256 values remain:
 W13-09 changes only its new web test and wave documentation. No runtime, fixture/transport, engine, adapter, dependency,
 schema or treatment-content file is edited. No source file, historical wave document or treatment content is deleted.
 The only permitted remote deletion is cleanup of UUID fixture rows/Auth users created by that exact authorized test run.
-The read-only post-gate inventory and before/after comparison remain pending final gate completion.
+The read-only before/after comparison passed on 2026-10-28: profiles 31, groups 23, symptoms 22, treatments 23,
+Player sessions 30, library 23, Timeline 26; every shared-source/reference count matches.
+Logs: .scratch/w13-09-inventory-20261028-before.log and -after.log. No personal content was exported.
 
 The deduplication sweep adds no normalization, serialization or transaction implementation: the new journey reuses existing
 App composition and HTTP fixture helpers. Existing engine membership/priority helpers remain the single domain owners;
@@ -110,4 +118,6 @@ no engine/adapter refactor is introduced as part of final verification.
 - [Content-preserving routing reproduction](../audits/w13-08-routing-reproduction.md)
 - [Earlier verified convergence checkpoint](w13-parallel-checkpoint-and-w13-09-entry.md)
 
+Implementation and automated verification are complete. Remaining follow-up is the explicit manual ledger and
+verified practical Hebrew copy/approval; neither is represented as passed.
 No deployment, push, merge, content deletion or subsequent wave work is part of this handoff.
