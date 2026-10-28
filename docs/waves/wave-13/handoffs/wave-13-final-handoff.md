@@ -16,7 +16,7 @@ Pending Manual QA Verification for Wave 13 and W13-07 practical-copy AC-01 remai
 | W13-06 greeting/identity | ec74ff0 | 11482da |
 | W13-07 approved education/video fallback | 100b1d6 | 6a6622b |
 | W13-08 confirmed completion/return | 100b1d6 | 6a6622b |
-| W13-09 assembled journeys | 8401180 | Verified Resolution; closure SHA indexed next |
+| W13-09 assembled journeys | 8401180 | 5b2dc1f |
 
 a17ef59 records W13-09 dispatch and agreed public test seams. No new runtime change was needed in W13-09.
 8401180 adds the actual-App HE untitled and EN titled assembled tests; fixtures and HTTP transport remain unchanged.

@@ -3,7 +3,8 @@
 [All waves](../INDEX.md)
 
 W13-01 through W13-09 are closed for the approved implementation scope, verified 2026-10-28.
-Final source: 8401180. All 787 root tests and 205 Chromium cases pass; typecheck, lint and dependency checks pass.
+Final source: 8401180; verified closure: 5b2dc1f. All 787 root tests and 205 Chromium cases pass.
+Typecheck, lint and dependency checks pass.
 Pending Manual QA Verification for Wave 13 is explicitly recorded under the current user directive.
 W13-07 uses the approved fallback; AC-01 remains pending verified practical copy/transcript, not marked passed.
 The dependent W13-09 AC-01 also remains unchecked as an accepted scope exception.

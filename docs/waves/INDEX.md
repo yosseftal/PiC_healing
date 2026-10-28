@@ -2,7 +2,7 @@
 
 Canonical wave documentation lives under **docs/waves/**.
 Start with a wave index, then its specification, tickets, audits and final handoff.
-Wave 13 implementation and automated verification are complete at source 8401180 (verified 2026-10-28).
+Wave 13 source is 8401180; verified approved-scope closure is 5b2dc1f (2026-10-28).
 Its final handoff explicitly records pending manual QA and the approved practical-copy exception.
 
 ## Waves

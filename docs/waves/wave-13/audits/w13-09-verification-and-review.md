@@ -107,6 +107,8 @@ Only same-run UUID fixtures and Auth users may be cleaned. Existing treatment/da
 
 ## Final preservation and closure — 2026-10-28
 
+Implementation source: 8401180. Verified approved-scope closure: 5b2dc1f.
+
 The final read-only inventory comparison passes: profiles 31, groups 23, symptoms 22, treatments 23,
 Player sessions 30, personal library 23, Timeline 26. All three shared source IDs and reference counts match.
 Logs: .scratch/w13-09-inventory-20261028-before.log and -after.log. No personal content was exported.

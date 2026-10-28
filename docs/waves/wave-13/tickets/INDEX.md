@@ -57,7 +57,8 @@ There are exactly nine tickets; approved W13-07V is included inside W13-07.
   **Blocked by:** None
 
 - **Ticket:** [W13-09][W13-09]
-  **Status:** closed, 8401180; 787 root tests and 205 Chromium cases pass; accepted pending manual QA recorded.
+  **Status:** closed, implementation 8401180, verified closure 5b2dc1f; 787 root tests / 205 Chromium cases pass.
+  Accepted pending manual QA and the dependent content exception remain explicitly recorded.
   **End-to-end delivery:** Prove the complete Wave 13 journeys and deliver the reviewed handoff
   **Blocked by:** W13-04, W13-05, W13-06, W13-07, W13-08
 

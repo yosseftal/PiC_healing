@@ -94,7 +94,7 @@ Implementation is explicitly dispatched by the user's final W13-09 charter.
 
 ### Solution path and architecture
 
-Implementation: 8401180, dispatched from 6a6622b; verified closure: 2026-10-28 (Asia/Jerusalem).
+Implementation: 8401180, dispatched from 6a6622b; verified closure: 5b2dc1f, 2026-10-28 (Asia/Jerusalem).
 The new actual-App HE untitled and EN titled journeys reuse the existing HTTP-only fixture/transport.
 No runtime, fixture, transport, engine, adapter, migration, dependency or treatment-content change was needed.
 Presentation row IDs survive editing/help/locale/reorder; engine-allocated committed IDs survive every later operation.
